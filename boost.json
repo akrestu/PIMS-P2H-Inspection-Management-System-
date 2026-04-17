@@ -1,0 +1,13 @@
+{
+    "agents": [
+        "claude_code"
+    ],
+    "skills": [
+        "fortify-development",
+        "laravel-best-practices",
+        "wayfinder-development",
+        "pest-testing",
+        "inertia-react-development",
+        "tailwindcss-development"
+    ]
+}
