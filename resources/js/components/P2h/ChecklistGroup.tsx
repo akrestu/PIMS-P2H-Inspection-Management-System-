@@ -7,7 +7,7 @@ import { useState } from 'react';
 import ChecklistItem from './ChecklistItem';
 
 interface Props {
-    risiko: P2hInspectionItem['risiko'];
+    section: P2hInspectionItem['section'];
     items: P2hInspectionItem[];
     answers: Record<number, AnswerState>;
     onChange: (id: number, kondisi: 'Layak' | 'Tidak Layak') => void;
@@ -15,27 +15,21 @@ interface Props {
     defaultOpen?: boolean;
 }
 
-const riskGroupConfig = {
-    Critical: {
-        label: 'Critical',
-        headerClass: 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900',
-        badgeClass: 'bg-red-600 text-white hover:bg-red-600',
-        dotClass: 'bg-red-500',
+const sectionConfig = {
+    A: {
+        label: 'A — Pemeriksaan Keliling Unit / Di Luar Kabin',
+        headerClass: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900',
+        badgeClass: 'bg-blue-600 text-white hover:bg-blue-600',
+        dotClass: 'bg-blue-500',
     },
-    Tinggi: {
-        label: 'Tinggi',
-        headerClass: 'bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-900',
-        badgeClass: 'bg-orange-500 text-white hover:bg-orange-500',
-        dotClass: 'bg-orange-500',
+    B: {
+        label: 'B — Pemeriksaan Dari Dalam Kabin',
+        headerClass: 'bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900',
+        badgeClass: 'bg-indigo-600 text-white hover:bg-indigo-600',
+        dotClass: 'bg-indigo-500',
     },
-    Sedang: {
-        label: 'Sedang',
-        headerClass: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900',
-        badgeClass: 'bg-yellow-500 text-black hover:bg-yellow-500',
-        dotClass: 'bg-yellow-500',
-    },
-    Rendah: {
-        label: 'Rendah',
+    C: {
+        label: 'C — Kelengkapan Tambahan',
         headerClass: 'bg-muted/30 border-border',
         badgeClass: '',
         dotClass: 'bg-muted-foreground',
@@ -43,7 +37,7 @@ const riskGroupConfig = {
 };
 
 export default function ChecklistGroup({
-    risiko,
+    section,
     items,
     answers,
     onChange,
@@ -51,11 +45,12 @@ export default function ChecklistGroup({
     defaultOpen = false,
 }: Props) {
     const [open, setOpen] = useState(defaultOpen);
-    const config = riskGroupConfig[risiko];
+    const config = sectionConfig[section];
 
     const filledCount = items.filter((item) => answers[item.id]?.kondisi !== null && answers[item.id]?.kondisi !== undefined).length;
     const allFilled = filledCount === items.length;
     const hasTL = items.some((item) => answers[item.id]?.kondisi === 'Tidak Layak');
+    const hasAATL = items.some((item) => answers[item.id]?.kondisi === 'Tidak Layak' && item.kode_bahaya === 'AA');
 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
@@ -65,18 +60,23 @@ export default function ChecklistGroup({
                     className={cn(
                         'flex w-full items-center justify-between rounded-lg border px-4 py-3 transition-colors',
                         config.headerClass,
+                        hasAATL && 'border-red-400 dark:border-red-700',
                         'hover:brightness-95 active:brightness-90',
                     )}
                 >
                     <div className="flex items-center gap-2.5">
                         <span className={cn('h-2.5 w-2.5 rounded-full shrink-0', config.dotClass)} />
-                        <span className="text-sm font-semibold">Risiko {config.label}</span>
+                        <span className="text-sm font-semibold">Seksi {config.label}</span>
                         <Badge className={cn('text-xs px-2 py-0', config.badgeClass)}>
                             {items.length} item
                         </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                        {/* Completion pill */}
+                        {hasAATL && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                                Stop!
+                            </span>
+                        )}
                         <span
                             className={cn(
                                 'text-xs font-medium px-2 py-0.5 rounded-full',

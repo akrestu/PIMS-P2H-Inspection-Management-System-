@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,7 +56,7 @@ interface SlotInfo {
     next_slot: number;
 }
 
-const RISK_ORDER: P2hInspectionItem['risiko'][] = ['Critical', 'Tinggi', 'Sedang', 'Rendah'];
+const SECTION_ORDER: P2hInspectionItem['section'][] = ['A', 'B', 'C'];
 
 const STEPS = [
     { id: 1, label: 'Unit & Shift', icon: Wrench },
@@ -241,6 +242,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
     const [unitSheetOpen, setUnitSheetOpen] = useState(false);
     const [slotInfo, setSlotInfo] = useState<SlotInfo | null>(null);
     const [checkingSlot, setCheckingSlot] = useState(false);
+    const [jobSite, setJobSite] = useState('');
+    const [lokasiKerja, setLokasiKerja] = useState('');
     const [kmAwal, setKmAwal] = useState('');
     const [shift, setShift] = useState('');
 
@@ -258,6 +261,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
     const [jumlahLiter, setJumlahLiter] = useState('');
 
     // Step 4
+    const [hmKmAkhir, setHmKmAkhir] = useState('');
     const [kondisiAkhir, setKondisiAkhir] = useState<'Layak Pakai' | 'BD' | ''>('');
     const [justifikasiKondisi, setJustifikasiKondisi] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -273,7 +277,15 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         return Math.round((layakCount / total) * 100);
     }, [answers, inspectionItems.length]);
 
-    const recommendedKondisi = p2hScore !== null ? (p2hScore >= 80 ? 'Layak Pakai' : 'BD') : null;
+    const hasAATidakLayak = useMemo(() => {
+        return inspectionItems.some(
+            (item) => item.kode_bahaya === 'AA' && answers[item.id]?.kondisi === 'Tidak Layak',
+        );
+    }, [answers, inspectionItems]);
+
+    const recommendedKondisi = p2hScore !== null
+        ? (hasAATidakLayak || p2hScore < 80 ? 'BD' : 'Layak Pakai')
+        : null;
     const isOverride = kondisiAkhir !== '' && recommendedKondisi !== null && kondisiAkhir !== recommendedKondisi;
 
     const filledCount = useMemo(
@@ -287,12 +299,12 @@ export default function P2hForm({ units, inspectionItems }: Props) {
     );
 
     const groupedItems = useMemo(() => {
-        return RISK_ORDER.reduce<Record<P2hInspectionItem['risiko'], P2hInspectionItem[]>>(
-            (acc, risiko) => {
-                acc[risiko] = inspectionItems.filter((item) => item.risiko === risiko);
+        return SECTION_ORDER.reduce<Record<P2hInspectionItem['section'], P2hInspectionItem[]>>(
+            (acc, section) => {
+                acc[section] = inspectionItems.filter((item) => item.section === section);
                 return acc;
             },
-            { Critical: [], Tinggi: [], Sedang: [], Rendah: [] },
+            { A: [], B: [], C: [] },
         );
     }, [inspectionItems]);
 
@@ -330,7 +342,6 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         if (s === 1) {
             if (!selectedUnitId) return 'Pilih unit terlebih dahulu.';
             if (checkingSlot) return 'Menunggu pengecekan slot…';
-            if (!kmAwal) return 'KM Awal wajib diisi.';
             if (!shift) return 'Shift wajib dipilih.';
         }
         if (s === 2) {
@@ -385,7 +396,10 @@ export default function P2hForm({ units, inspectionItems }: Props) {
 
         router.post('/p2h', {
             unit_id: Number(selectedUnitId),
-            km_awal: Number(kmAwal),
+            job_site: jobSite || null,
+            lokasi_kerja: lokasiKerja || null,
+            km_awal: kmAwal ? Number(kmAwal) : null,
+            hm_km_akhir: hmKmAkhir ? Number(hmKmAkhir) : null,
             shift,
             paraf,
             answers: answersArray,
@@ -576,15 +590,47 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                 </CardContent>
                             </Card>
 
+                            {/* Job Site & Lokasi Kerja */}
+                            <Card>
+                                <CardHeader className="px-4 pb-0">
+                                    <CardTitle className="text-base">Lokasi Pekerjaan</CardTitle>
+                                    <CardDescription>Isi job site dan lokasi kerja (opsional)</CardDescription>
+                                </CardHeader>
+                                <CardContent className="px-4 space-y-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="job-site" className="text-sm font-medium">Job Site</Label>
+                                        <Select value={jobSite} onValueChange={setJobSite}>
+                                            <SelectTrigger id="job-site" className="h-11 text-sm w-full">
+                                                <SelectValue placeholder="Pilih Job Site" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="PT. WBK Site MAS">PT. WBK Site MAS</SelectItem>
+                                                <SelectItem value="PT. WBK Site BAU">PT. WBK Site BAU</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="lokasi-kerja" className="text-sm font-medium">Lokasi Kerja</Label>
+                                        <Input
+                                            id="lokasi-kerja"
+                                            type="text"
+                                            value={lokasiKerja}
+                                            onChange={(e) => setLokasiKerja(e.target.value)}
+                                            placeholder="Contoh: Pit 3, Hauling Road"
+                                            className="h-11 text-sm"
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
                             {/* KM Awal & Shift */}
                             <Card>
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">KM Awal</CardTitle>
-                                        <span className="text-destructive text-sm">*</span>
+                                        <CardTitle className="text-base">HM/KM Awal</CardTitle>
                                     </div>
-                                    <CardDescription>Lihat odometer kendaraan, lalu masukkan angkanya</CardDescription>
+                                    <CardDescription>Lihat odometer/hourmeter kendaraan (opsional)</CardDescription>
                                 </CardHeader>
                                 <CardContent className="px-4 space-y-2">
                                     <Input
@@ -599,7 +645,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                     />
                                     {kmAwal && (
                                         <p className="text-xs text-muted-foreground">
-                                            = {Number(kmAwal).toLocaleString('id-ID')} km
+                                            = {Number(kmAwal).toLocaleString('id-ID')}
                                         </p>
                                     )}
                                 </CardContent>
@@ -689,20 +735,20 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                 </p>
                             </div>
 
-                            {/* Checklist groups */}
+                            {/* Checklist groups per seksi */}
                             <div className="space-y-2">
-                                {RISK_ORDER.map((risiko) => {
-                                    const items = groupedItems[risiko];
+                                {SECTION_ORDER.map((section) => {
+                                    const items = groupedItems[section];
                                     if (items.length === 0) return null;
                                     return (
                                         <ChecklistGroup
-                                            key={risiko}
-                                            risiko={risiko}
+                                            key={section}
+                                            section={section}
                                             items={items}
                                             answers={answers}
                                             onChange={handleKondisiChange}
                                             onKeteranganChange={handleKeteranganChange}
-                                            defaultOpen={risiko === 'Critical' || risiko === 'Tinggi'}
+                                            defaultOpen={section === 'A'}
                                         />
                                     );
                                 })}
@@ -865,15 +911,17 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                 <CardContent className="px-4 space-y-0">
                                     {/* Unit & Driver */}
                                     <div className="rounded-xl bg-muted/40 px-3 py-1 mb-3">
-                                        <SummaryRow icon={Truck}  label="Unit"       value={selectedUnit?.no_unit ?? '-'} />
+                                        <SummaryRow icon={Truck}  label="Unit"         value={selectedUnit?.no_unit ?? '-'} />
                                         <Separator />
-                                        <SummaryRow icon={Truck}  label="Jenis"      value={selectedUnit?.jenis_unit ?? '-'} />
+                                        <SummaryRow icon={Truck}  label="Jenis"        value={selectedUnit?.jenis_unit ?? '-'} />
                                         <Separator />
-                                        <SummaryRow icon={User}   label="Pengemudi"  value={auth?.user?.name ?? '-'} />
+                                        <SummaryRow icon={User}   label="Pengemudi"    value={auth?.user?.name ?? '-'} />
                                         <Separator />
-                                        <SummaryRow icon={Sun}    label="Shift"      value={shift} />
+                                        <SummaryRow icon={Sun}    label="Shift"        value={shift} />
+                                        {jobSite && <><Separator /><SummaryRow label="Job Site" value={jobSite} /></>}
+                                        {lokasiKerja && <><Separator /><SummaryRow label="Lokasi Kerja" value={lokasiKerja} /></>}
                                         <Separator />
-                                        <SummaryRow icon={Gauge}  label="KM Awal"    value={kmAwal ? `${Number(kmAwal).toLocaleString('id-ID')} km` : '-'} />
+                                        <SummaryRow icon={Gauge}  label="HM/KM Awal"  value={kmAwal ? Number(kmAwal).toLocaleString('id-ID') : '-'} />
                                     </div>
 
                                     {/* Hasil Checklist */}
@@ -972,7 +1020,10 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                                 : <ShieldAlert className="h-4 w-4 shrink-0" />
                                             }
                                             <span>
-                                                Rekomendasi P2H: <strong>{recommendedKondisi}</strong> (score {p2hScore}%)
+                                                Rekomendasi P2H: <strong>{recommendedKondisi}</strong>
+                                                {hasAATidakLayak
+                                                    ? ' — ada item AA (Stop) tidak layak'
+                                                    : ` (score ${p2hScore}%)`}
                                             </span>
                                         </div>
                                     )}
@@ -1048,12 +1099,40 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                 </CardContent>
                             </Card>
 
+                            {/* HM/KM Akhir */}
+                            <Card>
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center gap-2">
+                                        <Gauge className="h-4 w-4 text-muted-foreground" />
+                                        <CardTitle className="text-base">HM/KM Akhir</CardTitle>
+                                    </div>
+                                    <CardDescription>Isi HM/KM saat selesai shift (opsional)</CardDescription>
+                                </CardHeader>
+                                <CardContent className="px-4 space-y-2">
+                                    <Input
+                                        id="hm-km-akhir"
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={0}
+                                        value={hmKmAkhir}
+                                        onChange={(e) => setHmKmAkhir(e.target.value)}
+                                        placeholder="Contoh: 12700"
+                                        className="h-14 text-xl font-bold tracking-wide"
+                                    />
+                                    {hmKmAkhir && (
+                                        <p className="text-xs text-muted-foreground">
+                                            = {Number(hmKmAkhir).toLocaleString('id-ID')}
+                                        </p>
+                                    )}
+                                </CardContent>
+                            </Card>
+
                             {/* Tanda Tangan */}
                             <Card>
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <PenLine className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">Tanda Tangan</CardTitle>
+                                        <CardTitle className="text-base">Tanda Tangan Driver</CardTitle>
                                     </div>
                                     <CardDescription>
                                         Tanda tangani menggunakan jari atau mouse sebagai pernyataan bahwa pemeriksaan telah dilakukan dengan jujur dan benar.

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class P2hInspectionItem extends Model
 {
-    protected $fillable = ['nama_item', 'risiko', 'urutan', 'is_active'];
+    protected $fillable = ['nama_item', 'section', 'kode_bahaya', 'urutan', 'is_active'];
 
     protected $casts = [
         'is_active' => 'boolean',

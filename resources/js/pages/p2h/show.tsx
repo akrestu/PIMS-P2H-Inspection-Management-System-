@@ -32,13 +32,12 @@ interface Props {
     inspectionItems: P2hInspectionItem[];
 }
 
-const RISK_ORDER: P2hInspectionItem['risiko'][] = ['Critical', 'Tinggi', 'Sedang', 'Rendah'];
+const SECTION_ORDER: P2hInspectionItem['section'][] = ['A', 'B', 'C'];
 
-const riskGroupConfig = {
-    Critical: { headerClass: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-200', dot: 'bg-red-500' },
-    Tinggi:   { headerClass: 'bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950/20 dark:border-orange-900 dark:text-orange-200', dot: 'bg-orange-500' },
-    Sedang:   { headerClass: 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/20 dark:border-yellow-900 dark:text-yellow-200', dot: 'bg-yellow-500' },
-    Rendah:   { headerClass: 'bg-muted/30 border-border text-foreground', dot: 'bg-muted-foreground/50' },
+const sectionGroupConfig = {
+    A: { label: 'A — Pemeriksaan Keliling Unit / Di Luar Kabin', headerClass: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-200', dot: 'bg-blue-500' },
+    B: { label: 'B — Pemeriksaan Dari Dalam Kabin',             headerClass: 'bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/20 dark:border-indigo-900 dark:text-indigo-200', dot: 'bg-indigo-500' },
+    C: { label: 'C — Kelengkapan Tambahan',                     headerClass: 'bg-muted/30 border-border text-foreground', dot: 'bg-muted-foreground/50' },
 };
 
 // ── Shift icon + color ────────────────────────────────────────────────────────
@@ -88,9 +87,9 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
     const tlItems = entry.answers?.filter((a) => a.kondisi === 'Tidak Layak') ?? [];
     const layakCount = entry.answers?.filter((a) => a.kondisi === 'Layak').length ?? 0;
 
-    const groupedItems = RISK_ORDER.reduce<Record<P2hInspectionItem['risiko'], P2hInspectionItem[]>>(
-        (acc, r) => { acc[r] = inspectionItems.filter((i) => i.risiko === r); return acc; },
-        { Critical: [], Tinggi: [], Sedang: [], Rendah: [] },
+    const groupedItems = SECTION_ORDER.reduce<Record<P2hInspectionItem['section'], P2hInspectionItem[]>>(
+        (acc, s) => { acc[s] = inspectionItems.filter((i) => i.section === s); return acc; },
+        { A: [], B: [], C: [] },
     );
 
     return (
@@ -127,10 +126,22 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                         <p className="text-xs text-muted-foreground">Shift</p>
                         <ShiftBadge shift={entry.shift} />
                     </div>
+                    {entry.lokasi_kerja && (
+                        <div>
+                            <p className="text-xs text-muted-foreground">Lokasi Kerja</p>
+                            <p className="font-medium">{entry.lokasi_kerja}</p>
+                        </div>
+                    )}
                     <div>
-                        <p className="text-xs text-muted-foreground">KM Awal</p>
+                        <p className="text-xs text-muted-foreground">HM/KM Awal</p>
                         <p className="font-semibold">
-                            {entry.km_awal ? entry.km_awal.toLocaleString('id-ID') + ' km' : '-'}
+                            {entry.km_awal ? entry.km_awal.toLocaleString('id-ID') : '-'}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">HM/KM Akhir</p>
+                        <p className="font-semibold">
+                            {entry.hm_km_akhir ? entry.hm_km_akhir.toLocaleString('id-ID') : '-'}
                         </p>
                     </div>
                     <div>
@@ -201,7 +212,7 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                                                 <p className="mt-0.5 text-xs text-red-700/80 dark:text-red-400/80">{ans.keterangan}</p>
                                             )}
                                         </div>
-                                        {item && <RiskBadge risiko={item.risiko} />}
+                                        {item && <RiskBadge kode_bahaya={item.kode_bahaya} />}
                                     </div>
                                 </div>
                             );
@@ -219,15 +230,15 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pb-4">
-                    {RISK_ORDER.map((risiko) => {
-                        const items = groupedItems[risiko];
+                    {SECTION_ORDER.map((section) => {
+                        const items = groupedItems[section];
                         if (items.length === 0) return null;
-                        const cfg = riskGroupConfig[risiko];
+                        const cfg = sectionGroupConfig[section];
                         return (
-                            <div key={risiko} className="overflow-hidden rounded-lg border">
+                            <div key={section} className="overflow-hidden rounded-lg border">
                                 <div className={cn('flex items-center gap-2 border-b px-3 py-2', cfg.headerClass)}>
                                     <span className={cn('h-2 w-2 rounded-full shrink-0', cfg.dot)} />
-                                    <span className="text-xs font-bold">Risiko {risiko}</span>
+                                    <span className="text-xs font-bold">Seksi {cfg.label}</span>
                                     <span className="ml-auto text-xs opacity-70">{items.length} item</span>
                                 </div>
                                 <div className="divide-y">
@@ -390,6 +401,12 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                                 <ClipboardCheck className="h-3.5 w-3.5" />
                                 {filledEntries.length} pengisian hari ini
                             </span>
+                            {session.job_site && (
+                                <span className="flex items-center gap-1">
+                                    <Wrench className="h-3.5 w-3.5" />
+                                    {session.job_site}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>

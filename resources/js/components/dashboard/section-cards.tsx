@@ -90,10 +90,10 @@ export function SectionCards({ metrics }: { metrics: Metrics }) {
             trendLabel: `${tlRatio}% dari P2H hari ini`,
         },
         {
-            title: 'Item Critical TL',
+            title: 'Item AA (Stop) TL',
             value: metrics.critical_tidak_layak,
-            description: 'Risiko tinggi – perlu tindakan segera',
-            hint: 'Jumlah item dengan tingkat risiko Critical yang berstatus Tidak Layak hari ini.',
+            description: 'Kode Bahaya AA – unit harus distop',
+            hint: 'Jumlah item dengan kode bahaya AA yang berstatus Tidak Layak hari ini.',
             icon: ShieldAlert,
             accent: metrics.critical_tidak_layak > 0
                 ? 'from-red-500/10 to-red-500/5 dark:from-red-500/20 dark:to-red-500/5'

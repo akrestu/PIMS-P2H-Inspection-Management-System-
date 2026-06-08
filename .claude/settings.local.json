@@ -6,7 +6,10 @@
       "Bash(composer require *)",
       "Bash(npm install *)",
       "Bash(php d:\\\\COMPANY_DATA\\\\01_IT_AND_DATABASE\\\\04_APPLICATION\\\\PIMS\\\\artisan view:clear)",
-      "PowerShell(php \"d:\\\\COMPANY_DATA\\\\01_IT_AND_DATABASE\\\\04_APPLICATION\\\\PIMS\\\\artisan\" view:clear)"
+      "PowerShell(php \"d:\\\\COMPANY_DATA\\\\01_IT_AND_DATABASE\\\\04_APPLICATION\\\\PIMS\\\\artisan\" view:clear)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

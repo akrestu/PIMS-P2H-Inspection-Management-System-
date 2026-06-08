@@ -25,7 +25,7 @@ class DashboardController extends Controller
             ->count();
 
         $criticalTidakLayakHariIni = P2hChecklistAnswer::where('kondisi', 'Tidak Layak')
-            ->whereHas('inspectionItem', fn ($q) => $q->where('risiko', 'Critical'))
+            ->whereHas('inspectionItem', fn ($q) => $q->where('kode_bahaya', 'AA'))
             ->whereHas('userEntry.session', fn ($q) => $q->whereDate('tanggal', $today))
             ->count();
 

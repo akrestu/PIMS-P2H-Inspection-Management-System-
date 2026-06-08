@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('unit_id')->constrained('units');
             $table->date('tanggal');
+            $table->string('job_site')->nullable();
             $table->text('catatan_khusus')->nullable();
             $table->enum('status', ['open', 'completed'])->default('open');
             $table->foreignId('created_by')->constrained('users');

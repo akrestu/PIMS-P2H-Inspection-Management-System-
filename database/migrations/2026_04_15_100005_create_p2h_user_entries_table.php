@@ -13,7 +13,9 @@ return new class extends Migration
             $table->foreignId('p2h_session_id')->constrained('p2h_sessions')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users');
             $table->tinyInteger('user_slot');
+            $table->string('lokasi_kerja')->nullable();
             $table->integer('km_awal')->nullable();
+            $table->integer('hm_km_akhir')->nullable();
             $table->string('paraf_url')->nullable();
             $table->enum('shift', ['Pagi', 'Siang', 'Malam'])->nullable();
             $table->timestamp('submitted_at')->nullable();

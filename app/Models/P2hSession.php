@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class P2hSession extends Model
 {
-    protected $fillable = ['unit_id', 'tanggal', 'catatan_khusus', 'status', 'created_by'];
+    protected $fillable = ['unit_id', 'tanggal', 'job_site', 'catatan_khusus', 'status', 'created_by'];
 
     protected $casts = [
         'tanggal' => 'date',

@@ -113,7 +113,7 @@ class P2hSessionController extends Controller
             // Buat atau ambil session, lalu lock row untuk prevent race condition
             $session = P2hSession::firstOrCreate(
                 ['unit_id' => $data['unit_id'], 'tanggal' => today()],
-                ['status' => 'open', 'created_by' => $user->id]
+                ['status' => 'open', 'created_by' => $user->id, 'job_site' => $data['job_site'] ?? null]
             );
 
             // Pessimistic lock — blokir concurrent request untuk unit + tanggal yang sama
@@ -136,7 +136,9 @@ class P2hSessionController extends Controller
                 'p2h_session_id'      => $session->id,
                 'user_id'             => $user->id,
                 'user_slot'           => $nextSlot,
-                'km_awal'             => $data['km_awal'],
+                'lokasi_kerja'        => $data['lokasi_kerja'] ?? null,
+                'km_awal'             => $data['km_awal'] ?? null,
+                'hm_km_akhir'         => $data['hm_km_akhir'] ?? null,
                 'shift'               => $data['shift'],
                 'paraf_url'           => $parafUrl,
                 'submitted_at'        => now(),
@@ -170,11 +172,11 @@ class P2hSessionController extends Controller
                 ));
             }
 
-            // Cek item Critical Tidak Layak → dispatch notifikasi
+            // Cek item kode_bahaya AA + Tidak Layak → dispatch notifikasi
             $criticalTL = $entry->answers()
                 ->with('inspectionItem')
                 ->where('kondisi', 'Tidak Layak')
-                ->whereHas('inspectionItem', fn ($q) => $q->where('risiko', 'Critical'))
+                ->whereHas('inspectionItem', fn ($q) => $q->where('kode_bahaya', 'AA'))
                 ->get();
 
             if ($criticalTL->isNotEmpty()) {
@@ -201,14 +203,14 @@ class P2hSessionController extends Controller
             ->get()
             ->flatMap(fn ($e) => $e->answers)
             ->where('kondisi', 'Tidak Layak')
-            ->filter(fn ($a) => $a->inspectionItem?->risiko === 'Critical')
+            ->filter(fn ($a) => $a->inspectionItem?->kode_bahaya === 'AA')
             ->isNotEmpty();
 
         if ($hasCritical) {
             Inertia::flash('toast', [
                 'type'        => 'error',
                 'message'     => 'P2H disimpan — Ada item Critical TL!',
-                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item risiko Critical yang tidak layak. Admin telah diberitahu.",
+                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item kode bahaya AA (Stop) yang tidak layak. Admin telah diberitahu.",
             ]);
         } else {
             Inertia::flash('toast', [

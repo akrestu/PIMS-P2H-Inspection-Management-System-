@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class P2hUserEntry extends Model
 {
     protected $fillable = [
-        'p2h_session_id', 'user_id', 'user_slot', 'km_awal',
+        'p2h_session_id', 'user_id', 'user_slot', 'lokasi_kerja', 'km_awal', 'hm_km_akhir',
         'paraf_url', 'shift', 'submitted_at',
         'kondisi_akhir', 'justifikasi_kondisi',
     ];
@@ -44,9 +44,6 @@ class P2hUserEntry extends Model
         return $this->answers()->where('kondisi', 'Tidak Layak')->count();
     }
 
-    /**
-     * True jika kondisi_akhir berbeda dari rekomendasi kalkulasi P2H.
-     */
     public function getIsOverrideAttribute(): bool
     {
         if ($this->kondisi_akhir === null) {
@@ -58,8 +55,13 @@ class P2hUserEntry extends Model
             return false;
         }
 
+        $hasAACritical = $this->answers->contains(function ($answer) {
+            return $answer->kondisi === 'Tidak Layak'
+                && $answer->inspectionItem?->kode_bahaya === 'AA';
+        });
+
         $score = ($this->answers->where('kondisi', 'Layak')->count() / $total) * 100;
-        $recommended = $score >= 80 ? 'Layak Pakai' : 'BD';
+        $recommended = ($hasAACritical || $score < 80) ? 'BD' : 'Layak Pakai';
 
         return $this->kondisi_akhir !== $recommended;
     }

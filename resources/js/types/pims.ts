@@ -25,7 +25,8 @@ export interface Driver {
 export interface P2hInspectionItem {
     id: number;
     nama_item: string;
-    risiko: 'Critical' | 'Tinggi' | 'Sedang' | 'Rendah';
+    section: 'A' | 'B' | 'C';
+    kode_bahaya: 'AA' | 'A';
     urutan: number;
     is_active: boolean;
 }
@@ -51,7 +52,9 @@ export interface P2hUserEntry {
     p2h_session_id: number;
     user_id: number;
     user_slot: number;
+    lokasi_kerja: string | null;
     km_awal: number | null;
+    hm_km_akhir: number | null;
     paraf_url: string | null;
     shift: 'Shift I' | 'Shift II' | null;
     submitted_at: string | null;
@@ -81,6 +84,7 @@ export interface P2hSession {
     id: number;
     unit_id: number;
     tanggal: string;
+    job_site: string | null;
     catatan_khusus: string | null;
     status: 'open' | 'completed';
     created_by: number;

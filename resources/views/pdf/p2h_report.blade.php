@@ -4,338 +4,282 @@
     <meta charset="UTF-8">
     <title>P2H {{ $session->unit->no_unit }} - {{ $session->tanggal->format('d/m/Y') }}</title>
     <style>
-        @page { size: A4 portrait; margin: 7mm 10mm; }
+        @page { size: A4 portrait; margin: 12mm 12mm 10mm 12mm; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; font-size: 8.5px; color: #000; line-height: 1.2; }
+        body { font-family: Arial, sans-serif; font-size: 8px; color: #000; background: #fff; line-height: 1.2; }
 
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .header-table td { vertical-align: middle; padding: 1px 3px; }
-        .title-box { text-align: center; }
-        .title-box h2 { font-size: 9.5px; text-transform: uppercase; font-weight: bold; line-height: 1.4; }
-        .doc-info { font-size: 7px; text-align: right; line-height: 1.5; }
+        .page-break { page-break-after: always; }
 
-        .divider { border-top: 2px solid #000; margin: 2px 0; }
+        /* ── HEADER ── */
+        .hdr { width: 100%; border-collapse: collapse; }
+        .hdr .logo { width: 105px; padding: 5px 6px; border-right: 1px solid #000; vertical-align: middle; }
+        .hdr .logo .cn { font-size: 8.5px; font-weight: bold; line-height: 1.4; }
+        .hdr .logo .cs { font-size: 6px; color: #333; margin-top: 1px; }
+        .hdr .ttl { text-align: center; padding: 4px 8px; vertical-align: middle; }
+        .hdr .ttl h2 { font-size: 9.5px; font-weight: bold; text-transform: uppercase; line-height: 1.6; }
+        .hdr .di { width: 120px; border-left: 1px solid #000; vertical-align: top; }
+        .hdr .di table { width: 100%; border-collapse: collapse; }
+        .hdr .di table td { padding: 2px 4px; font-size: 7px; border-bottom: 1px solid #000; }
+        .hdr .di table tr:last-child td { border-bottom: none; }
+        .hdr .di table td:first-child { font-weight: bold; white-space: nowrap; border-right: 1px solid #000; }
 
-        .section-title {
-            font-weight: bold; font-size: 8px;
-            background: #d0d0d0; padding: 2px 5px;
-            margin: 3px 0 1px 0; text-transform: uppercase;
-            border-left: 3px solid #555; letter-spacing: 0.3px;
-        }
+        /* ── INFO GRID ── */
+        .ig { width: 100%; border-collapse: collapse; }
+        .ig td { border-right: 1px solid #000; border-bottom: 1px solid #000;
+                  padding: 2px 4px; font-size: 8px; height: 13px; vertical-align: middle; }
+        .ig td:last-child { border-right: none; }
+        .ig tr:last-child td { border-bottom: none; }
+        .ig .lbl { font-weight: bold; width: 78px; white-space: nowrap; }
+        .ig .sep { width: 9px; text-align: center; }
+        .ig .val { }
 
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .info-table td { padding: 2px 4px; font-size: 8px; border: 1px solid #ccc; }
-        .info-table .label { font-weight: bold; width: 22%; background: #f0f0f0; }
+        /* ── INSTR ── */
+        .instr { font-size: 7.5px; font-style: italic; padding: 2px 4px; line-height: 1.55; }
 
-        .users-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .users-table th, .users-table td { border: 1px solid #999; padding: 2px 3px; font-size: 7.5px; text-align: center; vertical-align: middle; }
-        .users-table th { background: #ddd; font-weight: bold; }
-        .users-table .user-label { background: #e8e8e8; font-weight: bold; text-align: left; padding-left: 4px; }
+        /* ── CHECKLIST ── */
+        .cl { width: 100%; border-collapse: collapse; }
+        .cl th { border-right: 1px solid #000; border-bottom: 1px solid #000;
+                  padding: 2px 2px; font-size: 7.5px; font-weight: bold;
+                  text-align: center; vertical-align: middle; line-height: 1.3; }
+        .cl th:last-child { border-right: none; }
+        .cl td { border-right: 1px solid #000; border-bottom: 1px solid #000;
+                  padding: 1px 3px; font-size: 7.5px; vertical-align: middle; }
+        .cl td:last-child { border-right: none; }
+        .cl tbody tr:last-child td { border-bottom: none; }
 
-        .checklist-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .checklist-table th { background: #444; color: #fff; font-size: 7px; padding: 2px 2px; text-align: center; border: 1px solid #333; }
-        .checklist-table td { border: 1px solid #bbb; padding: 1px 2px; font-size: 7.5px; vertical-align: middle; line-height: 1.2; }
-        .checklist-table .no-col { text-align: center; width: 16px; }
-        .checklist-table .item-col { width: 38%; }
-        .checklist-table .risk-col { text-align: center; width: 11%; }
-        .checklist-table .cond-col { text-align: center; width: 7%; }
-        .checklist-table .ket-col { width: 17%; font-size: 7px; }
-        .risk-critical { color: #c00; font-weight: bold; }
-        .risk-tinggi { color: #d4500a; font-weight: bold; }
-        .risk-sedang { color: #a07000; }
-        .risk-rendah { color: #666; }
-        .row-critical td { background: #fff5f5; }
+        .cn0  { width: 18px; text-align: center; }
+        .ctsk { text-align: left; padding-left: 4px !important; }
+        .ckd  { width: 42px; text-align: center; }
+        .cnm  { width: 42px; text-align: center; }
+        .cabn { width: 42px; text-align: center; }
+        .cket { width: 110px; }
 
-        .badge-layak { display:inline-block; background:#e6f4ea; border:1px solid #2d7a3a; color:#2d7a3a; font-weight:bold; padding:0 2px; font-size:6.5px; border-radius:2px; }
-        .badge-tl    { display:inline-block; background:#fce8e8; border:1px solid #c00;    color:#c00;    font-weight:bold; padding:0 2px; font-size:6.5px; border-radius:2px; }
+        .sec td { font-weight: bold; font-size: 7.5px; text-transform: uppercase;
+                   padding: 2px 4px !important; }
+        .tick { font-size: 8.5px; font-weight: bold; }
 
-        .sig-img { max-width: 70px; max-height: 25px; }
+        /* ── CATATAN ── */
+        .cat-title { font-weight: bold; font-size: 8px; text-align: center;
+                      padding: 2px; border-bottom: 1px solid #000; }
+        .cat-body { width: 100%; border-collapse: collapse; }
+        .cat-body td { height: 10px; border-bottom: 1px solid #ddd;
+                         padding: 1px 4px; font-size: 8px; }
+        .cat-body tr:last-child td { border-bottom: none; }
 
-        .service-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .service-table td { padding: 2px 4px; font-size: 8px; border: 1px solid #ccc; vertical-align: top; line-height: 1.6; }
+        /* ── PENTING ── */
+        .penting { padding: 3px 5px; font-size: 7px; line-height: 1.65; }
 
-        .bbm-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .bbm-table th, .bbm-table td { border: 1px solid #999; padding: 2px 3px; font-size: 7.5px; text-align: center; vertical-align: middle; }
-        .bbm-table th { background: #ddd; }
+        /* ── SIG ── */
+        .sig { width: 100%; border-collapse: collapse; }
+        .sig td { width: 33.33%; vertical-align: top; padding: 3px 6px 4px 6px;
+                   border-right: 1px solid #000; font-size: 7.5px; text-align: left; }
+        .sig td:last-child { border-right: none; }
+        .sig .role { font-weight: bold; margin-bottom: 2px; }
+        .sig .space { height: 30px; position: relative; }
+        .sig .sig-img { max-width: 80px; max-height: 28px; }
+        .sig .nl { border-top: 1px solid #000; margin-top: 2px; padding-top: 2px;
+                    text-align: center; font-size: 7.5px; }
 
-        .kesimpulan-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-        .kesimpulan-table th, .kesimpulan-table td { border: 1px solid #999; padding: 3px 4px; font-size: 8px; text-align: center; vertical-align: middle; }
-        .kesimpulan-table th { background: #ddd; font-size: 7.5px; }
-        .layak-text { color: #2d7a3a; font-weight: bold; font-size: 9px; }
-        .tl-text    { color: #c00;    font-weight: bold; font-size: 9px; }
-        .override-note { font-size: 6.5px; color: #555; margin-top: 1px; }
-        .override-badge { font-size: 6px; color: #777; font-style: italic; }
+        /* ── FOOTER ── */
+        .fnote { padding: 2px 5px; font-size: 6px; color: #444; line-height: 1.6; }
 
-        .catatan-box { border: 1px solid #999; padding: 3px 4px; font-size: 8px; min-height: 14px; }
-        .footer { text-align: center; font-size: 6.5px; color: #666; margin-top: 4px; border-top: 1px solid #ddd; padding-top: 3px; }
+        /* ── SECTION DIVIDERS (border-top on each section wrapper) ── */
+        .div1 { border-top: 1.5px solid #000; }
+        .div2 { border-top: 1px solid #000; }
     </style>
 </head>
 <body>
 
-{{-- HEADER --}}
-<table class="header-table">
-    <tr>
-        <td style="width:15%; text-align:center; border-right:1px solid #ccc;">
-            <div style="font-size:10px; font-weight:bold; letter-spacing:1px;">WBK</div>
-            <div style="font-size:6.5px; color:#333;">PT. Wahana Bandhawa Kencana</div>
-        </td>
-        <td class="title-box" style="width:70%;">
-            <h2>Formulir Pemeriksaan &amp; Perawatan Harian (P2H)<br>Unit Sarana &ndash; Bus / Light Vehicle</h2>
-        </td>
-        <td class="doc-info" style="width:15%; border-left:1px solid #ccc;">
-            <div>No. Dok: WBK-HSE-FO-091</div>
-            <div>Tgl Terbit: -</div>
-            <div>Revisi: -</div>
-        </td>
-    </tr>
-</table>
-<div class="divider"></div>
+@php
+    $entries  = $session->userEntries;
+    $sections = [
+        'A' => 'PEMERIKSAAN KELILING UNIT / DI LUAR KABIN',
+        'B' => 'PEMERIKSAAN DARI DALAM KABIN',
+        'C' => 'KELENGKAPAN TAMBAHAN',
+    ];
+@endphp
 
-{{-- INFO UNIT --}}
-<div class="section-title">Informasi Unit</div>
-<table class="info-table">
-    <tr>
-        <td class="label">Hari / Tanggal</td>
-        <td>{{ $session->tanggal->translatedFormat('l, d F Y') }}</td>
-        <td class="label">No. Unit</td>
-        <td>{{ $session->unit->no_unit }}</td>
-    </tr>
-    <tr>
-        <td class="label">Jenis Unit</td>
-        <td>{{ $session->unit->jenis_unit }}</td>
-        <td class="label">No. Lambung</td>
-        <td>{{ $session->unit->no_lambung ?? '-' }}</td>
-    </tr>
-</table>
+@foreach($entries as $idx => $entry)
 
-{{-- DATA DRIVER --}}
-@php $entries = $session->userEntries; @endphp
-<div class="section-title">Data Driver</div>
-<table class="users-table">
-    <thead>
-        <tr>
-            <th style="width:18%; text-align:left; padding-left:5px;"></th>
-            @foreach($entries as $e)
-                <th>
-                    P2H #{{ $e->user_slot }}<br>
-                    <span style="font-weight:normal; font-size:7px;">{{ $e->user?->name ?? '-' }}</span>
-                </th>
-            @endforeach
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td class="user-label">Nama Driver</td>
-            @foreach($entries as $entry)
-                <td>{{ $entry?->user?->name ?? '-' }}</td>
-            @endforeach
-        </tr>
-        <tr>
-            <td class="user-label">NIK</td>
-            @foreach($entries as $entry)
-                <td>{{ $entry?->user?->driver?->nik ?? '-' }}</td>
-            @endforeach
-        </tr>
-        <tr>
-            <td class="user-label">Department</td>
-            @foreach($entries as $entry)
-                <td>{{ $entry?->user?->driver?->department ?? '-' }}</td>
-            @endforeach
-        </tr>
-        <tr>
-            <td class="user-label">Shift</td>
-            @foreach($entries as $entry)
-                <td>{{ $entry?->shift ?? '-' }}</td>
-            @endforeach
-        </tr>
-        <tr>
-            <td class="user-label">KM Awal</td>
-            @foreach($entries as $entry)
-                <td>{{ $entry?->km_awal !== null ? number_format($entry->km_awal, 0, ',', '.') : '-' }}</td>
-            @endforeach
-        </tr>
-        <tr>
-            <td class="user-label">Paraf</td>
-            @foreach($entries as $entry)
-                <td style="height:28px;">
-                    @if($entry?->paraf_url)
-                        <img src="{{ storage_path('app/public/' . $entry->paraf_url) }}" class="sig-img" alt="paraf">
-                    @else
-                        -
-                    @endif
-                </td>
-            @endforeach
-        </tr>
-    </tbody>
-</table>
+{{-- ══ OUTER FRAME via inline style ══ --}}
+<table style="width:100%; border-collapse:separate; border-spacing:0; border:2px solid #000;">
+<tr><td style="padding:0;">
 
-{{-- CHECKLIST --}}
-<div class="section-title">Checklist Pemeriksaan</div>
-<table class="checklist-table">
-    <thead>
+    {{-- HEADER --}}
+    <table class="hdr">
         <tr>
-            <th class="no-col">No</th>
-            <th class="item-col" style="text-align:left; padding-left:4px;">Item Periksa</th>
-            <th class="risk-col">Risiko</th>
-            @foreach($entries as $e)
-                <th class="cond-col">P2H #{{ $e->user_slot }}</th>
-            @endforeach
-            <th class="ket-col">Keterangan</th>
+            <td class="logo">
+                <div class="cn">WAHANA BANDHAWA KENCANA</div>
+                <div class="cs">EARTHMOVING AND MINING COMPANY</div>
+            </td>
+            <td class="ttl">
+                <h2>PELAKSANAAN PEMERIKSAAN HARIAN ( P2H ) - PRESTART CEK DRIVER<br>LV - ELF - BUS<br>PERNYATAAN DRIVER</h2>
+            </td>
+            <td class="di">
+                <table>
+                    <tr><td>NO</td><td>WBK-PRO-FO-056</td></tr>
+                    <tr><td>TANGGAL TERBIT</td><td>1/12/2018</td></tr>
+                    <tr><td>NO REVISI</td><td>001</td></tr>
+                </table>
+            </td>
         </tr>
-    </thead>
-    <tbody>
-        @foreach($inspectionItems as $item)
-            @php
-                $isCritical = $item->risiko === 'Critical';
-                $rowClass   = $isCritical ? 'row-critical' : '';
-                $riskClass  = match($item->risiko) {
-                    'Critical' => 'risk-critical',
-                    'Tinggi'   => 'risk-tinggi',
-                    'Sedang'   => 'risk-sedang',
-                    default    => 'risk-rendah',
-                };
-                $keterangans = [];
-            @endphp
-            <tr class="{{ $rowClass }}">
-                <td class="no-col">{{ $item->urutan }}</td>
-                <td class="item-col">{{ $item->nama_item }}</td>
-                <td class="risk-col"><span class="{{ $riskClass }}">{{ $item->risiko }}</span></td>
-                @foreach($entries as $entry)
-                    @php
-                        $answer  = $entry?->answers?->firstWhere('inspection_item_id', $item->id);
-                        $kondisi = $answer?->kondisi;
-                        if ($kondisi === 'Tidak Layak' && $answer?->keterangan) {
-                            $keterangans[] = 'P' . $entry->user_slot . ': ' . $answer->keterangan;
-                        }
-                    @endphp
-                    <td class="cond-col">
-                        @if($kondisi === 'Layak')
-                            <span class="badge-layak">L</span>
-                        @elseif($kondisi === 'Tidak Layak')
-                            <span class="badge-tl">TL</span>
-                        @else
-                            <span style="color:#bbb;">-</span>
-                        @endif
-                    </td>
-                @endforeach
-                <td class="ket-col">{{ implode(' | ', $keterangans) ?: '-' }}</td>
+    </table>
+
+    {{-- DIVIDER --}}
+    <div class="div1"></div>
+
+    {{-- INFO GRID --}}
+    <table class="ig">
+        <colgroup>
+            <col style="width:78px"><col style="width:9px"><col>
+            <col style="width:72px"><col style="width:9px"><col>
+            <col style="width:72px"><col style="width:9px"><col style="width:62px">
+        </colgroup>
+        <tr>
+            <td class="lbl">NAMA</td><td class="sep">:</td><td class="val">{{ $entry->user?->name ?? '-' }}</td>
+            <td class="lbl">JOB SITE</td><td class="sep">:</td><td class="val" colspan="4">{{ $session->job_site ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">HARI/TGL</td><td class="sep">:</td><td class="val">{{ $session->tanggal->translatedFormat('l, d/m/Y') }}</td>
+            <td class="lbl">TYPE ALAT</td><td class="sep">:</td><td class="val" colspan="4">{{ $session->unit->jenis_unit ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">SHIFT</td><td class="sep">:</td><td class="val">{{ $entry->shift ?? '-' }}</td>
+            <td class="lbl">NO ALAT</td><td class="sep">:</td><td class="val" colspan="4">{{ $session->unit->no_unit ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">LOKASI KERJA</td><td class="sep">:</td><td class="val">{{ $entry->lokasi_kerja ?? '-' }}</td>
+            <td class="lbl">HM/KM AWAL</td><td class="sep">:</td><td class="val">{{ $entry->km_awal !== null ? number_format($entry->km_awal, 0, ',', '.') : '' }}</td>
+            <td class="lbl">HM/KM AKHIR</td><td class="sep">:</td><td class="val">{{ $entry->hm_km_akhir !== null ? number_format($entry->hm_km_akhir, 0, ',', '.') : '' }}</td>
+        </tr>
+    </table>
+
+    {{-- INSTRUKSI --}}
+    <div class="div2">
+        <div class="instr">
+            Beri tanda dalam kotak checkpoint dengan "V" pada kolom kondisi normal / abnormal<br>
+            Tuliskan pada kolom "Keterangan" apabila terdapat kondisi abnormal
+        </div>
+    </div>
+
+    {{-- CHECKLIST --}}
+    <div class="div2">
+    <table class="cl">
+        <thead>
+            <tr>
+                <th class="cn0" rowspan="2">NO</th>
+                <th class="ctsk" rowspan="2" style="text-align:left; padding-left:4px;">TUGAS - TUGAS PEMERIKSAAN</th>
+                <th class="ckd" rowspan="2">KODE<br>BAHAYA</th>
+                <th colspan="2">KONDISI</th>
+                <th class="cket" rowspan="2">KETERANGAN /<br>PENJELASAN</th>
             </tr>
-        @endforeach
-    </tbody>
-</table>
-
-{{-- INFORMASI SERVIS --}}
-<div class="section-title">Informasi Servis</div>
-@php $svc = $session->serviceInfo; @endphp
-<table class="service-table">
-    <tr>
-        <td style="width:30%;">
-            <strong>Jenis Servis:</strong><br>
-            <div style="margin-top:2px; line-height:1.6;">
-                @if($svc?->servis_mingguan) [X] @else [ ] @endif Servis Mingguan<br>
-                @if($svc?->servis_berkala) [X] @else [ ] @endif Servis Berkala<br>
-                @if($svc?->unschedule_breakdown) [X] @else [ ] @endif Unschedule Service (Break Down)<br>
-                @if($svc?->lainnya) [X] Lainnya: {{ $svc->lainnya }} @else [ ] Lainnya @endif
-            </div>
-        </td>
-        <td>
-            <strong>Catatan Servis:</strong><br>
-            <div style="margin-top:2px;">{{ $svc?->catatan_servis ?? '-' }}</div>
-        </td>
-    </tr>
-</table>
-
-{{-- PENGISIAN BBM --}}
-<div class="section-title">Pengisian Bahan Bakar</div>
-<table class="bbm-table">
-    <thead>
-        <tr>
-            <th>Driver</th>
-            <th>Shift</th>
-            <th>KM Unit</th>
-            <th>Jumlah Liter</th>
-            <th>Paraf</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($entries as $entry)
-            @if($entry)
-                <tr>
-                    <td>{{ $entry->user?->name ?? 'User #' . $entry->user_slot }}</td>
-                    <td>{{ $entry->shift ?? '-' }}</td>
-                    <td>{{ $entry->fuelLog?->km_unit !== null ? number_format($entry->fuelLog->km_unit, 0, ',', '.') : '-' }}</td>
-                    <td>{{ $entry->fuelLog?->jumlah_liter ?? '-' }}</td>
-                    <td style="width:80px; height:26px;">
-                        @if($entry->paraf_url)
-                            <img src="{{ storage_path('app/public/' . $entry->paraf_url) }}" class="sig-img" alt="paraf">
-                        @else
-                            -
-                        @endif
-                    </td>
+            <tr>
+                <th class="cnm">NORMAL</th>
+                <th class="cabn">ABNORMAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($sections as $sectionKey => $sectionLabel)
+                <tr class="sec">
+                    <td class="cn0" style="font-weight:bold;">{{ $sectionKey }}</td>
+                    <td colspan="5">{{ $sectionLabel }}</td>
                 </tr>
+                @foreach($inspectionItems->where('section', $sectionKey) as $item)
+                    @php
+                        $answer   = $entry?->answers?->firstWhere('inspection_item_id', $item->id);
+                        $kondisi  = $answer?->kondisi;
+                        $isNormal = $kondisi === 'Layak';
+                        $isAbnorm = $kondisi === 'Tidak Layak';
+                        $ket      = ($isAbnorm && $answer?->keterangan) ? $answer->keterangan : '';
+                    @endphp
+                    <tr>
+                        <td class="cn0">{{ $loop->iteration }}</td>
+                        <td class="ctsk">{{ $item->nama_item }}</td>
+                        <td class="ckd" style="text-align:center; font-weight:bold;">{{ $item->kode_bahaya }}</td>
+                        <td class="cnm"><span class="tick">{{ $isNormal ? 'V' : '' }}</span></td>
+                        <td class="cabn"><span class="tick">{{ $isAbnorm ? 'V' : '' }}</span></td>
+                        <td class="cket">{{ $ket }}</td>
+                    </tr>
+                @endforeach
+            @endforeach
+        </tbody>
+    </table>
+    </div>
+
+    {{-- CATATAN --}}
+    <div class="div2">
+        <div class="cat-title">CATATAN</div>
+        @php $catatanText = trim($session->catatan_khusus ?? ''); @endphp
+        <table class="cat-body">
+            @if($catatanText)
+                <tr><td style="height:auto; padding:2px 5px;">{{ $catatanText }}</td></tr>
+                <tr><td></td></tr><tr><td></td></tr>
+            @else
+                <tr><td></td></tr><tr><td></td></tr><tr><td></td></tr>
             @endif
-        @endforeach
-    </tbody>
-</table>
+        </table>
+    </div>
 
-{{-- KESIMPULAN --}}
-<div class="section-title">Kesimpulan</div>
-<table class="kesimpulan-table">
-    <thead>
+    {{-- PENTING --}}
+    <div class="div2">
+        <div class="penting">
+            <strong>Penting:</strong><br>
+            - Kode Bahaya AA : Stop (Tidak boleh dioperasikan)<br>
+            - Kode Bahaya A &nbsp;&nbsp;: Boleh dioperasikan sambil menunggu perbaikan<br>
+            - Apabila ada temuan bertanda (*) boleh dioperasikan sambil menunggu dilengkapi<br>
+            - Apabila ada temuan kode bahaya "A" harus dilakukan verifikasi dan validasi oleh mekanik<br>
+            - Pastikan unit posisi aman dan rata (rem parkir aktif)
+        </div>
+    </div>
+
+    {{-- PELAKSANA LABEL --}}
+    <div class="div2" style="padding:2px 5px; font-size:7.5px; font-weight:bold;">
+        Pelaksana Pemeriksaan Harian:
+    </div>
+
+    {{-- TANDA TANGAN --}}
+    <div class="div2">
+    <table class="sig">
         <tr>
-            @foreach($entries as $e)
-                <th>P2H #{{ $e->user_slot }}<br><span style="font-weight:normal;">{{ $e->user?->name ?? '-' }}</span></th>
-            @endforeach
-            @for($i = count($entries) + 1; $i <= 4; $i++)
-                <th>P2H #{{ $i }}</th>
-            @endfor
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            @foreach($entries as $entry)
-                @php
-                    $kondisiAkhir = $entry?->kondisi_akhir;
-                    $justifikasi  = $entry?->justifikasi_kondisi;
-                    $hasTL        = $entry?->answers?->where('kondisi', 'Tidak Layak')->count() > 0;
-                    $isOverride   = $entry?->is_override ?? false;
-                @endphp
-                <td>
-                    @if($kondisiAkhir)
-                        @if(str_contains(strtolower($kondisiAkhir), 'tidak') || str_contains(strtolower($kondisiAkhir), 'bd'))
-                            <span class="tl-text">{{ strtoupper($kondisiAkhir) }}</span>
-                        @else
-                            <span class="layak-text">{{ strtoupper($kondisiAkhir) }}</span>
-                        @endif
-                        @if($isOverride)
-                            <div class="override-badge">(Override)</div>
-                        @endif
-                        @if($justifikasi)
-                            <div class="override-note">{{ $justifikasi }}</div>
-                        @endif
-                    @elseif($hasTL)
-                        <span class="tl-text">TIDAK LAYAK</span>
-                    @elseif($entry)
-                        <span class="layak-text">LAYAK</span>
-                    @else
-                        <span style="color:#bbb;">-</span>
+            <td>
+                <div class="role">Dibuat oleh :</div>
+                <div class="space">
+                    @if($entry->paraf_url)
+                        <img src="{{ storage_path('app/public/' . $entry->paraf_url) }}" class="sig-img" alt="paraf">
                     @endif
-                </td>
-            @endforeach
-            @for($i = count($entries) + 1; $i <= 4; $i++)
-                <td><span style="color:#bbb;">-</span></td>
-            @endfor
+                </div>
+                <div class="nl">( {{ $entry->user?->name ?? '...............................' }} )<br><strong>Driver</strong></div>
+            </td>
+            <td>
+                <div class="role">Diperiksa oleh :</div>
+                <div class="space"></div>
+                <div class="nl">( ...............................<br><strong>Mekanik</strong></div>
+            </td>
+            <td>
+                <div class="role">Diketahui.</div>
+                <div class="space"></div>
+                <div class="nl">( ...............................<br><strong>Supervisor</strong></div>
+            </td>
         </tr>
-    </tbody>
-</table>
+    </table>
+    </div>
 
-{{-- CATATAN KHUSUS --}}
-<div class="section-title">Catatan Khusus</div>
-<div class="catatan-box">{{ $session->catatan_khusus ?? '-' }}</div>
+    {{-- FOOTER --}}
+    <div class="div2">
+        <div class="fnote">
+            * Formulir ini berfungsi sebagai laporan pemeriksaan unit &amp; sebagai bukti komunikasi masalah yang ditemukan saya. &nbsp;
+            * Formulir digunakan oleh operator atau driver pada setiap unit yang digunakan serta diserahkan pada unit saat P2H / Operasi. &nbsp;
+            * Simpan, Pelihara, Dikembalikan ke perusahaan. Karena dokumen ini Wajib Dipersyaratkan.
+        </div>
+    </div>
 
-<div class="footer">
-    Dicetak oleh sistem PIMS &ndash; {{ now()->format('d/m/Y H:i') }} | WBK-HSE-FO-091
-</div>
+</td></tr>
+</table>{{-- /outer frame --}}
 
+@if(!$loop->last)
+    <div class="page-break"></div>
+@endif
+
+@endforeach
 </body>
 </html>

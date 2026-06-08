@@ -16,7 +16,10 @@ class StoreP2hRequest extends FormRequest
     {
         return [
             'unit_id'                           => ['required', 'integer', 'exists:units,id', Rule::exists('units', 'id')->where('status', 'active')],
-            'km_awal'                           => ['required', 'integer', 'min:0'],
+            'job_site'                          => ['nullable', 'string', 'max:100'],
+            'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],
+            'km_awal'                           => ['nullable', 'integer', 'min:0'],
+            'hm_km_akhir'                       => ['nullable', 'integer', 'min:0'],
             'shift'                             => ['required', Rule::in(['Shift I', 'Shift II'])],
             'paraf'                             => ['required', 'string'],
             'answers'                           => ['required', 'array', 'size:' . \App\Models\P2hInspectionItem::active()->count()],
@@ -43,10 +46,6 @@ class StoreP2hRequest extends FormRequest
         ];
     }
 
-    /**
-     * Cek apakah kondisi_akhir berbeda dari rekomendasi kalkulasi P2H.
-     * Rekomendasi: score >= 80% → Layak Pakai, < 80% → BD.
-     */
     public function isOverrideDecision(): bool
     {
         $kondisiAkhir = $this->input('kondisi_akhir');
@@ -60,9 +59,16 @@ class StoreP2hRequest extends FormRequest
             return false;
         }
 
-        $layak    = collect($answers)->where('kondisi', 'Layak')->count();
+        $answerCollection = collect($answers);
+        $tidakLayakIds    = $answerCollection->where('kondisi', 'Tidak Layak')->pluck('inspection_item_id');
+
+        $hasAACritical = \App\Models\P2hInspectionItem::whereIn('id', $tidakLayakIds)
+            ->where('kode_bahaya', 'AA')
+            ->exists();
+
+        $layak    = $answerCollection->where('kondisi', 'Layak')->count();
         $score    = ($layak / $total) * 100;
-        $recommended = $score >= 80 ? 'Layak Pakai' : 'BD';
+        $recommended = ($hasAACritical || $score < 80) ? 'BD' : 'Layak Pakai';
 
         return $kondisiAkhir !== $recommended;
     }

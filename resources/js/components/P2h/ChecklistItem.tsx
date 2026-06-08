@@ -22,8 +22,8 @@ export default function ChecklistItem({ item, answer, onChange, onKeteranganChan
                 'rounded-xl border-2 p-3.5 transition-all duration-200',
                 isLayak && 'border-green-300 bg-green-50/60 dark:border-green-800 dark:bg-green-950/20',
                 isTidakLayak && 'border-red-300 bg-red-50/60 dark:border-red-800 dark:bg-red-950/20',
-                unanswered && item.risiko === 'Critical' && 'border-red-200 bg-red-50/30 dark:border-red-900 dark:bg-red-950/10',
-                unanswered && item.risiko !== 'Critical' && 'border-border bg-card',
+                unanswered && item.kode_bahaya === 'AA' && 'border-red-200 bg-red-50/30 dark:border-red-900 dark:bg-red-950/10',
+                unanswered && item.kode_bahaya !== 'AA' && 'border-border bg-card',
             )}
         >
             {/* Item label + risk badge */}
@@ -31,7 +31,7 @@ export default function ChecklistItem({ item, answer, onChange, onKeteranganChan
                 <span className="mt-0.5 font-mono text-xs text-muted-foreground shrink-0">{item.urutan}.</span>
                 <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-sm font-semibold leading-snug">{item.nama_item}</p>
-                    <RiskBadge risiko={item.risiko} />
+                    <RiskBadge kode_bahaya={item.kode_bahaya} />
                 </div>
             </div>
 

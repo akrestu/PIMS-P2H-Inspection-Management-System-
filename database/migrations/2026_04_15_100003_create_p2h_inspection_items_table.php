@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('p2h_inspection_items', function (Blueprint $table) {
             $table->id();
             $table->string('nama_item');
-            $table->enum('risiko', ['Critical', 'Tinggi', 'Sedang', 'Rendah']);
+            $table->enum('section', ['A', 'B', 'C']);
+            $table->enum('kode_bahaya', ['AA', 'A']);
             $table->integer('urutan');
             $table->boolean('is_active')->default(true);
             $table->timestamps();

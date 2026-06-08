@@ -138,7 +138,7 @@ export default function DashboardIndex({ metrics, chartData, recentP2h }: Props)
                                     Peringatan: {metrics.critical_tidak_layak} Item Critical Tidak Layak!
                                 </AlertTitle>
                                 <AlertDescription className="text-sm">
-                                    Terdapat item dengan risiko <strong>Critical</strong> yang berstatus Tidak Layak hari ini.
+                                    Terdapat item dengan kode bahaya <strong>AA (Stop)</strong> yang berstatus Tidak Layak hari ini.
                                     Pastikan unit tidak dioperasikan sebelum diperbaiki.
                                     <Link href="/p2h" className="ml-2 underline underline-offset-2 font-medium">
                                         Lihat detail →
