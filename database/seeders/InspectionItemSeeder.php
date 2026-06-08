@@ -48,7 +48,10 @@ class InspectionItemSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            P2hInspectionItem::create(array_merge($item, ['is_active' => true]));
+            P2hInspectionItem::updateOrCreate(
+                ['section' => $item['section'], 'urutan' => $item['urutan']],
+                array_merge($item, ['is_active' => true])
+            );
         }
     }
 }
