@@ -68,13 +68,10 @@ const columns: ColumnDef<RecentP2h>[] = [
             const val = row.getValue<number>('slot_terisi');
             return (
                 <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4].map((s) => (
-                        <span
-                            key={s}
-                            className={`h-2 w-2 rounded-full ${s <= val ? 'bg-blue-500' : 'bg-border'}`}
-                        />
+                    {Array.from({ length: val }).map((_, i) => (
+                        <span key={i} className="h-2 w-2 rounded-full bg-blue-500" />
                     ))}
-                    <span className="text-muted-foreground ml-1 text-xs">{val}/4</span>
+                    <span className="text-muted-foreground ml-1 text-xs">{val}x</span>
                 </div>
             );
         },

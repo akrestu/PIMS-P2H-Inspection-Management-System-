@@ -80,7 +80,13 @@ class UnitDowntimeController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return back()->with('success', 'Downtime berhasil dicatat.');
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => 'Downtime berhasil dicatat',
+            'description' => "Log {$data['tipe']} berhasil disimpan.",
+        ]);
+
+        return back();
     }
 
     public function update(Request $request, UnitDowntimeLog $log): RedirectResponse
@@ -95,13 +101,24 @@ class UnitDowntimeController extends Controller
 
         $log->update($data);
 
-        return back()->with('success', 'Downtime berhasil diperbarui.');
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => 'Downtime berhasil diperbarui',
+            'description' => "Log {$data['tipe']} berhasil diperbarui.",
+        ]);
+
+        return back();
     }
 
     public function destroy(UnitDowntimeLog $log): RedirectResponse
     {
         $log->delete();
 
-        return back()->with('success', 'Downtime berhasil dihapus.');
+        Inertia::flash('toast', [
+            'type'    => 'success',
+            'message' => 'Downtime berhasil dihapus',
+        ]);
+
+        return back();
     }
 }

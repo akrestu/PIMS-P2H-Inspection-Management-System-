@@ -281,7 +281,6 @@ class DataExportController extends Controller
                 $kondisiValues = $entries->pluck('kondisi_akhir')->filter()->values();
 
                 if ($kondisiValues->contains('BD')) { $status = 'bd'; $totalBdCells++; }
-                elseif ($slotsFilled < 4) { $status = 'partial'; }
                 elseif ($kondisiValues->isNotEmpty()) { $status = 'layak'; }
                 else {
                     $ta = 0; $la = 0;

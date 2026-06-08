@@ -330,7 +330,6 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         if (s === 1) {
             if (!selectedUnitId) return 'Pilih unit terlebih dahulu.';
             if (checkingSlot) return 'Menunggu pengecekan slot…';
-            if (!slotInfo?.slot_tersedia) return 'Slot P2H untuk unit ini sudah penuh hari ini.';
             if (!kmAwal) return 'KM Awal wajib diisi.';
             if (!shift) return 'Shift wajib dipilih.';
         }
@@ -430,7 +429,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                         <h1 className="text-base font-bold">Form P2H</h1>
                         <p className="text-xs text-muted-foreground">
                             {selectedUnit
-                                ? `${selectedUnit.no_unit} · ${selectedUnit.jenis_unit}${slotInfo ? ` · Slot #${slotInfo.next_slot}` : ''}`
+                                ? `${selectedUnit.no_unit} · ${selectedUnit.jenis_unit}${slotInfo ? ` · Pengisian ke-${slotInfo.next_slot}` : ''}`
                                 : 'Pemeriksaan & Perawatan Harian'}
                         </p>
                     </div>
@@ -535,20 +534,12 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                     )}
 
                                     {slotInfo && !checkingSlot && (
-                                        slotInfo.slot_tersedia ? (
+                                        (
                                             <Alert className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/20">
                                                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                <AlertTitle className="text-green-800 dark:text-green-300">Slot Tersedia</AlertTitle>
+                                                <AlertTitle className="text-green-800 dark:text-green-300">P2H Tersedia</AlertTitle>
                                                 <AlertDescription className="text-xs text-green-700 dark:text-green-400">
-                                                    Anda akan mengisi <strong>Slot #{slotInfo.next_slot}</strong> — sudah terisi {slotInfo.slot_terisi} dari 4 slot hari ini
-                                                </AlertDescription>
-                                            </Alert>
-                                        ) : (
-                                            <Alert variant="destructive">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertTitle>Slot Penuh</AlertTitle>
-                                                <AlertDescription className="text-xs">
-                                                    P2H unit ini sudah 4/4 untuk hari ini. Pilih unit lain.
+                                                    Anda akan melakukan <strong>pengisian ke-{slotInfo.next_slot}</strong> hari ini{slotInfo.slot_terisi > 0 ? ` (${slotInfo.slot_terisi} pengisian sebelumnya)` : ''}
                                                 </AlertDescription>
                                             </Alert>
                                         )

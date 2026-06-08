@@ -338,21 +338,19 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function P2hShow({ session, inspectionItems }: Props) {
-    const entries = [1, 2, 3, 4].map(
-        (slot) => session.user_entries?.find((e) => e.user_slot === slot) ?? null,
-    );
-    const filledEntries = entries.filter(Boolean);
+    const entries = [...(session.user_entries ?? [])].sort((a, b) => a.user_slot - b.user_slot);
+    const filledEntries = entries;
     const totalTL = filledEntries.reduce((sum, e) => sum + (e?.answers?.filter((a) => a.kondisi === 'Tidak Layak').length ?? 0), 0);
     const isLV = session.unit?.jenis_unit === 'Light Vehicle';
 
     const formattedDate = session.tanggal
-        ? new Date(session.tanggal).toLocaleDateString('id-ID', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        })
+        ? (() => {
+              const [y, m, d] = session.tanggal.substring(0, 10).split('-').map(Number);
+              return new Date(y, m - 1, d);
+          })().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
         : '-';
 
-    const firstFilled = entries.findIndex(Boolean);
-    const defaultTab = String(firstFilled === -1 ? 1 : firstFilled + 1);
+    const defaultTab = entries.length > 0 ? String(entries[0].user_slot) : '1';
 
     return (
         <>
@@ -390,7 +388,7 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                             </span>
                             <span className="flex items-center gap-1">
                                 <ClipboardCheck className="h-3.5 w-3.5" />
-                                {filledEntries.length}/4 slot terisi
+                                {filledEntries.length} pengisian hari ini
                             </span>
                         </div>
                     </div>
@@ -398,10 +396,10 @@ export default function P2hShow({ session, inspectionItems }: Props) {
 
                 {/* ── Session-level stats ── */}
                 <div className="grid grid-cols-4 gap-2">
-                    <StatCard label="Slot" value={`${filledEntries.length}/4`} />
+                    <StatCard label="P2H" value={filledEntries.length} />
                     <StatCard label="Total TL" value={totalTL} variant={totalTL > 0 ? 'danger' : 'default'} />
                     <StatCard label="Item" value={inspectionItems.length} />
-                    <StatCard label="Status" value={session.status === 'completed' ? '✓' : '…'} variant={session.status === 'completed' ? 'success' : 'warning'} />
+                    <StatCard label="Status" value="Open" variant="default" />
                 </div>
 
                 {/* ── Export ── */}
@@ -416,55 +414,36 @@ export default function P2hShow({ session, inspectionItems }: Props) {
 
                 {/* ── Slot Tabs ── */}
                 <Tabs defaultValue={defaultTab}>
-                    <TabsList className="grid w-full grid-cols-4 h-auto gap-1 bg-muted/60 p-1">
-                        {[1, 2, 3, 4].map((slot) => {
-                            const entry = entries[slot - 1];
+                    <TabsList className="flex h-auto flex-wrap gap-1 bg-muted/60 p-1">
+                        {entries.map((entry) => {
+                            const slot = entry.user_slot;
                             const slotTL = entry?.answers?.filter((a) => a.kondisi === 'Tidak Layak').length ?? 0;
                             return (
                                 <TabsTrigger
                                     key={slot}
                                     value={String(slot)}
-                                    disabled={!entry}
-                                    className="relative flex flex-col items-center gap-0.5 py-2 text-xs data-[state=active]:shadow-sm"
+                                    className="relative flex flex-col items-center gap-0.5 py-2 px-3 text-xs data-[state=active]:shadow-sm"
                                 >
-                                    <span className="font-semibold">Slot {slot}</span>
-                                    {entry ? (
-                                        slotTL > 0 ? (
-                                            <span className="text-[10px] text-red-500 font-medium">{slotTL} TL</span>
-                                        ) : (
-                                            <span className="text-[10px] text-green-500 font-medium">Layak</span>
-                                        )
+                                    <span className="font-semibold">P2H #{slot}</span>
+                                    {slotTL > 0 ? (
+                                        <span className="text-[10px] text-red-500 font-medium">{slotTL} TL</span>
                                     ) : (
-                                        <span className="text-[10px] text-muted-foreground/50">Kosong</span>
+                                        <span className="text-[10px] text-green-500 font-medium">Layak</span>
                                     )}
-                                    {entry && (
-                                        <span className={cn(
-                                            'absolute right-1.5 top-1.5 h-2 w-2 rounded-full',
-                                            slotTL > 0 ? 'bg-red-500' : 'bg-green-500',
-                                        )} />
-                                    )}
+                                    <span className={cn(
+                                        'absolute right-1.5 top-1.5 h-2 w-2 rounded-full',
+                                        slotTL > 0 ? 'bg-red-500' : 'bg-green-500',
+                                    )} />
                                 </TabsTrigger>
                             );
                         })}
                     </TabsList>
 
-                    {[1, 2, 3, 4].map((slot) => {
-                        const entry = entries[slot - 1];
+                    {entries.map((entry) => {
+                        const slot = entry.user_slot;
                         return (
                             <TabsContent key={slot} value={String(slot)}>
-                                {entry ? (
-                                    <EntryDetail entry={entry} inspectionItems={inspectionItems} />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted py-14 text-center mt-2">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                                            <User className="h-6 w-6 text-muted-foreground" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold">Slot #{slot} Belum Diisi</p>
-                                            <p className="text-xs text-muted-foreground">Belum ada pengemudi yang mengisi slot ini.</p>
-                                        </div>
-                                    </div>
-                                )}
+                                <EntryDetail entry={entry} inspectionItems={inspectionItems} />
                             </TabsContent>
                         );
                     })}

@@ -155,11 +155,10 @@ class MonitoringP2hExport implements FromArray, WithTitle, WithStyles, WithEvent
 
     private function cellLabel(array $cell): string
     {
-        $label = $cell['slots_filled'] . '/4';
+        $label = $cell['slots_filled'] . 'x';
         $label .= match ($cell['status']) {
             'layak'   => ' ✓',
             'bd'      => ' BD',
-            'partial' => ' ~',
             default   => '',
         };
         return $label;

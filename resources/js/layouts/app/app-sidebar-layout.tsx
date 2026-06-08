@@ -15,7 +15,7 @@ export default function AppSidebarLayout({
             <AppContent variant="sidebar" className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {/* Add bottom padding on mobile so content isn't hidden behind the bottom nav bar */}
-                <div className="pb-20 md:pb-0">
+                <div className="pb-28 md:pb-0">
                     {children}
                 </div>
             </AppContent>

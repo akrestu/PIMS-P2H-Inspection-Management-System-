@@ -33,10 +33,16 @@ import {
     Users,
     X,
 } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ─────────────────────────── Types ─────────────────────────── */
 type Role = 'admin' | 'manager' | 'driver';
+
+interface UnitOption {
+    id: number;
+    no_unit: string;
+    jenis_unit: 'Bus' | 'Light Vehicle';
+}
 
 interface UserRow {
     id: number;
@@ -44,7 +50,13 @@ interface UserRow {
     nik: string | null;
     email: string;
     roles: { name: Role }[];
-    driver: { nik: string; nama: string; department: string; jenis_unit: 'Bus' | 'Light Vehicle' | null } | null;
+    driver: {
+        nik: string;
+        nama: string;
+        department: string;
+        jenis_unit: 'Bus' | 'Light Vehicle' | null;
+        units?: UnitOption[];
+    } | null;
 }
 
 interface PaginatedData {
@@ -67,6 +79,7 @@ interface Props {
     users: PaginatedData;
     filters: { search?: string; role?: string };
     stats: Stats;
+    units: UnitOption[];
 }
 
 /* ─────────────────── Helpers ────────────────────────────────── */
@@ -148,9 +161,79 @@ function JenisUnitSelect({ value, onChange, error }: { value: string; onChange: 
     );
 }
 
+/* ─────────────── AssignedUnitsSelect ───────────────────────── */
+function AssignedUnitsSelect({
+    units,
+    selected,
+    onChange,
+    error,
+}: {
+    units: UnitOption[];
+    selected: number[];
+    onChange: (ids: number[]) => void;
+    error?: string;
+}) {
+    const toggle = (id: number) => {
+        onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+    };
+
+    const selectedUnits = units.filter((u) => selected.includes(u.id));
+
+    return (
+        <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+                Unit yang Di-assign
+                <span className="text-muted-foreground ml-1 font-normal">(opsional, bisa beberapa)</span>
+            </Label>
+            <p className="text-muted-foreground text-xs">
+                Jika diisi, driver hanya melihat unit ini di form P2H. Jika kosong, fallback ke Kategori Unit.
+            </p>
+            <div className="rounded-md border max-h-40 overflow-y-auto divide-y">
+                {units.length === 0 && (
+                    <p className="text-muted-foreground px-3 py-2 text-xs">Tidak ada unit aktif.</p>
+                )}
+                {units.map((unit) => (
+                    <label
+                        key={unit.id}
+                        className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={selected.includes(unit.id)}
+                            onChange={() => toggle(unit.id)}
+                            className="h-4 w-4 rounded border-input accent-primary"
+                        />
+                        <span className="flex-1 text-sm font-medium">{unit.no_unit}</span>
+                        <span className="text-muted-foreground text-xs">{unit.jenis_unit}</span>
+                    </label>
+                ))}
+            </div>
+            {selectedUnits.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                    {selectedUnits.map((u) => (
+                        <span
+                            key={u.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-xs font-medium"
+                        >
+                            {u.no_unit}
+                            <button type="button" onClick={() => toggle(u.id)} className="hover:text-destructive transition-colors">
+                                <X className="h-3 w-3" />
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
+            {error && <p className="text-destructive text-xs">{error}</p>}
+        </div>
+    );
+}
+
 /* ─────────────────── AddUserSheet ───────────────────────────── */
-function AddUserSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
+function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
+    const { data, setData, post, processing, errors, reset } = useForm<{
+        name: string; nik: string; email: string; password: string; role: string;
+        nama: string; department: string; jenis_unit: string; assigned_unit_ids: number[];
+    }>({
         name: '',
         nik: '',
         email: '',
@@ -159,6 +242,7 @@ function AddUserSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
         nama: '',
         department: '',
         jenis_unit: '',
+        assigned_unit_ids: [],
     });
     const [showPwd, setShowPwd] = useState(false);
     const isDriver = data.role === 'driver';
@@ -262,6 +346,13 @@ function AddUserSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
                                 onChange={(v) => setData('jenis_unit', v)}
                                 error={errors.jenis_unit}
                             />
+
+                            <AssignedUnitsSelect
+                                units={units}
+                                selected={data.assigned_unit_ids}
+                                onChange={(ids) => setData('assigned_unit_ids', ids)}
+                                error={errors.assigned_unit_ids as string | undefined}
+                            />
                         </>
                     )}
                 </form>
@@ -278,8 +369,11 @@ function AddUserSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
 }
 
 /* ─────────────────── EditUserSheet ──────────────────────────── */
-function EditUserSheet({ user, open, onOpenChange }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void }) {
-    const { data, setData, put, processing, errors, reset } = useForm({
+function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
+    const { data, setData, put, processing, errors, reset } = useForm<{
+        name: string; nik: string; email: string; password: string; role: string;
+        nama: string; department: string; jenis_unit: string; assigned_unit_ids: number[];
+    }>({
         name: user?.name ?? '',
         nik: user?.nik ?? '',
         email: user?.email ?? '',
@@ -288,9 +382,27 @@ function EditUserSheet({ user, open, onOpenChange }: { user: UserRow | null; ope
         nama: user?.driver?.nama ?? '',
         department: user?.driver?.department ?? '',
         jenis_unit: user?.driver?.jenis_unit ?? '',
+        assigned_unit_ids: user?.driver?.units?.map((u) => u.id) ?? [],
     });
     const [showPwd, setShowPwd] = useState(false);
     const isDriver = data.role === 'driver';
+
+    useEffect(() => {
+        if (user) {
+            setData({
+                name: user.name,
+                nik: user.nik ?? '',
+                email: user.email,
+                password: '',
+                role: (userRole(user) ?? 'driver') as string,
+                nama: user.driver?.nama ?? '',
+                department: user.driver?.department ?? '',
+                jenis_unit: user.driver?.jenis_unit ?? '',
+                assigned_unit_ids: user.driver?.units?.map((u) => u.id) ?? [],
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]);
 
     const handleClose = () => { reset(); onOpenChange(false); };
     const submit = (e: React.FormEvent) => {
@@ -401,6 +513,13 @@ function EditUserSheet({ user, open, onOpenChange }: { user: UserRow | null; ope
                                 onChange={(v) => setData('jenis_unit', v)}
                                 error={errors.jenis_unit}
                             />
+
+                            <AssignedUnitsSelect
+                                units={units}
+                                selected={data.assigned_unit_ids}
+                                onChange={(ids) => setData('assigned_unit_ids', ids)}
+                                error={errors.assigned_unit_ids as string | undefined}
+                            />
                         </>
                     )}
                 </form>
@@ -480,7 +599,7 @@ function StatCard({ title, value, icon: Icon, colorClass }: {
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UsersIndex({ users, filters, stats }: Props) {
+export default function UsersIndex({ users, filters, stats, units }: Props) {
     const { auth } = usePage<{ auth: { user: { id: number } } }>().props;
     const currentUserId = auth.user.id;
 
@@ -769,8 +888,8 @@ export default function UsersIndex({ users, filters, stats }: Props) {
                 </Card>
             </div>
 
-            <AddUserSheet open={addOpen} onOpenChange={setAddOpen} />
-            <EditUserSheet user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} />
+            <AddUserSheet open={addOpen} onOpenChange={setAddOpen} units={units} />
+            <EditUserSheet user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} />
             <DeleteDialog user={deleteUser} open={!!deleteUser} onOpenChange={(o) => { if (!o) setDeleteUser(null); }} />
         </TooltipProvider>
     );

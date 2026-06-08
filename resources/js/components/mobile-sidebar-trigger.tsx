@@ -63,7 +63,7 @@ export function MobileSidebarTrigger() {
         /* Only visible on mobile */
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
             {/* Frosted glass bottom bar */}
-            <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-1 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
                 <nav className="flex items-center justify-around">
                     {quickLinks.map((link) => {
                         const Icon = link.icon;
@@ -73,8 +73,8 @@ export function MobileSidebarTrigger() {
                                 key={link.title}
                                 href={link.href}
                                 className={`
-                                    relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl
-                                    transition-all duration-150 min-w-[56px]
+                                    relative flex flex-col items-center gap-1 px-4 py-3 rounded-xl
+                                    transition-all duration-150 min-w-[68px]
                                     ${active
                                         ? 'text-primary'
                                         : 'text-muted-foreground hover:text-foreground'
@@ -83,25 +83,25 @@ export function MobileSidebarTrigger() {
                             >
                                 {/* Active pill indicator */}
                                 {active && (
-                                    <span className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary" />
+                                    <span className="absolute top-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full bg-primary" />
                                 )}
                                 <div className="relative">
                                     <Icon
-                                        className={`h-5 w-5 transition-transform duration-150 ${
+                                        className={`h-7 w-7 transition-transform duration-150 ${
                                             active ? 'scale-110' : ''
                                         }`}
                                     />
                                     {link.badge !== undefined && link.badge > 0 && (
                                         <Badge
                                             variant="destructive"
-                                            className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] font-bold leading-none"
+                                            className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full p-0 text-[10px] font-bold leading-none"
                                         >
                                             {link.badge > 9 ? '9+' : link.badge}
                                         </Badge>
                                     )}
                                 </div>
                                 <span
-                                    className={`text-[10px] font-medium leading-none ${
+                                    className={`text-xs font-medium leading-none ${
                                         active ? 'font-semibold' : ''
                                     }`}
                                 >
@@ -112,7 +112,7 @@ export function MobileSidebarTrigger() {
                     })}
 
                     {/* Separator */}
-                    <div className="h-8 w-px bg-border/60" />
+                    <div className="h-10 w-px bg-border/60" />
 
                     {/* Menu toggle button */}
                     <Button
@@ -120,7 +120,7 @@ export function MobileSidebarTrigger() {
                         size="sm"
                         onClick={toggleSidebar}
                         className={`
-                            relative flex flex-col items-center gap-0.5 h-auto px-3 py-2 rounded-xl min-w-[56px]
+                            relative flex flex-col items-center gap-1 h-auto px-4 py-3 rounded-xl min-w-[68px]
                             transition-all duration-150
                             ${openMobile
                                 ? 'bg-accent text-accent-foreground'
@@ -129,19 +129,19 @@ export function MobileSidebarTrigger() {
                         `}
                         aria-label={openMobile ? 'Tutup menu' : 'Buka menu'}
                     >
-                        <div className="relative h-5 w-5">
+                        <div className="relative h-7 w-7">
                             <Menu
-                                className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${
+                                className={`absolute inset-0 h-7 w-7 transition-all duration-200 ${
                                     openMobile ? 'opacity-0 rotate-90 scale-75' : 'opacity-100 rotate-0 scale-100'
                                 }`}
                             />
                             <X
-                                className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${
+                                className={`absolute inset-0 h-7 w-7 transition-all duration-200 ${
                                     openMobile ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-75'
                                 }`}
                             />
                         </div>
-                        <span className="text-[10px] font-medium leading-none">
+                        <span className="text-xs font-medium leading-none">
                             {openMobile ? 'Tutup' : 'Menu'}
                         </span>
                     </Button>

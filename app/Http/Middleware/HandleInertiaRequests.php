@@ -41,7 +41,11 @@ class HandleInertiaRequests extends Middleware
         $flash = null;
         foreach (['success', 'error', 'warning', 'info'] as $type) {
             if ($request->session()->has($type)) {
-                $flash = ['type' => $type, 'message' => $request->session()->get($type)];
+                $flash = [
+                    'type'        => $type,
+                    'message'     => $request->session()->get($type),
+                    'description' => $request->session()->get("{$type}_description"),
+                ];
                 break;
             }
         }

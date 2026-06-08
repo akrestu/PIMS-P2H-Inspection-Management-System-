@@ -97,7 +97,7 @@
             <td>{{ $s['tanggal'] }}</td>
             <td><strong>{{ $s['no_unit'] }}</strong></td>
             <td>{{ $s['jenis_unit'] }}</td>
-            <td class="text-center">{{ $s['slot_terisi'] }}/4</td>
+            <td class="text-center">{{ $s['slot_terisi'] }}x</td>
             <td class="text-center {{ $s['total_tl'] > 0 ? 'red' : 'green' }}">
                 {{ $s['total_tl'] > 0 ? $s['total_tl'] : '0' }}
             </td>

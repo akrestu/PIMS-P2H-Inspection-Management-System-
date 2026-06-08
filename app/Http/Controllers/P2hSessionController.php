@@ -47,7 +47,7 @@ class P2hSessionController extends Controller
         $mapped = $sessions->through(function ($session) {
             return [
                 'id'          => $session->id,
-                'tanggal'     => $session->tanggal->format('d/m/Y'),
+                'tanggal'     => $session->tanggal->format('Y-m-d'),
                 'no_unit'     => $session->unit->no_unit,
                 'jenis_unit'  => $session->unit->jenis_unit,
                 'slot_terisi' => $session->userEntries->count(),
@@ -65,13 +65,19 @@ class P2hSessionController extends Controller
     public function create(): Response
     {
         $driver = auth()->user()->driver;
-        $units = Unit::active()
-            ->when(
-                $driver?->jenis_unit,
-                fn ($q) => $q->where('jenis_unit', $driver->jenis_unit)
-            )
-            ->orderBy('no_unit')
-            ->get(['id', 'no_unit', 'jenis_unit']);
+
+        if ($driver) {
+            $assignedUnits = $driver->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit']);
+        }
+
+        if (!empty($assignedUnits) && $assignedUnits->isNotEmpty()) {
+            $units = $assignedUnits;
+        } else {
+            $units = Unit::active()
+                ->when($driver?->jenis_unit, fn ($q) => $q->where('jenis_unit', $driver->jenis_unit))
+                ->orderBy('no_unit')
+                ->get(['id', 'no_unit', 'jenis_unit']);
+        }
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
         return Inertia::render('p2h/form', [
@@ -93,7 +99,7 @@ class P2hSessionController extends Controller
         return response()->json([
             'session_id'    => $session?->id,
             'slot_terisi'   => $slotTerisi,
-            'slot_tersedia' => $slotTerisi < 4,
+            'slot_tersedia' => true,
             'next_slot'     => $slotTerisi + 1,
         ]);
     }
@@ -103,9 +109,7 @@ class P2hSessionController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
-        $slotPenuh = false;
-
-        DB::transaction(function () use ($data, $user, &$session, &$slotPenuh) {
+        DB::transaction(function () use ($data, $user, &$session) {
             // Buat atau ambil session, lalu lock row untuk prevent race condition
             $session = P2hSession::firstOrCreate(
                 ['unit_id' => $data['unit_id'], 'tanggal' => today()],
@@ -114,11 +118,6 @@ class P2hSessionController extends Controller
 
             // Pessimistic lock — blokir concurrent request untuk unit + tanggal yang sama
             $session = P2hSession::where('id', $session->id)->lockForUpdate()->first();
-
-            if ($session->userEntries()->count() >= 4) {
-                $slotPenuh = true;
-                return;
-            }
 
             $nextSlot = $session->userEntries()->count() + 1;
 
@@ -189,15 +188,7 @@ class P2hSessionController extends Controller
                 }
             }
 
-            // Tandai session completed jika sudah 4 slot
-            if ($session->userEntries()->count() >= 4) {
-                $session->update(['status' => 'completed']);
-            }
         }, attempts: 3);
-
-        if ($slotPenuh) {
-            return back()->withErrors(['unit_id' => 'Slot P2H untuk unit ini sudah penuh (4/4) hari ini.']);
-        }
 
         $session = P2hSession::where('unit_id', $data['unit_id'])
             ->whereDate('tanggal', today())
@@ -217,17 +208,17 @@ class P2hSessionController extends Controller
             Inertia::flash('toast', [
                 'type'        => 'error',
                 'message'     => 'P2H disimpan — Ada item Critical TL!',
-                'description' => "Slot {$slotTerisi}/4 terisi. Terdapat item risiko Critical yang tidak layak. Admin telah diberitahu.",
+                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item risiko Critical yang tidak layak. Admin telah diberitahu.",
             ]);
         } else {
             Inertia::flash('toast', [
                 'type'        => 'success',
                 'message'     => 'P2H berhasil disimpan',
-                'description' => "Slot {$slotTerisi}/4 terisi untuk unit {$session->unit->no_unit}.",
+                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}.",
             ]);
         }
 
-        return redirect()->route('p2h.show', $session);
+        return redirect()->route('p2h.index');
     }
 
     public function destroy(P2hSession $session): RedirectResponse

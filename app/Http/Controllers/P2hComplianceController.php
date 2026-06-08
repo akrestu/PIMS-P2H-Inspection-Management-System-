@@ -96,8 +96,6 @@ class P2hComplianceController extends Controller
                 if ($kondisiValues->contains('BD')) {
                     $status = 'bd';
                     $totalBdCells++;
-                } elseif ($slotsFilled < 4) {
-                    $status = 'partial';
                 } elseif ($kondisiValues->isNotEmpty()) {
                     $status = 'layak';
                 } else {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Unit extends Model
@@ -18,6 +19,11 @@ class Unit extends Model
     public function downtimeLogs(): HasMany
     {
         return $this->hasMany(UnitDowntimeLog::class);
+    }
+
+    public function drivers(): BelongsToMany
+    {
+        return $this->belongsToMany(Driver::class, 'driver_unit');
     }
 
     public function scopeActive(Builder $query): Builder

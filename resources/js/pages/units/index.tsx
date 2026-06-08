@@ -28,7 +28,7 @@ import {
     Truck,
     XCircle,
 } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ─────────────────────────── Types ─────────────────────────── */
 interface PaginatedData {
@@ -73,6 +73,16 @@ function UnitFormSheet({
         no_lambung: unit?.no_lambung ?? '',
         status: unit?.status ?? 'active',
     });
+
+    useEffect(() => {
+        setData({
+            no_unit: unit?.no_unit ?? '',
+            jenis_unit: unit?.jenis_unit ?? 'Light Vehicle',
+            no_lambung: unit?.no_lambung ?? '',
+            status: unit?.status ?? 'active',
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [unit?.id]);
 
     const handleClose = () => {
         reset();
@@ -619,6 +629,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
 
             {/* ── Sheet: Add / Edit ── */}
             <UnitFormSheet
+                key={editUnit?.id ?? 'add'}
                 unit={editUnit}
                 open={sheetOpen}
                 onOpenChange={(o) => {

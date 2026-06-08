@@ -30,7 +30,7 @@ import { useState } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type CellStatus = 'layak' | 'bd' | 'partial';
+type CellStatus = 'layak' | 'bd';
 
 interface MatrixCell {
     session_id: number;
@@ -98,13 +98,11 @@ function cellClasses(status: CellStatus | null, highlightMissing: boolean): stri
             return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/60 cursor-pointer';
         case 'bd':
             return 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/60 cursor-pointer';
-        case 'partial':
-            return 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-950/60 cursor-pointer';
     }
 }
 
 function statusLabel(status: CellStatus): string {
-    return status === 'layak' ? 'Layak Pakai' : status === 'bd' ? 'Breakdown' : 'Sebagian';
+    return status === 'layak' ? 'Layak Pakai' : 'Breakdown';
 }
 
 function complianceColor(pct: number): string {
@@ -320,7 +318,7 @@ function MatrixCellComponent({
                 cellClasses(cell?.status ?? null, highlightMissing),
             )}
         >
-            {cell ? `${cell.slots_filled}/4` : highlightMissing ? '!' : '–'}
+            {cell ? `${cell.slots_filled}x` : highlightMissing ? '!' : '–'}
         </div>
     );
 
@@ -337,8 +335,8 @@ function MatrixCellComponent({
                 <TooltipContent side="top" className="text-xs space-y-1">
                     <p className="font-semibold">{fmtLong(date)}</p>
                     <p>
-                        Slot terisi:{' '}
-                        <span className="font-bold">{cell.slots_filled}/4</span>
+                        Jumlah P2H:{' '}
+                        <span className="font-bold">{cell.slots_filled}x</span>
                     </p>
                     <p>
                         Item TL:{' '}
@@ -350,8 +348,7 @@ function MatrixCellComponent({
                         Status:{' '}
                         <span className={cn(
                             'font-bold',
-                            cell.status === 'layak' ? 'text-emerald-400' :
-                            cell.status === 'bd' ? 'text-red-400' : 'text-amber-400',
+                            cell.status === 'layak' ? 'text-emerald-400' : 'text-red-400',
                         )}>
                             {statusLabel(cell.status)}
                         </span>
@@ -366,9 +363,8 @@ function MatrixCellComponent({
 
 function MatrixLegend() {
     const items = [
-        { label: 'Layak Pakai (4 slot)', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' },
+        { label: 'Layak Pakai', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' },
         { label: 'Breakdown', cls: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400' },
-        { label: 'Sebagian (< 4 slot)', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' },
         { label: 'Tidak ada P2H', cls: 'bg-muted/40 text-muted-foreground/40' },
     ];
     return (
@@ -377,7 +373,7 @@ function MatrixLegend() {
             {items.map((item) => (
                 <span key={item.label} className="flex items-center gap-1.5">
                     <span className={cn('h-5 w-7 rounded text-[9px] font-bold flex items-center justify-center', item.cls)}>
-                        2/4
+                        3x
                     </span>
                     {item.label}
                 </span>
@@ -546,13 +542,12 @@ export default function P2hCompliancePage({ matrix, dates, columnSummary, summar
                     <p>
                         <strong className="text-foreground">Cara baca:</strong>{' '}
                         Setiap sel menunjukkan apakah unit mengisi P2H pada tanggal tersebut.
-                        Angka dalam sel adalah jumlah slot terisi (maks. 4).
+                        Angka dalam sel adalah jumlah pengisian P2H pada hari tersebut.
                         Klik sel untuk melihat detail sesi P2H.
                     </p>
                     <p>
                         Status <strong className="text-emerald-600 dark:text-emerald-400">Layak Pakai</strong> = semua slot dengan kondisi_akhir Layak Pakai atau score ≥ 80%.{' '}
                         Status <strong className="text-red-600 dark:text-red-400">Breakdown</strong> = ada satu atau lebih slot kondisi BD.{' '}
-                        Status <strong className="text-amber-600 dark:text-amber-400">Sebagian</strong> = kurang dari 4 slot terisi.{' '}
                         Range maksimal <strong className="text-foreground">31 hari</strong>.
                     </p>
                 </div>

@@ -78,6 +78,12 @@ interface Props {
     filters: Filters;
 }
 
+// Parse YYYY-MM-DD as local date (not UTC) to avoid off-by-one in WIB timezone
+function parseDateLocal(s: string): Date {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
 // ── Quick filter chips ────────────────────────────────────────────────────────
 const today = new Date().toISOString().split('T')[0];
 const weekStart = (() => {
@@ -140,10 +146,10 @@ function DeleteDialog({
                                 <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
                                     <p className="font-semibold text-foreground">{row.no_unit}</p>
                                     <p className="text-xs">
-                                        {new Date(row.tanggal).toLocaleDateString('id-ID', {
+                                        {parseDateLocal(row.tanggal).toLocaleDateString('id-ID', {
                                             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
                                         })}
-                                        {' · '}{row.slot_terisi}/4 slot · {row.total_tl > 0 ? `${row.total_tl} item TL` : 'Semua Layak'}
+                                        {' · '}{row.slot_terisi}x P2H · {row.total_tl > 0 ? `${row.total_tl} item TL` : 'Semua Layak'}
                                     </p>
                                 </div>
                             )}
@@ -185,7 +191,7 @@ function SessionCard({
     const isCompleted = row.status === 'completed';
     const isLV = row.jenis_unit === 'Light Vehicle';
 
-    const formattedDate = new Date(row.tanggal).toLocaleDateString('id-ID', {
+    const formattedDate = parseDateLocal(row.tanggal).toLocaleDateString('id-ID', {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
@@ -240,20 +246,14 @@ function SessionCard({
                 </span>
                 <span className="flex items-center gap-1">
                     <ClipboardList className="h-3.5 w-3.5" />
-                    {row.slot_terisi}/4 slot terisi
+                    {row.slot_terisi}x P2H hari ini
                 </span>
             </div>
 
-            {/* Slot indicator */}
+            {/* P2H count indicator */}
             <div className="mb-3 flex gap-1.5">
-                {[1, 2, 3, 4].map((slot) => (
-                    <div
-                        key={slot}
-                        className={cn(
-                            'h-1.5 flex-1 rounded-full',
-                            slot <= row.slot_terisi ? 'bg-primary' : 'bg-muted',
-                        )}
-                    />
+                {Array.from({ length: row.slot_terisi }).map((_, i) => (
+                    <div key={i} className="h-1.5 flex-1 rounded-full bg-primary" />
                 ))}
             </div>
 
@@ -305,7 +305,7 @@ function SessionCardSkeleton() {
             </div>
             <Skeleton className="h-3 w-40" />
             <div className="flex gap-1.5">
-                {[1,2,3,4].map(i => <Skeleton key={i} className="h-1.5 flex-1 rounded-full" />)}
+                {[1,2,3].map(i => <Skeleton key={i} className="h-1.5 flex-1 rounded-full" />)}
             </div>
         </div>
     );

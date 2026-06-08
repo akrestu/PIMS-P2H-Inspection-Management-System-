@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = User::with(['roles', 'driver'])
+        $query = User::with(['roles', 'driver.units'])
             ->when($request->search, function ($q) use ($request) {
                 $q->where(function ($inner) use ($request) {
                     $inner->where('name', 'like', "%{$request->search}%")
@@ -42,6 +43,7 @@ class UserController extends Controller
             'users'   => $users,
             'filters' => $request->only(['search', 'role']),
             'stats'   => $stats,
+            'units'   => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit']),
         ]);
     }
 
@@ -56,7 +58,9 @@ class UserController extends Controller
             // Driver-only fields
             'nama'       => 'required_if:role,driver|nullable|string|max:255',
             'department' => 'required_if:role,driver|nullable|string|max:255',
-            'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
+            'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
+            'assigned_unit_ids'   => 'nullable|array',
+            'assigned_unit_ids.*' => 'integer|exists:units,id',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -69,19 +73,21 @@ class UserController extends Controller
             $user->assignRole($validated['role']);
 
             if ($validated['role'] === 'driver') {
-                Driver::create([
+                $driver = Driver::create([
                     'user_id'    => $user->id,
                     'nik'        => $validated['nik'],
                     'nama'       => $validated['nama'],
                     'department' => $validated['department'],
                     'jenis_unit' => $validated['jenis_unit'] ?? null,
                 ]);
+                $driver->units()->sync($validated['assigned_unit_ids'] ?? []);
             }
         });
 
         Inertia::flash('toast', [
-            'type'    => 'success',
-            'message' => 'User berhasil ditambahkan',
+            'type'        => 'success',
+            'message'     => 'User berhasil ditambahkan',
+            'description' => "Akun {$validated['name']} berhasil dibuat.",
         ]);
 
         return redirect()->route('users.index');
@@ -98,7 +104,9 @@ class UserController extends Controller
             // Driver-only fields
             'nama'       => 'required_if:role,driver|nullable|string|max:255',
             'department' => 'required_if:role,driver|nullable|string|max:255',
-            'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
+            'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
+            'assigned_unit_ids'   => 'nullable|array',
+            'assigned_unit_ids.*' => 'integer|exists:units,id',
         ]);
 
         DB::transaction(function () use ($validated, $user) {
@@ -112,12 +120,10 @@ class UserController extends Controller
             }
             $user->update($userData);
 
-            // Sync role
             $user->syncRoles([$validated['role']]);
 
-            // Handle driver profile
             if ($validated['role'] === 'driver') {
-                $user->driver()->updateOrCreate(
+                $driver = $user->driver()->updateOrCreate(
                     ['user_id' => $user->id],
                     [
                         'nik'        => $validated['nik'],
@@ -126,15 +132,16 @@ class UserController extends Controller
                         'jenis_unit' => $validated['jenis_unit'] ?? null,
                     ]
                 );
+                $driver->units()->sync($validated['assigned_unit_ids'] ?? []);
             } else {
-                // Remove driver profile if role changed away from driver
                 $user->driver()->delete();
             }
         });
 
         Inertia::flash('toast', [
-            'type'    => 'success',
-            'message' => 'Data user diperbarui',
+            'type'        => 'success',
+            'message'     => 'Data user diperbarui',
+            'description' => "Data {$validated['name']} berhasil diperbarui.",
         ]);
 
         return redirect()->route('users.index');
@@ -149,8 +156,9 @@ class UserController extends Controller
         $user->delete();
 
         Inertia::flash('toast', [
-            'type'    => 'success',
-            'message' => 'User berhasil dihapus',
+            'type'        => 'success',
+            'message'     => 'User berhasil dihapus',
+            'description' => "Akun {$user->name} dihapus dari sistem.",
         ]);
 
         return redirect()->route('users.index');

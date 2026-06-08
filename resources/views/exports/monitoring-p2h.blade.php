@@ -24,7 +24,6 @@
     table.matrix tbody tr:nth-child(even) { background: #f8fafc; }
     .cell-layak   { background: #dcfce7; color: #15803d; border-radius: 2px; padding: 1px 2px; }
     .cell-bd      { background: #fee2e2; color: #b91c1c; border-radius: 2px; padding: 1px 2px; }
-    .cell-partial { background: #fef9c3; color: #a16207; border-radius: 2px; padding: 1px 2px; }
     .cell-empty   { color: #d1d5db; }
     .compliance-good { color: #16a34a; font-weight: bold; }
     .compliance-ok   { color: #ca8a04; font-weight: bold; }
@@ -35,7 +34,6 @@
     .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; vertical-align: middle; }
     .dot-layak { background: #dcfce7; border: 1px solid #16a34a; }
     .dot-bd { background: #fee2e2; border: 1px solid #dc2626; }
-    .dot-partial { background: #fef9c3; border: 1px solid #ca8a04; }
     .dot-empty { background: #f3f4f6; border: 1px solid #d1d5db; }
     .footer { margin-top: 10px; padding: 6px 16px 0; border-top: 1px solid #e5e7eb; font-size: 7px; color: #888; }
 </style>
@@ -80,11 +78,10 @@
 
 {{-- Legend --}}
 <div class="legend">
-    <span class="legend-item"><span class="dot dot-layak"></span> Layak (4 slot)</span>
+    <span class="legend-item"><span class="dot dot-layak"></span> Layak Pakai</span>
     <span class="legend-item"><span class="dot dot-bd"></span> Breakdown</span>
-    <span class="legend-item"><span class="dot dot-partial"></span> Sebagian (&lt; 4 slot)</span>
     <span class="legend-item"><span class="dot dot-empty"></span> Tidak ada P2H</span>
-    <span class="legend-item" style="color:#888;">Angka = slot terisi / 4</span>
+    <span class="legend-item" style="color:#888;">Angka = jumlah pengisian P2H</span>
 </div>
 
 <div class="section-title">Compliance Matrix</div>
@@ -117,7 +114,7 @@
                 @php $cell = $row['cells'][$date] ?? null; @endphp
                 <td>
                     @if ($cell)
-                        <span class="cell-{{ $cell['status'] }}">{{ $cell['slots_filled'] }}/4</span>
+                        <span class="cell-{{ $cell['status'] }}">{{ $cell['slots_filled'] }}x</span>
                     @else
                         <span class="cell-empty">–</span>
                     @endif

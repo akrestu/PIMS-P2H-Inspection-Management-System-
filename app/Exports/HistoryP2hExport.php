@@ -31,7 +31,7 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
                 $s['tanggal'],
                 $s['no_unit'],
                 $s['jenis_unit'],
-                $s['slot_terisi'] . '/4',
+                $s['slot_terisi'] . 'x P2H',
                 $s['total_tl'] > 0 ? $s['total_tl'] . ' item TL' : 'Semua Layak',
                 $s['total_tl'] > 0 ? 'Ada TL' : 'Layak',
                 ucfirst($s['status']),
