@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
 
 interface Props {
@@ -12,22 +12,42 @@ interface Props {
 
 export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
     const [hasSig, setHasSig] = useState(false);
+    const savedDataUrl = useRef<string | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const handleEnd = () => {
+        savedDataUrl.current = sigPadRef.current?.toDataURL('image/png') ?? null;
         setHasSig(true);
         onEnd?.();
     };
 
     const handleClear = () => {
         sigPadRef.current?.clear();
+        savedDataUrl.current = null;
         setHasSig(false);
         onClear?.();
     };
+
+    // Restore signature after canvas is resized (mobile viewport changes clear the canvas)
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const observer = new ResizeObserver(() => {
+            if (savedDataUrl.current && sigPadRef.current) {
+                sigPadRef.current.fromDataURL(savedDataUrl.current, {
+                    width: sigPadRef.current.getCanvas().offsetWidth,
+                    height: sigPadRef.current.getCanvas().offsetHeight,
+                });
+            }
+        });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [sigPadRef]);
 
     return (
         <div className="space-y-3">
             {/* Canvas area */}
             <div
+                ref={containerRef}
                 className={cn(
                     'relative rounded-xl border-2 border-dashed transition-colors overflow-hidden',
                     hasSig ? 'border-primary bg-white dark:bg-gray-950' : 'border-muted-foreground/30 bg-muted/20',
