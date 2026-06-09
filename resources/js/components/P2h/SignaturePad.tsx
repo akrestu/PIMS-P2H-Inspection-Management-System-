@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
 
 interface Props {
@@ -14,6 +14,19 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
     const [hasSig, setHasSig] = useState(false);
     const savedDataUrl = useRef<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const restoreSignature = useCallback(() => {
+        if (!savedDataUrl.current || !sigPadRef.current) return;
+        const canvas = sigPadRef.current.getCanvas();
+        // re-draw setelah browser selesai layout
+        requestAnimationFrame(() => {
+            if (!savedDataUrl.current || !sigPadRef.current) return;
+            sigPadRef.current.fromDataURL(savedDataUrl.current, {
+                width: canvas.offsetWidth,
+                height: canvas.offsetHeight,
+            });
+        });
+    }, [sigPadRef]);
 
     const handleEnd = () => {
         savedDataUrl.current = sigPadRef.current?.toDataURL('image/png') ?? null;
@@ -28,20 +41,35 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
         onClear?.();
     };
 
-    // Restore signature after canvas is resized (mobile viewport changes clear the canvas)
     useEffect(() => {
-        if (!containerRef.current) return;
-        const observer = new ResizeObserver(() => {
-            if (savedDataUrl.current && sigPadRef.current) {
-                sigPadRef.current.fromDataURL(savedDataUrl.current, {
-                    width: sigPadRef.current.getCanvas().offsetWidth,
-                    height: sigPadRef.current.getCanvas().offsetHeight,
-                });
-            }
-        });
-        observer.observe(containerRef.current);
-        return () => observer.disconnect();
-    }, [sigPadRef]);
+        // ResizeObserver: canvas resize (viewport height berubah saat address bar mobile muncul/hilang)
+        const observer = containerRef.current
+            ? new ResizeObserver(restoreSignature)
+            : null;
+        if (containerRef.current && observer) {
+            observer.observe(containerRef.current);
+        }
+
+        // scroll: Chrome Android bisa clear canvas saat di-scroll off-screen
+        const onScroll = () => restoreSignature();
+        // visibilitychange: tab background/foreground
+        const onVisibility = () => {
+            if (document.visibilityState === 'visible') restoreSignature();
+        };
+        // pageshow: kembali dari bfcache
+        const onPageShow = () => restoreSignature();
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        document.addEventListener('visibilitychange', onVisibility);
+        window.addEventListener('pageshow', onPageShow);
+
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener('scroll', onScroll);
+            document.removeEventListener('visibilitychange', onVisibility);
+            window.removeEventListener('pageshow', onPageShow);
+        };
+    }, [restoreSignature]);
 
     return (
         <div className="space-y-3">
