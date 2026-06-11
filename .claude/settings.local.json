@@ -9,7 +9,9 @@
       "PowerShell(php \"d:\\\\COMPANY_DATA\\\\01_IT_AND_DATABASE\\\\04_APPLICATION\\\\PIMS\\\\artisan\" view:clear)",
       "Bash(npm run *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(php -l app/Http/Controllers/AuditLogController.php)",
+      "Bash(php -l app/Http/Controllers/DashboardController.php)"
     ]
   }
 }

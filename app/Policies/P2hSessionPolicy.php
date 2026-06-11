@@ -16,4 +16,10 @@ class P2hSessionPolicy
         // Driver hanya bisa lihat jika pernah mengisi salah satu entry
         return $session->userEntries()->where('user_id', $user->id)->exists();
     }
+
+    // Hanya admin yang boleh hapus sesi P2H (karena menyangkut audit trail)
+    public function delete(User $user, P2hSession $session): bool
+    {
+        return $user->hasRole('admin');
+    }
 }

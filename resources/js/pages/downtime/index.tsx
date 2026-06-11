@@ -24,7 +24,7 @@ import {
     Wrench,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -135,6 +135,16 @@ function DowntimeDialog({
         jam_selesai: editLog?.jam_selesai?.slice(0, 16) ?? '',
         keterangan:  editLog?.keterangan ?? '',
     });
+
+    useEffect(() => {
+        setData({
+            unit_id:     editLog ? String(editLog.unit_id) : '',
+            tipe:        editLog?.tipe ?? '',
+            jam_mulai:   editLog?.jam_mulai?.slice(0, 16) ?? '',
+            jam_selesai: editLog?.jam_selesai?.slice(0, 16) ?? '',
+            keterangan:  editLog?.keterangan ?? '',
+        });
+    }, [editLog]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

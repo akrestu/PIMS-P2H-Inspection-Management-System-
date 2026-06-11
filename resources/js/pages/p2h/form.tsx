@@ -231,42 +231,85 @@ function StepNavFooter({
     );
 }
 
+const DRAFT_KEY = 'p2h_form_draft';
+
+interface P2hDraft {
+    step: number;
+    selectedUnitId: string;
+    jobSite: string;
+    lokasiKerja: string;
+    kmAwal: string;
+    shift: string;
+    answers: Record<number, AnswerState>;
+    servisMingguan: boolean;
+    servisBerkala: boolean;
+    unscheduleBreakdown: boolean;
+    lainnya: boolean;
+    lainnyaText: string;
+    catatanServis: string;
+    kmUnit: string;
+    jumlahLiter: string;
+    hmKmAkhir: string;
+    kondisiAkhir: 'Layak Pakai' | 'BD' | '';
+    justifikasiKondisi: string;
+}
+
+function loadDraft(): Partial<P2hDraft> {
+    try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        return raw ? (JSON.parse(raw) as Partial<P2hDraft>) : {};
+    } catch {
+        return {};
+    }
+}
+
+function saveDraft(draft: P2hDraft) {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* storage full */ }
+}
+
+function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
+
 // ─── Main Form ────────────────────────────────────────────────────────────────
 export default function P2hForm({ units, inspectionItems }: Props) {
     const { auth } = usePage<{ auth: { user: { name: string; nik?: string | null } | null } }>().props;
 
-    const [step, setStep] = useState(1);
+    const draft = loadDraft();
+
+    const [step, setStep] = useState(draft.step ?? 1);
 
     // Step 1
-    const [selectedUnitId, setSelectedUnitId] = useState<string>('');
+    const [selectedUnitId, setSelectedUnitId] = useState<string>(draft.selectedUnitId ?? '');
     const [unitSheetOpen, setUnitSheetOpen] = useState(false);
     const [slotInfo, setSlotInfo] = useState<SlotInfo | null>(null);
     const [checkingSlot, setCheckingSlot] = useState(false);
-    const [jobSite, setJobSite] = useState('');
-    const [lokasiKerja, setLokasiKerja] = useState('');
-    const [kmAwal, setKmAwal] = useState('');
-    const [shift, setShift] = useState('');
+    const [jobSite, setJobSite] = useState(draft.jobSite ?? '');
+    const [lokasiKerja, setLokasiKerja] = useState(draft.lokasiKerja ?? '');
+    const [kmAwal, setKmAwal] = useState(draft.kmAwal ?? '');
+    const [shift, setShift] = useState(draft.shift ?? '');
 
     // Step 2
-    const [answers, setAnswers] = useState<Record<number, AnswerState>>({});
+    const [answers, setAnswers] = useState<Record<number, AnswerState>>(draft.answers ?? {});
 
     // Step 3
-    const [servisMingguan, setServisMingguan] = useState(false);
-    const [servisBerkala, setServisBerkala] = useState(false);
-    const [unscheduleBreakdown, setUnscheduleBreakdown] = useState(false);
-    const [lainnya, setLainnya] = useState(false);
-    const [lainnyaText, setLainnyaText] = useState('');
-    const [catatanServis, setCatatanServis] = useState('');
-    const [kmUnit, setKmUnit] = useState('');
-    const [jumlahLiter, setJumlahLiter] = useState('');
+    const [servisMingguan, setServisMingguan] = useState(draft.servisMingguan ?? false);
+    const [servisBerkala, setServisBerkala] = useState(draft.servisBerkala ?? false);
+    const [unscheduleBreakdown, setUnscheduleBreakdown] = useState(draft.unscheduleBreakdown ?? false);
+    const [lainnya, setLainnya] = useState(draft.lainnya ?? false);
+    const [lainnyaText, setLainnyaText] = useState(draft.lainnyaText ?? '');
+    const [catatanServis, setCatatanServis] = useState(draft.catatanServis ?? '');
+    const [kmUnit, setKmUnit] = useState(draft.kmUnit ?? '');
+    const [jumlahLiter, setJumlahLiter] = useState(draft.jumlahLiter ?? '');
 
     // Step 4
-    const [hmKmAkhir, setHmKmAkhir] = useState('');
-    const [kondisiAkhir, setKondisiAkhir] = useState<'Layak Pakai' | 'BD' | ''>('');
-    const [justifikasiKondisi, setJustifikasiKondisi] = useState('');
+    const [hmKmAkhir, setHmKmAkhir] = useState(draft.hmKmAkhir ?? '');
+    const [kondisiAkhir, setKondisiAkhir] = useState<'Layak Pakai' | 'BD' | ''>(draft.kondisiAkhir ?? '');
+    const [justifikasiKondisi, setJustifikasiKondisi] = useState(draft.justifikasiKondisi ?? '');
     const [submitting, setSubmitting] = useState(false);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
+    const [hasDraft] = useState(() => Boolean(draft.selectedUnitId));
 
     const selectedUnit = units.find((u) => u.id === Number(selectedUnitId));
 
@@ -307,6 +350,21 @@ export default function P2hForm({ units, inspectionItems }: Props) {
             { A: [], B: [], C: [] },
         );
     }, [inspectionItems]);
+
+    // Auto-save draft setiap kali ada perubahan state (kecuali tanda tangan)
+    useEffect(() => {
+        saveDraft({
+            step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+            answers, servisMingguan, servisBerkala, unscheduleBreakdown,
+            lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
+            hmKmAkhir, kondisiAkhir, justifikasiKondisi,
+        });
+    }, [
+        step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+        answers, servisMingguan, servisBerkala, unscheduleBreakdown,
+        lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
+        hmKmAkhir, kondisiAkhir, justifikasiKondisi,
+    ]);
 
     useEffect(() => {
         if (!selectedUnitId) { setSlotInfo(null); return; }
@@ -394,6 +452,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
             keterangan: answers[item.id]?.keterangan || null,
         }));
 
+        clearDraft();
+
         router.post('/p2h', {
             unit_id: Number(selectedUnitId),
             job_site: jobSite || null,
@@ -419,6 +479,13 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         }, {
             onError: (errors) => {
                 setSubmitting(false);
+                // Kembalikan draft jika submit gagal
+                saveDraft({
+                    step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+                    answers, servisMingguan, servisBerkala, unscheduleBreakdown,
+                    lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
+                    hmKmAkhir, kondisiAkhir, justifikasiKondisi,
+                });
                 const messages = Object.values(errors);
                 if (messages.length > 0) {
                     messages.forEach((msg) => toast.error(msg));
@@ -439,6 +506,20 @@ export default function P2hForm({ units, inspectionItems }: Props) {
 
                 {/* ── Sticky Top Header ── */}
                 <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    {hasDraft && (
+                        <div className="mb-2 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 dark:border-amber-900 dark:bg-amber-950/30">
+                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                                ✦ Draft tersimpan dilanjutkan secara otomatis
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => { clearDraft(); window.location.reload(); }}
+                                className="ml-2 text-xs font-medium text-amber-600 underline hover:text-amber-800 dark:text-amber-400"
+                            >
+                                Mulai ulang
+                            </button>
+                        </div>
+                    )}
                     <div className="mb-3">
                         <h1 className="text-base font-bold">Form P2H</h1>
                         <p className="text-xs text-muted-foreground">

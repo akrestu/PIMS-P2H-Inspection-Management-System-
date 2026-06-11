@@ -15,8 +15,10 @@ import {
     ChevronRight,
     ExternalLink,
     Inbox,
+    Loader2,
     TriangleAlert,
 } from 'lucide-react';
+import { useState } from 'react';
 
 /* ─────────────────────────── Types ─────────────────────────── */
 interface PaginatedData {
@@ -194,8 +196,14 @@ export default function NotificationsIndex({ notifications, unread_count, total_
         router.get('/notifications', { filter: value === 'all' ? undefined : value }, { preserveState: false });
     };
 
+    const [markingAll, setMarkingAll] = useState(false);
+
     const handleMarkAllRead = () => {
-        router.post('/notifications/read-all');
+        if (markingAll) return;
+        setMarkingAll(true);
+        router.post('/notifications/read-all', {}, {
+            onFinish: () => setMarkingAll(false),
+        });
     };
 
     const gotoPage = (page: number) => {
@@ -233,9 +241,12 @@ export default function NotificationsIndex({ notifications, unread_count, total_
                     {unread_count > 0 && (
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={handleMarkAllRead} className="gap-2">
-                                    <CheckCheck className="h-4 w-4" />
-                                    Tandai Semua Dibaca
+                                <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markingAll} className="gap-2">
+                                    {markingAll
+                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                        : <CheckCheck className="h-4 w-4" />
+                                    }
+                                    {markingAll ? 'Memproses…' : 'Tandai Semua Dibaca'}
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>Tandai {unread_count} notifikasi sebagai sudah dibaca</TooltipContent>

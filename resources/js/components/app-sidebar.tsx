@@ -24,6 +24,7 @@ import {
     ClipboardPlus,
     ClockAlert,
     LayoutGrid,
+    ShieldCheck,
     Users,
 } from 'lucide-react';
 
@@ -79,6 +80,15 @@ export function AppSidebar() {
                               href: '/users',
                               icon: Users,
                           },
+                          ...(isAdmin
+                              ? [
+                                    {
+                                        title: 'Audit Log',
+                                        href: '/audit-log',
+                                        icon: ShieldCheck,
+                                    },
+                                ]
+                              : []),
                       ],
                   },
               ]

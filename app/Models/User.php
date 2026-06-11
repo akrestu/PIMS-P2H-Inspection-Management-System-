@@ -26,6 +26,29 @@ class User extends Authenticatable
     }
 
     /**
+     * Override default behavior: jika email null, kembalikan string kosong
+     * agar Fortify tidak mencoba menyimpan null sebagai primary key di password_reset_tokens.
+     * User tanpa email tidak bisa menggunakan fitur lupa password via email.
+     */
+    public function getEmailForPasswordReset(): string
+    {
+        return $this->email ?? '';
+    }
+
+    /**
+     * Tentukan apakah user ini bisa menerima link reset password.
+     * User tanpa email dikecualikan dari alur reset password.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        if (empty($this->email)) {
+            return;
+        }
+
+        parent::sendPasswordResetNotification($token);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

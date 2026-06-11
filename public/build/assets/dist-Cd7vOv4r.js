@@ -1,0 +1,1 @@
+import{_ as e,f as t}from"./jsx-runtime-KwM0nKCQ.js";import{n}from"./dist-dkgvhgf7.js";var r=e(t(),1);function i(e){let t=r.useRef(e);return r.useEffect(()=>{t.current=e}),r.useMemo(()=>(...e)=>t.current?.(...e),[])}var a=r.useId||(()=>void 0),o=0;function s(e){let[t,i]=r.useState(a());return n(()=>{e||i(e=>e??String(o++))},[e]),e||(t?`radix-${t}`:``)}export{i as n,s as t};

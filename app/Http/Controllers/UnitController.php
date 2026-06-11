@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\UnitsExport;
+use App\Exports\UnitsImportTemplateExport;
 use App\Http\Requests\StoreUnitRequest;
+use App\Imports\UnitsImport;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UnitController extends Controller
 {
@@ -45,6 +50,11 @@ class UnitController extends Controller
     {
         $unit = Unit::create($request->validated());
 
+        activity('unit')
+            ->causedBy(auth()->user())
+            ->performedOn($unit)
+            ->log("Menambahkan unit: {$unit->no_unit} ({$unit->jenis_unit})");
+
         Inertia::flash('toast', [
             'type'        => 'success',
             'message'     => 'Unit berhasil ditambahkan',
@@ -63,6 +73,11 @@ class UnitController extends Controller
     {
         $unit->update($request->validated());
 
+        activity('unit')
+            ->causedBy(auth()->user())
+            ->performedOn($unit)
+            ->log("Memperbarui unit: {$unit->no_unit}");
+
         Inertia::flash('toast', [
             'type'        => 'success',
             'message'     => 'Unit berhasil diperbarui',
@@ -75,6 +90,12 @@ class UnitController extends Controller
     public function destroy(Unit $unit): RedirectResponse
     {
         $noUnit = $unit->no_unit;
+
+        activity('unit')
+            ->causedBy(auth()->user())
+            ->withProperties(['no_unit' => $noUnit, 'jenis_unit' => $unit->jenis_unit])
+            ->log("Menghapus unit: {$noUnit}");
+
         $unit->delete();
 
         Inertia::flash('toast', [
@@ -82,6 +103,46 @@ class UnitController extends Controller
             'message'     => 'Unit berhasil dihapus',
             'description' => "Unit {$noUnit} telah dihapus dari sistem.",
         ]);
+
+        return redirect()->route('units.index');
+    }
+
+    public function export(): BinaryFileResponse
+    {
+        $units = Unit::latest()->get();
+        return Excel::download(new UnitsExport($units), 'units_' . now()->format('Ymd_His') . '.xlsx');
+    }
+
+    public function importTemplate(): BinaryFileResponse
+    {
+        return Excel::download(new UnitsImportTemplateExport(), 'template_import_units.xlsx');
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+        ]);
+
+        $import = new UnitsImport();
+        Excel::import($import, $request->file('file'));
+
+        $success = $import->successCount();
+        $errors  = $import->rowErrors();
+
+        if (count($errors) > 0) {
+            Inertia::flash('toast', [
+                'type'        => 'warning',
+                'message'     => "Import selesai dengan {$success} berhasil, " . count($errors) . ' gagal.',
+                'description' => implode(' | ', array_slice($errors, 0, 3)) . (count($errors) > 3 ? '...' : ''),
+            ]);
+        } else {
+            Inertia::flash('toast', [
+                'type'        => 'success',
+                'message'     => 'Import berhasil',
+                'description' => "{$success} unit berhasil ditambahkan.",
+            ]);
+        }
 
         return redirect()->route('units.index');
     }

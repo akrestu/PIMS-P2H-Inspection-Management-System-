@@ -27,6 +27,13 @@ class P2hSessionController extends Controller
 {
     public function index(Request $request): Response
     {
+        $request->validate([
+            'date_from'  => 'nullable|date_format:Y-m-d',
+            'date_to'    => 'nullable|date_format:Y-m-d',
+            'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
+            'hasil'      => 'nullable|in:ada_tl,semua_layak',
+        ]);
+
         $user = $request->user();
 
         $query = P2hSession::with(['unit', 'userEntries.answers'])
@@ -125,7 +132,18 @@ class P2hSessionController extends Controller
             $parafUrl = null;
             if (! empty($data['paraf'])) {
                 $base64  = preg_replace('/^data:image\/\w+;base64,/', '', $data['paraf']);
-                $imgData = base64_decode($base64);
+                $imgData = base64_decode($base64, strict: true);
+
+                // Validasi bahwa data adalah gambar PNG/JPEG yang valid
+                if ($imgData === false) {
+                    throw new \InvalidArgumentException('Data tanda tangan tidak valid.');
+                }
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mime  = $finfo->buffer($imgData);
+                if (! in_array($mime, ['image/png', 'image/jpeg', 'image/webp'], true)) {
+                    throw new \InvalidArgumentException('Format tanda tangan tidak didukung.');
+                }
+
                 $filename = 'signatures/' . Str::uuid() . '.png';
                 Storage::disk('public')->put($filename, $imgData);
                 $parafUrl = $filename;
@@ -225,16 +243,18 @@ class P2hSessionController extends Controller
 
     public function destroy(P2hSession $session): RedirectResponse
     {
-        DB::transaction(function () use ($session) {
-            // Hapus file signature dari storage
-            $session->load('userEntries');
-            foreach ($session->userEntries as $entry) {
-                if ($entry->paraf_url) {
-                    Storage::disk('public')->delete($entry->paraf_url);
-                }
-            }
-            $session->delete();
-        });
+        $this->authorize('delete', $session);
+
+        activity('p2h')
+            ->causedBy(auth()->user())
+            ->performedOn($session)
+            ->withProperties([
+                'unit'    => $session->unit?->no_unit,
+                'tanggal' => $session->tanggal?->toDateString(),
+            ])
+            ->log("Menghapus sesi P2H unit {$session->unit?->no_unit} tanggal {$session->tanggal?->toDateString()}");
+
+        $session->delete();
 
         Inertia::flash('toast', [
             'type'    => 'success',

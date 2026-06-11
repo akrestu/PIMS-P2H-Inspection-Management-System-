@@ -13,11 +13,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
-    Building2,
     ChevronLeft,
     ChevronRight,
+    Download,
     Eye,
     EyeOff,
+    FileSpreadsheet,
     IdCard,
     Mail,
     MoreHorizontal,
@@ -28,6 +29,7 @@ import {
     Shield,
     ShieldCheck,
     Trash2,
+    Upload,
     User,
     UserCheck,
     Users,
@@ -48,7 +50,7 @@ interface UserRow {
     id: number;
     name: string;
     nik: string | null;
-    email: string;
+    email: string | null;
     roles: { name: Role }[];
     driver: {
         nik: string;
@@ -138,6 +140,28 @@ function RoleSelect({ value, onChange, error }: { value: string; onChange: (v: s
     );
 }
 
+/* ─────────────────── DepartmentSelect ──────────────────────── */
+const DEPARTMENTS = ['Production', 'Maintenance', 'Supply Chain', 'Engineering', 'HSE', 'HRGA'];
+
+function DepartmentSelect({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
+    return (
+        <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Department <span className="text-destructive">*</span></Label>
+            <Select value={value || ''} onValueChange={onChange}>
+                <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Pilih department..." />
+                </SelectTrigger>
+                <SelectContent>
+                    {DEPARTMENTS.map((d) => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {error && <p className="text-destructive text-xs">{error}</p>}
+        </div>
+    );
+}
+
 /* ─────────────────── JenisUnitSelect ───────────────────────── */
 function JenisUnitSelect({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
     return (
@@ -173,9 +197,18 @@ function AssignedUnitsSelect({
     onChange: (ids: number[]) => void;
     error?: string;
 }) {
+    const [unitSearch, setUnitSearch] = useState('');
+
     const toggle = (id: number) => {
         onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
     };
+
+    const filteredUnits = unitSearch.trim()
+        ? units.filter((u) =>
+              u.no_unit.toLowerCase().includes(unitSearch.toLowerCase()) ||
+              u.jenis_unit.toLowerCase().includes(unitSearch.toLowerCase()),
+          )
+        : units;
 
     const selectedUnits = units.filter((u) => selected.includes(u.id));
 
@@ -188,11 +221,24 @@ function AssignedUnitsSelect({
             <p className="text-muted-foreground text-xs">
                 Jika diisi, driver hanya melihat unit ini di form P2H. Jika kosong, fallback ke Kategori Unit.
             </p>
+            {units.length > 5 && (
+                <div className="relative">
+                    <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+                    <Input
+                        value={unitSearch}
+                        onChange={(e) => setUnitSearch(e.target.value)}
+                        placeholder="Cari nomor unit…"
+                        className="h-8 pl-8 text-xs"
+                    />
+                </div>
+            )}
             <div className="rounded-md border max-h-40 overflow-y-auto divide-y">
-                {units.length === 0 && (
-                    <p className="text-muted-foreground px-3 py-2 text-xs">Tidak ada unit aktif.</p>
+                {filteredUnits.length === 0 && (
+                    <p className="text-muted-foreground px-3 py-2 text-xs">
+                        {unitSearch ? 'Unit tidak ditemukan.' : 'Tidak ada unit aktif.'}
+                    </p>
                 )}
-                {units.map((unit) => (
+                {filteredUnits.map((unit) => (
                     <label
                         key={unit.id}
                         className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
@@ -288,11 +334,13 @@ function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChan
 
                     {/* Email */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="add-email" className="text-sm font-medium">Email <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="add-email" className="text-sm font-medium">
+                            Email <span className="text-muted-foreground font-normal">(opsional)</span>
+                        </Label>
                         <div className="relative">
                             <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                             <Input id="add-email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)}
-                                placeholder="user@pims.test" className="h-10 pl-9" required />
+                                placeholder="Kosongkan jika tidak ada" className="h-10 pl-9" />
                         </div>
                         {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
                     </div>
@@ -331,15 +379,11 @@ function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChan
                                 {errors.nama && <p className="text-destructive text-xs">{errors.nama}</p>}
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="add-dept" className="text-sm font-medium">Department <span className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <Building2 className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                                    <Input id="add-dept" value={data.department} onChange={(e) => setData('department', e.target.value)}
-                                        placeholder="Operasional" className="h-10 pl-9" required />
-                                </div>
-                                {errors.department && <p className="text-destructive text-xs">{errors.department}</p>}
-                            </div>
+                            <DepartmentSelect
+                                value={data.department}
+                                onChange={(v) => setData('department', v)}
+                                error={errors.department}
+                            />
 
                             <JenisUnitSelect
                                 value={data.jenis_unit}
@@ -425,7 +469,7 @@ function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | nu
                         </Avatar>
                         <div>
                             <p className="font-semibold text-sm">{user.name}</p>
-                            <p className="text-muted-foreground text-xs">{user.email}</p>
+                            <p className="text-muted-foreground text-xs">{user.email || '—'}</p>
                         </div>
                     </div>
                     <SheetTitle>Edit User</SheetTitle>
@@ -456,11 +500,13 @@ function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | nu
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="edit-email" className="text-sm font-medium">Email <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="edit-email" className="text-sm font-medium">
+                            Email <span className="text-muted-foreground font-normal">(opsional)</span>
+                        </Label>
                         <div className="relative">
                             <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                             <Input id="edit-email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)}
-                                className="h-10 pl-9" required />
+                                placeholder="Kosongkan jika tidak ada" className="h-10 pl-9" />
                         </div>
                         {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
                     </div>
@@ -498,15 +544,11 @@ function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | nu
                                 {errors.nama && <p className="text-destructive text-xs">{errors.nama}</p>}
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="edit-dept" className="text-sm font-medium">Department <span className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <Building2 className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                                    <Input id="edit-dept" value={data.department} onChange={(e) => setData('department', e.target.value)}
-                                        className="h-10 pl-9" required />
-                                </div>
-                                {errors.department && <p className="text-destructive text-xs">{errors.department}</p>}
-                            </div>
+                            <DepartmentSelect
+                                value={data.department}
+                                onChange={(v) => setData('department', v)}
+                                error={errors.department}
+                            />
 
                             <JenisUnitSelect
                                 value={data.jenis_unit}
@@ -581,6 +623,90 @@ function DeleteDialog({ user, open, onOpenChange }: { user: UserRow | null; open
     );
 }
 
+/* ───────────────── ImportSheet ─────────────────────────────── */
+function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+    const [file, setFile] = useState<File | null>(null);
+    const [processing, setProcessing] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    const handleClose = () => { setFile(null); onOpenChange(false); };
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!file) return;
+        setProcessing(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        router.post('/users/import', formData, {
+            forceFormData: true,
+            onFinish: () => { setProcessing(false); handleClose(); },
+        });
+    };
+
+    return (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+            <SheetContent className="flex flex-col" side="right">
+                <SheetHeader className="border-b pb-4">
+                    <SheetTitle className="flex items-center gap-2">
+                        <Upload className="h-5 w-5 text-muted-foreground" />
+                        Import User dari Excel
+                    </SheetTitle>
+                    <SheetDescription>
+                        Upload file Excel (.xlsx/.xls) sesuai format template. Baris yang error akan dilaporkan dan dilewati.
+                    </SheetDescription>
+                </SheetHeader>
+
+                <form id="import-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
+                    <div className="rounded-lg border border-dashed p-4 text-center space-y-2">
+                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm font-medium">
+                            {file ? file.name : 'Pilih file Excel'}
+                        </p>
+                        {file && (
+                            <p className="text-xs text-muted-foreground">
+                                {(file.size / 1024).toFixed(1)} KB
+                            </p>
+                        )}
+                        <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                            {file ? 'Ganti File' : 'Pilih File'}
+                        </Button>
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                        />
+                    </div>
+
+                    <div className="rounded-lg bg-muted/50 border p-3 space-y-1.5 text-xs text-muted-foreground">
+                        <p className="font-semibold text-foreground text-xs">Panduan Import:</p>
+                        <ul className="space-y-1 list-disc list-inside">
+                            <li>Download template terlebih dahulu</li>
+                            <li>Isi data sesuai kolom — jangan ubah nama kolom heading</li>
+                            <li>Role valid: <code className="bg-muted px-1 rounded">admin</code>, <code className="bg-muted px-1 rounded">manager</code>, <code className="bg-muted px-1 rounded">driver</code></li>
+                            <li>Email bersifat opsional</li>
+                            <li>NIK harus unik di seluruh sistem</li>
+                        </ul>
+                    </div>
+
+                    <a href="/users/import-template" className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline">
+                        <Download className="h-4 w-4" />
+                        Download Template Excel
+                    </a>
+                </form>
+
+                <SheetFooter className="border-t pt-4">
+                    <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
+                    <Button type="submit" form="import-form" disabled={!file || processing} className="flex-1">
+                        {processing ? 'Mengimport...' : 'Import Sekarang'}
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
 /* ───────────────── StatCard ─────────────────────────────────── */
 function StatCard({ title, value, icon: Icon, colorClass }: {
     title: string; value: number; icon: React.ElementType; colorClass: string;
@@ -606,6 +732,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
     const [addOpen, setAddOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
     const [editUser, setEditUser] = useState<UserRow | null>(null);
     const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
 
@@ -641,9 +768,29 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                         <h1 className="text-2xl font-bold tracking-tight">Manajemen User</h1>
                         <p className="text-muted-foreground mt-0.5 text-sm">Kelola seluruh akun pengguna sistem.</p>
                     </div>
-                    <Button onClick={() => setAddOpen(true)} className="gap-2">
-                        <Plus className="h-4 w-4" /> Tambah User
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="gap-2">
+                                    <Upload className="h-4 w-4" /> Import
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Import user dari file Excel</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <a href="/users/export">
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <Download className="h-4 w-4" /> Export Excel
+                                    </Button>
+                                </a>
+                            </TooltipTrigger>
+                            <TooltipContent>Download daftar user ke Excel</TooltipContent>
+                        </Tooltip>
+                        <Button onClick={() => setAddOpen(true)} className="gap-2">
+                            <Plus className="h-4 w-4" /> Tambah User
+                        </Button>
+                    </div>
                 </div>
 
                 {/* ── Stat Cards ── */}
@@ -779,7 +926,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                                 </TableCell>
 
                                                 <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
-                                                    {u.email}
+                                                    {u.email || <span className="text-muted-foreground/50">—</span>}
                                                 </TableCell>
 
                                                 <TableCell className="hidden text-sm lg:table-cell">
@@ -889,6 +1036,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
             </div>
 
             <AddUserSheet open={addOpen} onOpenChange={setAddOpen} units={units} />
+            <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
             <EditUserSheet user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} />
             <DeleteDialog user={deleteUser} open={!!deleteUser} onOpenChange={(o) => { if (!o) setDeleteUser(null); }} />
         </TooltipProvider>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\DriverDashboardController;
@@ -61,12 +62,20 @@ Route::middleware(['auth'])->group(function () {
     // Admin only
     Route::middleware(['role:admin'])->group(function () {
         Route::delete('/p2h/{session}', [P2hSessionController::class, 'destroy'])->name('p2h.destroy');
+        Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
     });
 
     // Admin & Manager
     Route::middleware(['role:admin|manager'])->group(function () {
-        Route::resource('units', UnitController::class);
+        Route::get('/units/export', [UnitController::class, 'export'])->name('units.export');
+        Route::get('/units/import-template', [UnitController::class, 'importTemplate'])->name('units.import-template');
+        Route::post('/units/import', [UnitController::class, 'import'])->middleware('throttle:5,1')->name('units.import');
+        Route::resource('units', UnitController::class)->except(['show']);
+
         Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
+        Route::get('/users/import-template', [UserController::class, 'importTemplate'])->name('users.import-template');
+        Route::post('/users/import', [UserController::class, 'import'])->middleware('throttle:5,1')->name('users.import');
 
         // Export PDF & Excel
         Route::get('/export/monitoring-pa/pdf',   [DataExportController::class, 'monitoringPaPdf'])->name('export.monitoring-pa.pdf');

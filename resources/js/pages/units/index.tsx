@@ -18,6 +18,8 @@ import {
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
+    Download,
+    FileSpreadsheet,
     MoreHorizontal,
     Package,
     Pencil,
@@ -26,6 +28,7 @@ import {
     Search,
     Trash2,
     Truck,
+    Upload,
     XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -201,6 +204,90 @@ function UnitFormSheet({
     );
 }
 
+/* ───────────────── ImportSheet ─────────────────────────────── */
+function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+    const [file, setFile] = useState<File | null>(null);
+    const [processing, setProcessing] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    const handleClose = () => { setFile(null); onOpenChange(false); };
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!file) return;
+        setProcessing(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        router.post('/units/import', formData, {
+            forceFormData: true,
+            onFinish: () => { setProcessing(false); handleClose(); },
+        });
+    };
+
+    return (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+            <SheetContent className="flex flex-col" side="right">
+                <SheetHeader className="border-b pb-4">
+                    <SheetTitle className="flex items-center gap-2">
+                        <Upload className="h-5 w-5 text-muted-foreground" />
+                        Import Unit dari Excel
+                    </SheetTitle>
+                    <SheetDescription>
+                        Upload file Excel (.xlsx/.xls) sesuai format template. Baris yang error akan dilaporkan dan dilewati.
+                    </SheetDescription>
+                </SheetHeader>
+
+                <form id="import-unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
+                    <div className="rounded-lg border border-dashed p-4 text-center space-y-2">
+                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm font-medium">
+                            {file ? file.name : 'Pilih file Excel'}
+                        </p>
+                        {file && (
+                            <p className="text-xs text-muted-foreground">
+                                {(file.size / 1024).toFixed(1)} KB
+                            </p>
+                        )}
+                        <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                            {file ? 'Ganti File' : 'Pilih File'}
+                        </Button>
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                        />
+                    </div>
+
+                    <div className="rounded-lg bg-muted/50 border p-3 space-y-1.5 text-xs text-muted-foreground">
+                        <p className="font-semibold text-foreground text-xs">Panduan Import:</p>
+                        <ul className="space-y-1 list-disc list-inside">
+                            <li>Download template terlebih dahulu</li>
+                            <li>Isi data sesuai kolom — jangan ubah nama kolom heading</li>
+                            <li>Jenis unit valid: <code className="bg-muted px-1 rounded">Bus</code>, <code className="bg-muted px-1 rounded">Light Vehicle</code></li>
+                            <li>Status valid: <code className="bg-muted px-1 rounded">active</code>, <code className="bg-muted px-1 rounded">inactive</code></li>
+                            <li>No. unit harus unik di seluruh sistem</li>
+                        </ul>
+                    </div>
+
+                    <a href="/units/import-template" className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline">
+                        <Download className="h-4 w-4" />
+                        Download Template Excel
+                    </a>
+                </form>
+
+                <SheetFooter className="border-t pt-4">
+                    <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
+                    <Button type="submit" form="import-unit-form" disabled={!file || processing} className="flex-1">
+                        {processing ? 'Mengimport...' : 'Import Sekarang'}
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
 /* ──────────────────── DeleteConfirmDialog ───────────────────── */
 function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; open: boolean; onOpenChange: (o: boolean) => void }) {
     const [processing, setProcessing] = useState(false);
@@ -286,6 +373,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
     const [editUnit, setEditUnit] = useState<Unit | undefined>(undefined);
     const [deleteUnit, setDeleteUnit] = useState<Unit | null>(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
 
     // Debounce search
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -350,10 +438,30 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                         <h1 className="text-2xl font-bold tracking-tight">Manajemen Unit</h1>
                         <p className="text-muted-foreground mt-0.5 text-sm">Kelola data kendaraan Bus & Light Vehicle.</p>
                     </div>
-                    <Button onClick={openAdd} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Tambah Unit
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="gap-2">
+                                    <Upload className="h-4 w-4" /> Import
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Import unit dari file Excel</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <a href="/units/export">
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <Download className="h-4 w-4" /> Export Excel
+                                    </Button>
+                                </a>
+                            </TooltipTrigger>
+                            <TooltipContent>Download daftar unit ke Excel</TooltipContent>
+                        </Tooltip>
+                        <Button onClick={openAdd} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Tambah Unit
+                        </Button>
+                    </div>
                 </div>
 
                 {/* ── Stat Cards ── */}
@@ -626,6 +734,9 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* ── Import Sheet ── */}
+            <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
 
             {/* ── Sheet: Add / Edit ── */}
             <UnitFormSheet

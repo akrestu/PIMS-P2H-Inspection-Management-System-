@@ -17,6 +17,12 @@ class P2hComplianceController extends Controller
 
     public function index(Request $request): Response
     {
+        $request->validate([
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'date_to'   => 'nullable|date_format:Y-m-d',
+            'jenis_unit'=> 'nullable|in:Bus,Light Vehicle',
+        ]);
+
         // ── 1. Parse + clamp date range (max 31 hari, default 14 hari terakhir) ──
         $dateTo   = $request->input('date_to',   now()->toDateString());
         $dateFrom = $request->input('date_from', now()->subDays(13)->toDateString());

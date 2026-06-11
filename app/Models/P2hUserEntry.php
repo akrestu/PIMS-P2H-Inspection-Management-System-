@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class P2hUserEntry extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'p2h_session_id', 'user_id', 'user_slot', 'lokasi_kerja', 'km_awal', 'hm_km_akhir',
         'paraf_url', 'shift', 'submitted_at',

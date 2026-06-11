@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ChartAreaInteractive } from '@/components/dashboard/chart-area-interactive';
 import { DataTable, RecentP2h } from '@/components/dashboard/data-table';
 import { FleetStatusChart } from '@/components/dashboard/fleet-status-chart';
+import { PAWeeklyTrend } from '@/components/dashboard/pa-weekly-trend';
 import { SectionCards } from '@/components/dashboard/section-cards';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { dashboard } from '@/routes';
@@ -25,9 +26,15 @@ interface ChartPoint {
     total: number;
 }
 
+interface PaPoint {
+    label: string;
+    pa: number;
+}
+
 interface Props {
     metrics: Metrics;
     chartData: ChartPoint[];
+    paWeeklyTrend: PaPoint[];
     recentP2h: RecentP2h[];
 }
 
@@ -53,7 +60,7 @@ function formatDateId() {
     }).format(new Date());
 }
 
-export default function DashboardIndex({ metrics, chartData, recentP2h }: Props) {
+export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, recentP2h }: Props) {
     const [alertDismissed, setAlertDismissed] = useState(false);
     const hasCritical = metrics.critical_tidak_layak > 0;
     const hasTL = metrics.unit_tidak_layak_hari_ini > 0;
@@ -172,6 +179,13 @@ export default function DashboardIndex({ metrics, chartData, recentP2h }: Props)
                                 <FleetStatusChart metrics={metrics} />
                             </ErrorBoundary>
                         </div>
+                    </div>
+
+                    {/* ── PA Weekly Trend ── */}
+                    <div className="px-4 lg:px-6">
+                        <ErrorBoundary label="trend PA mingguan">
+                            <PAWeeklyTrend data={paWeeklyTrend} />
+                        </ErrorBoundary>
                     </div>
 
                     <Separator className="mx-4 w-auto lg:mx-6" />
