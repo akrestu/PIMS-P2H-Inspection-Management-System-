@@ -264,6 +264,49 @@ class P2hSessionController extends Controller
         return redirect()->route('p2h.index');
     }
 
+    public function destroyEntry(P2hSession $session, P2hUserEntry $entry): RedirectResponse
+    {
+        $this->authorize('deleteEntry', $session);
+        abort_if($entry->p2h_session_id !== $session->id, 404);
+
+        $sessionDeleted = false;
+
+        DB::transaction(function () use ($session, $entry, &$sessionDeleted) {
+            activity('p2h')
+                ->causedBy(auth()->user())
+                ->performedOn($entry)
+                ->withProperties([
+                    'unit'    => $session->unit?->no_unit,
+                    'tanggal' => $session->tanggal?->toDateString(),
+                    'shift'   => $entry->shift,
+                    'slot'    => $entry->user_slot,
+                ])
+                ->log("Menghapus entry P2H slot {$entry->user_slot} unit {$session->unit?->no_unit}");
+
+            $entry->delete();
+
+            if ($session->userEntries()->count() === 0) {
+                $session->delete();
+                $sessionDeleted = true;
+            }
+        });
+
+        if ($sessionDeleted) {
+            Inertia::flash('toast', [
+                'type'    => 'success',
+                'message' => 'Entry terakhir dihapus, sesi P2H dihapus otomatis',
+            ]);
+            return redirect()->route('p2h.index');
+        }
+
+        Inertia::flash('toast', [
+            'type'    => 'success',
+            'message' => 'Entry shift berhasil dihapus',
+        ]);
+
+        return redirect()->route('p2h.show', $session->id);
+    }
+
     public function show(Request $request, P2hSession $session): Response
     {
         $this->authorize('view', $session);

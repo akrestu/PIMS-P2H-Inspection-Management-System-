@@ -251,15 +251,20 @@ class MonitoringController extends Controller
     }
 
     /**
-     * W = jumlah shift entries × SHIFT_HOURS (12 jam per shift).
+     * W = unique (tanggal × shift) × SHIFT_HOURS.
+     * Menghindari penghitungan ganda apabila beberapa driver mengisi P2H
+     * dalam shift yang sama pada hari yang sama.
      */
     private function calculateWorkingHours(Collection $unitSessions): float
     {
-        $shiftCount = 0;
+        $uniqueShifts = [];
         foreach ($unitSessions as $session) {
-            $shiftCount += $session->userEntries->count();
+            foreach ($session->userEntries as $entry) {
+                $key = $session->tanggal->toDateString() . '_' . ($entry->shift ?? 'unknown');
+                $uniqueShifts[$key] = true;
+            }
         }
-        return $shiftCount * self::SHIFT_HOURS;
+        return count($uniqueShifts) * self::SHIFT_HOURS;
     }
 
     /**

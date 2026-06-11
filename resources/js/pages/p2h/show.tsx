@@ -2,10 +2,18 @@ import RiskBadge from '@/components/P2h/RiskBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { P2hInspectionItem, P2hSession, P2hUserEntry } from '@/types/pims';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import {
     AlertTriangle,
@@ -22,10 +30,12 @@ import {
     ShieldAlert,
     ShieldCheck,
     Sun,
+    Trash2,
     User,
     Wrench,
     XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     session: P2hSession;
@@ -347,8 +357,96 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
     );
 }
 
+// ── Delete Entry Dialog ───────────────────────────────────────────────────────
+function DeleteEntryDialog({
+    entry,
+    session,
+    isLastEntry,
+    open,
+    onClose,
+}: {
+    entry: P2hUserEntry | null;
+    session: P2hSession;
+    isLastEntry: boolean;
+    open: boolean;
+    onClose: () => void;
+}) {
+    const [processing, setProcessing] = useState(false);
+
+    const handleDelete = () => {
+        if (!entry) return;
+        setProcessing(true);
+        router.delete(`/p2h/${session.id}/entries/${entry.id}`, {
+            onFinish: () => {
+                setProcessing(false);
+                onClose();
+            },
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+            <DialogContent className="max-w-sm">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-destructive">
+                        <Trash2 className="h-5 w-5" />
+                        Hapus Entry Shift?
+                    </DialogTitle>
+                    <DialogDescription asChild>
+                        <div className="space-y-2 pt-1 text-sm text-muted-foreground">
+                            {entry && (
+                                <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+                                    <p className="font-semibold text-foreground">{entry.user?.name ?? '-'}</p>
+                                    <div className="mt-1 flex items-center gap-2">
+                                        <ShiftBadge shift={entry.shift} />
+                                        {entry.submitted_at && (
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(entry.submitted_at).toLocaleString('id-ID', {
+                                                    day: 'numeric', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: false,
+                                                    timeZone: 'Asia/Jakarta',
+                                                })}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            <p className="text-amber-700 dark:text-amber-400">
+                                Semua jawaban checklist dan tanda tangan entry ini akan dihapus permanen.
+                            </p>
+                            {isLastEntry && (
+                                <p className="font-semibold text-destructive">
+                                    Ini adalah entry terakhir. Sesi P2H untuk unit ini pada tanggal ini akan ikut dihapus otomatis.
+                                </p>
+                            )}
+                        </div>
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={onClose} disabled={processing}>
+                        Batal
+                    </Button>
+                    <Button variant="destructive" onClick={handleDelete} disabled={processing} className="gap-2">
+                        {processing ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                            <Trash2 className="h-4 w-4" />
+                        )}
+                        Hapus Entry
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function P2hShow({ session, inspectionItems }: Props) {
+    const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>().props;
+    const isAdmin = auth?.user?.roles?.includes('admin') ?? false;
+
+    const [entryToDelete, setEntryToDelete] = useState<P2hUserEntry | null>(null);
+
     const entries = [...(session.user_entries ?? [])].sort((a, b) => a.user_slot - b.user_slot);
     const filledEntries = entries;
     const totalTL = filledEntries.reduce((sum, e) => sum + (e?.answers?.filter((a) => a.kondisi === 'Tidak Layak').length ?? 0), 0);
@@ -460,11 +558,32 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                         const slot = entry.user_slot;
                         return (
                             <TabsContent key={slot} value={String(slot)}>
+                                {isAdmin && (
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => setEntryToDelete(entry)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                            Hapus Entry Ini
+                                        </Button>
+                                    </div>
+                                )}
                                 <EntryDetail entry={entry} inspectionItems={inspectionItems} />
                             </TabsContent>
                         );
                     })}
                 </Tabs>
+
+                <DeleteEntryDialog
+                    entry={entryToDelete}
+                    session={session}
+                    isLastEntry={entries.length === 1}
+                    open={entryToDelete !== null}
+                    onClose={() => setEntryToDelete(null)}
+                />
 
                 {/* ── Service Info ── */}
                 {session.service_info && (

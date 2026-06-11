@@ -22,4 +22,10 @@ class P2hSessionPolicy
     {
         return $user->hasRole('admin');
     }
+
+    // Hanya admin yang boleh hapus entry per shift
+    public function deleteEntry(User $user, P2hSession $session): bool
+    {
+        return $user->hasRole('admin');
+    }
 }

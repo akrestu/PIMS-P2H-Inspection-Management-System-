@@ -170,8 +170,14 @@ class DataExportController extends Controller
             $bdDays        = $dailyData->where('effective_status', 'bd')->count();
             $compliancePa  = $totalDaysWithSession > 0 ? round(($operationDays / $totalDaysWithSession) * 100, 1) : null;
 
-            $shiftCount    = $unitSessions->sum(fn ($s) => $s->userEntries->count());
-            $workingHours  = $shiftCount * $SHIFT_HOURS;
+            $uniqueShifts = [];
+            foreach ($unitSessions as $s) {
+                foreach ($s->userEntries as $e) {
+                    $key = $s->tanggal->toDateString() . '_' . ($e->shift ?? 'unknown');
+                    $uniqueShifts[$key] = true;
+                }
+            }
+            $workingHours = count($uniqueShifts) * $SHIFT_HOURS;
             $downtimeHours = UnitDowntimeLog::where('unit_id', $unit->id)->completed()->inRange($dateFrom, $dateTo)
                 ->get()->sum(fn ($log) => $log->duration_hours ?? 0.0);
             $actualPa = ($workingHours + $downtimeHours) > 0
