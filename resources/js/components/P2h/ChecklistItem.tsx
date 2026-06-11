@@ -28,9 +28,9 @@ export default function ChecklistItem({ item, answer, onChange, onKeteranganChan
         >
             {/* Item label + risk badge */}
             <div className="mb-3 flex flex-wrap items-start gap-2">
-                <span className="mt-0.5 font-mono text-xs text-muted-foreground shrink-0">{item.urutan}.</span>
+                <span className="mt-0.5 font-mono text-sm text-muted-foreground shrink-0">{item.urutan}.</span>
                 <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-sm font-semibold leading-snug">{item.nama_item}</p>
+                    <p className="text-base font-semibold leading-snug">{item.nama_item}</p>
                     <RiskBadge kode_bahaya={item.kode_bahaya} />
                 </div>
             </div>
@@ -41,7 +41,7 @@ export default function ChecklistItem({ item, answer, onChange, onKeteranganChan
                     type="button"
                     onClick={() => onChange(item.id, 'Layak')}
                     className={cn(
-                        'flex h-12 items-center justify-center gap-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150 active:scale-95',
+                        'flex h-13 items-center justify-center gap-2 rounded-lg border-2 text-base font-semibold transition-all duration-150 active:scale-95',
                         isLayak
                             ? 'border-green-500 bg-green-500 text-white shadow-md'
                             : 'border-border bg-background text-muted-foreground hover:border-green-400 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30 dark:hover:text-green-400',
@@ -55,7 +55,7 @@ export default function ChecklistItem({ item, answer, onChange, onKeteranganChan
                     type="button"
                     onClick={() => onChange(item.id, 'Tidak Layak')}
                     className={cn(
-                        'flex h-12 items-center justify-center gap-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150 active:scale-95',
+                        'flex h-13 items-center justify-center gap-2 rounded-lg border-2 text-base font-semibold transition-all duration-150 active:scale-95',
                         isTidakLayak
                             ? 'border-red-500 bg-red-500 text-white shadow-md'
                             : 'border-border bg-background text-muted-foreground hover:border-red-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30 dark:hover:text-red-400',
@@ -69,14 +69,14 @@ export default function ChecklistItem({ item, answer, onChange, onKeteranganChan
             {/* Keterangan (muncul jika Tidak Layak) */}
             {isTidakLayak && (
                 <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <p className="mb-1.5 text-xs font-medium text-red-700 dark:text-red-400">
+                    <p className="mb-1.5 text-sm font-medium text-red-700 dark:text-red-400">
                         Wajib: Jelaskan kerusakan / kondisi yang ditemukan
                     </p>
                     <Textarea
                         placeholder="Contoh: Ban bocor, tekanan hanya 20 psi..."
                         value={answer.keterangan}
                         onChange={(e) => onKeteranganChange(item.id, e.target.value)}
-                        className="min-h-[72px] border-red-300 text-sm focus-visible:ring-red-400 dark:border-red-800"
+                        className="min-h-[72px] border-red-300 text-base focus-visible:ring-red-400 dark:border-red-800"
                         required
                     />
                 </div>

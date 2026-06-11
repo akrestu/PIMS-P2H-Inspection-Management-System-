@@ -66,8 +66,8 @@ export default function ChecklistGroup({
                 >
                     <div className="flex items-center gap-2.5">
                         <span className={cn('h-2.5 w-2.5 rounded-full shrink-0', config.dotClass)} />
-                        <span className="text-sm font-semibold">Seksi {config.label}</span>
-                        <Badge className={cn('text-xs px-2 py-0', config.badgeClass)}>
+                        <span className="text-base font-semibold">Seksi {config.label}</span>
+                        <Badge className={cn('text-sm px-2 py-0', config.badgeClass)}>
                             {items.length} item
                         </Badge>
                     </div>

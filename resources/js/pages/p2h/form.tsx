@@ -124,8 +124,8 @@ function SummaryRow({
     return (
         <div className="flex items-center gap-3 py-2">
             {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
-            <span className="min-w-0 flex-1 text-sm text-muted-foreground">{label}</span>
-            <span className={cn('text-sm font-semibold', highlight && 'text-destructive')}>{value}</span>
+            <span className="min-w-0 flex-1 text-base text-muted-foreground">{label}</span>
+            <span className={cn('text-base font-semibold', highlight && 'text-destructive')}>{value}</span>
         </div>
     );
 }
@@ -654,8 +654,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                             <User className="h-4 w-4 text-muted-foreground" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs text-muted-foreground">Nama</p>
-                                            <p className="truncate text-sm font-semibold">{auth?.user?.name ?? '-'}</p>
+                                            <p className="text-sm text-muted-foreground">Nama</p>
+                                            <p className="truncate text-base font-semibold">{auth?.user?.name ?? '-'}</p>
                                         </div>
                                     </div>
                                     <Separator />
@@ -664,8 +664,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                             <Hash className="h-4 w-4 text-muted-foreground" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs text-muted-foreground">NIK</p>
-                                            <p className="truncate text-sm font-semibold">{auth?.user?.nik ?? '-'}</p>
+                                            <p className="text-sm text-muted-foreground">NIK</p>
+                                            <p className="truncate text-base font-semibold">{auth?.user?.nik ?? '-'}</p>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -780,8 +780,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                 <CardContent className="px-4 py-4 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-semibold">Progress Pemeriksaan</p>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-base font-semibold">Progress Pemeriksaan</p>
+                                            <p className="text-sm text-muted-foreground">
                                                 {filledCount} dari {inspectionItems.length} item sudah diperiksa
                                             </p>
                                         </div>
@@ -810,7 +810,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                             {/* Instruksi */}
                             <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/20">
                                 <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                <p className="text-sm text-blue-700 dark:text-blue-300">
                                     Periksa setiap komponen kendaraan, lalu pilih <strong>Layak</strong> atau{' '}
                                     <strong>Tidak Layak</strong>. Jika Tidak Layak, wajib isi keterangan.
                                 </p>
@@ -880,8 +880,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                                     className="mt-0.5 h-5 w-5"
                                                 />
                                                 <div>
-                                                    <p className="text-sm font-medium">{srv.label}</p>
-                                                    <p className="text-xs text-muted-foreground">{srv.desc}</p>
+                                                    <p className="text-base font-medium">{srv.label}</p>
+                                                    <p className="text-sm text-muted-foreground">{srv.desc}</p>
                                                 </div>
                                             </label>
                                         ))}
@@ -898,8 +898,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                                 className="mt-0.5 h-5 w-5"
                                             />
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium">Lainnya</p>
-                                                <p className="text-xs text-muted-foreground">Servis jenis lain — sebutkan di bawah</p>
+                                                <p className="text-base font-medium">Lainnya</p>
+                                                <p className="text-sm text-muted-foreground">Servis jenis lain — sebutkan di bawah</p>
                                                 {lainnya && (
                                                     <Input
                                                         value={lainnyaText}
