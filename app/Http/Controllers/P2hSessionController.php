@@ -272,6 +272,15 @@ class P2hSessionController extends Controller
         $sessionDeleted = false;
 
         DB::transaction(function () use ($session, $entry, &$sessionDeleted) {
+            $entry->delete();
+
+            if ($session->userEntries()->count() === 0) {
+                $session->delete();
+                $sessionDeleted = true;
+            }
+        });
+
+        try {
             activity('p2h')
                 ->causedBy(auth()->user())
                 ->performedOn($entry)
@@ -282,14 +291,9 @@ class P2hSessionController extends Controller
                     'slot'    => $entry->user_slot,
                 ])
                 ->log("Menghapus entry P2H slot {$entry->user_slot} unit {$session->unit?->no_unit}");
-
-            $entry->delete();
-
-            if ($session->userEntries()->count() === 0) {
-                $session->delete();
-                $sessionDeleted = true;
-            }
-        });
+        } catch (\Throwable) {
+            // activity_log mungkin belum punya kolom batch_uuid — jangan blokir operasi
+        }
 
         if ($sessionDeleted) {
             Inertia::flash('toast', [

@@ -12,7 +12,9 @@
       "Bash(git commit -m ' *)",
       "Bash(php -l app/Http/Controllers/AuditLogController.php)",
       "Bash(php -l app/Http/Controllers/DashboardController.php)",
-      "Bash(composer update *)"
+      "Bash(composer update *)",
+      "Bash(findstr /i \"activity\")",
+      "Bash(Select-String \"activity\")"
     ]
   }
 }
