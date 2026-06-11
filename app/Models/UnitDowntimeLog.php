@@ -36,7 +36,8 @@ class UnitDowntimeLog extends Model
             return null;
         }
 
-        return round($this->jam_mulai->diffInMinutes($this->jam_selesai) / 60, 2);
+        $minutes = $this->jam_selesai->diffInMinutes($this->jam_mulai, absolute: true);
+        return round($minutes / 60, 2);
     }
 
     /**

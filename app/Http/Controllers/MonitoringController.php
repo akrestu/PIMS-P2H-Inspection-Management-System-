@@ -129,9 +129,11 @@ class MonitoringController extends Controller
             // ── PA Aktual: W / (W + S) ────────────────────────────────────────
             $workingHours  = $this->calculateWorkingHours($unitSessions);
             $downtimeHours = $this->calculateDowntimeHours($unit->id, $dateFrom, $dateTo);
-            $actualPa      = ($workingHours + $downtimeHours) > 0
-                ? round($workingHours / ($workingHours + $downtimeHours) * 100, 1)
-                : null;
+            $actualPa = null;
+            if (($workingHours + $downtimeHours) > 0) {
+                $raw      = $workingHours / ($workingHours + $downtimeHours) * 100;
+                $actualPa = round(min(100.0, max(0.0, $raw)), 1);
+            }
 
             // ── Status saat ini (dari sesi terbaru) ───────────────────────────
             $latestSession = $unitSessions->sortByDesc('tanggal')->first();
