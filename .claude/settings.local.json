@@ -11,7 +11,8 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(php -l app/Http/Controllers/AuditLogController.php)",
-      "Bash(php -l app/Http/Controllers/DashboardController.php)"
+      "Bash(php -l app/Http/Controllers/DashboardController.php)",
+      "Bash(composer update *)"
     ]
   }
 }
