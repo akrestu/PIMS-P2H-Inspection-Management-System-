@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -217,6 +218,13 @@ class UserController extends Controller
         $errors  = $import->rowErrors();
 
         if (count($errors) > 0) {
+            Log::warning('Import user selesai dengan error', [
+                'user_id'      => auth()->id(),
+                'success'      => $success,
+                'error_count'  => count($errors),
+                'errors'       => $errors,
+            ]);
+
             Inertia::flash('toast', [
                 'type'        => 'warning',
                 'message'     => "Import selesai dengan {$success} berhasil, " . count($errors) . ' gagal.',

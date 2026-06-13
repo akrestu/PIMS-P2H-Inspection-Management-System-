@@ -10,14 +10,22 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 
 class UsersImport implements ToCollection, WithHeadingRow
 {
     private int $successCount = 0;
     private array $rowErrors = [];
 
+    public function headingRow(): int
+    {
+        return 2;
+    }
+
     public function collection(Collection $rows): void
     {
+        set_time_limit(0);
+
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2; // +2: baris 1 = heading
 
