@@ -15,6 +15,10 @@ return [
 
     'name' => env('APP_NAME', 'PIMS'),
 
+    'contact_wa' => env('CONTACT_WA', '085156650598'),
+
+    'job_sites' => array_filter(explode(',', env('JOB_SITES', 'PT. WBK Site MAS,PT. WBK Site BAU'))),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

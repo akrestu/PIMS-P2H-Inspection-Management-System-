@@ -1,14 +1,15 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { MessageCircle, Phone } from 'lucide-react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { login } from '@/routes';
 
-const WA_NUMBER = '085156650598';
-const WA_LINK = `https://wa.me/62${WA_NUMBER.replace(/^0/, '')}?text=${encodeURIComponent('Halo Tim IT, saya membutuhkan bantuan untuk reset password akun PIMS saya.')}`;
-
 export default function ForgotPassword() {
+    const { contact } = usePage().props;
+    const waNumber = contact.wa_number;
+    const waLink = `https://wa.me/62${waNumber.replace(/^0/, '')}?text=${encodeURIComponent('Halo Tim IT, saya membutuhkan bantuan untuk reset password akun PIMS saya.')}`;
+
     return (
         <>
             <Head title="PIMS — Lupa Password" />
@@ -35,7 +36,7 @@ export default function ForgotPassword() {
                             </p>
 
                             {/* WhatsApp Button */}
-                            <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="w-full">
+                            <a href={waLink} target="_blank" rel="noopener noreferrer" className="w-full">
                                 <Button size="lg" className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white">
                                     <MessageCircle className="size-5" />
                                     Chat WhatsApp Tim IT
@@ -45,7 +46,7 @@ export default function ForgotPassword() {
                             {/* Number display */}
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Phone className="size-4 shrink-0" />
-                                <span>{WA_NUMBER}</span>
+                                <span>{waNumber}</span>
                             </div>
                         </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AppSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -53,6 +54,14 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'contact' => [
+                'wa_number' => config('app.contact_wa', '085156650598'),
+            ],
+            'options' => [
+                'job_sites'               => AppSetting::get('job_sites', config('app.job_sites', ['PT. WBK Site MAS', 'PT. WBK Site BAU'])),
+                'shifts'                  => AppSetting::get('shifts', ['Shift I', 'Shift II']),
+                'session_lifetime_minutes' => (int) config('session.lifetime', 120),
+            ],
             'auth' => [
                 'user' => $user ? array_merge($user->toArray(), [
                     'roles' => $user->getRoleNames()->toArray(),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\AppSetting;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +21,7 @@ class StoreP2hRequest extends FormRequest
             'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],
             'km_awal'                           => ['nullable', 'integer', 'min:0'],
             'hm_km_akhir'                       => ['nullable', 'integer', 'min:0'],
-            'shift'                             => ['required', Rule::in(['Shift I', 'Shift II'])],
+            'shift'                             => ['required', Rule::in(AppSetting::get('shifts', ['Shift I', 'Shift II']))],
             'paraf'                             => ['required', 'string'],
             'answers'                           => ['required', 'array', 'size:' . \App\Models\P2hInspectionItem::active()->count()],
             'answers.*.inspection_item_id'      => ['required', 'integer', 'exists:p2h_inspection_items,id'],

@@ -336,7 +336,8 @@ class DataExportController extends Controller
             ->when($request->no_unit,   fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$request->no_unit}%")))
             ->when($request->jenis_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $request->jenis_unit)))
             ->when($request->hasil === 'ada_tl',      fn ($q) => $q->whereHas('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
-            ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')));
+            ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
+            ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
         if ($user->hasRole('driver')) {
             $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id));
@@ -360,6 +361,7 @@ class DataExportController extends Controller
             'no_unit'    => $request->no_unit,
             'jenis_unit' => $request->jenis_unit,
             'hasil'      => $request->hasil,
+            'user_id'    => $request->user_id,
         ];
 
         return [$sessions, $filters];

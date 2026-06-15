@@ -491,7 +491,7 @@ export default function DriverDashboardIndex({ shiftAktif, sudahP2hShiftIni, sta
         <>
             <Head title="Dashboard Driver" />
 
-            <div className="flex flex-1 flex-col gap-0 pb-24">
+            <div className="flex flex-1 flex-col gap-0 pb-32">
 
                 {/* ── Greeting Header ── */}
                 <GreetingHeader
@@ -551,6 +551,23 @@ export default function DriverDashboardIndex({ shiftAktif, sudahP2hShiftIni, sta
                     </div>
 
                 </div>
+            </div>
+
+            {/* ── Sticky Bottom CTA ── */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm px-4 py-3 safe-area-inset-bottom">
+                <Link href="/p2h/form" className="block">
+                    <Button
+                        className={cn(
+                            'w-full h-12 gap-2 text-sm font-bold shadow-md',
+                            sudahP2hShiftIni
+                                ? 'bg-primary hover:bg-primary/90'
+                                : 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 text-white shadow-amber-500/30',
+                        )}
+                    >
+                        <ClipboardPlus className="h-5 w-5" />
+                        {sudahP2hShiftIni ? 'Isi P2H Shift Berikutnya' : 'Isi Form P2H Sekarang'}
+                    </Button>
+                </Link>
             </div>
         </>
     );

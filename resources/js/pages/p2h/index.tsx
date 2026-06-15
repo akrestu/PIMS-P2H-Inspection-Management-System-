@@ -70,12 +70,19 @@ interface Filters {
     no_unit?: string;
     jenis_unit?: string;
     hasil?: string;
+    user_id?: string;
     [key: string]: string | undefined;
+}
+
+interface SimpleUser {
+    id: number;
+    name: string;
 }
 
 interface Props {
     sessions: PaginatedData;
     filters: Filters;
+    allUsers: SimpleUser[];
 }
 
 // Parse YYYY-MM-DD as local date (not UTC) to avoid off-by-one in WIB timezone
@@ -312,7 +319,7 @@ function SessionCardSkeleton() {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-export default function P2hIndex({ sessions, filters }: Props) {
+export default function P2hIndex({ sessions, filters, allUsers }: Props) {
     const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>().props;
     const isAdmin = auth?.user?.roles?.includes('admin') ?? false;
 
@@ -496,6 +503,23 @@ export default function P2hIndex({ sessions, filters }: Props) {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                {allUsers.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground">Driver</Label>
+                                        <Select
+                                            value={form.user_id ?? 'all'}
+                                            onValueChange={(v) => setForm({ ...form, user_id: v === 'all' ? undefined : v })}
+                                        >
+                                            <SelectTrigger className="h-10"><SelectValue placeholder="Semua driver" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">Semua driver</SelectItem>
+                                                {allUsers.map((u) => (
+                                                    <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                                 <div className="flex items-end gap-2">
                                     <Button type="submit" className="h-10 flex-1 gap-2">
                                         <Search className="h-4 w-4" />

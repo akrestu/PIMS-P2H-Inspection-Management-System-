@@ -273,7 +273,9 @@ function clearDraft() {
 
 // ─── Main Form ────────────────────────────────────────────────────────────────
 export default function P2hForm({ units, inspectionItems }: Props) {
-    const { auth } = usePage<{ auth: { user: { name: string; nik?: string | null } | null } }>().props;
+    const { auth, options } = usePage<{ auth: { user: { name: string; nik?: string | null } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
+    const jobSiteOptions = options?.job_sites ?? ['PT. WBK Site MAS', 'PT. WBK Site BAU'];
+    const shiftOptions = options?.shifts ?? ['Shift I', 'Shift II'];
 
     const draft = loadDraft();
 
@@ -366,21 +368,31 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         hmKmAkhir, kondisiAkhir, justifikasiKondisi,
     ]);
 
-    useEffect(() => {
-        if (!selectedUnitId) { setSlotInfo(null); return; }
+    const checkSlot = useCallback((unitId: string, attempt = 1) => {
+        if (!unitId) { setSlotInfo(null); return; }
         setCheckingSlot(true);
-        fetch(`/api/p2h/check-slot?unit_id=${selectedUnitId}`)
+        fetch(`/api/p2h/check-slot?unit_id=${unitId}`)
             .then((r) => {
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 return r.json();
             })
-            .then((data) => setSlotInfo(data))
+            .then((data) => { setSlotInfo(data); setCheckingSlot(false); })
             .catch(() => {
-                setSlotInfo(null);
-                toast.error('Gagal mengecek ketersediaan slot. Coba pilih unit kembali.');
-            })
-            .finally(() => setCheckingSlot(false));
-    }, [selectedUnitId]);
+                if (attempt < 3) {
+                    setTimeout(() => checkSlot(unitId, attempt + 1), attempt * 1000);
+                } else {
+                    setSlotInfo(null);
+                    setCheckingSlot(false);
+                    toast.error('Gagal mengecek ketersediaan slot setelah 3 percobaan. Periksa koneksi internet.', {
+                        action: { label: 'Coba Lagi', onClick: () => checkSlot(unitId) },
+                    });
+                }
+            });
+    }, []);
+
+    useEffect(() => {
+        checkSlot(selectedUnitId);
+    }, [selectedUnitId, checkSlot]);
 
     const handleKondisiChange = useCallback((itemId: number, kondisi: 'Layak' | 'Tidak Layak') => {
         setAnswers((prev) => ({
@@ -685,8 +697,9 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                                 <SelectValue placeholder="Pilih Job Site" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="PT. WBK Site MAS">PT. WBK Site MAS</SelectItem>
-                                                <SelectItem value="PT. WBK Site BAU">PT. WBK Site BAU</SelectItem>
+                                                {jobSiteOptions.map((site) => (
+                                                    <SelectItem key={site} value={site}>{site}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -746,24 +759,27 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                         type="single"
                                         value={shift}
                                         onValueChange={(v) => { if (v) setShift(v); }}
-                                        className="grid w-full grid-cols-2 gap-2"
+                                        className={cn('grid w-full gap-2', shiftOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3')}
                                     >
-                                        <ToggleGroupItem
-                                            value="Shift I"
-                                            className="h-20 flex-col gap-1.5 rounded-xl border-2 text-sm font-semibold data-[state=on]:border-amber-500 data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 dark:data-[state=on]:bg-amber-950/30 dark:data-[state=on]:text-amber-300"
-                                        >
-                                            <Sun className="h-6 w-6" />
-                                            Shift I
-                                            <span className="text-xs font-normal opacity-70">Day Shift</span>
-                                        </ToggleGroupItem>
-                                        <ToggleGroupItem
-                                            value="Shift II"
-                                            className="h-20 flex-col gap-1.5 rounded-xl border-2 text-sm font-semibold data-[state=on]:border-indigo-600 data-[state=on]:bg-indigo-50 data-[state=on]:text-indigo-700 dark:data-[state=on]:bg-indigo-950/30 dark:data-[state=on]:text-indigo-300"
-                                        >
-                                            <Moon className="h-6 w-6" />
-                                            Shift II
-                                            <span className="text-xs font-normal opacity-70">Night Shift</span>
-                                        </ToggleGroupItem>
+                                        {shiftOptions.map((s, i) => {
+                                            const isDay = i === 0;
+                                            const Icon = isDay ? Sun : Moon;
+                                            return (
+                                                <ToggleGroupItem
+                                                    key={s}
+                                                    value={s}
+                                                    className={cn(
+                                                        'h-20 flex-col gap-1.5 rounded-xl border-2 text-sm font-semibold',
+                                                        isDay
+                                                            ? 'data-[state=on]:border-amber-500 data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 dark:data-[state=on]:bg-amber-950/30 dark:data-[state=on]:text-amber-300'
+                                                            : 'data-[state=on]:border-indigo-600 data-[state=on]:bg-indigo-50 data-[state=on]:text-indigo-700 dark:data-[state=on]:bg-indigo-950/30 dark:data-[state=on]:text-indigo-300',
+                                                    )}
+                                                >
+                                                    <Icon className="h-6 w-6" />
+                                                    {s}
+                                                </ToggleGroupItem>
+                                            );
+                                        })}
                                     </ToggleGroup>
                                 </CardContent>
                             </Card>

@@ -10,6 +10,7 @@ use App\Models\P2hServiceInfo;
 use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Unit;
+use App\Models\User;
 use App\Notifications\CriticalItemAlert;
 use App\Policies\P2hSessionPolicy;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,7 @@ class P2hSessionController extends Controller
             'date_to'    => 'nullable|date_format:Y-m-d',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
             'hasil'      => 'nullable|in:ada_tl,semua_layak',
+            'user_id'    => 'nullable|integer|exists:users,id',
         ]);
 
         $user = $request->user();
@@ -42,7 +44,8 @@ class P2hSessionController extends Controller
             ->when($request->no_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$request->no_unit}%")))
             ->when($request->jenis_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $request->jenis_unit)))
             ->when($request->hasil === 'ada_tl', fn ($q) => $q->whereHas('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
-            ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')));
+            ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
+            ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
         // Driver hanya lihat P2H yang pernah ia isi
         if ($user->hasRole('driver')) {
@@ -63,9 +66,15 @@ class P2hSessionController extends Controller
             ];
         });
 
+        // Kirim daftar user (hanya untuk admin/manager) untuk filter driver
+        $allUsers = $user->hasAnyRole(['admin', 'manager'])
+            ? User::role('driver')->orderBy('name')->get(['id', 'name'])
+            : collect();
+
         return Inertia::render('p2h/index', [
             'sessions' => $mapped,
-            'filters'  => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil']),
+            'filters'  => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'user_id']),
+            'allUsers' => $allUsers,
         ]);
     }
 
@@ -117,14 +126,21 @@ class P2hSessionController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($data, $user, &$session) {
-            // Buat atau ambil session, lalu lock row untuk prevent race condition
-            $session = P2hSession::firstOrCreate(
-                ['unit_id' => $data['unit_id'], 'tanggal' => today()],
-                ['status' => 'open', 'created_by' => $user->id, 'job_site' => $data['job_site'] ?? null]
-            );
+            // Lock dulu sebelum create untuk prevent race condition
+            $session = P2hSession::where('unit_id', $data['unit_id'])
+                ->whereDate('tanggal', today())
+                ->lockForUpdate()
+                ->first();
 
-            // Pessimistic lock — blokir concurrent request untuk unit + tanggal yang sama
-            $session = P2hSession::where('id', $session->id)->lockForUpdate()->first();
+            if (! $session) {
+                $session = P2hSession::create([
+                    'unit_id'    => $data['unit_id'],
+                    'tanggal'    => today(),
+                    'status'     => 'open',
+                    'created_by' => $user->id,
+                    'job_site'   => $data['job_site'] ?? null,
+                ]);
+            }
 
             $nextSlot = $session->userEntries()->count() + 1;
 
@@ -291,8 +307,11 @@ class P2hSessionController extends Controller
                     'slot'    => $entry->user_slot,
                 ])
                 ->log("Menghapus entry P2H slot {$entry->user_slot} unit {$session->unit?->no_unit}");
-        } catch (\Throwable) {
-            // activity_log mungkin belum punya kolom batch_uuid — jangan blokir operasi
+        } catch (\Throwable $e) {
+            Log::warning('Activity log gagal dicatat', [
+                'entry_id' => $entry->id,
+                'error'    => $e->getMessage(),
+            ]);
         }
 
         if ($sessionDeleted) {

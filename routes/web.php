@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppSettingController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
@@ -64,6 +65,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/p2h/{session}', [P2hSessionController::class, 'destroy'])->name('p2h.destroy');
         Route::delete('/p2h/{session}/entries/{entry}', [P2hSessionController::class, 'destroyEntry'])->name('p2h.entries.destroy');
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
+        Route::get('/app-settings', [AppSettingController::class, 'index'])->name('app-settings.index');
+        Route::post('/app-settings', [AppSettingController::class, 'update'])->name('app-settings.update');
     });
 
     // Admin & Manager

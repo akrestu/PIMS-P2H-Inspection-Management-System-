@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\P2hChecklistAnswer;
 use App\Models\P2hUserEntry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,16 +32,15 @@ class DriverDashboardController extends Controller
             ->whereHas('session', fn ($q) => $q->whereMonth('tanggal', now()->month)->whereYear('tanggal', now()->year))
             ->count();
 
-        $totalTidakLayak = P2hUserEntry::where('user_id', $user->id)
-            ->withCount(['answers as tidak_layak_count' => fn ($q) => $q->where('kondisi', 'Tidak Layak')])
-            ->get()
-            ->sum('tidak_layak_count');
+        $totalTidakLayak = P2hChecklistAnswer::whereHas('userEntry', fn ($q) => $q->where('user_id', $user->id))
+            ->where('kondisi', 'Tidak Layak')
+            ->count();
 
-        // History P2H driver — 20 terbaru, diurutkan berdasarkan submitted_at lalu created_at
+        // History P2H driver — 10 terbaru untuk menjaga performa mobile
         $history = P2hUserEntry::where('user_id', $user->id)
             ->with(['session.unit', 'answers'])
             ->orderByRaw('COALESCE(submitted_at, created_at) DESC')
-            ->take(20)
+            ->take(10)
             ->get()
             ->map(function (P2hUserEntry $entry) {
                 $totalItems  = $entry->answers->count();

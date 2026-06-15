@@ -24,6 +24,7 @@ import {
     ClipboardPlus,
     ClockAlert,
     LayoutGrid,
+    Settings2,
     ShieldCheck,
     Users,
 } from 'lucide-react';
@@ -86,6 +87,11 @@ export function AppSidebar() {
                                         title: 'Audit Log',
                                         href: '/audit-log',
                                         icon: ShieldCheck,
+                                    },
+                                    {
+                                        title: 'Pengaturan Aplikasi',
+                                        href: '/app-settings',
+                                        icon: Settings2,
                                     },
                                 ]
                               : []),

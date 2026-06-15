@@ -14,7 +14,8 @@
       "Bash(php -l app/Http/Controllers/DashboardController.php)",
       "Bash(composer update *)",
       "Bash(findstr /i \"activity\")",
-      "Bash(Select-String \"activity\")"
+      "Bash(Select-String \"activity\")",
+      "Bash(php \"d:/COMPANY_DATA/01_IT_AND_DATABASE/04_APPLICATION/PIMS/artisan\" make:migration create_app_settings_table --path=database/migrations)"
     ]
   }
 }
