@@ -796,7 +796,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-DnfOQsOG.js",
+    "file": "assets/app-DMt1u0WR.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1056,7 +1056,7 @@
     ]
   },
   "resources/js/pages/driver-dashboard/index.tsx": {
-    "file": "assets/driver-dashboard-CDQseRBi.js",
+    "file": "assets/driver-dashboard-BV6E1e3j.js",
     "name": "driver-dashboard",
     "src": "resources/js/pages/driver-dashboard/index.tsx",
     "isDynamicEntry": true,
