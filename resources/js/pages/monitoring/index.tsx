@@ -22,12 +22,15 @@ import {
     FileSpreadsheet,
     FileText,
     Filter,
+    MessageCircle,
     RefreshCw,
     TrendingDown,
     TrendingUp,
     WrenchIcon,
     X,
 } from 'lucide-react';
+import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
+import { formatPaReport } from '@/lib/whatsapp-formatters';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -496,6 +499,8 @@ function Legend({ threshold }: { threshold: number }) {
 
 export default function MonitoringIndex({ unitData, summary, filters, allUnits }: Props) {
     const [form, setForm] = useState(filters);
+    const { share } = useWhatsAppShare();
+    const handleShareWhatsApp = () => share(formatPaReport(unitData, summary, filters));
     const [sortBy, setSortBy] = useState<'actual_asc' | 'actual_desc' | 'name' | 'status'>('actual_asc');
     const [showFilter, setShowFilter] = useState(false);
 
@@ -625,6 +630,14 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                                         <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                         Export Excel
                                     </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onSelect={handleShareWhatsApp}
+                                    className="flex items-center gap-2 cursor-pointer"
+                                >
+                                    <MessageCircle className="h-4 w-4 text-green-500" />
+                                    Bagikan via WhatsApp
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

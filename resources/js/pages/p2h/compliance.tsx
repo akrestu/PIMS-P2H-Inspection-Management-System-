@@ -15,9 +15,12 @@ import {
     FileSpreadsheet,
     FileText,
     Filter,
+    MessageCircle,
     RefreshCw,
     X,
 } from 'lucide-react';
+import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
+import { formatP2hReport } from '@/lib/whatsapp-formatters';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -119,10 +122,12 @@ function FilterBar({
     filters,
     highlightMissing,
     onToggleHighlight,
+    onShareWhatsApp,
 }: {
     filters: Filters;
     highlightMissing: boolean;
     onToggleHighlight: () => void;
+    onShareWhatsApp: () => void;
 }) {
     const [form, setForm] = useState<Filters>(filters);
     const [showPanel, setShowPanel] = useState(false);
@@ -233,6 +238,14 @@ function FilterBar({
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Export Excel
                                 </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onSelect={onShareWhatsApp}
+                                className="flex items-center gap-2 cursor-pointer"
+                            >
+                                <MessageCircle className="h-4 w-4 text-green-500" />
+                                Bagikan via WhatsApp
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -386,6 +399,8 @@ function MatrixLegend() {
 
 export default function P2hCompliancePage({ matrix, dates, columnSummary, summary, filters }: Props) {
     const [highlightMissing, setHighlightMissing] = useState(false);
+    const { share } = useWhatsAppShare();
+    const handleShareWhatsApp = () => share(formatP2hReport(matrix, dates, summary, filters));
 
     return (
         <>
@@ -410,6 +425,7 @@ export default function P2hCompliancePage({ matrix, dates, columnSummary, summar
                     filters={filters}
                     highlightMissing={highlightMissing}
                     onToggleHighlight={() => setHighlightMissing((v) => !v)}
+                    onShareWhatsApp={handleShareWhatsApp}
                 />
 
                 {/* ── Legend ── */}
