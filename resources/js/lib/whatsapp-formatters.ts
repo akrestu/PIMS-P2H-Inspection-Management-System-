@@ -92,14 +92,12 @@ function todayId(): string {
 }
 
 function jenisLabel(jenis: string): string {
-    if (jenis === 'Light Vehicle') return 'Kendaraan Ringan (LV)';
-    if (jenis === 'Bus') return 'Bus';
+    if (jenis === 'Light Vehicle') return 'LV';
     return jenis;
 }
 
-function unitLabel(row: { no_unit: string; jenis_unit: string; no_lambung: string | null }): string {
-    const lambung = row.no_lambung ? ` (No. Lambung: ${row.no_lambung})` : '';
-    return `${row.no_unit}${lambung}`;
+function unitLabel(row: { no_unit: string; no_lambung: string | null }): string {
+    return row.no_lambung ? `${row.no_unit} (Lambung: ${row.no_lambung})` : row.no_unit;
 }
 
 // ── PA Monitoring Formatter ───────────────────────────────────────────────────
@@ -108,88 +106,52 @@ export function formatPaReport(unitData: UnitPA[], summary: PaSummary, filters: 
     const threshold = summary.pa_threshold;
     const lines: string[] = [];
 
-    lines.push('*LAPORAN KETERSEDIAAN KENDARAAN*');
-    lines.push(`Periode  : ${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
-    if (filters.jenis_unit) {
-        lines.push(`Kategori : ${jenisLabel(filters.jenis_unit)}`);
-    }
-    lines.push('');
-    lines.push(
-        'Laporan ini menunjukkan seberapa banyak waktu kendaraan tersedia untuk beroperasi (target minimal ' +
-        threshold + '% dari total waktu kerja).',
-    );
+    lines.push('*Laporan Ketersediaan Kendaraan*');
+    lines.push(`${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
+    if (filters.jenis_unit) lines.push(jenisLabel(filters.jenis_unit));
 
     lines.push('');
-    lines.push('*KONDISI ARMADA SAAT INI*');
-    lines.push(`- Kendaraan beroperasi normal : ${summary.operation_count} unit`);
-    lines.push(`- Kendaraan rusak (breakdown) : ${summary.bd_count} unit`);
-    if (summary.no_data_count > 0) {
-        lines.push(`- Kendaraan belum ada data   : ${summary.no_data_count} unit`);
-    }
-    lines.push(`- Total kendaraan dipantau   : ${summary.total_units} unit`);
-    lines.push('');
-    lines.push(
-        `Ketersediaan rata-rata armada: *${summary.fleet_actual_pa !== null ? summary.fleet_actual_pa + '%' : 'belum ada data'}*`,
-    );
-    lines.push(
-        `Kepatuhan pengecekan harian  : *${summary.fleet_compliance_pa !== null ? summary.fleet_compliance_pa + '%' : 'belum ada data'}*`,
-    );
+    lines.push(`Beroperasi normal : ${summary.operation_count} unit`);
+    lines.push(`Rusak (breakdown) : ${summary.bd_count} unit`);
+    if (summary.no_data_count > 0) lines.push(`Belum ada data    : ${summary.no_data_count} unit`);
+    lines.push(`Ketersediaan rata-rata : *${summary.fleet_actual_pa ?? '-'}%*`);
+    lines.push(`Kepatuhan cek harian   : *${summary.fleet_compliance_pa ?? '-'}%*`);
 
     // --- BD units ---
     const bdUnits = unitData.filter((u) => u.current_status === 'bd');
     if (bdUnits.length > 0) {
         lines.push('');
-        lines.push(`*KENDARAAN RUSAK / BREAKDOWN (${bdUnits.length} unit)*`);
-        lines.push('Kendaraan berikut sedang dalam kondisi rusak dan tidak dapat beroperasi:');
-        lines.push('');
+        lines.push(`*Kendaraan Rusak (${bdUnits.length})*`);
         for (const u of bdUnits) {
-            const tersedia = u.actual_pa !== null ? `${u.actual_pa}%` : 'belum ada data';
-            const wh = u.working_hours > 0 ? `${u.working_hours.toFixed(0)} jam` : '-';
-            const dh = u.downtime_hours > 0 ? `${u.downtime_hours.toFixed(0)} jam` : '-';
             lines.push(`${unitLabel(u)} - ${jenisLabel(u.jenis_unit)}`);
-            lines.push(`  Waktu tersedia  : ${tersedia} dari total jam kerja`);
-            lines.push(`  Jam beroperasi  : ${wh}`);
-            lines.push(`  Jam tidak jalan : ${dh}`);
-            lines.push(`  Hari beroperasi : ${u.operation_days} hari`);
-            lines.push(`  Hari rusak      : ${u.bd_days} hari`);
-            lines.push('');
+            lines.push(`  Tersedia ${u.actual_pa ?? '-'}%, jam rusak ${u.downtime_hours > 0 ? u.downtime_hours.toFixed(0) + ' jam' : '-'}, rusak ${u.bd_days} hari`);
         }
     }
 
-    // --- Operation units below threshold ---
+    // --- Operation below threshold ---
     const belowThreshold = unitData
         .filter((u) => u.current_status === 'operation' && u.actual_pa !== null && u.actual_pa < threshold)
         .sort((a, b) => (a.actual_pa ?? 0) - (b.actual_pa ?? 0));
 
     if (belowThreshold.length > 0) {
-        lines.push(`*KENDARAAN PERLU PERHATIAN - KETERSEDIAAN DI BAWAH ${threshold}% (${belowThreshold.length} unit)*`);
-        lines.push(`Kendaraan ini masih beroperasi, namun ketersediaannya di bawah target ${threshold}%:`);
         lines.push('');
+        lines.push(`*Perlu Perhatian - Di bawah ${threshold}% (${belowThreshold.length})*`);
         for (const u of belowThreshold) {
-            const tersedia = u.actual_pa !== null ? `${u.actual_pa}%` : '-';
-            const kepatuhan = u.compliance_pa !== null ? `${u.compliance_pa}%` : '-';
-            const dh = u.downtime_hours > 0 ? `${u.downtime_hours.toFixed(0)} jam` : '-';
             lines.push(`${unitLabel(u)} - ${jenisLabel(u.jenis_unit)}`);
-            lines.push(`  Waktu tersedia   : ${tersedia} (di bawah target ${threshold}%)`);
-            lines.push(`  Kepatuhan cek    : ${kepatuhan}`);
-            lines.push(`  Total jam rusak  : ${dh}`);
-            lines.push(`  Hari rusak       : ${u.bd_days} hari`);
-            lines.push('');
+            lines.push(`  Tersedia ${u.actual_pa ?? '-'}%, cek harian ${u.compliance_pa ?? '-'}%, rusak ${u.bd_days} hari`);
         }
     }
 
-    // --- Normal operation units ---
+    // --- Normal units ---
     const normalUnits = unitData
         .filter((u) => u.current_status === 'operation' && (u.actual_pa === null || u.actual_pa >= threshold))
         .sort((a, b) => (b.actual_pa ?? 0) - (a.actual_pa ?? 0));
 
     if (normalUnits.length > 0) {
-        lines.push(`*KENDARAAN BEROPERASI NORMAL - ${threshold}% KE ATAS (${normalUnits.length} unit)*`);
+        lines.push('');
+        lines.push(`*Beroperasi Normal (${normalUnits.length})*`);
         for (const u of normalUnits) {
-            const tersedia = u.actual_pa !== null ? `${u.actual_pa}%` : 'belum ada data jam';
-            const kepatuhan = u.compliance_pa !== null ? `${u.compliance_pa}%` : '-';
-            lines.push(`- ${unitLabel(u)} (${jenisLabel(u.jenis_unit)})`);
-            lines.push(`  Tersedia ${tersedia}, kepatuhan cek ${kepatuhan}`);
+            lines.push(`- ${unitLabel(u)} (${jenisLabel(u.jenis_unit)}) - Tersedia ${u.actual_pa ?? '-'}%, cek ${u.compliance_pa ?? '-'}%`);
         }
     }
 
@@ -197,17 +159,14 @@ export function formatPaReport(unitData: UnitPA[], summary: PaSummary, filters: 
     const noDataUnits = unitData.filter((u) => u.current_status === 'no_data');
     if (noDataUnits.length > 0) {
         lines.push('');
-        lines.push(`*KENDARAAN BELUM ADA DATA (${noDataUnits.length} unit)*`);
-        lines.push('Kendaraan berikut belum memiliki catatan penggunaan pada periode ini:');
+        lines.push(`*Belum Ada Data (${noDataUnits.length})*`);
         for (const u of noDataUnits) {
             lines.push(`- ${unitLabel(u)} (${jenisLabel(u.jenis_unit)})`);
         }
     }
 
     lines.push('');
-    lines.push('-----------------------------');
-    lines.push(`_Dikirim otomatis oleh sistem PIMS_`);
-    lines.push(`_${todayId()}_`);
+    lines.push(`_PIMS - ${todayId()}_`);
 
     return lines.join('\n');
 }
@@ -223,16 +182,9 @@ export function formatP2hReport(
     const lastDate = dates[dates.length - 1];
     const lines: string[] = [];
 
-    const kategori = filters.jenis_unit ? jenisLabel(filters.jenis_unit) : 'Semua Kendaraan';
-
-    lines.push('*PENGINGAT PENGECEKAN KENDARAAN (P2H)*');
-    lines.push(`Tanggal  : ${fmtDateShort(lastDate)}`);
-    lines.push(`Kategori : ${kategori}`);
-    lines.push('');
-    lines.push(
-        'P2H adalah pengecekan kondisi kendaraan yang wajib dilakukan setiap hari ' +
-        'sebelum kendaraan digunakan. Berikut status pengisian hari ini:',
-    );
+    lines.push('*Pengingat Pengecekan Kendaraan Harian*');
+    lines.push(fmtDateShort(lastDate));
+    if (filters.jenis_unit) lines.push(jenisLabel(filters.jenis_unit));
 
     const notFilled: MatrixRow[] = [];
     const filledLayak: MatrixRow[] = [];
@@ -240,41 +192,27 @@ export function formatP2hReport(
 
     for (const row of matrix) {
         const cell = row.cells[lastDate];
-        if (cell === null || cell === undefined) {
-            notFilled.push(row);
-        } else if (cell.status === 'bd') {
-            filledBd.push(row);
-        } else {
-            filledLayak.push(row);
-        }
+        if (!cell) notFilled.push(row);
+        else if (cell.status === 'bd') filledBd.push(row);
+        else filledLayak.push(row);
     }
 
-    // --- Belum P2H ---
     lines.push('');
-    lines.push('-----------------------------');
     if (notFilled.length === 0) {
-        lines.push('*SEMUA KENDARAAN SUDAH DICEK*');
-        lines.push('Tidak ada kendaraan yang terlewat. Terima kasih!');
+        lines.push('*Semua kendaraan sudah dicek hari ini.*');
     } else {
-        lines.push(`*BELUM DILAKUKAN PENGECEKAN (${notFilled.length} kendaraan)*`);
-        lines.push('Mohon segera lakukan pengecekan P2H untuk kendaraan berikut:');
-        lines.push('');
+        lines.push(`*Belum dicek (${notFilled.length} kendaraan)*`);
         for (const row of notFilled) {
             lines.push(`- ${unitLabel(row)} (${jenisLabel(row.jenis_unit)})`);
         }
     }
 
-    // --- Sudah P2H ---
     lines.push('');
-    lines.push('-----------------------------');
     if (filledLayak.length === 0 && filledBd.length === 0) {
-        lines.push('*BELUM ADA KENDARAAN YANG DICEK HARI INI*');
+        lines.push('Belum ada kendaraan yang dicek hari ini.');
     } else {
-        lines.push(`*SUDAH DILAKUKAN PENGECEKAN (${filledLayak.length + filledBd.length} kendaraan)*`);
-        lines.push('');
-
         if (filledLayak.length > 0) {
-            lines.push(`Layak digunakan (${filledLayak.length} kendaraan):`);
+            lines.push(`*Sudah dicek - Layak (${filledLayak.length} kendaraan)*`);
             if (filledLayak.length <= 10) {
                 for (const row of filledLayak) {
                     lines.push(`- ${unitLabel(row)} (${jenisLabel(row.jenis_unit)})`);
@@ -283,33 +221,23 @@ export function formatP2hReport(
                 lines.push(`- ${filledLayak.length} kendaraan dinyatakan layak`);
             }
         }
-
         if (filledBd.length > 0) {
             lines.push('');
-            lines.push(`Dinyatakan rusak / breakdown (${filledBd.length} kendaraan):`);
+            lines.push(`*Sudah dicek - Rusak (${filledBd.length} kendaraan)*`);
             for (const row of filledBd) {
                 lines.push(`- ${unitLabel(row)} (${jenisLabel(row.jenis_unit)})`);
             }
         }
     }
 
-    // --- Ringkasan periode ---
     lines.push('');
-    lines.push('-----------------------------');
-    lines.push('*RINGKASAN PERIODE*');
-    lines.push(`Periode  : ${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
-    lines.push(
-        `Tingkat kepatuhan pengisian P2H armada: *${summary.fleet_compliance}%*`,
-    );
-    lines.push(`Total hari yang terlewat (tidak ada pengecekan): ${summary.total_missed} hari`);
-    if (summary.total_bd_days > 0) {
-        lines.push(`Total hari kendaraan dinyatakan rusak: ${summary.total_bd_days} hari`);
-    }
+    lines.push(`Periode ${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
+    lines.push(`Kepatuhan pengisian : *${summary.fleet_compliance}%*`);
+    lines.push(`Hari terlewat       : ${summary.total_missed} hari`);
+    if (summary.total_bd_days > 0) lines.push(`Hari rusak          : ${summary.total_bd_days} hari`);
 
     lines.push('');
-    lines.push('-----------------------------');
-    lines.push(`_Dikirim otomatis oleh sistem PIMS_`);
-    lines.push(`_${todayId()}_`);
+    lines.push(`_PIMS - ${todayId()}_`);
 
     return lines.join('\n');
 }
@@ -323,86 +251,53 @@ export function formatP2hHistoryReport(
 ): string {
     const lines: string[] = [];
 
-    const kategori = filters.jenis_unit ? jenisLabel(filters.jenis_unit) : 'Semua Kendaraan';
-
-    lines.push('*LAPORAN KEPATUHAN PENGECEKAN KENDARAAN (P2H)*');
-    lines.push(`Periode  : ${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
-    lines.push(`Kategori : ${kategori}`);
-    lines.push('');
-    lines.push(
-        'Laporan ini merangkum seberapa rutin pengecekan P2H dilakukan ' +
-        'oleh setiap kendaraan selama periode di atas.',
-    );
+    lines.push('*Laporan Pengecekan Kendaraan*');
+    lines.push(`${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
+    if (filters.jenis_unit) lines.push(jenisLabel(filters.jenis_unit));
 
     lines.push('');
-    lines.push('*RINGKASAN ARMADA*');
-    lines.push(`- Tingkat kepatuhan seluruh armada : *${summary.fleet_compliance}%*`);
-    lines.push(`- Kendaraan dengan pengecekan sempurna (100%) : ${summary.perfect_units} unit`);
-    lines.push(`- Total hari yang terlewat (tidak ada pengecekan) : ${summary.total_missed} hari`);
-    if (summary.total_bd_days > 0) {
-        lines.push(`- Total hari dinyatakan rusak : ${summary.total_bd_days} hari`);
-    }
-    lines.push(`- Total kendaraan dipantau : ${summary.total_units} unit`);
+    lines.push(`Kepatuhan armada         : *${summary.fleet_compliance}%*`);
+    lines.push(`Kendaraan sempurna (100%): ${summary.perfect_units} unit`);
+    lines.push(`Hari terlewat            : ${summary.total_missed} hari`);
+    if (summary.total_bd_days > 0) lines.push(`Hari rusak               : ${summary.total_bd_days} hari`);
 
     const sorted = [...matrix].sort((a, b) => a.compliance_pct - b.compliance_pct);
-
     const poor = sorted.filter((r) => r.compliance_pct < 70);
     const fair = sorted.filter((r) => r.compliance_pct >= 70 && r.compliance_pct < 90);
     const good = sorted.filter((r) => r.compliance_pct >= 90);
 
-    // --- Perlu perhatian ---
     if (poor.length > 0) {
         lines.push('');
-        lines.push('-----------------------------');
-        lines.push(`*PERLU PERHATIAN - Kepatuhan di bawah 70% (${poor.length} kendaraan)*`);
-        lines.push('Kendaraan berikut sering melewatkan pengecekan harian:');
-        lines.push('');
+        lines.push(`*Perlu Perhatian - di bawah 70% (${poor.length} kendaraan)*`);
         for (const r of poor) {
             const missed = r.total_days - r.filled_days;
-            lines.push(`${unitLabel(r)} - ${jenisLabel(r.jenis_unit)}`);
-            lines.push(
-                `  Dicek ${r.filled_days} dari ${r.total_days} hari (${r.compliance_pct}%)`,
-            );
-            lines.push(`  Tidak dicek sebanyak ${missed} hari`);
-            lines.push('');
+            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)})`);
+            lines.push(`  Dicek ${r.filled_days} dari ${r.total_days} hari, tidak dicek ${missed} hari`);
         }
     }
 
-    // --- Cukup baik ---
     if (fair.length > 0) {
         lines.push('');
-        lines.push('-----------------------------');
-        lines.push(`*CUKUP BAIK - Kepatuhan 70% sampai 89% (${fair.length} kendaraan)*`);
-        lines.push('');
+        lines.push(`*Cukup Baik - 70% sampai 89% (${fair.length} kendaraan)*`);
         for (const r of fair) {
             const missed = r.total_days - r.filled_days;
-            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)})`);
-            lines.push(
-                `  Dicek ${r.filled_days} dari ${r.total_days} hari (${r.compliance_pct}%), terlewat ${missed} hari`,
-            );
+            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)}) - dicek ${r.filled_days}/${r.total_days} hari, terlewat ${missed} hari`);
         }
     }
 
-    // --- Baik ---
     if (good.length > 0) {
         lines.push('');
-        lines.push('-----------------------------');
-        lines.push(`*BAIK - Kepatuhan 90% ke atas (${good.length} kendaraan)*`);
-        lines.push('');
+        lines.push(`*Baik - 90% ke atas (${good.length} kendaraan)*`);
         for (const r of good) {
-            const label =
-                r.compliance_pct === 100
-                    ? `Sempurna! Dicek setiap hari (${r.total_days}/${r.total_days} hari)`
-                    : `Dicek ${r.filled_days} dari ${r.total_days} hari (${r.compliance_pct}%)`;
-            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)})`);
-            lines.push(`  ${label}`);
+            const detail = r.compliance_pct === 100
+                ? `sempurna, dicek setiap hari`
+                : `dicek ${r.filled_days} dari ${r.total_days} hari`;
+            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)}) - ${detail}`);
         }
     }
 
     lines.push('');
-    lines.push('-----------------------------');
-    lines.push(`_Dikirim otomatis oleh sistem PIMS_`);
-    lines.push(`_${todayId()}_`);
+    lines.push(`_PIMS - ${todayId()}_`);
 
     return lines.join('\n');
 }
