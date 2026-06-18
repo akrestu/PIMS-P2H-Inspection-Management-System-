@@ -17,10 +17,23 @@ use Illuminate\Support\Facades\Route;
 
 // Root redirect: role-aware
 Route::get('/', function () {
-    if (auth()->check() && auth()->user()->hasRole('driver')) {
+    if (! auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    $user = auth()->user();
+
+    if ($user->hasRole('driver')) {
         return redirect()->route('driver.dashboard');
     }
-    return redirect()->route('dashboard');
+
+    if ($user->hasAnyRole(['admin', 'manager'])) {
+        return redirect()->route('dashboard');
+    }
+
+    return redirect()->route('login')->withErrors([
+        'nik' => 'Akun Anda belum memiliki role yang valid. Hubungi administrator.',
+    ]);
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {

@@ -1,24 +1,21 @@
 import { Form } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
 
 interface LoginFormProps {
-    canResetPassword?: boolean;
     status?: string;
 }
 
-export function LoginForm({ canResetPassword, status }: LoginFormProps) {
+export function LoginForm({ status }: LoginFormProps) {
     return (
-        <div className="flex flex-col gap-6">
-            <div>
+        <div className="flex flex-col items-center gap-6">
+            <div className="text-center">
                 <h2 className="text-xl font-semibold tracking-tight">Masuk ke Akun Anda</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     Masukkan NIK dan password untuk melanjutkan
@@ -35,8 +32,8 @@ export function LoginForm({ canResetPassword, status }: LoginFormProps) {
                 {({ processing, errors }) => (
                     <>
                         {/* NIK */}
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="nik">NIK</Label>
+                        <div className="flex flex-col gap-1.5 text-center">
+                            <Label htmlFor="nik" className="text-center">NIK</Label>
                             <Input
                                 id="nik"
                                 type="text"
@@ -46,26 +43,15 @@ export function LoginForm({ canResetPassword, status }: LoginFormProps) {
                                 tabIndex={1}
                                 autoComplete="username"
                                 placeholder="Nomor Induk Karyawan"
-                                className="h-11 w-full tracking-widest"
+                                className="h-11 w-full text-center"
                                 inputMode="numeric"
                             />
                             <InputError message={errors.nik} />
                         </div>
 
                         {/* Password */}
-                        <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Password</Label>
-                                {canResetPassword && (
-                                    <TextLink
-                                        href={request()}
-                                        className="text-xs text-muted-foreground hover:text-foreground"
-                                        tabIndex={5}
-                                    >
-                                        Lupa password?
-                                    </TextLink>
-                                )}
-                            </div>
+                        <div className="flex flex-col gap-1.5 text-center">
+                            <Label htmlFor="password" className="text-center">Password</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
@@ -79,7 +65,7 @@ export function LoginForm({ canResetPassword, status }: LoginFormProps) {
                         </div>
 
                         {/* Remember me */}
-                        <div className="flex items-center gap-2.5 py-1">
+                        <div className="flex items-center justify-center gap-2.5 py-1">
                             <Checkbox id="remember" name="remember" tabIndex={3} />
                             <Label
                                 htmlFor="remember"

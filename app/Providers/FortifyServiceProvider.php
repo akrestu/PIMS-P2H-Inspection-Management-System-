@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Spatie\Permission\PermissionRegistrar;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -47,11 +48,26 @@ class FortifyServiceProvider extends ServiceProvider
                 public function toResponse($request)
                 {
                     $user = auth()->user();
+
+                    // Flush stale Spatie permission cache so hasRole() reads fresh data
+                    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
                     if ($user?->hasRole('driver')) {
                         return redirect()->route('driver.dashboard');
                     }
 
-                    return redirect()->route('dashboard');
+                    if ($user?->hasAnyRole(['admin', 'manager'])) {
+                        return redirect()->route('dashboard');
+                    }
+
+                    // User has no recognised role — log out and return to login with error
+                    auth()->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return redirect()->route('login')->withErrors([
+                        'nik' => 'Akun Anda belum memiliki role yang valid. Hubungi administrator.',
+                    ]);
                 }
             };
         });
