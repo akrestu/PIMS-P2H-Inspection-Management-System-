@@ -20,13 +20,16 @@ import {
     X,
 } from 'lucide-react';
 import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
-import { formatP2hReport } from '@/lib/whatsapp-formatters';
+import { formatP2hReport, formatP2hHistoryReport } from '@/lib/whatsapp-formatters';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
@@ -123,11 +126,13 @@ function FilterBar({
     highlightMissing,
     onToggleHighlight,
     onShareWhatsApp,
+    onShareWhatsAppHistory,
 }: {
     filters: Filters;
     highlightMissing: boolean;
     onToggleHighlight: () => void;
     onShareWhatsApp: () => void;
+    onShareWhatsAppHistory: () => void;
 }) {
     const [form, setForm] = useState<Filters>(filters);
     const [showPanel, setShowPanel] = useState(false);
@@ -240,13 +245,28 @@ function FilterBar({
                                 </a>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onSelect={onShareWhatsApp}
-                                className="flex items-center gap-2 cursor-pointer"
-                            >
-                                <MessageCircle className="h-4 w-4 text-green-500" />
-                                Bagikan via WhatsApp
-                            </DropdownMenuItem>
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+                                    <MessageCircle className="h-4 w-4 text-green-500" />
+                                    Bagikan via WhatsApp
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent>
+                                    <DropdownMenuItem
+                                        onSelect={onShareWhatsApp}
+                                        className="flex flex-col items-start cursor-pointer"
+                                    >
+                                        <span className="font-medium">Reminder Harian</span>
+                                        <span className="text-xs text-muted-foreground">Siapa belum & sudah P2H hari ini</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onSelect={onShareWhatsAppHistory}
+                                        className="flex flex-col items-start cursor-pointer"
+                                    >
+                                        <span className="font-medium">Laporan Historis</span>
+                                        <span className="text-xs text-muted-foreground">Compliance tiap unit sepanjang periode</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuSub>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -401,6 +421,7 @@ export default function P2hCompliancePage({ matrix, dates, columnSummary, summar
     const [highlightMissing, setHighlightMissing] = useState(false);
     const { share } = useWhatsAppShare();
     const handleShareWhatsApp = () => share(formatP2hReport(matrix, dates, summary, filters));
+    const handleShareWhatsAppHistory = () => share(formatP2hHistoryReport(matrix, summary, filters));
 
     return (
         <>
@@ -426,6 +447,7 @@ export default function P2hCompliancePage({ matrix, dates, columnSummary, summar
                     highlightMissing={highlightMissing}
                     onToggleHighlight={() => setHighlightMissing((v) => !v)}
                     onShareWhatsApp={handleShareWhatsApp}
+                    onShareWhatsAppHistory={handleShareWhatsAppHistory}
                 />
 
                 {/* ── Legend ── */}
