@@ -114,40 +114,60 @@ export function formatPaReport(unitData: UnitPA[], summary: PaSummary, filters: 
         lines.push(`- No Data   : ${summary.no_data_count} unit`);
     }
 
-    const needsAttention = unitData.filter(
-        (u) => u.actual_pa === null || u.actual_pa < threshold || u.current_status === 'bd',
-    );
-    const normalUnits = unitData.filter(
-        (u) => u.actual_pa !== null && u.actual_pa >= threshold && u.current_status !== 'bd',
-    );
+    const bdUnits = unitData.filter((u) => u.current_status === 'bd');
+    const operationUnits = unitData
+        .filter((u) => u.current_status === 'operation')
+        .sort((a, b) => (a.actual_pa ?? 0) - (b.actual_pa ?? 0));
+    const noDataUnits = unitData.filter((u) => u.current_status === 'no_data');
 
-    if (needsAttention.length > 0) {
+    if (bdUnits.length > 0) {
         lines.push('');
-        lines.push(`*[!] PERLU PERHATIAN (PA < ${threshold}% atau BD)*`);
-        for (const u of needsAttention) {
+        lines.push(`--- BREAKDOWN (${bdUnits.length} unit) ---`);
+        for (const u of bdUnits) {
             const pa = u.actual_pa !== null ? `${u.actual_pa}%` : 'N/A';
-            const p2h = u.compliance_pa !== null ? `${u.compliance_pa}%` : 'N/A';
-            const st =
-                u.current_status === 'bd'
-                    ? 'Breakdown'
-                    : u.current_status === 'operation'
-                      ? 'Operation'
-                      : 'No Data';
-            lines.push(`[X] ${u.no_unit} (${shortJenis(u.jenis_unit)}) - PA: ${pa} | P2H: ${p2h} | ${st}`);
+            const p2h = u.compliance_pa !== null ? `${u.compliance_pa}%` : '-';
+            const wh = u.working_hours > 0 ? `${u.working_hours.toFixed(1)} jam` : '-';
+            const dh = u.downtime_hours > 0 ? `${u.downtime_hours.toFixed(1)} jam` : '-';
+            lines.push(`[X] ${u.no_unit} (${shortJenis(u.jenis_unit)})`);
+            lines.push(`    PA Aktual : ${pa} | Kelayakan P2H: ${p2h}`);
+            lines.push(`    Jam Kerja : ${wh} | Downtime: ${dh}`);
+            lines.push(`    Hari Op   : ${u.operation_days}h | Hari BD: ${u.bd_days}h`);
         }
     }
 
-    if (normalUnits.length > 0) {
-        lines.push('');
-        if (normalUnits.length <= 5) {
-            lines.push('*[OK] UNIT OPERASI NORMAL*');
-            for (const u of normalUnits) {
-                lines.push(
-                    `[v] ${u.no_unit} (${shortJenis(u.jenis_unit)}) - PA: ${u.actual_pa}% | P2H: ${u.compliance_pa ?? 'N/A'}%`,
-                );
+    if (operationUnits.length > 0) {
+        const belowThreshold = operationUnits.filter((u) => u.actual_pa !== null && u.actual_pa < threshold);
+        const aboveThreshold = operationUnits.filter((u) => u.actual_pa === null || u.actual_pa >= threshold);
+
+        if (belowThreshold.length > 0) {
+            lines.push('');
+            lines.push(`--- OPERATION - PA RENDAH < ${threshold}% (${belowThreshold.length} unit) ---`);
+            for (const u of belowThreshold) {
+                const pa = u.actual_pa !== null ? `${u.actual_pa}%` : 'N/A';
+                const p2h = u.compliance_pa !== null ? `${u.compliance_pa}%` : '-';
+                const dh = u.downtime_hours > 0 ? `${u.downtime_hours.toFixed(1)} jam` : '-';
+                lines.push(`[!] ${u.no_unit} (${shortJenis(u.jenis_unit)})`);
+                lines.push(`    PA Aktual : ${pa} | Kelayakan P2H: ${p2h}`);
+                lines.push(`    Downtime  : ${dh} | Hari BD: ${u.bd_days}h`);
             }
-        } else {
-            lines.push(`[v] ${normalUnits.length} unit beroperasi normal (PA >= ${threshold}%)`);
+        }
+
+        if (aboveThreshold.length > 0) {
+            lines.push('');
+            lines.push(`--- OPERATION - PA NORMAL >= ${threshold}% (${aboveThreshold.length} unit) ---`);
+            for (const u of aboveThreshold) {
+                const pa = u.actual_pa !== null ? `${u.actual_pa}%` : 'N/A';
+                const p2h = u.compliance_pa !== null ? `${u.compliance_pa}%` : '-';
+                lines.push(`[v] ${u.no_unit} (${shortJenis(u.jenis_unit)}) - PA: ${pa} | P2H: ${p2h}`);
+            }
+        }
+    }
+
+    if (noDataUnits.length > 0) {
+        lines.push('');
+        lines.push(`--- TIDAK ADA DATA (${noDataUnits.length} unit) ---`);
+        for (const u of noDataUnits) {
+            lines.push(`[-] ${u.no_unit} (${shortJenis(u.jenis_unit)})`);
         }
     }
 
