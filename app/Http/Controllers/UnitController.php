@@ -165,10 +165,11 @@ class UnitController extends Controller
         $summary = implode(', ', $parts) ?: '0 perubahan';
 
         if (count($errors) > 0) {
+            session()->flash('import_errors', $errors);
             Inertia::flash('toast', [
                 'type'        => 'warning',
                 'message'     => "Import selesai: {$summary}, " . count($errors) . ' baris gagal.',
-                'description' => implode(' | ', array_slice($errors, 0, 3)) . (count($errors) > 3 ? '...' : ''),
+                'description' => implode(' | ', array_slice($errors, 0, 5)) . (count($errors) > 5 ? ' (+' . (count($errors) - 5) . ' lainnya)' : ''),
             ]);
         } else {
             Inertia::flash('toast', [

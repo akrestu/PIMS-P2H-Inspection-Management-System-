@@ -25,6 +25,10 @@ class UnitsImport implements ToCollection, WithHeadingRow
             $status    = strtolower(trim($row['status'] ?? 'active'));
             $dept      = trim($row['department'] ?? '') ?: null;
 
+            // Normalize jenis_unit — case-insensitive, terima LV/Bus/Light Vehicle
+            $jenisUnitMap = ['bus' => 'Bus', 'light vehicle' => 'Light Vehicle', 'lv' => 'Light Vehicle'];
+            $jenisUnit    = $jenisUnitMap[strtolower($jenisUnit)] ?? $jenisUnit;
+
             if (empty($noUnit)) {
                 $this->rowErrors[] = "Baris {$rowNum}: No. unit wajib diisi.";
                 continue;
@@ -38,11 +42,15 @@ class UnitsImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $existing = Unit::where('no_unit', $noUnit)->first();
+            // Cek termasuk soft-deleted agar tidak bentrok unique constraint
+            $existing = Unit::withTrashed()->where('no_unit', $noUnit)->first();
 
-            // UPDATE — no_unit sudah ada: perbarui data
             if ($existing) {
                 try {
+                    // Restore dulu kalau soft-deleted, lalu update datanya
+                    if ($existing->trashed()) {
+                        $existing->restore();
+                    }
                     $existing->update([
                         'jenis_unit' => $jenisUnit,
                         'no_lambung' => $noLambung,
