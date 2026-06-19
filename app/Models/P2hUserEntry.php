@@ -15,10 +15,13 @@ class P2hUserEntry extends Model
         'p2h_session_id', 'user_id', 'user_slot', 'lokasi_kerja', 'km_awal', 'hm_km_akhir',
         'paraf_url', 'shift', 'submitted_at',
         'kondisi_akhir', 'justifikasi_kondisi',
+        'approval_status', 'pic_approver_id', 'approver_id', 'approved_at', 'catatan_approval',
+        'approver_signature_url',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
+        'approved_at'  => 'datetime',
     ];
 
     public function session(): BelongsTo
@@ -41,6 +44,22 @@ class P2hUserEntry extends Model
         return $this->hasOne(P2hFuelLog::class);
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_id');
+    }
+
+    public function pic(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pic_approver_id');
+    }
+
+    /** Entry ini sudah dianggap sah (tidak perlu approval atau sudah approved) */
+    public function isValid(): bool
+    {
+        return $this->approval_status === null || $this->approval_status === 'approved';
+    }
+
     public function getTidakLayakCountAttribute(): int
     {
         return $this->answers()->where('kondisi', 'Tidak Layak')->count();
@@ -50,6 +69,13 @@ class P2hUserEntry extends Model
     {
         if ($this->kondisi_akhir === null) {
             return false;
+        }
+
+        // Pastikan inspectionItem sudah di-eager-load sebelum mengakses accessor ini.
+        // Jika belum, load sekarang untuk menghindari N+1 yang tersebar di caller.
+        if ($this->relationLoaded('answers') && $this->answers->isNotEmpty()
+            && ! $this->answers->first()->relationLoaded('inspectionItem')) {
+            $this->load('answers.inspectionItem');
         }
 
         $total = $this->answers->count();

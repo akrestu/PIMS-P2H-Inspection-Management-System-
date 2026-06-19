@@ -63,13 +63,33 @@ class HandleInertiaRequests extends Middleware
                 'session_lifetime_minutes' => (int) config('session.lifetime', 120),
             ],
             'auth' => [
-                'user' => $user ? array_merge($user->toArray(), [
+                'user' => $user ? array_merge($user->only(['id', 'name', 'email', 'jabatan', 'department', 'jenis_unit']), [
                     'roles' => $user->getRoleNames()->toArray(),
                 ]) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'notifications' => [
-                'unread_count' => $user ? $user->unreadNotifications()->count() : 0,
+                'unread_count'      => $user ? $user->unreadNotifications()->count() : 0,
+                'recent'            => $user
+                    ? cache()->remember(
+                        "recent_notifications_user_{$user->id}",
+                        now()->addSeconds(30),
+                        fn () => $user->notifications()->latest()->limit(5)->get(['id', 'type', 'data', 'read_at', 'created_at'])
+                    )
+                    : [],
+                'pending_approvals' => ($user && $user->canViewApprovals())
+                    ? cache()->remember(
+                        "pending_approvals_user_{$user->id}",
+                        now()->addSeconds(30),
+                        fn () => \App\Models\P2hUserEntry::where('approval_status', 'pending')
+                            ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
+                            ->when(
+                                $user->isStaffOnly(),
+                                fn ($q) => $q->where('pic_approver_id', $user->id)
+                            )
+                            ->count()
+                    )
+                    : 0,
             ],
             'flash' => $flash,
         ];

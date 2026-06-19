@@ -75,6 +75,7 @@ function UnitFormSheet({
         jenis_unit: unit?.jenis_unit ?? 'Light Vehicle',
         no_lambung: unit?.no_lambung ?? '',
         status: unit?.status ?? 'active',
+        department: unit?.department ?? '',
     });
 
     useEffect(() => {
@@ -83,6 +84,7 @@ function UnitFormSheet({
             jenis_unit: unit?.jenis_unit ?? 'Light Vehicle',
             no_lambung: unit?.no_lambung ?? '',
             status: unit?.status ?? 'active',
+            department: unit?.department ?? '',
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit?.id]);
@@ -163,6 +165,26 @@ function UnitFormSheet({
                             className="h-10"
                         />
                     </div>
+
+                    {/* Departemen (LV only) */}
+                    {data.jenis_unit === 'Light Vehicle' && (
+                        <div className="space-y-1.5">
+                            <Label htmlFor="department" className="text-sm font-medium">
+                                Departemen <span className="text-muted-foreground text-xs">(opsional)</span>
+                            </Label>
+                            <Input
+                                id="department"
+                                value={data.department}
+                                onChange={(e) => setData('department', e.target.value)}
+                                placeholder="Contoh: Operasional"
+                                className="h-10"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Staff/Sr.Staff departemen ini dapat melihat & menyetujui P2H unit LV ini.
+                            </p>
+                            {errors.department && <p className="text-destructive text-xs">{errors.department}</p>}
+                        </div>
+                    )}
 
                     {/* Status */}
                     <div className="space-y-1.5">
@@ -557,6 +579,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                         <TableHead>No. Unit</TableHead>
                                         <TableHead>Jenis Unit</TableHead>
                                         <TableHead>No. Polisi</TableHead>
+                                        <TableHead className="hidden md:table-cell">Departemen</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="w-14 text-right">Aksi</TableHead>
                                     </TableRow>
@@ -564,7 +587,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                 <TableBody>
                                     {units.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6}>
+                                            <TableCell colSpan={7}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="bg-muted rounded-full p-4">
                                                         <Package className="text-muted-foreground h-8 w-8" />
@@ -613,6 +636,11 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                                         <span className="text-muted-foreground text-sm">—</span>
                                                     )}
                                                 </TableCell>
+                                                <TableCell className="hidden md:table-cell text-sm">
+                                                    {unit.jenis_unit === 'Light Vehicle' && unit.department
+                                                        ? unit.department
+                                                        : <span className="text-muted-foreground">—</span>}
+                                                </TableCell>
                                                 <TableCell>
                                                     <Badge
                                                         variant={unit.status === 'active' ? 'default' : 'secondary'}
@@ -628,28 +656,24 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
-                                                                    >
-                                                                        <MoreHorizontal className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Aksi</TooltipContent>
-                                                        </Tooltip>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                aria-label="Aksi"
+                                                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                                                            >
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end" className="w-44">
-                                                            <DropdownMenuItem onClick={() => openEdit(unit)} className="gap-2">
+                                                            <DropdownMenuItem onClick={() => setTimeout(() => openEdit(unit), 0)} className="gap-2">
                                                                 <Pencil className="h-4 w-4" />
                                                                 Edit Unit
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
-                                                                onClick={() => openDelete(unit)}
+                                                                onClick={() => setTimeout(() => openDelete(unit), 0)}
                                                                 className="text-destructive focus:text-destructive gap-2"
                                                             >
                                                                 <Trash2 className="h-4 w-4" />

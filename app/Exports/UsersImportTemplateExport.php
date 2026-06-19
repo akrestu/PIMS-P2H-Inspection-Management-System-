@@ -17,15 +17,14 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
 {
     public function array(): array
     {
-        // Contoh satu baris
         return [
-            ['John Doe', '1234567890', 'john@email.com', 'Password123!', 'driver', 'Jhon', 'Operasional', 'Bus'],
+            ['John Doe', '1234567890', 'john@email.com', 'Password123!', 'driver', 'Non Staff', 'Operasional', 'Bus'],
         ];
     }
 
     public function headings(): array
     {
-        return ['nama_lengkap', 'nik', 'email', 'password', 'role', 'nama_driver', 'department', 'jenis_unit'];
+        return ['nama_lengkap', 'nik', 'email', 'password', 'role', 'jabatan', 'department', 'jenis_unit'];
     }
 
     public function title(): string
@@ -41,8 +40,8 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
             'C' => 32,
             'D' => 20,
             'E' => 12,
-            'F' => 24,
-            'G' => 20,
+            'F' => 14,
+            'G' => 22,
             'H' => 16,
         ];
     }
@@ -65,15 +64,14 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
 
-                // Keterangan kolom di baris 2
                 $notes = [
                     'A' => 'Nama lengkap (wajib)',
-                    'B' => 'NIK karyawan (wajib, unik)',
+                    'B' => 'NIK / NRPP karyawan (wajib, unik)',
                     'C' => 'Email (opsional)',
                     'D' => 'Password min. 8 karakter (wajib)',
                     'E' => 'admin / manager / driver (wajib)',
-                    'F' => 'Nama panggilan driver (wajib jika role=driver)',
-                    'G' => 'Department (wajib jika role=driver)',
+                    'F' => 'Sr.Staff / Staff / Non Staff (wajib kecuali role admin)',
+                    'G' => 'Nama departemen (wajib kecuali role admin)',
                     'H' => 'Bus atau Light Vehicle (opsional)',
                 ];
 
@@ -87,7 +85,6 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                 ]);
                 $sheet->getRowDimension(1)->setRowHeight(30);
 
-                // Tambah baris keterangan setelah heading (baris 3 setelah insert)
                 $lastDataRow = $sheet->getHighestRow();
                 $noteRow = $lastDataRow + 2;
                 $sheet->setCellValue("A{$noteRow}", 'Keterangan Kolom:');

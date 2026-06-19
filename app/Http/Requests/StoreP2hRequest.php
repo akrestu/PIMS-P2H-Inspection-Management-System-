@@ -17,6 +17,11 @@ class StoreP2hRequest extends FormRequest
     {
         return [
             'unit_id'                           => ['required', 'integer', 'exists:units,id', Rule::exists('units', 'id')->where('status', 'active')],
+            'pic_approver_id'                   => $this->requiresPicApprover()
+                ? ['required', 'integer', Rule::exists('users', 'id')
+                    ->whereIn('jabatan', ['Staff', 'Sr.Staff'])
+                    ->where('department', $this->getPicDepartment())]
+                : ['nullable', 'integer'],
             'job_site'                          => ['nullable', 'string', 'max:100'],
             'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],
             'km_awal'                           => ['nullable', 'integer', 'min:0'],
@@ -45,6 +50,19 @@ class StoreP2hRequest extends FormRequest
                 Rule::requiredIf(fn () => $this->isOverrideDecision()),
             ],
         ];
+    }
+
+    public function requiresPicApprover(): bool
+    {
+        $unit = \App\Models\Unit::find($this->input('unit_id'));
+        return $unit?->jenis_unit === 'Light Vehicle';
+    }
+
+    /** Department dari unit yang dipilih — dipakai untuk validasi PIC harus sedepartemen. */
+    public function getPicDepartment(): ?string
+    {
+        $unit = \App\Models\Unit::find($this->input('unit_id'));
+        return $unit?->department;
     }
 
     public function isOverrideDecision(): bool

@@ -26,6 +26,7 @@ class CriticalItemAlert extends Notification
     public function toArray(object $notifiable): array
     {
         return [
+            'type'           => 'critical_alert',
             'session_id'     => $this->session->id,
             'no_unit'        => $this->session->unit->no_unit,
             'driver_name'    => $this->entry->user->name,

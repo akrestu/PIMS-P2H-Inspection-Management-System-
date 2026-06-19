@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Link, usePage } from '@inertiajs/react';
-import { Bell } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, LogOut } from 'lucide-react';
+import { logout } from '@/routes';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function AppSidebarHeader({
@@ -20,8 +21,12 @@ export function AppSidebarHeader({
 
     const unreadCount = notifications?.unread_count ?? 0;
 
+    const handleLogout = () => {
+        router.flushAll();
+    };
+
     return (
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border/50 bg-background/90 px-4 backdrop-blur-md transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             {/* Left: trigger + breadcrumbs */}
             <div className="flex min-w-0 flex-1 items-center gap-2">
                 {/* Sidebar toggle — desktop only; mobile uses bottom nav bar */}
@@ -49,8 +54,29 @@ export function AppSidebarHeader({
                 )}
             </div>
 
-            {/* Right: theme toggle + notification bell */}
+            {/* Right: theme toggle + notification bell + logout (mobile) */}
             <div className="flex items-center gap-1">
+                {/* Logout — mobile only */}
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Link
+                                href={logout()}
+                                as="button"
+                                method="post"
+                                onClick={handleLogout}
+                                className="md:hidden inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                <span className="sr-only">Logout</span>
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs md:hidden">
+                            Logout
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>

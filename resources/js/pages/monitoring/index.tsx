@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
     Activity,
     AlertTriangle,
@@ -498,6 +498,12 @@ function Legend({ threshold }: { threshold: number }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function MonitoringIndex({ unitData, summary, filters, allUnits }: Props) {
+    const { auth } = usePage<{ auth: { user: { roles: string[]; jabatan?: string } | null } }>().props;
+    const roles    = auth?.user?.roles ?? [];
+    const jabatan  = auth?.user?.jabatan ?? '';
+    const isAdminOrManager = roles.includes('admin') || roles.includes('manager');
+    const isStaffDriver    = !isAdminOrManager && (jabatan === 'Staff' || jabatan === 'Sr.Staff');
+
     const [form, setForm] = useState(filters);
     const { share } = useWhatsAppShare();
     const handleShareWhatsApp = () => share(formatPaReport(unitData, summary, filters));
@@ -601,7 +607,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                             <RefreshCw className="h-4 w-4" />
                             Reset
                         </Button>
-                        <DropdownMenu>
+                        {!isStaffDriver && <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="gap-2">
                                     <Download className="h-4 w-4" />
@@ -640,7 +646,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                                     Bagikan via WhatsApp
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
-                        </DropdownMenu>
+                        </DropdownMenu>}
                     </div>
                 </div>
 
@@ -705,20 +711,22 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Jenis Unit</Label>
-                                    <Select
-                                        value={form.jenis_unit ?? 'all'}
-                                        onValueChange={(v) => setForm({ ...form, jenis_unit: v === 'all' ? undefined : v })}
-                                    >
-                                        <SelectTrigger className="h-10"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Semua jenis</SelectItem>
-                                            <SelectItem value="Bus">Bus</SelectItem>
-                                            <SelectItem value="Light Vehicle">Light Vehicle</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                {!isStaffDriver && (
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground">Jenis Unit</Label>
+                                        <Select
+                                            value={form.jenis_unit ?? 'all'}
+                                            onValueChange={(v) => setForm({ ...form, jenis_unit: v === 'all' ? undefined : v })}
+                                        >
+                                            <SelectTrigger className="h-10"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">Semua jenis</SelectItem>
+                                                <SelectItem value="Bus">Bus</SelectItem>
+                                                <SelectItem value="Light Vehicle">Light Vehicle</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                             </div>
                             <div className="mt-3 flex justify-end gap-2">
                                 <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>

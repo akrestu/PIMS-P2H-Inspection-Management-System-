@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class P2hSession extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['unit_id', 'tanggal', 'job_site', 'catatan_khusus', 'status', 'created_by'];
+    protected $fillable = ['unit_id', 'tanggal', 'job_site', 'catatan_khusus', 'status', 'created_by', 'best_compliance_score'];
 
     protected $casts = [
         'tanggal' => 'date',

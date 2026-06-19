@@ -41,6 +41,11 @@ class MonitoringController extends Controller
             $dateFrom = $from->toDateString();
         }
 
+        $authUser = $request->user();
+
+        // Driver Non Staff tidak diizinkan
+        abort_unless($authUser->canViewApprovals(), 403);
+
         // ── Semua unit aktif ──────────────────────────────────────────────────
         $unitQuery = Unit::active()->orderBy('no_unit');
         if ($unitId) {
@@ -49,6 +54,11 @@ class MonitoringController extends Controller
         if ($jenis) {
             $unitQuery->where('jenis_unit', $jenis);
         }
+        // Staff/Sr.Staff murni hanya lihat LV dept mereka
+        if ($authUser->isStaffOnly()) {
+            $unitQuery->where('jenis_unit', 'Light Vehicle')
+                      ->where('department', $authUser->department);
+        }
         $units = $unitQuery->get();
 
         // ── Semua sesi dalam range ────────────────────────────────────────────
@@ -56,11 +66,26 @@ class MonitoringController extends Controller
             ->whereBetween('tanggal', [$dateFrom, $dateTo])
             ->when($unitId, fn ($q) => $q->where('unit_id', $unitId))
             ->when($jenis, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $jenis)))
+            ->when(
+                $authUser->isStaffOnly(),
+                fn ($q) => $q->whereHas('unit', fn ($u) => $u
+                    ->where('jenis_unit', 'Light Vehicle')
+                    ->where('department', $authUser->department)
+                )
+            )
+            ->get()
+            ->groupBy('unit_id');
+
+        // ── Batch load semua downtime logs sekaligus (hindari N+1 per unit) ──
+        $unitIds = $units->pluck('id');
+        $downtimeLogs = UnitDowntimeLog::whereIn('unit_id', $unitIds)
+            ->completed()
+            ->inRange($dateFrom, $dateTo)
             ->get()
             ->groupBy('unit_id');
 
         // ── Hitung PA per unit ────────────────────────────────────────────────
-        $unitData = $units->map(function (Unit $unit) use ($sessions, $from, $to, $dateFrom, $dateTo) {
+        $unitData = $units->map(function (Unit $unit) use ($sessions, $from, $to, $dateFrom, $dateTo, $downtimeLogs) {
             $unitSessions = $sessions->get($unit->id, collect());
 
             // Group sesi per tanggal
@@ -128,7 +153,7 @@ class MonitoringController extends Controller
 
             // ── PA Aktual: W / (W + S) ────────────────────────────────────────
             $workingHours  = $this->calculateWorkingHours($unitSessions);
-            $downtimeHours = $this->calculateDowntimeHours($unit->id, $dateFrom, $dateTo);
+            $downtimeHours = $this->sumDowntimeHours($downtimeLogs->get($unit->id, collect()));
             $actualPa = null;
             if (($workingHours + $downtimeHours) > 0) {
                 $raw      = $workingHours / ($workingHours + $downtimeHours) * 100;
@@ -235,7 +260,11 @@ class MonitoringController extends Controller
             'shift_hours'           => self::SHIFT_HOURS,
         ];
 
-        $allUnits = Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit']);
+        $allUnitsQuery = Unit::active()->orderBy('no_unit');
+        if ($authUser->isStaffOnly()) {
+            $allUnitsQuery->where('jenis_unit', 'Light Vehicle')->where('department', $authUser->department);
+        }
+        $allUnits = $allUnitsQuery->get(['id', 'no_unit', 'jenis_unit']);
 
         return Inertia::render('monitoring/index', [
             'unitData' => $unitData,
@@ -268,14 +297,10 @@ class MonitoringController extends Controller
     }
 
     /**
-     * S = total jam downtime logs yang selesai dan overlap dengan range.
+     * S = total jam downtime dari collection yang sudah di-batch-load.
      */
-    private function calculateDowntimeHours(int $unitId, string $from, string $to): float
+    private function sumDowntimeHours(Collection $logs): float
     {
-        return UnitDowntimeLog::where('unit_id', $unitId)
-            ->completed()
-            ->inRange($from, $to)
-            ->get()
-            ->sum(fn ($log) => $log->duration_hours ?? 0.0);
+        return $logs->sum(fn ($log) => $log->duration_hours ?? 0.0);
     }
 }

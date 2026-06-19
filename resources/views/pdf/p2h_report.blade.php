@@ -31,7 +31,6 @@
         .ig tr:last-child td { border-bottom: none; }
         .ig .lbl { font-weight: bold; width: 78px; white-space: nowrap; }
         .ig .sep { width: 9px; text-align: center; }
-        .ig .val { }
 
         /* ── INSTR ── */
         .instr { font-size: 7.5px; font-style: italic; padding: 2px 4px; line-height: 1.55; }
@@ -55,8 +54,35 @@
         .cket { width: 110px; }
 
         .sec td { font-weight: bold; font-size: 7.5px; text-transform: uppercase;
-                   padding: 2px 4px !important; }
+                   padding: 2px 4px !important; background: #f0f0f0; }
         .tick { font-size: 8.5px; font-weight: bold; }
+
+        /* ── KONDISI AKHIR ── */
+        .kondisi-box { padding: 3px 5px; font-size: 8px; }
+        .kondisi-badge { display: inline-block; padding: 1px 6px; border-radius: 3px;
+                          font-weight: bold; font-size: 7.5px; border: 1px solid; }
+        .kondisi-layak { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .kondisi-bd    { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .kondisi-override { display: inline-block; margin-left: 4px; padding: 1px 5px;
+                             border-radius: 3px; background: #fef9c3; color: #854d0e;
+                             border: 1px solid #fde047; font-size: 7px; }
+
+        /* ── FUEL LOG ── */
+        .fuel-box { padding: 3px 5px; font-size: 8px; }
+        .fuel-grid { width: 100%; border-collapse: collapse; }
+        .fuel-grid td { padding: 1px 4px; font-size: 8px; }
+
+        /* ── SERVICE INFO ── */
+        .svc-box { padding: 3px 5px; font-size: 8px; }
+        .svc-check { display: inline-block; width: 8px; height: 8px; border: 1px solid #000;
+                      text-align: center; line-height: 8px; font-size: 7px; margin-right: 2px;
+                      vertical-align: middle; }
+
+        /* ── APPROVAL ── */
+        .apv-box { padding: 3px 5px; font-size: 8px; }
+        .apv-approved { color: #166534; font-weight: bold; }
+        .apv-rejected { color: #991b1b; font-weight: bold; }
+        .apv-pending  { color: #92400e; font-weight: bold; }
 
         /* ── CATATAN ── */
         .cat-title { font-weight: bold; font-size: 8px; text-align: center;
@@ -71,19 +97,19 @@
 
         /* ── SIG ── */
         .sig { width: 100%; border-collapse: collapse; }
-        .sig td { width: 33.33%; vertical-align: top; padding: 3px 6px 4px 6px;
+        .sig td { vertical-align: top; padding: 3px 6px 4px 6px;
                    border-right: 1px solid #000; font-size: 7.5px; text-align: left; }
         .sig td:last-child { border-right: none; }
         .sig .role { font-weight: bold; margin-bottom: 2px; }
-        .sig .space { height: 30px; position: relative; }
-        .sig .sig-img { max-width: 80px; max-height: 28px; }
+        .sig .space { height: 32px; position: relative; }
+        .sig .sig-img { max-width: 80px; max-height: 30px; object-fit: contain; }
         .sig .nl { border-top: 1px solid #000; margin-top: 2px; padding-top: 2px;
                     text-align: center; font-size: 7.5px; }
 
         /* ── FOOTER ── */
         .fnote { padding: 2px 5px; font-size: 6px; color: #444; line-height: 1.6; }
 
-        /* ── SECTION DIVIDERS (border-top on each section wrapper) ── */
+        /* ── SECTION DIVIDERS ── */
         .div1 { border-top: 1.5px solid #000; }
         .div2 { border-top: 1px solid #000; }
     </style>
@@ -97,11 +123,23 @@
         'B' => 'PEMERIKSAAN DARI DALAM KABIN',
         'C' => 'KELENGKAPAN TAMBAHAN',
     ];
+    $svcInfo = $session->serviceInfo;
 @endphp
 
 @foreach($entries as $idx => $entry)
 
-{{-- ══ OUTER FRAME via inline style ══ --}}
+@php
+    $fuelLog     = $entry->fuelLog;
+    $hasFuel     = $fuelLog && ($fuelLog->km_unit || $fuelLog->jumlah_liter);
+    $kondisiAkhr = $entry->kondisi_akhir;
+    $isOverride  = (bool) $entry->is_override;
+    $approvalSts = $entry->approval_status; // null | 'pending' | 'approved' | 'rejected'
+    $approver    = $entry->approver;
+
+    $isLV     = $session->unit?->jenis_unit === 'Light Vehicle';
+    $showApvr = $isLV && $approvalSts !== null;
+@endphp
+
 <table style="width:100%; border-collapse:separate; border-spacing:0; border:2px solid #000;">
 <tr><td style="padding:0;">
 
@@ -136,21 +174,21 @@
             <col style="width:72px"><col style="width:9px"><col style="width:62px">
         </colgroup>
         <tr>
-            <td class="lbl">NAMA</td><td class="sep">:</td><td class="val">{{ $entry->user?->name ?? '-' }}</td>
-            <td class="lbl">JOB SITE</td><td class="sep">:</td><td class="val" colspan="4">{{ $session->job_site ?? '-' }}</td>
+            <td class="lbl">NAMA</td><td class="sep">:</td><td>{{ $entry->user?->name ?? '-' }}</td>
+            <td class="lbl">JOB SITE</td><td class="sep">:</td><td colspan="4">{{ $session->job_site ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="lbl">HARI/TGL</td><td class="sep">:</td><td class="val">{{ $session->tanggal->translatedFormat('l, d/m/Y') }}</td>
-            <td class="lbl">TYPE ALAT</td><td class="sep">:</td><td class="val" colspan="4">{{ $session->unit->jenis_unit ?? '-' }}</td>
+            <td class="lbl">HARI/TGL</td><td class="sep">:</td><td>{{ $session->tanggal->translatedFormat('l, d/m/Y') }}</td>
+            <td class="lbl">TYPE ALAT</td><td class="sep">:</td><td colspan="4">{{ $session->unit->jenis_unit ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="lbl">SHIFT</td><td class="sep">:</td><td class="val">{{ $entry->shift ?? '-' }}</td>
-            <td class="lbl">NO ALAT</td><td class="sep">:</td><td class="val" colspan="4">{{ $session->unit->no_unit ?? '-' }}</td>
+            <td class="lbl">SHIFT</td><td class="sep">:</td><td>{{ $entry->shift ?? '-' }}</td>
+            <td class="lbl">NO ALAT</td><td class="sep">:</td><td colspan="4">{{ $session->unit->no_unit ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="lbl">LOKASI KERJA</td><td class="sep">:</td><td class="val">{{ $entry->lokasi_kerja ?? '-' }}</td>
-            <td class="lbl">HM/KM AWAL</td><td class="sep">:</td><td class="val">{{ $entry->km_awal !== null ? number_format($entry->km_awal, 0, ',', '.') : '' }}</td>
-            <td class="lbl">HM/KM AKHIR</td><td class="sep">:</td><td class="val">{{ $entry->hm_km_akhir !== null ? number_format($entry->hm_km_akhir, 0, ',', '.') : '' }}</td>
+            <td class="lbl">LOKASI KERJA</td><td class="sep">:</td><td>{{ $entry->lokasi_kerja ?? '-' }}</td>
+            <td class="lbl">HM/KM AWAL</td><td class="sep">:</td><td>{{ $entry->km_awal !== null ? number_format($entry->km_awal, 0, ',', '.') : '-' }}</td>
+            <td class="lbl">HM/KM AKHIR</td><td class="sep">:</td><td>{{ $entry->hm_km_akhir !== null ? number_format($entry->hm_km_akhir, 0, ',', '.') : '-' }}</td>
         </tr>
     </table>
 
@@ -181,7 +219,7 @@
         <tbody>
             @foreach($sections as $sectionKey => $sectionLabel)
                 <tr class="sec">
-                    <td class="cn0" style="font-weight:bold;">{{ $sectionKey }}</td>
+                    <td class="cn0">{{ $sectionKey }}</td>
                     <td colspan="5">{{ $sectionLabel }}</td>
                 </tr>
                 @foreach($inspectionItems->where('section', $sectionKey) as $item)
@@ -206,7 +244,113 @@
     </table>
     </div>
 
-    {{-- CATATAN --}}
+    {{-- KONDISI AKHIR OPERATOR --}}
+    @if($kondisiAkhr)
+    <div class="div2">
+        <div class="kondisi-box">
+            <strong>Keputusan Akhir Operator:</strong>&nbsp;
+            @if($kondisiAkhr === 'Layak Pakai')
+                <span class="kondisi-badge kondisi-layak">&#10003; LAYAK PAKAI</span>
+            @else
+                <span class="kondisi-badge kondisi-bd">&#10007; BD / TIDAK LAYAK</span>
+            @endif
+            @if($isOverride)
+                <span class="kondisi-override">Override</span>
+            @endif
+            @if($entry->justifikasi_kondisi)
+                <br><span style="font-style:italic; color:#555;">Alasan: {{ $entry->justifikasi_kondisi }}</span>
+            @endif
+        </div>
+    </div>
+    @endif
+
+    {{-- PENGISIAN BAHAN BAKAR --}}
+    @if($hasFuel)
+    <div class="div2">
+        <div class="fuel-box">
+            <strong>Pengisian Bahan Bakar:</strong>
+            <table class="fuel-grid" style="margin-top:2px;">
+                <tr>
+                    <td style="width:120px;"><strong>KM Saat Pengisian</strong></td>
+                    <td style="width:8px;">:</td>
+                    <td>{{ $fuelLog->km_unit !== null ? number_format($fuelLog->km_unit, 0, ',', '.') . ' km' : '-' }}</td>
+                    <td style="width:100px; padding-left:12px;"><strong>Jumlah Liter</strong></td>
+                    <td style="width:8px;">:</td>
+                    <td>{{ $fuelLog->jumlah_liter !== null ? $fuelLog->jumlah_liter . ' liter' : '-' }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    {{-- SERVIS & PEMELIHARAAN (dari session, tampil hanya di entry pertama) --}}
+    @if($idx === 0 && $svcInfo)
+    @php
+        $anySvc = $svcInfo->servis_mingguan || $svcInfo->servis_berkala || $svcInfo->unschedule_breakdown || $svcInfo->lainnya;
+    @endphp
+    @if($anySvc || $svcInfo->catatan_servis)
+    <div class="div2">
+        <div class="svc-box">
+            <strong>Servis &amp; Pemeliharaan:</strong>
+            @if($anySvc)
+            <span style="margin-left:6px;">
+                @if($svcInfo->servis_mingguan)
+                    <span class="svc-check">V</span> Servis Mingguan &nbsp;
+                @endif
+                @if($svcInfo->servis_berkala)
+                    <span class="svc-check">V</span> Servis Berkala &nbsp;
+                @endif
+                @if($svcInfo->unschedule_breakdown)
+                    <span class="svc-check">V</span> Unschedule / Breakdown &nbsp;
+                @endif
+                @if($svcInfo->lainnya)
+                    <span class="svc-check">V</span> Lainnya: {{ $svcInfo->lainnya }}
+                @endif
+            </span>
+            @endif
+            @if($svcInfo->catatan_servis)
+                <br><span style="font-style:italic; color:#555;">Catatan Servis: {{ $svcInfo->catatan_servis }}</span>
+            @endif
+        </div>
+    </div>
+    @endif
+    @endif
+
+    {{-- STATUS VERIFIKASI (untuk LV yang memerlukan approval) --}}
+    @if($showApvr)
+    <div class="div2">
+        <div class="apv-box">
+            <strong>Status Verifikasi:</strong>&nbsp;
+            @if($approvalSts === 'approved')
+                <span class="apv-approved">&#10003; DISETUJUI</span>
+                @if($approver)
+                    &nbsp;&mdash; oleh {{ $approver->name }}
+                    @if($entry->approved_at)
+                        &nbsp;({{ $entry->approved_at->format('d/m/Y H:i') }})
+                    @endif
+                @endif
+                @if($entry->catatan_approval)
+                    <br><span style="font-style:italic; color:#555;">Catatan: {{ $entry->catatan_approval }}</span>
+                @endif
+            @elseif($approvalSts === 'rejected')
+                <span class="apv-rejected">&#10007; DITOLAK</span>
+                @if($approver)
+                    &nbsp;&mdash; oleh {{ $approver->name }}
+                @endif
+                @if($entry->catatan_approval)
+                    <br><span style="font-style:italic; color:#555;">Catatan: {{ $entry->catatan_approval }}</span>
+                @endif
+            @else
+                <span class="apv-pending">&#9203; MENUNGGU VERIFIKASI</span>
+                @if($entry->pic)
+                    &nbsp;&mdash; PIC: {{ $entry->pic->name }}
+                @endif
+            @endif
+        </div>
+    </div>
+    @endif
+
+    {{-- CATATAN KHUSUS --}}
     <div class="div2">
         <div class="cat-title">CATATAN</div>
         @php $catatanText = trim($session->catatan_khusus ?? ''); @endphp
@@ -232,7 +376,7 @@
         </div>
     </div>
 
-    {{-- PELAKSANA LABEL --}}
+    {{-- PELAKSANA --}}
     <div class="div2" style="padding:2px 5px; font-size:7.5px; font-weight:bold;">
         Pelaksana Pemeriksaan Harian:
     </div>
@@ -241,24 +385,32 @@
     <div class="div2">
     <table class="sig">
         <tr>
-            <td>
+            {{-- Dibuat oleh: Driver --}}
+            <td style="width:50%">
                 <div class="role">Dibuat oleh :</div>
                 <div class="space">
                     @if($entry->paraf_url)
-                        <img src="{{ storage_path('app/public/' . $entry->paraf_url) }}" class="sig-img" alt="paraf">
+                        <img src="{{ storage_path('app/public/' . $entry->paraf_url) }}" class="sig-img" alt="paraf driver">
                     @endif
                 </div>
-                <div class="nl">( {{ $entry->user?->name ?? '...............................' }} )<br><strong>Driver</strong></div>
+                <div class="nl">
+                    ( {{ $entry->user?->name ?? '...............................' }} )<br>
+                    <strong>Driver</strong>
+                </div>
             </td>
-            <td>
-                <div class="role">Diperiksa oleh :</div>
-                <div class="space"></div>
-                <div class="nl">( ...............................<br><strong>Mekanik</strong></div>
-            </td>
-            <td>
-                <div class="role">Diketahui.</div>
-                <div class="space"></div>
-                <div class="nl">( ...............................<br><strong>Supervisor</strong></div>
+
+            {{-- Diverifikasi oleh: Approver --}}
+            <td style="width:50%">
+                <div class="role">Diverifikasi oleh :</div>
+                <div class="space">
+                    @if($showApvr && $entry->approver_signature_url)
+                        <img src="{{ storage_path('app/public/' . $entry->approver_signature_url) }}" class="sig-img" alt="paraf approver">
+                    @endif
+                </div>
+                <div class="nl">
+                    ( {{ $showApvr && $approver ? $approver->name : '...............................' }} )<br>
+                    <strong>PIC / Atasan</strong>
+                </div>
             </td>
         </tr>
     </table>
@@ -274,7 +426,7 @@
     </div>
 
 </td></tr>
-</table>{{-- /outer frame --}}
+</table>
 
 @if(!$loop->last)
     <div class="page-break"></div>

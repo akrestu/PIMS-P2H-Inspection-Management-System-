@@ -25,8 +25,7 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
         }
 
         return $this->users->values()->map(function ($user, $index) {
-            $role   = $user->roles->first()?->name ?? '';
-            $driver = $user->driver;
+            $role = $user->roles->first()?->name ?? '';
 
             return [
                 $index + 1,
@@ -34,9 +33,9 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
                 $user->nik ?? '',
                 $user->email ?? '',
                 $role,
-                $driver?->nama ?? '',
-                $driver?->department ?? '',
-                $driver?->jenis_unit ?? '',
+                $user->jabatan ?? '',
+                $user->department ?? '',
+                $user->jenis_unit ?? '',
                 $user->created_at?->format('d/m/Y H:i') ?? '',
             ];
         })->toArray();
@@ -44,7 +43,7 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
 
     public function headings(): array
     {
-        return ['No', 'Nama Lengkap', 'NIK', 'Email', 'Role', 'Nama Driver', 'Department', 'Jenis Unit', 'Tanggal Dibuat'];
+        return ['No', 'Nama Lengkap', 'NIK / NRPP', 'Email', 'Role', 'Jabatan', 'Departemen', 'Jenis Unit', 'Tanggal Dibuat'];
     }
 
     public function title(): string
@@ -57,11 +56,11 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
         return [
             'A' => 6,
             'B' => 28,
-            'C' => 16,
+            'C' => 18,
             'D' => 32,
             'E' => 12,
-            'F' => 24,
-            'G' => 20,
+            'F' => 14,
+            'G' => 22,
             'H' => 16,
             'I' => 18,
         ];
@@ -85,7 +84,6 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
 
-                // Insert 2 header rows above data
                 $sheet->insertNewRowBefore(1, 2);
                 $sheet->setCellValue('A1', 'DATA USER — PT. Wahana Bandhawa Kencana');
                 $sheet->setCellValue('A2', 'Diekspor: ' . now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i'));

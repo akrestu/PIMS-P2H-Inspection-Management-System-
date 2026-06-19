@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ import {
     Users,
     X,
 } from 'lucide-react';
+// UserCheck masih dipakai untuk role badge driver
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ─────────────────────────── Types ─────────────────────────── */
@@ -46,19 +48,18 @@ interface UnitOption {
     jenis_unit: 'Bus' | 'Light Vehicle';
 }
 
+type Jabatan = 'Sr.Staff' | 'Staff' | 'Non Staff';
+
 interface UserRow {
     id: number;
     name: string;
     nik: string | null;
     email: string | null;
+    jabatan: Jabatan | null;
+    department: string | null;
+    jenis_unit: string | null;
     roles: { name: Role }[];
-    driver: {
-        nik: string;
-        nama: string;
-        department: string;
-        jenis_unit: 'Bus' | 'Light Vehicle' | null;
-        units?: UnitOption[];
-    } | null;
+    units?: UnitOption[];
 }
 
 interface PaginatedData {
@@ -79,7 +80,7 @@ interface Stats {
 
 interface Props {
     users: PaginatedData;
-    filters: { search?: string; role?: string };
+    filters: { search?: string; role?: string; jabatan?: string; per_page?: string };
     stats: Stats;
     units: UnitOption[];
 }
@@ -140,20 +141,34 @@ function RoleSelect({ value, onChange, error }: { value: string; onChange: (v: s
     );
 }
 
-/* ─────────────────── DepartmentSelect ──────────────────────── */
-const DEPARTMENTS = ['Production', 'Maintenance', 'Supply Chain', 'Engineering', 'HSE', 'HRGA'];
+/* ─────────────────── JabatanSelect ─────────────────────────── */
+const JABATAN_LIST: Jabatan[] = ['Sr.Staff', 'Staff', 'Non Staff'];
+const JABATAN_META: Record<Jabatan, string> = {
+    'Sr.Staff': 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400',
+    'Staff':    'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400',
+    'Non Staff':'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400',
+};
 
-function DepartmentSelect({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
+function JabatanBadge({ jabatan }: { jabatan: Jabatan | null }) {
+    if (!jabatan) return <span className="text-muted-foreground text-xs">—</span>;
+    return (
+        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${JABATAN_META[jabatan]}`}>
+            {jabatan}
+        </span>
+    );
+}
+
+function JabatanSelect({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
     return (
         <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Department <span className="text-destructive">*</span></Label>
+            <Label className="text-sm font-medium">Jabatan <span className="text-destructive">*</span></Label>
             <Select value={value || ''} onValueChange={onChange}>
                 <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Pilih department..." />
+                    <SelectValue placeholder="Pilih jabatan..." />
                 </SelectTrigger>
                 <SelectContent>
-                    {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                    {JABATAN_LIST.map((j) => (
+                        <SelectItem key={j} value={j}>{j}</SelectItem>
                     ))}
                 </SelectContent>
             </Select>
@@ -274,24 +289,136 @@ function AssignedUnitsSelect({
     );
 }
 
+/* ─────────────────── UserFormFields (shared) ────────────────── */
+function UserFormFields<T extends {
+    name: string; nik: string; email: string; password: string; role: string;
+    jabatan: string; department: string; jenis_unit: string; assigned_unit_ids: number[];
+}>({
+    data, setData, errors, units, isEdit = false,
+}: {
+    data: T;
+    setData: (key: keyof T, value: any) => void;
+    errors: Partial<Record<keyof T, string>>;
+    units: UnitOption[];
+    isEdit?: boolean;
+}) {
+    const [showPwd, setShowPwd] = useState(false);
+    const isAdmin = data.role === 'admin';
+    const isDriver = data.role === 'driver';
+    const needsProfile = !isAdmin;
+
+    return (
+        <>
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Informasi Akun</p>
+
+            <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Nama Lengkap <span className="text-destructive">*</span></Label>
+                <div className="relative">
+                    <User className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input value={data.name} onChange={(e) => setData('name' as keyof T, e.target.value)}
+                        placeholder="John Doe" className="h-10 pl-9" required />
+                </div>
+                {errors.name && <p className="text-destructive text-xs">{errors.name as string}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+                <Label className="text-sm font-medium">NIK / NRPP <span className="text-destructive">*</span></Label>
+                <div className="relative">
+                    <IdCard className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input value={data.nik} onChange={(e) => setData('nik' as keyof T, e.target.value)}
+                        placeholder="Nomor Induk Karyawan / NRPP" className="h-10 pl-9 tracking-widest" inputMode="numeric" required />
+                </div>
+                {errors.nik && <p className="text-destructive text-xs">{errors.nik as string}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+                <Label className="text-sm font-medium">
+                    Email <span className="text-muted-foreground font-normal">(opsional)</span>
+                </Label>
+                <div className="relative">
+                    <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input type="email" value={data.email} onChange={(e) => setData('email' as keyof T, e.target.value)}
+                        placeholder="Kosongkan jika tidak ada" className="h-10 pl-9" />
+                </div>
+                {errors.email && <p className="text-destructive text-xs">{errors.email as string}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+                <Label className="text-sm font-medium">
+                    {isEdit ? 'Password Baru' : 'Password'}{' '}
+                    {isEdit
+                        ? <span className="text-muted-foreground font-normal">(kosongkan jika tidak diubah)</span>
+                        : <span className="text-destructive">*</span>
+                    }
+                </Label>
+                <div className="relative">
+                    <Input type={showPwd ? 'text' : 'password'} value={data.password}
+                        onChange={(e) => setData('password' as keyof T, e.target.value)}
+                        placeholder={isEdit ? '••••••••' : 'Min. 8 karakter'} className="h-10 pr-10"
+                        required={!isEdit} />
+                    <button type="button" onClick={() => setShowPwd((v) => !v)}
+                        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors">
+                        {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                </div>
+                {errors.password && <p className="text-destructive text-xs">{errors.password as string}</p>}
+            </div>
+
+            <Separator />
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Role & Jabatan</p>
+
+            <RoleSelect value={data.role} onChange={(v) => setData('role' as keyof T, v)} error={errors.role as string | undefined} />
+
+            {needsProfile && (
+                <>
+                    <JabatanSelect value={data.jabatan} onChange={(v) => setData('jabatan' as keyof T, v)} error={errors.jabatan as string | undefined} />
+
+                    <div className="space-y-1.5">
+                        <Label className="text-sm font-medium">Departemen <span className="text-destructive">*</span></Label>
+                        <Select value={data.department || ''} onValueChange={(v) => setData('department' as keyof T, v)}>
+                            <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Pilih departemen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Management', 'Production', 'Maintenance', 'Supply Chain', 'Engineering', 'HSE', 'HRGA'].map((d) => (
+                                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {errors.department && <p className="text-destructive text-xs">{errors.department as string}</p>}
+                    </div>
+                </>
+            )}
+
+            {isDriver && (
+                <>
+                    <Separator />
+                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Konfigurasi Driver</p>
+
+                    <JenisUnitSelect
+                        value={data.jenis_unit}
+                        onChange={(v) => setData('jenis_unit' as keyof T, v)}
+                        error={errors.jenis_unit as string | undefined}
+                    />
+
+                    <AssignedUnitsSelect
+                        units={units}
+                        selected={data.assigned_unit_ids}
+                        onChange={(ids) => setData('assigned_unit_ids' as keyof T, ids)}
+                        error={errors.assigned_unit_ids as string | undefined}
+                    />
+                </>
+            )}
+        </>
+    );
+}
+
 /* ─────────────────── AddUserSheet ───────────────────────────── */
 function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
-    const { data, setData, post, processing, errors, reset } = useForm<{
-        name: string; nik: string; email: string; password: string; role: string;
-        nama: string; department: string; jenis_unit: string; assigned_unit_ids: number[];
-    }>({
-        name: '',
-        nik: '',
-        email: '',
-        password: '',
-        role: '',
-        nama: '',
-        department: '',
-        jenis_unit: '',
-        assigned_unit_ids: [],
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '', nik: '', email: '', password: '', role: '',
+        jabatan: '', department: '', jenis_unit: '', assigned_unit_ids: [] as number[],
     });
-    const [showPwd, setShowPwd] = useState(false);
-    const isDriver = data.role === 'driver';
 
     const handleClose = () => { reset(); onOpenChange(false); };
     const submit = (e: React.FormEvent) => {
@@ -304,103 +431,11 @@ function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChan
             <SheetContent className="flex flex-col" side="right">
                 <SheetHeader className="border-b pb-4">
                     <SheetTitle>Tambah User Baru</SheetTitle>
-                    <SheetDescription>Buat akun user dengan role yang sesuai.</SheetDescription>
+                    <SheetDescription>Buat akun user dengan role dan jabatan yang sesuai.</SheetDescription>
                 </SheetHeader>
-
                 <form id="user-add-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
-                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Informasi Akun</p>
-
-                    {/* Name */}
-                    <div className="space-y-1.5">
-                        <Label htmlFor="add-name" className="text-sm font-medium">Nama Lengkap <span className="text-destructive">*</span></Label>
-                        <div className="relative">
-                            <User className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                            <Input id="add-name" value={data.name} onChange={(e) => setData('name', e.target.value)}
-                                placeholder="John Doe" className="h-10 pl-9" required />
-                        </div>
-                        {errors.name && <p className="text-destructive text-xs">{errors.name}</p>}
-                    </div>
-
-                    {/* NIK */}
-                    <div className="space-y-1.5">
-                        <Label htmlFor="add-nik" className="text-sm font-medium">NIK <span className="text-destructive">*</span></Label>
-                        <div className="relative">
-                            <IdCard className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                            <Input id="add-nik" value={data.nik} onChange={(e) => setData('nik', e.target.value)}
-                                placeholder="Nomor Induk Karyawan" className="h-10 pl-9 tracking-widest" inputMode="numeric" required />
-                        </div>
-                        {errors.nik && <p className="text-destructive text-xs">{errors.nik}</p>}
-                    </div>
-
-                    {/* Email */}
-                    <div className="space-y-1.5">
-                        <Label htmlFor="add-email" className="text-sm font-medium">
-                            Email <span className="text-muted-foreground font-normal">(opsional)</span>
-                        </Label>
-                        <div className="relative">
-                            <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                            <Input id="add-email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)}
-                                placeholder="Kosongkan jika tidak ada" className="h-10 pl-9" />
-                        </div>
-                        {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
-                    </div>
-
-                    {/* Password */}
-                    <div className="space-y-1.5">
-                        <Label htmlFor="add-password" className="text-sm font-medium">Password <span className="text-destructive">*</span></Label>
-                        <div className="relative">
-                            <Input id="add-password" type={showPwd ? 'text' : 'password'} value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
-                                placeholder="Min. 8 karakter" className="h-10 pr-10" required />
-                            <button type="button" onClick={() => setShowPwd((v) => !v)}
-                                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors">
-                                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                        {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
-                    </div>
-
-                    {/* Role */}
-                    <RoleSelect value={data.role} onChange={(v) => setData('role', v)} error={errors.role} />
-
-                    {/* Driver fields */}
-                    {isDriver && (
-                        <>
-                            <Separator />
-                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Profil Driver</p>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="add-nama" className="text-sm font-medium">Nama Panggilan <span className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <UserCheck className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                                    <Input id="add-nama" value={data.nama} onChange={(e) => setData('nama', e.target.value)}
-                                        placeholder="Nama yang muncul di P2H" className="h-10 pl-9" required />
-                                </div>
-                                {errors.nama && <p className="text-destructive text-xs">{errors.nama}</p>}
-                            </div>
-
-                            <DepartmentSelect
-                                value={data.department}
-                                onChange={(v) => setData('department', v)}
-                                error={errors.department}
-                            />
-
-                            <JenisUnitSelect
-                                value={data.jenis_unit}
-                                onChange={(v) => setData('jenis_unit', v)}
-                                error={errors.jenis_unit}
-                            />
-
-                            <AssignedUnitsSelect
-                                units={units}
-                                selected={data.assigned_unit_ids}
-                                onChange={(ids) => setData('assigned_unit_ids', ids)}
-                                error={errors.assigned_unit_ids as string | undefined}
-                            />
-                        </>
-                    )}
+                    <UserFormFields data={data} setData={setData} errors={errors} units={units} />
                 </form>
-
                 <SheetFooter className="border-t pt-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
                     <Button type="submit" form="user-add-form" disabled={processing} className="flex-1">
@@ -414,35 +449,30 @@ function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChan
 
 /* ─────────────────── EditUserSheet ──────────────────────────── */
 function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
-    const { data, setData, put, processing, errors, reset } = useForm<{
-        name: string; nik: string; email: string; password: string; role: string;
-        nama: string; department: string; jenis_unit: string; assigned_unit_ids: number[];
-    }>({
+    const { data, setData, put, processing, errors, reset } = useForm({
         name: user?.name ?? '',
         nik: user?.nik ?? '',
         email: user?.email ?? '',
         password: '',
         role: (userRole(user) ?? 'driver') as string,
-        nama: user?.driver?.nama ?? '',
-        department: user?.driver?.department ?? '',
-        jenis_unit: user?.driver?.jenis_unit ?? '',
-        assigned_unit_ids: user?.driver?.units?.map((u) => u.id) ?? [],
+        jabatan: user?.jabatan ?? '',
+        department: user?.department ?? '',
+        jenis_unit: user?.jenis_unit ?? '',
+        assigned_unit_ids: user?.units?.map((u) => u.id) ?? [] as number[],
     });
-    const [showPwd, setShowPwd] = useState(false);
-    const isDriver = data.role === 'driver';
 
     useEffect(() => {
         if (user) {
             setData({
                 name: user.name,
                 nik: user.nik ?? '',
-                email: user.email,
+                email: user.email ?? '',
                 password: '',
                 role: (userRole(user) ?? 'driver') as string,
-                nama: user.driver?.nama ?? '',
-                department: user.driver?.department ?? '',
-                jenis_unit: user.driver?.jenis_unit ?? '',
-                assigned_unit_ids: user.driver?.units?.map((u) => u.id) ?? [],
+                jabatan: user.jabatan ?? '',
+                department: user.department ?? '',
+                jenis_unit: user.jenis_unit ?? '',
+                assigned_unit_ids: user.units?.map((u) => u.id) ?? [],
             });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -473,99 +503,11 @@ function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | nu
                         </div>
                     </div>
                     <SheetTitle>Edit User</SheetTitle>
-                    <SheetDescription>Perbarui data akun, role, dan profil user.</SheetDescription>
+                    <SheetDescription>Perbarui data akun, role, jabatan, dan profil user.</SheetDescription>
                 </SheetHeader>
-
                 <form id="user-edit-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
-                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Informasi Akun</p>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="edit-name" className="text-sm font-medium">Nama Lengkap <span className="text-destructive">*</span></Label>
-                        <div className="relative">
-                            <User className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                            <Input id="edit-name" value={data.name} onChange={(e) => setData('name', e.target.value)}
-                                className="h-10 pl-9" required />
-                        </div>
-                        {errors.name && <p className="text-destructive text-xs">{errors.name}</p>}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="edit-nik" className="text-sm font-medium">NIK <span className="text-destructive">*</span></Label>
-                        <div className="relative">
-                            <IdCard className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                            <Input id="edit-nik" value={data.nik ?? ''} onChange={(e) => setData('nik', e.target.value)}
-                                className="h-10 pl-9 tracking-widest" inputMode="numeric" required />
-                        </div>
-                        {errors.nik && <p className="text-destructive text-xs">{errors.nik}</p>}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="edit-email" className="text-sm font-medium">
-                            Email <span className="text-muted-foreground font-normal">(opsional)</span>
-                        </Label>
-                        <div className="relative">
-                            <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                            <Input id="edit-email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)}
-                                placeholder="Kosongkan jika tidak ada" className="h-10 pl-9" />
-                        </div>
-                        {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="edit-password" className="text-sm font-medium">
-                            Password Baru <span className="text-muted-foreground font-normal">(kosongkan jika tidak diubah)</span>
-                        </Label>
-                        <div className="relative">
-                            <Input id="edit-password" type={showPwd ? 'text' : 'password'} value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
-                                placeholder="••••••••" className="h-10 pr-10" />
-                            <button type="button" onClick={() => setShowPwd((v) => !v)}
-                                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors">
-                                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                        {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
-                    </div>
-
-                    <RoleSelect value={data.role} onChange={(v) => setData('role', v)} error={errors.role} />
-
-                    {isDriver && (
-                        <>
-                            <Separator />
-                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Profil Driver</p>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="edit-nama" className="text-sm font-medium">Nama Panggilan <span className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <UserCheck className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                                    <Input id="edit-nama" value={data.nama} onChange={(e) => setData('nama', e.target.value)}
-                                        className="h-10 pl-9" required />
-                                </div>
-                                {errors.nama && <p className="text-destructive text-xs">{errors.nama}</p>}
-                            </div>
-
-                            <DepartmentSelect
-                                value={data.department}
-                                onChange={(v) => setData('department', v)}
-                                error={errors.department}
-                            />
-
-                            <JenisUnitSelect
-                                value={data.jenis_unit}
-                                onChange={(v) => setData('jenis_unit', v)}
-                                error={errors.jenis_unit}
-                            />
-
-                            <AssignedUnitsSelect
-                                units={units}
-                                selected={data.assigned_unit_ids}
-                                onChange={(ids) => setData('assigned_unit_ids', ids)}
-                                error={errors.assigned_unit_ids as string | undefined}
-                            />
-                        </>
-                    )}
+                    <UserFormFields data={data} setData={setData} errors={errors} units={units} isEdit />
                 </form>
-
                 <SheetFooter className="border-t pt-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
                     <Button type="submit" form="user-edit-form" disabled={processing} className="flex-1">
@@ -616,6 +558,55 @@ function DeleteDialog({ user, open, onOpenChange }: { user: UserRow | null; open
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">Batal</Button>
                     <Button variant="destructive" onClick={confirm} disabled={processing} className="flex-1">
                         {processing ? 'Menghapus...' : 'Hapus'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+/* ─────────────── BatchDeleteDialog ─────────────────────────── */
+function BatchDeleteDialog({
+    ids,
+    open,
+    onOpenChange,
+    onSuccess,
+}: {
+    ids: number[];
+    open: boolean;
+    onOpenChange: (o: boolean) => void;
+    onSuccess: () => void;
+}) {
+    const [processing, setProcessing] = useState(false);
+    const count = ids.length;
+
+    const confirm = () => {
+        setProcessing(true);
+        router.delete('/users/batch', {
+            data: { ids },
+            onSuccess: () => { onSuccess(); onOpenChange(false); },
+            onFinish: () => setProcessing(false),
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-sm">
+                <DialogHeader>
+                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
+                        <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <DialogTitle className="text-center">Hapus {count} User?</DialogTitle>
+                    <DialogDescription className="text-center">
+                        <span className="font-semibold text-foreground">{count} user</span> yang dipilih akan dihapus permanen.
+                        Akun Anda sendiri dan akun admin tidak akan dihapus meskipun dipilih.
+                        Tindakan ini tidak dapat dibatalkan.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">Batal</Button>
+                    <Button variant="destructive" onClick={confirm} disabled={processing} className="flex-1">
+                        {processing ? 'Menghapus...' : `Hapus ${count} User`}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -731,31 +722,57 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
+    const [jabatanFilter, setJabatanFilter] = useState(filters.jabatan ?? '');
+    const [perPage, setPerPage] = useState(filters.per_page ?? '15');
     const [addOpen, setAddOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
     const [editUser, setEditUser] = useState<UserRow | null>(null);
     const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
+
+    // Rows that can be selected (exclude self)
+    const selectableIds = users.data.filter((u) => u.id !== currentUserId).map((u) => u.id);
+    const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedIds.includes(id));
+    const someSelected = selectedIds.length > 0 && !allSelected;
+
+    const toggleAll = () => {
+        setSelectedIds(allSelected ? [] : selectableIds);
+    };
+    const toggleOne = (id: number) => {
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    };
+    const clearSelection = () => setSelectedIds([]);
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const applyFilters = useCallback((s: string, r: string) => {
+    const applyFilters = useCallback((s: string, r: string, j: string, pp: string) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            router.get('/users', { search: s, role: r }, { preserveState: true, replace: true });
+            router.get('/users', { search: s, role: r, jabatan: j, per_page: pp }, { preserveState: true, replace: true });
         }, 350);
     }, []);
 
-    const handleSearch = (val: string) => { setSearch(val); applyFilters(val, roleFilter); };
+    const handleSearch = (val: string) => { setSearch(val); applyFilters(val, roleFilter, jabatanFilter, perPage); };
     const handleRole = (r: string) => {
         const next = roleFilter === r ? '' : r;
         setRoleFilter(next);
-        applyFilters(search, next);
+        applyFilters(search, next, jabatanFilter, perPage);
+    };
+    const handleJabatan = (j: string) => {
+        const next = jabatanFilter === j ? '' : j;
+        setJabatanFilter(next);
+        applyFilters(search, roleFilter, next, perPage);
+    };
+    const handlePerPage = (pp: string) => {
+        setPerPage(pp);
+        router.get('/users', { search, role: roleFilter, jabatan: jabatanFilter, per_page: pp }, { preserveState: true, replace: true });
     };
     const resetFilters = () => {
-        setSearch(''); setRoleFilter('');
+        setSearch(''); setRoleFilter(''); setJabatanFilter(''); setPerPage('15');
         router.get('/users', {}, { preserveState: false });
     };
 
-    const hasFilters = search || roleFilter;
+    const hasFilters = search || roleFilter || jabatanFilter;
 
     return (
         <TooltipProvider>
@@ -793,6 +810,35 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                     </div>
                 </div>
 
+                {/* ── Batch Action Bar ── */}
+                {selectedIds.length > 0 && (
+                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={toggleAll}
+                                className="border-destructive/60 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                            />
+                            <span className="text-sm font-medium">
+                                <span className="text-destructive font-semibold">{selectedIds.length}</span> user dipilih
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8 gap-1.5 text-muted-foreground">
+                                <X className="h-3.5 w-3.5" /> Batalkan
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setBatchDeleteOpen(true)}
+                                className="h-8 gap-1.5"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" /> Hapus {selectedIds.length} User
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Stat Cards ── */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <StatCard title="Total User" value={stats.total} icon={Users}
@@ -822,7 +868,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
 
                         <Separator orientation="vertical" className="hidden h-7 sm:block" />
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-muted-foreground text-xs font-medium">Role:</span>
                             {(['admin', 'manager', 'driver'] as Role[]).map((r) => (
                                 <button key={r} onClick={() => handleRole(r)}
@@ -832,6 +878,22 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                             : 'border-border hover:border-primary/60'
                                     }`}>
                                     {ROLE_META[r].label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <Separator orientation="vertical" className="hidden h-7 sm:block" />
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs font-medium">Jabatan:</span>
+                            {JABATAN_LIST.map((j) => (
+                                <button key={j} onClick={() => handleJabatan(j)}
+                                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                                        jabatanFilter === j
+                                            ? 'border-primary bg-primary text-primary-foreground'
+                                            : 'border-border hover:border-primary/60'
+                                    }`}>
+                                    {j}
                                 </button>
                             ))}
                         </div>
@@ -859,19 +921,28 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="w-12 text-center">#</TableHead>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>NIK</TableHead>
+                                        <TableHead className="w-10 pl-4">
+                                            <Checkbox
+                                                checked={allSelected}
+                                                ref={(el) => { if (el) (el as any).indeterminate = someSelected; }}
+                                                onCheckedChange={toggleAll}
+                                                aria-label="Pilih semua"
+                                                disabled={selectableIds.length === 0}
+                                            />
+                                        </TableHead>
+                                        <TableHead className="w-10 text-center hidden sm:table-cell">#</TableHead>
+                                        <TableHead>Nama</TableHead>
+                                        <TableHead className="hidden sm:table-cell">NIK / NRPP</TableHead>
                                         <TableHead>Role</TableHead>
-                                        <TableHead className="hidden md:table-cell">Email</TableHead>
-                                        <TableHead className="hidden lg:table-cell">Department</TableHead>
+                                        <TableHead className="hidden md:table-cell">Jabatan</TableHead>
+                                        <TableHead className="hidden lg:table-cell">Departemen</TableHead>
                                         <TableHead className="w-14 text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {users.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7}>
+                                            <TableCell colSpan={6}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="bg-muted rounded-full p-4">
                                                         <Users className="text-muted-foreground h-8 w-8" />
@@ -896,20 +967,37 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                         </TableRow>
                                     ) : (
                                         users.data.map((u, idx) => (
-                                            <TableRow key={u.id} className="group">
-                                                <TableCell className="text-muted-foreground text-center text-sm">
+                                            <TableRow
+                                                key={u.id}
+                                                className={`group ${selectedIds.includes(u.id) ? 'bg-destructive/5' : ''}`}
+                                            >
+                                                <TableCell className="pl-4 w-10">
+                                                    {u.id !== currentUserId ? (
+                                                        <Checkbox
+                                                            checked={selectedIds.includes(u.id)}
+                                                            onCheckedChange={() => toggleOne(u.id)}
+                                                            aria-label={`Pilih ${u.name}`}
+                                                        />
+                                                    ) : (
+                                                        <span className="block w-4" />
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground text-center text-sm hidden sm:table-cell">
                                                     {(users.from ?? 1) + idx}
                                                 </TableCell>
 
                                                 <TableCell>
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-2.5 min-w-0">
                                                         <Avatar className={`h-8 w-8 shrink-0 ${avatarColor(u.name)}`}>
                                                             <AvatarFallback className={`text-xs font-bold text-white ${avatarColor(u.name)}`}>
                                                                 {getInitials(u.name)}
                                                             </AvatarFallback>
                                                         </Avatar>
-                                                        <div>
-                                                            <p className="font-medium text-sm leading-tight">{u.name}</p>
+                                                        <div className="min-w-0">
+                                                            <p className="font-medium text-sm leading-tight truncate">{u.name}</p>
+                                                            <p className="text-muted-foreground text-xs font-mono sm:hidden truncate">
+                                                                {u.nik ?? '—'}
+                                                            </p>
                                                             {u.id === currentUserId && (
                                                                 <span className="text-[10px] text-muted-foreground">(Anda)</span>
                                                             )}
@@ -917,7 +1005,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                                     </div>
                                                 </TableCell>
 
-                                                <TableCell>
+                                                <TableCell className="hidden sm:table-cell">
                                                     <span className="font-mono text-sm">{u.nik ?? '—'}</span>
                                                 </TableCell>
 
@@ -925,21 +1013,16 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                                     <RoleBadge role={userRole(u)} />
                                                 </TableCell>
 
-                                                <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
-                                                    {u.email || <span className="text-muted-foreground/50">—</span>}
+                                                <TableCell className="hidden md:table-cell">
+                                                    <JabatanBadge jabatan={u.jabatan} />
                                                 </TableCell>
 
                                                 <TableCell className="hidden text-sm lg:table-cell">
-                                                    {u.driver?.department ? (
+                                                    {u.department ? (
                                                         <div className="flex flex-wrap items-center gap-1">
                                                             <Badge variant="outline" className="text-xs font-normal">
-                                                                {u.driver.department}
+                                                                {u.department}
                                                             </Badge>
-                                                            {u.driver.jenis_unit && (
-                                                                <Badge variant="secondary" className="text-xs font-normal">
-                                                                    {u.driver.jenis_unit}
-                                                                </Badge>
-                                                            )}
                                                         </div>
                                                     ) : (
                                                         <span className="text-muted-foreground">—</span>
@@ -948,26 +1031,22 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
 
                                                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenu>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="sm"
-                                                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100">
-                                                                        <MoreHorizontal className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Aksi</TooltipContent>
-                                                        </Tooltip>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm"
+                                                                aria-label="Aksi"
+                                                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end" className="w-44">
-                                                            <DropdownMenuItem onClick={() => setEditUser(u)} className="gap-2">
+                                                            <DropdownMenuItem onClick={() => setTimeout(() => setEditUser(u), 0)} className="gap-2">
                                                                 <Pencil className="h-4 w-4" /> Edit User
                                                             </DropdownMenuItem>
                                                             {u.id !== currentUserId && (
                                                                 <>
                                                                     <DropdownMenuSeparator />
                                                                     <DropdownMenuItem
-                                                                        onClick={() => setDeleteUser(u)}
+                                                                        onClick={() => setTimeout(() => setDeleteUser(u), 0)}
                                                                         className="gap-2 text-destructive focus:text-destructive">
                                                                         <Trash2 className="h-4 w-4" /> Hapus User
                                                                     </DropdownMenuItem>
@@ -983,52 +1062,63 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                             </Table>
                         </div>
 
-                        {/* Pagination */}
-                        {users.last_page > 1 && (
-                            <div className="flex items-center justify-between border-t px-4 py-3">
-                                <p className="text-muted-foreground text-sm">
-                                    Menampilkan <span className="font-medium">{users.from}</span>–
-                                    <span className="font-medium">{users.to}</span> dari{' '}
-                                    <span className="font-medium">{users.total}</span> user
-                                </p>
-                                <div className="flex items-center gap-1">
-                                    <Button variant="outline" size="sm" disabled={users.current_page === 1}
-                                        onClick={() => router.get('/users', { ...filters, page: users.current_page - 1 })}
-                                        className="h-8 gap-1">
-                                        <ChevronLeft className="h-4 w-4" /> Prev
-                                    </Button>
-                                    {Array.from({ length: users.last_page }, (_, i) => i + 1)
-                                        .filter((p) => p === 1 || p === users.last_page || Math.abs(p - users.current_page) <= 1)
-                                        .reduce<(number | '...')[]>((acc, p, i, arr) => {
-                                            if (i > 0 && (arr[i - 1] as number) !== p - 1) acc.push('...');
-                                            acc.push(p); return acc;
-                                        }, [])
-                                        .map((p, i) =>
-                                            p === '...' ? (
-                                                <span key={`e-${i}`} className="text-muted-foreground px-1 text-sm">…</span>
-                                            ) : (
-                                                <Button key={p} size="sm"
-                                                    variant={p === users.current_page ? 'default' : 'outline'}
-                                                    onClick={() => router.get('/users', { ...filters, page: p })}
-                                                    className="h-8 w-8 p-0">
-                                                    {p}
-                                                </Button>
-                                            )
-                                        )}
-                                    <Button variant="outline" size="sm" disabled={users.current_page === users.last_page}
-                                        onClick={() => router.get('/users', { ...filters, page: users.current_page + 1 })}
-                                        className="h-8 gap-1">
-                                        Next <ChevronRight className="h-4 w-4" />
-                                    </Button>
+                        {/* Pagination footer */}
+                        {users.total > 0 && (
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
+                                {/* Left: info + per-page selector */}
+                                <div className="flex items-center gap-3">
+                                    <p className="text-muted-foreground text-sm">
+                                        {perPage === 'all'
+                                            ? <>Menampilkan semua <span className="font-medium">{users.total}</span> user</>
+                                            : <>Menampilkan <span className="font-medium">{users.from}</span>–<span className="font-medium">{users.to}</span> dari <span className="font-medium">{users.total}</span> user</>
+                                        }
+                                    </p>
+                                    <Select value={perPage} onValueChange={handlePerPage}>
+                                        <SelectTrigger className="h-8 w-32 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="15">15 per halaman</SelectItem>
+                                            <SelectItem value="50">50 per halaman</SelectItem>
+                                            <SelectItem value="100">100 per halaman</SelectItem>
+                                            <SelectItem value="all">Tampilkan semua</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            </div>
-                        )}
 
-                        {users.last_page === 1 && users.total > 0 && (
-                            <div className="border-t px-4 py-3">
-                                <p className="text-muted-foreground text-sm">
-                                    Total <span className="font-medium">{users.total}</span> user terdaftar
-                                </p>
+                                {/* Right: page buttons (hidden when show-all) */}
+                                {users.last_page > 1 && perPage !== 'all' && (
+                                    <div className="flex items-center gap-1">
+                                        <Button variant="outline" size="sm" disabled={users.current_page === 1}
+                                            onClick={() => router.get('/users', { ...filters, per_page: perPage, page: users.current_page - 1 })}
+                                            className="h-8 gap-1">
+                                            <ChevronLeft className="h-4 w-4" /> Prev
+                                        </Button>
+                                        {Array.from({ length: users.last_page }, (_, i) => i + 1)
+                                            .filter((p) => p === 1 || p === users.last_page || Math.abs(p - users.current_page) <= 1)
+                                            .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                                                if (i > 0 && (arr[i - 1] as number) !== p - 1) acc.push('...');
+                                                acc.push(p); return acc;
+                                            }, [])
+                                            .map((p, i) =>
+                                                p === '...' ? (
+                                                    <span key={`e-${i}`} className="text-muted-foreground px-1 text-sm">…</span>
+                                                ) : (
+                                                    <Button key={p} size="sm"
+                                                        variant={p === users.current_page ? 'default' : 'outline'}
+                                                        onClick={() => router.get('/users', { ...filters, per_page: perPage, page: p })}
+                                                        className="h-8 w-8 p-0">
+                                                        {p}
+                                                    </Button>
+                                                )
+                                            )}
+                                        <Button variant="outline" size="sm" disabled={users.current_page === users.last_page}
+                                            onClick={() => router.get('/users', { ...filters, per_page: perPage, page: users.current_page + 1 })}
+                                            className="h-8 gap-1">
+                                            Next <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </CardContent>
@@ -1039,6 +1129,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
             <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
             <EditUserSheet user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} />
             <DeleteDialog user={deleteUser} open={!!deleteUser} onOpenChange={(o) => { if (!o) setDeleteUser(null); }} />
+            <BatchDeleteDialog ids={selectedIds} open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen} onSuccess={clearSelection} />
         </TooltipProvider>
     );
 }

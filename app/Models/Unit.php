@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Unit extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['no_unit', 'jenis_unit', 'no_lambung', 'status'];
+    protected $fillable = ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department'];
 
     public function p2hSessions(): HasMany
     {
@@ -23,9 +23,9 @@ class Unit extends Model
         return $this->hasMany(UnitDowntimeLog::class);
     }
 
-    public function drivers(): BelongsToMany
+    public function users(): BelongsToMany
     {
-        return $this->belongsToMany(Driver::class, 'driver_unit');
+        return $this->belongsToMany(User::class, 'user_unit');
     }
 
     public function scopeActive(Builder $query): Builder

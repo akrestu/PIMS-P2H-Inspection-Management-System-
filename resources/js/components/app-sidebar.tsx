@@ -20,6 +20,7 @@ import {
     Bell,
     CalendarCheck,
     Car,
+    ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
     ClockAlert,
@@ -31,14 +32,18 @@ import {
 
 export function AppSidebar() {
     const { auth, notifications } = usePage<{
-        auth: { user: { roles: string[] } | null };
-        notifications: { unread_count: number };
+        auth: { user: { roles: string[]; jabatan?: string | null } | null };
+        notifications: { unread_count: number; pending_approvals?: number };
     }>().props;
 
     const roles: string[] = auth?.user?.roles ?? [];
     const isAdmin = roles.includes('admin');
     const isDriver = roles.includes('driver');
     const isAdminOrManager = isAdmin || roles.includes('manager');
+    const jabatan = auth?.user?.jabatan ?? null;
+    const isStaff = jabatan === 'Staff' || jabatan === 'Sr.Staff';
+    const canApprove = isStaff || isAdminOrManager;
+    const pendingApprovals = notifications?.pending_approvals ?? 0;
     const unreadCount = notifications?.unread_count ?? 0;
     const { state } = useSidebar();
     const isCollapsed = state === 'collapsed';
@@ -112,6 +117,20 @@ export function AppSidebar() {
                               href: driverDashboard(),
                               icon: LayoutGrid,
                           },
+                          ...(isStaff
+                              ? [
+                                    {
+                                        title: 'Monitoring PA',
+                                        href: '/monitoring',
+                                        icon: Activity,
+                                    },
+                                    {
+                                        title: 'Monitoring P2H',
+                                        href: '/p2h-compliance',
+                                        icon: CalendarCheck,
+                                    },
+                                ]
+                              : []),
                       ],
                   },
               ]
@@ -132,6 +151,14 @@ export function AppSidebar() {
                     href: '/p2h',
                     icon: ClipboardList,
                 },
+                ...(canApprove
+                    ? [{
+                          title: 'Persetujuan P2H',
+                          href: '/p2h/approvals',
+                          icon: ClipboardCheck,
+                          badge: pendingApprovals,
+                      }]
+                    : []),
                 {
                     title: 'Notifikasi',
                     href: '/notifications',

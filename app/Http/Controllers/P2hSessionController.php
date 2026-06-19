@@ -12,6 +12,7 @@ use App\Models\P2hUserEntry;
 use App\Models\Unit;
 use App\Models\User;
 use App\Notifications\CriticalItemAlert;
+use App\Notifications\LvP2hApprovalRequest;
 use App\Policies\P2hSessionPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -80,25 +81,27 @@ class P2hSessionController extends Controller
 
     public function create(): Response
     {
-        $driver = auth()->user()->driver;
+        $user = auth()->user();
+        $assignedUnits = $user->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit']);
 
-        if ($driver) {
-            $assignedUnits = $driver->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit']);
-        }
-
-        if (!empty($assignedUnits) && $assignedUnits->isNotEmpty()) {
+        if ($assignedUnits->isNotEmpty()) {
             $units = $assignedUnits;
         } else {
             $units = Unit::active()
-                ->when($driver?->jenis_unit, fn ($q) => $q->where('jenis_unit', $driver->jenis_unit))
+                ->when($user->jenis_unit, fn ($q) => $q->where('jenis_unit', $user->jenis_unit))
                 ->orderBy('no_unit')
                 ->get(['id', 'no_unit', 'jenis_unit']);
         }
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
+        $staffUsers = User::whereIn('jabatan', ['Staff', 'Sr.Staff'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'jabatan', 'department']);
+
         return Inertia::render('p2h/form', [
             'units'           => $units,
             'inspectionItems' => $inspectionItems,
+            'staffUsers'      => $staffUsers,
         ]);
     }
 
@@ -165,6 +168,10 @@ class P2hSessionController extends Controller
                 $parafUrl = $filename;
             }
 
+            // Tentukan apakah entry ini perlu approval (semua driver yang mengisi LV)
+            $unit = Unit::withTrashed()->find($data['unit_id']);
+            $needsApproval = $unit?->jenis_unit === 'Light Vehicle';
+
             // Buat user entry
             $entry = P2hUserEntry::create([
                 'p2h_session_id'      => $session->id,
@@ -178,6 +185,8 @@ class P2hSessionController extends Controller
                 'submitted_at'        => now(),
                 'kondisi_akhir'       => $data['kondisi_akhir'],
                 'justifikasi_kondisi' => $data['justifikasi_kondisi'] ?? null,
+                'approval_status'     => $needsApproval ? 'pending' : null,
+                'pic_approver_id'     => $needsApproval ? ($data['pic_approver_id']) : null,
             ]);
 
             // Simpan jawaban checklist
@@ -206,7 +215,19 @@ class P2hSessionController extends Controller
                 ));
             }
 
-            // Cek item kode_bahaya AA + Tidak Layak → dispatch notifikasi
+            // Hitung score entry ini dan update best_compliance_score di sesi
+            $totalAnswers = count($data['answers']);
+            $layakAnswers = collect($data['answers'])->where('kondisi', 'Layak')->count();
+            $entryScore   = $totalAnswers > 0 ? round(($layakAnswers / $totalAnswers) * 100, 1) : null;
+
+            if ($entryScore !== null) {
+                $current = $session->best_compliance_score;
+                if ($current === null || $entryScore > $current) {
+                    $session->update(['best_compliance_score' => $entryScore]);
+                }
+            }
+
+            // Cek item kode_bahaya AA + Tidak Layak → notifikasi admin
             $criticalTL = $entry->answers()
                 ->with('inspectionItem')
                 ->where('kondisi', 'Tidak Layak')
@@ -214,12 +235,34 @@ class P2hSessionController extends Controller
                 ->get();
 
             if ($criticalTL->isNotEmpty()) {
-                $admins = \App\Models\User::role('admin')->get();
-                foreach ($admins as $admin) {
-                    $admin->notify(new CriticalItemAlert(
+                // Throttle: satu notifikasi per unit per hari, hindari spam saat banyak submit bersamaan
+                $alertKey = "critical_alert_sent_unit_{$session->unit_id}_" . today()->toDateString();
+                $alreadySent = cache()->get($alertKey, false);
+
+                if (! $alreadySent) {
+                    cache()->put($alertKey, true, now()->endOfDay());
+                    $admins = \App\Models\User::role('admin')->get();
+                    foreach ($admins as $admin) {
+                        $admin->notify(new CriticalItemAlert(
+                            session: $session,
+                            entry: $entry,
+                            criticalItems: $criticalTL,
+                        ));
+                    }
+                }
+            }
+
+            // Kirim notifikasi approval hanya ke PIC yang dipilih oleh submitter
+            if ($needsApproval && ! empty($data['pic_approver_id'])) {
+                $pic = \App\Models\User::find($data['pic_approver_id']);
+                if (! $pic) {
+                    // PIC tidak ditemukan — reset approval agar entry tidak tergantung selamanya
+                    $entry->update(['approval_status' => null, 'pic_approver_id' => null]);
+                } else {
+                    $pic->notify(new LvP2hApprovalRequest(
                         session: $session,
                         entry: $entry,
-                        criticalItems: $criticalTL,
+                        submitter: $user,
                     ));
                 }
             }
@@ -240,11 +283,22 @@ class P2hSessionController extends Controller
             ->filter(fn ($a) => $a->inspectionItem?->kode_bahaya === 'AA')
             ->isNotEmpty();
 
+        // Cek apakah entry ini pending approval
+        $latestEntry = $session->userEntries()->with('pic')->latest()->first();
+        $isPendingApproval = $latestEntry?->approval_status === 'pending';
+
         if ($hasCritical) {
             Inertia::flash('toast', [
                 'type'        => 'error',
                 'message'     => 'P2H disimpan — Ada item Critical TL!',
                 'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item kode bahaya AA (Stop) yang tidak layak. Admin telah diberitahu.",
+            ]);
+        } elseif ($isPendingApproval) {
+            $picName = $latestEntry?->pic?->name ?? 'PIC yang dipilih';
+            Inertia::flash('toast', [
+                'type'        => 'warning',
+                'message'     => 'P2H disubmit — Menunggu Verifikasi',
+                'description' => "P2H unit {$session->unit->no_unit} menunggu persetujuan dari {$picName}.",
             ]);
         } else {
             Inertia::flash('toast', [
@@ -254,7 +308,7 @@ class P2hSessionController extends Controller
             ]);
         }
 
-        return redirect()->route('p2h.index');
+        return redirect()->route('p2h.show', $session->id);
     }
 
     public function destroy(P2hSession $session): RedirectResponse
@@ -336,7 +390,9 @@ class P2hSessionController extends Controller
 
         $session->load([
             'unit',
-            'userEntries.user.driver',
+            'userEntries.user',
+            'userEntries.approver',
+            'userEntries.pic',
             'userEntries.answers.inspectionItem',
             'userEntries.fuelLog',
             'serviceInfo',

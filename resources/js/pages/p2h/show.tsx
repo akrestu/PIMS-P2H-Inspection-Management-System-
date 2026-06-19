@@ -111,6 +111,51 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                 <StatCard label="Tidak Layak" value={tlItems.length} variant={tlItems.length > 0 ? 'danger' : 'default'} />
             </div>
 
+            {/* ── Approval status banner ── */}
+            {entry.approval_status === 'pending' && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 p-3 flex items-center gap-2">
+                    <span className="text-amber-600 dark:text-amber-400">⏳</span>
+                    <div>
+                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Menunggu Verifikasi</p>
+                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                            {entry.pic
+                                ? <>Menunggu persetujuan <span className="font-semibold">{entry.pic.name}</span> ({entry.pic.jabatan})</>
+                                : 'P2H ini sedang menunggu persetujuan PIC yang ditunjuk.'}
+                        </p>
+                    </div>
+                </div>
+            )}
+            {entry.approval_status === 'rejected' && (
+                <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20 p-3 space-y-1">
+                    <p className="text-sm font-semibold text-red-800 dark:text-red-300">✕ P2H Ditolak</p>
+                    {entry.catatan_approval && (
+                        <p className="text-xs text-red-700 dark:text-red-400">
+                            <span className="font-semibold">Catatan: </span>{entry.catatan_approval}
+                        </p>
+                    )}
+                    {entry.approver && (
+                        <p className="text-xs text-red-600 dark:text-red-500">
+                            Ditolak oleh {entry.approver.name} · {entry.approved_at ? new Date(entry.approved_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) : ''}
+                        </p>
+                    )}
+                </div>
+            )}
+            {entry.approval_status === 'approved' && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/20 p-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-emerald-600 dark:text-emerald-400">✓</span>
+                        <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                            Disetujui{entry.approver ? ` oleh ${entry.approver.name}` : ''}
+                            {entry.approved_at && (
+                                <span className="ml-1.5 text-xs font-normal text-emerald-600 dark:text-emerald-400">
+                                    · {new Date(entry.approved_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })}
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* ── Driver info ── */}
             <Card>
                 <CardHeader className="pb-2 pt-4">
@@ -125,12 +170,12 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                         <p className="font-semibold">{entry.user?.name ?? '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-muted-foreground">NIK</p>
-                        <p className="font-medium">{entry.user?.driver?.nik ?? '-'}</p>
+                        <p className="text-xs text-muted-foreground">NIK / NRPP</p>
+                        <p className="font-medium">{entry.user?.nik ?? '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-muted-foreground">Department</p>
-                        <p className="font-medium">{entry.user?.driver?.department ?? '-'}</p>
+                        <p className="text-xs text-muted-foreground">Departemen</p>
+                        <p className="font-medium">{entry.user?.department ?? '-'}</p>
                     </div>
                     <div>
                         <p className="text-xs text-muted-foreground">Shift</p>
@@ -324,8 +369,8 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                 </Card>
             )}
 
-            {/* ── Signature ── */}
-            {entry.paraf_url && (
+            {/* ── Tanda Tangan ── */}
+            {(entry.paraf_url || entry.approver_signature_url) && (
                 <Card>
                     <CardHeader className="pb-2 pt-4">
                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -333,23 +378,51 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                             Tanda Tangan
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="pb-4">
-                        <div className="inline-block rounded-xl border-2 border-dashed border-muted p-2">
-                            <img
-                                src={`/storage/${entry.paraf_url}`}
-                                alt={`Tanda tangan ${entry.user?.name}`}
-                                className="max-h-28 rounded-lg bg-white dark:bg-gray-100"
-                            />
-                        </div>
-                        <p className="mt-1.5 text-xs text-muted-foreground">
-                            {entry.user?.name} · {entry.submitted_at
-                                ? new Date(entry.submitted_at).toLocaleString('id-ID', {
-                                    day: 'numeric', month: 'short', year: 'numeric',
-                                    hour: '2-digit', minute: '2-digit',
-                                    hour12: false, timeZone: 'Asia/Jakarta',
-                                  })
-                                : '-'}
-                        </p>
+                    <CardContent className="pb-4 space-y-4">
+                        {entry.paraf_url && (
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1.5">Pengemudi</p>
+                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-muted bg-white p-2 dark:bg-gray-100">
+                                    <img
+                                        src={`/storage/${entry.paraf_url}`}
+                                        alt={`Tanda tangan ${entry.user?.name}`}
+                                        className="max-h-full max-w-full rounded-lg object-contain"
+                                    />
+                                </div>
+                                <p className="mt-1.5 text-xs text-muted-foreground">
+                                    {entry.user?.name} · {entry.submitted_at
+                                        ? new Date(entry.submitted_at).toLocaleString('id-ID', {
+                                            day: 'numeric', month: 'short', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit',
+                                            hour12: false, timeZone: 'Asia/Jakarta',
+                                          })
+                                        : '-'}
+                                </p>
+                            </div>
+                        )}
+                        {entry.approver_signature_url && (
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1.5">Approver</p>
+                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-emerald-300 bg-white p-2 dark:border-emerald-700 dark:bg-gray-100">
+                                    <img
+                                        src={`/storage/${entry.approver_signature_url}`}
+                                        alt={`TTD ${entry.approver?.name}`}
+                                        className="max-h-full max-w-full rounded-lg object-contain"
+                                    />
+                                </div>
+                                {entry.approver && (
+                                    <p className="mt-1.5 text-xs text-muted-foreground">
+                                        {entry.approver.name} · {entry.approved_at
+                                            ? new Date(entry.approved_at).toLocaleString('id-ID', {
+                                                day: 'numeric', month: 'short', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit',
+                                                hour12: false, timeZone: 'Asia/Jakarta',
+                                              })
+                                            : '-'}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             )}
@@ -459,7 +532,14 @@ export default function P2hShow({ session, inspectionItems }: Props) {
           })().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
         : '-';
 
-    const defaultTab = entries.length > 0 ? String(entries[0].user_slot) : '1';
+    // Jika datang dari notifikasi approval, buka tab entry yang di-approve
+    const urlEntryId = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('entry')
+        : null;
+    const targetEntry = urlEntryId ? entries.find((e) => String(e.id) === urlEntryId) : null;
+    const defaultTab = targetEntry
+        ? String(targetEntry.user_slot)
+        : (entries.length > 0 ? String(entries[0].user_slot) : '1');
 
     return (
         <>

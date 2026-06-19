@@ -15,7 +15,17 @@
       "Bash(composer update *)",
       "Bash(findstr /i \"activity\")",
       "Bash(Select-String \"activity\")",
-      "Bash(php \"d:/COMPANY_DATA/01_IT_AND_DATABASE/04_APPLICATION/PIMS/artisan\" make:migration create_app_settings_table --path=database/migrations)"
+      "Bash(php \"d:/COMPANY_DATA/01_IT_AND_DATABASE/04_APPLICATION/PIMS/artisan\" make:migration create_app_settings_table --path=database/migrations)",
+      "Bash(grep -rn \"Driver::\\\\|App\\\\\\\\\\\\\\\\Models\\\\\\\\\\\\\\\\Driver\\\\|use App\\\\\\\\\\\\\\\\Models\\\\\\\\\\\\\\\\Driver\\\\|new Driver\\\\|Driver model\" \"d:/COMPANY_DATA/01_IT_AND_DATABASE/04_APPLICATION/PIMS/app\" --include=\"*.php\")",
+      "Bash(Get-Content storage/logs/laravel.log -Tail 50)",
+      "Read(//d/COMPANY_DATA/01_IT_AND_DATABASE/04_APPLICATION/PIMS/public/**)",
+      "Bash(grep -E \"\\\\.\\(jsx|tsx|php\\)$\")",
+      "Bash(popover\")",
+      "Bash(Remove-Item -Recurse -Force \"d:/COMPANY_DATA/01_IT_AND_DATABASE/04_APPLICATION/PIMS/node_modules/.vite\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"Vite cache cleared\")",
+      "Skill(code-review)",
+      "Skill(code-review:*)",
+      "Bash(npm list *)"
     ]
   }
 }

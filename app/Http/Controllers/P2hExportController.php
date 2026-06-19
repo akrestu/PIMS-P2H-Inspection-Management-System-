@@ -15,9 +15,11 @@ class P2hExportController extends Controller
 
         $session->load([
             'unit',
-            'userEntries.user.driver',
+            'userEntries.user',
             'userEntries.answers.inspectionItem',
             'userEntries.fuelLog',
+            'userEntries.approver',
+            'userEntries.pic',
             'serviceInfo',
         ]);
 

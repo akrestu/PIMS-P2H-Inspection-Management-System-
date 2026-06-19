@@ -1,3 +1,13 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,12 +21,16 @@ import {
     Bell,
     BellOff,
     CheckCheck,
+    CheckCircle,
     ChevronLeft,
     ChevronRight,
+    ClipboardCheck,
     ExternalLink,
     Inbox,
     Loader2,
+    Trash2,
     TriangleAlert,
+    XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -54,20 +68,86 @@ function fullDateTime(dateStr: string): string {
     });
 }
 
+/* ─────────── Notification type config ─────────────────────── */
+type NotifType = 'critical_alert' | 'lv_approval_request' | 'lv_approval_result';
+
+function getTypeConfig(data: PimsNotification['data']) {
+    const type = (data.type ?? 'critical_alert') as NotifType;
+
+    if (type === 'lv_approval_request') {
+        return {
+            icon: ClipboardCheck,
+            iconClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+            borderClass: 'border-amber-200 bg-amber-50/50 hover:bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 dark:hover:bg-amber-950/30',
+            badge: (
+                <Badge variant="secondary" className="gap-1 border-amber-200 bg-amber-100 text-amber-700 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                    <ClipboardCheck className="h-3 w-3" />
+                    Permintaan Persetujuan
+                </Badge>
+            ),
+            actionHint: 'Klik untuk tinjau & setujui',
+        };
+    }
+
+    if (type === 'lv_approval_result') {
+        const approved = data.status === 'approved';
+        return {
+            icon: approved ? CheckCircle : XCircle,
+            iconClass: approved
+                ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
+                : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+            borderClass: approved
+                ? 'border-green-200 bg-green-50/50 hover:bg-green-50 dark:border-green-900/50 dark:bg-green-950/20 dark:hover:bg-green-950/30'
+                : 'border-red-200 bg-red-50/50 hover:bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 dark:hover:bg-red-950/30',
+            badge: approved ? (
+                <Badge variant="secondary" className="gap-1 border-green-200 bg-green-100 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    <CheckCircle className="h-3 w-3" />
+                    Disetujui
+                </Badge>
+            ) : (
+                <Badge variant="destructive" className="gap-1 text-xs">
+                    <XCircle className="h-3 w-3" />
+                    Ditolak
+                </Badge>
+            ),
+            actionHint: 'Klik untuk lihat detail P2H',
+        };
+    }
+
+    // critical_alert (default)
+    return {
+        icon: TriangleAlert,
+        iconClass: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+        borderClass: 'border-red-200 bg-red-50/50 hover:bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 dark:hover:bg-red-950/30',
+        badge: (
+            <Badge variant="destructive" className="gap-1 text-xs">
+                <AlertTriangle className="h-3 w-3" />
+                Critical Alert
+            </Badge>
+        ),
+        actionHint: 'Klik untuk lihat sesi P2H',
+    };
+}
+
 /* ─────────────────── NotificationCard ─────────────────────── */
 function NotificationCard({ notif }: { notif: PimsNotification }) {
     const isUnread = !notif.read_at;
+    const config = getTypeConfig(notif.data);
+    const Icon = config.icon;
 
     const handleClick = () => {
         router.patch(`/notifications/${notif.id}/read`);
     };
 
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        router.delete(`/notifications/${notif.id}`, { preserveScroll: true });
+    };
+
     return (
         <div
             className={`group relative flex cursor-pointer gap-4 rounded-xl border p-4 transition-all hover:shadow-sm ${
-                isUnread
-                    ? 'border-red-200 bg-red-50/50 hover:bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 dark:hover:bg-red-950/30'
-                    : 'border-border bg-card hover:bg-muted/30'
+                isUnread ? config.borderClass : 'border-border bg-card hover:bg-muted/30'
             }`}
             onClick={handleClick}
             role="button"
@@ -78,12 +158,10 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
             <div className="shrink-0 pt-0.5">
                 <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                        isUnread
-                            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                            : 'bg-muted text-muted-foreground'
+                        isUnread ? config.iconClass : 'bg-muted text-muted-foreground'
                     }`}
                 >
-                    <TriangleAlert className="h-5 w-5" />
+                    <Icon className="h-5 w-5" />
                 </div>
             </div>
 
@@ -91,13 +169,7 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
             <div className="min-w-0 flex-1 space-y-2">
                 {/* Top row: badges */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <Badge
-                        variant="destructive"
-                        className="gap-1 text-xs"
-                    >
-                        <AlertTriangle className="h-3 w-3" />
-                        Critical Alert
-                    </Badge>
+                    {config.badge}
                     {isUnread && (
                         <Badge
                             variant="secondary"
@@ -109,21 +181,42 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                     )}
                 </div>
 
-                {/* Unit & Driver */}
+                {/* Unit info */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="text-sm font-semibold">
-                        Unit {notif.data.no_unit}
-                    </span>
-                    <Separator orientation="vertical" className="h-3.5 hidden sm:block" />
-                    <span className="text-muted-foreground text-sm">
-                        Driver: <span className="text-foreground font-medium">{notif.data.driver_name}</span>
-                    </span>
+                    <span className="text-sm font-semibold">Unit {notif.data.no_unit}</span>
+                    {(notif.data.driver_name || notif.data.submitter) && (
+                        <>
+                            <Separator orientation="vertical" className="h-3.5 hidden sm:block" />
+                            <span className="text-muted-foreground text-sm">
+                                {notif.data.driver_name
+                                    ? <>Driver: <span className="text-foreground font-medium">{notif.data.driver_name}</span></>
+                                    : <>Diajukan oleh: <span className="text-foreground font-medium">{notif.data.submitter}</span></>
+                                }
+                            </span>
+                        </>
+                    )}
+                    {notif.data.shift && (
+                        <>
+                            <Separator orientation="vertical" className="h-3.5 hidden sm:block" />
+                            <span className="text-muted-foreground text-sm">{notif.data.shift}</span>
+                        </>
+                    )}
                 </div>
 
+                {/* Approval result: approver & notes */}
+                {notif.data.type === 'lv_approval_result' && (
+                    <div className="text-sm text-muted-foreground space-y-0.5">
+                        <p>Oleh: <span className="text-foreground font-medium">{notif.data.approver}</span></p>
+                        {notif.data.catatan && (
+                            <p className="italic">"{notif.data.catatan}"</p>
+                        )}
+                    </div>
+                )}
+
                 {/* Critical items */}
-                {notif.data.critical_items?.length > 0 && (
+                {(notif.data.critical_items?.length ?? 0) > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                        {notif.data.critical_items.map((item, idx) => (
+                        {notif.data.critical_items!.map((item, idx) => (
                             <div
                                 key={idx}
                                 className="inline-flex max-w-full items-start gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 dark:border-red-900/50 dark:bg-red-950/30"
@@ -152,16 +245,30 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                     </Tooltip>
 
                     <span className="text-muted-foreground flex items-center gap-1 text-xs opacity-0 transition-opacity group-hover:opacity-100">
-                        {isUnread ? 'Klik untuk lihat & tandai dibaca' : 'Lihat sesi P2H'}
+                        {isUnread ? config.actionHint : 'Lihat detail'}
                         <ExternalLink className="h-3 w-3" />
                     </span>
                 </div>
             </div>
 
-            {/* Unread dot */}
-            {isUnread && (
-                <span className="absolute top-4 right-4 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
-            )}
+            {/* Unread dot + delete button */}
+            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                {isUnread && (
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+                )}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button
+                            onClick={handleDelete}
+                            className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                            aria-label="Hapus notifikasi"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Hapus notifikasi ini</TooltipContent>
+                </Tooltip>
+            </div>
         </div>
     );
 }
@@ -169,7 +276,7 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
 /* ─────────────── Empty State ───────────────────────────────── */
 function EmptyState({ tab }: { tab: string }) {
     const config = {
-        all: { icon: Inbox, title: 'Belum ada notifikasi', desc: 'Notifikasi critical alert dari sesi P2H akan muncul di sini.' },
+        all: { icon: Inbox, title: 'Belum ada notifikasi', desc: 'Notifikasi dari aktivitas P2H (critical alert, persetujuan) akan muncul di sini.' },
         unread: { icon: BellOff, title: 'Semua sudah dibaca', desc: 'Tidak ada notifikasi yang belum dibaca saat ini.' },
         read: { icon: Bell, title: 'Belum ada yang dibaca', desc: 'Notifikasi yang sudah kamu baca akan tampil di sini.' },
     }[tab] ?? { icon: Inbox, title: 'Kosong', desc: '' };
@@ -197,12 +304,25 @@ export default function NotificationsIndex({ notifications, unread_count, total_
     };
 
     const [markingAll, setMarkingAll] = useState(false);
+    const [clearingAll, setClearingAll] = useState(false);
+    const [showClearDialog, setShowClearDialog] = useState(false);
 
     const handleMarkAllRead = () => {
         if (markingAll) return;
         setMarkingAll(true);
         router.post('/notifications/read-all', {}, {
             onFinish: () => setMarkingAll(false),
+        });
+    };
+
+    const handleClearAll = () => {
+        if (clearingAll) return;
+        setClearingAll(true);
+        router.delete('/notifications', {
+            onFinish: () => {
+                setClearingAll(false);
+                setShowClearDialog(false);
+            },
         });
     };
 
@@ -238,48 +358,64 @@ export default function NotificationsIndex({ notifications, unread_count, total_
                         </p>
                     </div>
 
-                    {unread_count > 0 && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markingAll} className="gap-2">
-                                    {markingAll
-                                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                                        : <CheckCheck className="h-4 w-4" />
-                                    }
-                                    {markingAll ? 'Memproses…' : 'Tandai Semua Dibaca'}
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Tandai {unread_count} notifikasi sebagai sudah dibaca</TooltipContent>
-                        </Tooltip>
+                    {total_count > 0 && (
+                        <div className="flex items-center gap-2">
+                            {unread_count > 0 && (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markingAll} className="gap-2">
+                                            {markingAll
+                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                : <CheckCheck className="h-4 w-4" />
+                                            }
+                                            {markingAll ? 'Memproses…' : 'Tandai Semua Dibaca'}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Tandai {unread_count} notifikasi sebagai sudah dibaca</TooltipContent>
+                                </Tooltip>
+                            )}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="sm" onClick={() => setShowClearDialog(true)} disabled={clearingAll} className="gap-2 text-destructive hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5">
+                                        {clearingAll
+                                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                                            : <Trash2 className="h-4 w-4" />
+                                        }
+                                        {clearingAll ? 'Menghapus…' : 'Hapus Semua'}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Hapus semua {total_count} notifikasi secara permanen</TooltipContent>
+                            </Tooltip>
+                        </div>
                     )}
                 </div>
 
                 {/* ── Tabs ── */}
                 <Tabs value={filter} onValueChange={handleTabChange} className="w-full">
-                    <TabsList className="mb-2">
-                        <TabsTrigger value="all" className="gap-2">
-                            <Bell className="h-3.5 w-3.5" />
-                            Semua
+                    <TabsList className="mb-2 w-full">
+                        <TabsTrigger value="all" className="flex-1 gap-1.5">
+                            <Bell className="h-3.5 w-3.5 shrink-0" />
+                            <span>Semua</span>
                             {total_count > 0 && (
-                                <span className="bg-muted-foreground/20 text-muted-foreground ml-0.5 rounded px-1.5 py-0.5 text-xs tabular-nums">
+                                <span className="bg-muted-foreground/20 text-muted-foreground hidden rounded px-1.5 py-0.5 text-xs tabular-nums sm:inline">
                                     {total_count}
                                 </span>
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="unread" className="gap-2">
-                            <span className={`h-2 w-2 rounded-full ${unread_count > 0 ? 'bg-red-500' : 'bg-muted-foreground/40'}`} />
-                            Belum Dibaca
+                        <TabsTrigger value="unread" className="flex-1 gap-1.5">
+                            <span className={`h-2 w-2 shrink-0 rounded-full ${unread_count > 0 ? 'bg-red-500' : 'bg-muted-foreground/40'}`} />
+                            <span className="truncate">Belum Dibaca</span>
                             {unread_count > 0 && (
-                                <span className="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 ml-0.5 rounded px-1.5 py-0.5 text-xs tabular-nums">
+                                <span className="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 hidden rounded px-1.5 py-0.5 text-xs tabular-nums sm:inline">
                                     {unread_count}
                                 </span>
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="read" className="gap-2">
-                            <CheckCheck className="h-3.5 w-3.5" />
-                            Sudah Dibaca
+                        <TabsTrigger value="read" className="flex-1 gap-1.5">
+                            <CheckCheck className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">Sudah Dibaca</span>
                             {readCount > 0 && (
-                                <span className="bg-muted-foreground/20 text-muted-foreground ml-0.5 rounded px-1.5 py-0.5 text-xs tabular-nums">
+                                <span className="bg-muted-foreground/20 text-muted-foreground hidden rounded px-1.5 py-0.5 text-xs tabular-nums sm:inline">
                                     {readCount}
                                 </span>
                             )}
@@ -378,6 +514,29 @@ export default function NotificationsIndex({ notifications, unread_count, total_
                     ))}
                 </Tabs>
             </div>
+
+            <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus semua notifikasi?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Sebanyak <span className="font-semibold text-foreground">{total_count} notifikasi</span> akan dihapus secara permanen.
+                            Tindakan ini tidak dapat dibatalkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={clearingAll}>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleClearAll}
+                            disabled={clearingAll}
+                            className="gap-2 bg-destructive text-white hover:bg-destructive/90"
+                        >
+                            {clearingAll && <Loader2 className="h-4 w-4 animate-spin" />}
+                            {clearingAll ? 'Menghapus…' : 'Ya, Hapus Semua'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </TooltipProvider>
     );
 }

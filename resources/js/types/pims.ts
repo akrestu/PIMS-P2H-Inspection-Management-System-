@@ -1,25 +1,27 @@
+export type Jabatan = 'Sr.Staff' | 'Staff' | 'Non Staff';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 export interface Unit {
     id: number;
     no_unit: string;
     jenis_unit: 'Bus' | 'Light Vehicle';
     no_lambung: string | null;
     status: 'active' | 'inactive';
+    department: string | null;
     created_at?: string;
     updated_at?: string;
 }
 
-export interface Driver {
+export interface UserProfile {
     id: number;
-    user_id: number;
-    nik: string;
-    nama: string;
-    department: string;
-    jenis_unit: 'Bus' | 'Light Vehicle' | null;
-    user?: {
-        id: number;
-        name: string;
-        email: string;
-    };
+    name: string;
+    nik: string | null;
+    email: string | null;
+    jabatan: Jabatan | null;
+    department: string | null;
+    jenis_unit: string | null;
+    roles: string[];
+    units?: Pick<Unit, 'id' | 'no_unit' | 'jenis_unit'>[];
 }
 
 export interface P2hInspectionItem {
@@ -58,16 +60,21 @@ export interface P2hUserEntry {
     paraf_url: string | null;
     shift: 'Shift I' | 'Shift II' | null;
     submitted_at: string | null;
-    user?: {
-        id: number;
-        name: string;
-        driver?: Driver;
-    };
+    kondisi_akhir: 'Layak Pakai' | 'BD' | null;
+    justifikasi_kondisi: string | null;
+    is_override?: boolean;
+    // Approval
+    approval_status: ApprovalStatus | null;
+    pic_approver_id: number | null;
+    approver_id: number | null;
+    approved_at: string | null;
+    catatan_approval: string | null;
+    approver_signature_url: string | null;
+    user?: Pick<UserProfile, 'id' | 'name' | 'nik' | 'jabatan' | 'department'>;
+    approver?: Pick<UserProfile, 'id' | 'name'>;
+    pic?: Pick<UserProfile, 'id' | 'name' | 'jabatan'>;
     answers?: P2hChecklistAnswer[];
     fuel_log?: P2hFuelLog;
-    kondisi_akhir?: 'Layak Pakai' | 'BD' | null;
-    justifikasi_kondisi?: string | null;
-    is_override?: boolean;
 }
 
 export interface P2hServiceInfo {
@@ -98,14 +105,21 @@ export interface PimsNotification {
     type: string;
     notifiable_id: number;
     data: {
-        session_id: number;
-        no_unit: string;
-        driver_name: string;
-        submitted_at: string;
-        critical_items: Array<{
-            nama_item: string;
-            keterangan: string | null;
-        }>;
+        type?: string;
+        // CriticalItemAlert
+        session_id?: number;
+        no_unit?: string;
+        driver_name?: string;
+        submitted_at?: string;
+        critical_items?: Array<{ nama_item: string; keterangan: string | null }>;
+        // LvP2hApprovalRequest / LvP2hApprovalResult
+        entry_id?: number;
+        submitter?: string;
+        shift?: string;
+        tanggal?: string;
+        status?: ApprovalStatus;
+        approver?: string;
+        catatan?: string | null;
     };
     read_at: string | null;
     created_at: string;

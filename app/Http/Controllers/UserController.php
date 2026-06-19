@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exports\UsersExport;
 use App\Exports\UsersImportTemplateExport;
 use App\Imports\UsersImport;
-use App\Models\Driver;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -24,19 +23,22 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = User::with(['roles', 'driver.units'])
+        $query = User::with(['roles', 'units'])
             ->when($request->search, function ($q) use ($request) {
                 $q->where(function ($inner) use ($request) {
                     $inner->where('name', 'like', "%{$request->search}%")
                           ->orWhere('nik', 'like', "%{$request->search}%")
                           ->orWhere('email', 'like', "%{$request->search}%")
-                          ->orWhereHas('driver', fn ($d) => $d->where('nama', 'like', "%{$request->search}%"));
+                          ->orWhere('department', 'like', "%{$request->search}%");
                 });
             })
             ->when($request->role, fn ($q) => $q->role($request->role))
+            ->when($request->jabatan, fn ($q) => $q->where('jabatan', $request->jabatan))
             ->latest();
 
-        $users = $query->paginate(15)->withQueryString();
+        $perPage = $request->per_page === 'all' ? $query->count() : (int) ($request->per_page ?? 15);
+        $perPage = ($request->per_page === 'all' || in_array($perPage, [15, 50, 100])) ? max(1, $perPage) : 15;
+        $users = $query->paginate($perPage)->withQueryString();
 
         $stats = [
             'total'   => User::count(),
@@ -47,7 +49,7 @@ class UserController extends Controller
 
         return Inertia::render('users/index', [
             'users'   => $users,
-            'filters' => $request->only(['search', 'role']),
+            'filters' => $request->only(['search', 'role', 'jabatan', 'per_page']),
             'stats'   => $stats,
             'units'   => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit']),
         ]);
@@ -56,14 +58,13 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'nik'        => 'required|string|max:20|unique:users,nik',
-            'email'      => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->whereNotNull('email')],
-            'password'   => ['required', Password::defaults()],
-            'role'       => 'required|in:admin,manager,driver',
-            // Driver-only fields
-            'nama'       => 'required_if:role,driver|nullable|string|max:255',
-            'department' => 'required_if:role,driver|nullable|string|max:255',
+            'name'                => 'required|string|max:255',
+            'nik'                 => 'required|string|max:20|unique:users,nik',
+            'email'               => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->whereNotNull('email')],
+            'password'            => ['required', Password::defaults()],
+            'role'                => 'required|in:admin,manager,driver',
+            'jabatan'             => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
+            'department'          => 'required_unless:role,admin|nullable|string|max:255',
             'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
             'assigned_unit_ids'   => 'nullable|array',
             'assigned_unit_ids.*' => 'integer|exists:units,id',
@@ -71,29 +72,30 @@ class UserController extends Controller
 
         DB::transaction(function () use ($validated) {
             $user = User::create([
-                'name'     => $validated['name'],
-                'nik'      => $validated['nik'],
-                'email'    => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'name'       => $validated['name'],
+                'nik'        => $validated['nik'],
+                'email'      => $validated['email'] ?? null,
+                'password'   => Hash::make($validated['password']),
+                'jabatan'    => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
+                'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
+                'jenis_unit' => $validated['jenis_unit'] ?? null,
             ]);
             $user->assignRole($validated['role']);
+
+            if ($validated['role'] === 'driver') {
+                $user->units()->sync($validated['assigned_unit_ids'] ?? []);
+            }
 
             activity('user')
                 ->causedBy(auth()->user())
                 ->performedOn($user)
-                ->withProperties(['role' => $validated['role'], 'nik' => $validated['nik']])
-                ->log("Membuat user baru: {$user->name} ({$validated['role']})");
-
-            if ($validated['role'] === 'driver') {
-                $driver = Driver::create([
-                    'user_id'    => $user->id,
+                ->withProperties([
+                    'role'       => $validated['role'],
+                    'jabatan'    => $user->jabatan,
+                    'department' => $user->department,
                     'nik'        => $validated['nik'],
-                    'nama'       => $validated['nama'],
-                    'department' => $validated['department'],
-                    'jenis_unit' => $validated['jenis_unit'] ?? null,
-                ]);
-                $driver->units()->sync($validated['assigned_unit_ids'] ?? []);
-            }
+                ])
+                ->log("Membuat user baru: {$user->name} ({$validated['role']})");
         });
 
         Inertia::flash('toast', [
@@ -108,14 +110,13 @@ class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'nik'        => ['required', 'string', 'max:20', Rule::unique('users', 'nik')->ignore($user->id)],
-            'email'      => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)->whereNotNull('email')],
-            'role'       => 'required|in:admin,manager,driver',
-            'password'   => ['nullable', Password::defaults()],
-            // Driver-only fields
-            'nama'       => 'required_if:role,driver|nullable|string|max:255',
-            'department' => 'required_if:role,driver|nullable|string|max:255',
+            'name'                => 'required|string|max:255',
+            'nik'                 => ['required', 'string', 'max:20', Rule::unique('users', 'nik')->ignore($user->id)],
+            'email'               => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)->whereNotNull('email')],
+            'role'                => 'required|in:admin,manager,driver',
+            'password'            => ['nullable', Password::defaults()],
+            'jabatan'             => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
+            'department'          => 'required_unless:role,admin|nullable|string|max:255',
             'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
             'assigned_unit_ids'   => 'nullable|array',
             'assigned_unit_ids.*' => 'integer|exists:units,id',
@@ -123,9 +124,12 @@ class UserController extends Controller
 
         DB::transaction(function () use ($validated, $user) {
             $userData = [
-                'name'  => $validated['name'],
-                'nik'   => $validated['nik'],
-                'email' => $validated['email'],
+                'name'       => $validated['name'],
+                'nik'        => $validated['nik'],
+                'email'      => $validated['email'] ?? null,
+                'jabatan'    => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
+                'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
+                'jenis_unit' => $validated['jenis_unit'] ?? null,
             ];
             if (! empty($validated['password'])) {
                 $userData['password'] = Hash::make($validated['password']);
@@ -135,27 +139,23 @@ class UserController extends Controller
             $oldRole = $user->getRoleNames()->first();
             $user->syncRoles([$validated['role']]);
 
-            $props = ['role_lama' => $oldRole, 'role_baru' => $validated['role']];
+            // Sync assigned units (driver only; clear for other roles)
+            if ($validated['role'] === 'driver') {
+                $user->units()->sync($validated['assigned_unit_ids'] ?? []);
+            } else {
+                $user->units()->detach();
+            }
+
             activity('user')
                 ->causedBy(auth()->user())
                 ->performedOn($user)
-                ->withProperties($props)
+                ->withProperties([
+                    'role_lama'  => $oldRole,
+                    'role_baru'  => $validated['role'],
+                    'jabatan'    => $user->jabatan,
+                    'department' => $user->department,
+                ])
                 ->log("Memperbarui user: {$user->name}" . ($oldRole !== $validated['role'] ? " (role: {$oldRole} → {$validated['role']})" : ''));
-
-            if ($validated['role'] === 'driver') {
-                $driver = $user->driver()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'nik'        => $validated['nik'],
-                        'nama'       => $validated['nama'],
-                        'department' => $validated['department'],
-                        'jenis_unit' => $validated['jenis_unit'] ?? null,
-                    ]
-                );
-                $driver->units()->sync($validated['assigned_unit_ids'] ?? []);
-            } else {
-                $user->driver()->delete();
-            }
         });
 
         Inertia::flash('toast', [
@@ -167,13 +167,55 @@ class UserController extends Controller
         return redirect()->route('users.index');
     }
 
+    public function destroyBatch(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $currentUser = auth()->user();
+
+        $deleted = 0;
+        $skipped = 0;
+        DB::transaction(function () use ($request, $currentUser, &$deleted, &$skipped) {
+            foreach ($request->ids as $id) {
+                $user = User::find($id);
+                if (! $user) {
+                    $skipped++;
+                    continue;
+                }
+                // Lewati akun sendiri atau admin (jika bukan admin)
+                if ($user->id == $currentUser->id || (! $currentUser->hasRole('admin') && $user->hasRole('admin'))) {
+                    $skipped++;
+                    continue;
+                }
+                activity('user')
+                    ->causedBy($currentUser)
+                    ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
+                    ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
+                $user->delete();
+                $deleted++;
+            }
+        });
+
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => "{$deleted} user berhasil dihapus",
+            'description' => $skipped > 0
+                ? "{$skipped} user dilewati (akun sendiri / admin)."
+                : null,
+        ]);
+
+        return redirect()->route('users.index');
+    }
+
     public function destroy(User $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
             return back()->withErrors(['error' => 'Tidak dapat menghapus akun sendiri.']);
         }
 
-        // Manager tidak boleh menghapus akun admin
         if (! auth()->user()->hasRole('admin') && $user->hasRole('admin')) {
             return back()->withErrors(['error' => 'Tidak memiliki izin untuk menghapus akun admin.']);
         }
@@ -196,7 +238,7 @@ class UserController extends Controller
 
     public function export(): BinaryFileResponse
     {
-        $users = User::with(['roles', 'driver'])->latest()->get();
+        $users = User::with(['roles', 'units'])->latest()->get();
         return Excel::download(new UsersExport($users), 'users_' . now()->format('Ymd_His') . '.xlsx');
     }
 
@@ -219,10 +261,10 @@ class UserController extends Controller
 
         if (count($errors) > 0) {
             Log::warning('Import user selesai dengan error', [
-                'user_id'      => auth()->id(),
-                'success'      => $success,
-                'error_count'  => count($errors),
-                'errors'       => $errors,
+                'user_id'     => auth()->id(),
+                'success'     => $success,
+                'error_count' => count($errors),
+                'errors'      => $errors,
             ]);
 
             Inertia::flash('toast', [
@@ -233,7 +275,7 @@ class UserController extends Controller
         } else {
             Inertia::flash('toast', [
                 'type'        => 'success',
-                'message'     => "Import berhasil",
+                'message'     => 'Import berhasil',
                 'description' => "{$success} user berhasil ditambahkan.",
             ]);
         }

@@ -21,6 +21,7 @@ import {
     AlertCircle,
     AlertTriangle,
     ArrowRight,
+    Check,
     CheckCircle2,
     ChevronDown,
     ChevronLeft,
@@ -32,21 +33,31 @@ import {
     Loader2,
     Moon,
     PenLine,
+    Search,
     Send,
     ShieldAlert,
     ShieldCheck,
     Sun,
     Truck,
     User,
+    X,
     Wrench,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 
+interface StaffUser {
+    id: number;
+    name: string;
+    jabatan: string;
+    department: string;
+}
+
 interface Props {
     units: Unit[];
     inspectionItems: P2hInspectionItem[];
+    staffUsers: StaffUser[];
 }
 
 interface SlotInfo {
@@ -162,7 +173,7 @@ function StepNavFooter({
     const isLastStep = step === totalSteps;
 
     return (
-        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:bottom-0">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:bottom-0">
             {/* Progress bar — step 2 only */}
             {checklistProgress !== undefined && (
                 <div className="flex items-center gap-3 border-b px-4 py-2">
@@ -240,6 +251,7 @@ interface P2hDraft {
     lokasiKerja: string;
     kmAwal: string;
     shift: string;
+    picApproverId: string;
     answers: Record<number, AnswerState>;
     servisMingguan: boolean;
     servisBerkala: boolean;
@@ -271,15 +283,149 @@ function clearDraft() {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
 }
 
+// ─── PIC Combobox ─────────────────────────────────────────────────────────────
+function PicCombobox({
+    staffUsers,
+    value,
+    onChange,
+}: {
+    staffUsers: StaffUser[];
+    value: string;
+    onChange: (id: string) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const selected = staffUsers.find((s) => String(s.id) === value) ?? null;
+
+    const filtered = query.trim()
+        ? staffUsers.filter((s) =>
+              s.name.toLowerCase().includes(query.toLowerCase()) ||
+              (s.jabatan ?? '').toLowerCase().includes(query.toLowerCase()) ||
+              (s.department ?? '').toLowerCase().includes(query.toLowerCase()),
+          )
+        : staffUsers;
+
+    // Close on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false);
+                setQuery('');
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const select = (id: string) => {
+        onChange(id);
+        setOpen(false);
+        setQuery('');
+    };
+
+    const clear = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onChange('');
+        setQuery('');
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            {/* Trigger / input */}
+            <div
+                className={cn(
+                    'flex h-11 w-full items-center gap-2 rounded-lg border px-3 text-sm transition-colors cursor-text',
+                    open
+                        ? 'border-primary ring-2 ring-primary/20'
+                        : 'border-input hover:border-muted-foreground/50',
+                )}
+                onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0); }}
+            >
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <input
+                    ref={inputRef}
+                    value={open ? query : ''}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => setOpen(true)}
+                    placeholder={selected ? selected.name : 'Ketik nama, jabatan, atau departemen…'}
+                    className={cn(
+                        'flex-1 bg-transparent outline-none placeholder:text-muted-foreground',
+                        !open && selected ? 'text-transparent placeholder:text-foreground' : '',
+                    )}
+                />
+                {selected && (
+                    <button
+                        type="button"
+                        onClick={clear}
+                        className="shrink-0 rounded text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Hapus pilihan"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+                {!selected && (
+                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
+                )}
+            </div>
+
+            {/* Dropdown */}
+            {open && (
+                <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
+                    {filtered.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-muted-foreground text-center">
+                            Tidak ada PIC yang cocok.
+                        </p>
+                    ) : (
+                        filtered.map((s) => {
+                            const isSelected = String(s.id) === value;
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => select(String(s.id))}
+                                    className={cn(
+                                        'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent',
+                                        isSelected && 'bg-primary/5',
+                                    )}
+                                >
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                        <User className="h-4 w-4" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate font-medium">{s.name}</p>
+                                        <p className="truncate text-xs text-muted-foreground">
+                                            {s.jabatan}{s.department ? ` · ${s.department}` : ''}
+                                        </p>
+                                    </div>
+                                    {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                                </button>
+                            );
+                        })
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Main Form ────────────────────────────────────────────────────────────────
-export default function P2hForm({ units, inspectionItems }: Props) {
-    const { auth, options } = usePage<{ auth: { user: { name: string; nik?: string | null } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
+export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
+    const { auth, options } = usePage<{ auth: { user: { name: string; nik?: string | null; jabatan?: string } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
     const jobSiteOptions = options?.job_sites ?? ['PT. WBK Site MAS', 'PT. WBK Site BAU'];
     const shiftOptions = options?.shifts ?? ['Shift I', 'Shift II'];
 
-    const draft = loadDraft();
+    // Dibaca sekali pada mount — mencegah re-read localStorage di strict mode double-render
+    const [draft] = useState(loadDraft);
 
     const [step, setStep] = useState(draft.step ?? 1);
+    const topRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [step]);
 
     // Step 1
     const [selectedUnitId, setSelectedUnitId] = useState<string>(draft.selectedUnitId ?? '');
@@ -290,6 +436,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
     const [lokasiKerja, setLokasiKerja] = useState(draft.lokasiKerja ?? '');
     const [kmAwal, setKmAwal] = useState(draft.kmAwal ?? '');
     const [shift, setShift] = useState(draft.shift ?? '');
+    const [picApproverId, setPicApproverId] = useState<string>(draft.picApproverId ?? '');
 
     // Step 2
     const [answers, setAnswers] = useState<Record<number, AnswerState>>(draft.answers ?? {});
@@ -314,6 +461,8 @@ export default function P2hForm({ units, inspectionItems }: Props) {
     const [hasDraft] = useState(() => Boolean(draft.selectedUnitId));
 
     const selectedUnit = units.find((u) => u.id === Number(selectedUnitId));
+
+    const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle';
 
     const p2hScore = useMemo(() => {
         const total = inspectionItems.length;
@@ -357,12 +506,14 @@ export default function P2hForm({ units, inspectionItems }: Props) {
     useEffect(() => {
         saveDraft({
             step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+            picApproverId,
             answers, servisMingguan, servisBerkala, unscheduleBreakdown,
             lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
             hmKmAkhir, kondisiAkhir, justifikasiKondisi,
         });
     }, [
         step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+        picApproverId,
         answers, servisMingguan, servisBerkala, unscheduleBreakdown,
         lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
         hmKmAkhir, kondisiAkhir, justifikasiKondisi,
@@ -413,6 +564,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
             if (!selectedUnitId) return 'Pilih unit terlebih dahulu.';
             if (checkingSlot) return 'Menunggu pengecekan slot…';
             if (!shift) return 'Shift wajib dipilih.';
+            if (needsApproval && !picApproverId) return 'PIC yang akan menyetujui P2H wajib dipilih.';
         }
         if (s === 2) {
             for (const item of inspectionItems) {
@@ -435,12 +587,10 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         const err = validateStep(step);
         if (err) { toast.error(err); return; }
         setStep((s) => Math.min(s + 1, 4));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const goPrev = () => {
         setStep((s) => Math.max(s - 1, 1));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleSubmit = () => {
@@ -473,6 +623,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
             km_awal: kmAwal ? Number(kmAwal) : null,
             hm_km_akhir: hmKmAkhir ? Number(hmKmAkhir) : null,
             shift,
+            pic_approver_id: needsApproval && picApproverId ? Number(picApproverId) : null,
             paraf,
             answers: answersArray,
             kondisi_akhir: kondisiAkhir,
@@ -489,11 +640,15 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                 jumlah_liter: jumlahLiter ? Number(jumlahLiter) : null,
             },
         }, {
+            onSuccess: () => {
+                router.visit('/p2h', { replace: true });
+            },
             onError: (errors) => {
                 setSubmitting(false);
                 // Kembalikan draft jika submit gagal
                 saveDraft({
                     step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+                    picApproverId,
                     answers, servisMingguan, servisBerkala, unscheduleBreakdown,
                     lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
                     hmKmAkhir, kondisiAkhir, justifikasiKondisi,
@@ -514,7 +669,7 @@ export default function P2hForm({ units, inspectionItems }: Props) {
         <>
             <Head title="Form P2H" />
 
-            <div className="flex min-h-screen flex-col pb-52 md:pb-24">
+            <div ref={topRef} className="flex min-h-screen flex-col pb-52 md:pb-24">
 
                 {/* ── Sticky Top Header ── */}
                 <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -783,6 +938,47 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                     </ToggleGroup>
                                 </CardContent>
                             </Card>
+                        {/* PIC Approver — muncul untuk semua driver yang mengisi unit LV */}
+                        {needsApproval && (
+                            <Card className="border-amber-200 dark:border-amber-800">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                        <CardTitle className="text-base">PIC Persetujuan</CardTitle>
+                                        <span className="text-destructive text-sm">*</span>
+                                    </div>
+                                    <CardDescription>
+                                        P2H untuk unit Light Vehicle memerlukan persetujuan. Pilih Staff/Sr.Staff yang akan memeriksa dan menandatangani form ini.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="px-4 space-y-2">
+                                    <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/30">
+                                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                                            PIC yang dipilih akan mendapat notifikasi dan wajib me-review serta menandatangani P2H Anda sebelum dinyatakan valid.
+                                        </p>
+                                    </div>
+                                    <PicCombobox
+                                        staffUsers={staffUsers}
+                                        value={picApproverId}
+                                        onChange={setPicApproverId}
+                                    />
+                                    {picApproverId && (() => {
+                                        const pic = staffUsers.find((s) => String(s.id) === picApproverId);
+                                        return pic ? (
+                                            <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2">
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                                                    <User className="h-4 w-4 text-primary" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold truncate">{pic.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{pic.jabatan}{pic.department ? ` · ${pic.department}` : ''}</p>
+                                                </div>
+                                            </div>
+                                        ) : null;
+                                    })()}
+                                </CardContent>
+                            </Card>
+                        )}
                         </>
                     )}
 
@@ -1019,6 +1215,12 @@ export default function P2hForm({ units, inspectionItems }: Props) {
                                         {lokasiKerja && <><Separator /><SummaryRow label="Lokasi Kerja" value={lokasiKerja} /></>}
                                         <Separator />
                                         <SummaryRow icon={Gauge}  label="HM/KM Awal"  value={kmAwal ? Number(kmAwal).toLocaleString('id-ID') : '-'} />
+                                        {needsApproval && picApproverId && (() => {
+                                            const pic = staffUsers.find((s) => String(s.id) === picApproverId);
+                                            return pic ? (
+                                                <><Separator /><SummaryRow icon={User} label="PIC Approval" value={`${pic.name} (${pic.jabatan})`} /></>
+                                            ) : null;
+                                        })()}
                                     </div>
 
                                     {/* Hasil Checklist */}

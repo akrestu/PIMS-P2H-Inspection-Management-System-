@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Driver;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -15,41 +14,59 @@ class RoleSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $roleDriver  = Role::create(['name' => 'driver']);
-        $roleAdmin   = Role::create(['name' => 'admin']);
-        $roleManager = Role::create(['name' => 'manager']);
+        $roleDriver  = Role::firstOrCreate(['name' => 'driver']);
+        $roleAdmin   = Role::firstOrCreate(['name' => 'admin']);
+        $roleManager = Role::firstOrCreate(['name' => 'manager']);
 
-        // Default driver user
-        $driverUser = User::create([
-            'name'     => 'Driver Test',
-            'nik'      => '1100000000000001',
-            'email'    => 'driver@pims.test',
-            'password' => Hash::make('password'),
-        ]);
-        $driverUser->assignRole($roleDriver);
-        Driver::create([
-            'user_id'    => $driverUser->id,
-            'nik'        => 'NIK-001',
-            'nama'       => 'Driver Test',
-            'department' => 'Operasional',
-        ]);
+        // Driver - Non Staff (butuh approval untuk P2H LV)
+        $driverUser = User::updateOrCreate(
+            ['nik' => '1100000000000001'],
+            [
+                'name'       => 'Driver Test',
+                'email'      => 'driver@pims.test',
+                'password'   => Hash::make('password'),
+                'jabatan'    => 'Non Staff',
+                'department' => 'Operasional',
+            ]
+        );
+        $driverUser->syncRoles([$roleDriver]);
 
-        // Default admin user
-        $adminUser = User::create([
-            'name'     => 'Admin Test',
-            'nik'      => '1100000000000002',
-            'email'    => 'admin@pims.test',
-            'password' => Hash::make('password'),
-        ]);
-        $adminUser->assignRole($roleAdmin);
+        // Driver - Staff (dapat approve P2H LV dept Operasional)
+        $staffDriverUser = User::updateOrCreate(
+            ['nik' => '1100000000000004'],
+            [
+                'name'       => 'Staff Driver Test',
+                'email'      => 'staff.driver@pims.test',
+                'password'   => Hash::make('password'),
+                'jabatan'    => 'Staff',
+                'department' => 'Operasional',
+            ]
+        );
+        $staffDriverUser->syncRoles([$roleDriver]);
 
-        // Default manager user
-        $managerUser = User::create([
-            'name'     => 'Manager Test',
-            'nik'      => '1100000000000003',
-            'email'    => 'manager@pims.test',
-            'password' => Hash::make('password'),
-        ]);
-        $managerUser->assignRole($roleManager);
+        // Admin (tanpa jabatan - akses penuh)
+        $adminUser = User::updateOrCreate(
+            ['nik' => '1100000000000002'],
+            [
+                'name'     => 'Admin Test',
+                'email'    => 'admin@pims.test',
+                'password' => Hash::make('password'),
+                'jabatan'  => null,
+            ]
+        );
+        $adminUser->syncRoles([$roleAdmin]);
+
+        // Manager dengan jabatan Sr.Staff
+        $managerUser = User::updateOrCreate(
+            ['nik' => '1100000000000003'],
+            [
+                'name'       => 'Manager Test',
+                'email'      => 'manager@pims.test',
+                'password'   => Hash::make('password'),
+                'jabatan'    => 'Sr.Staff',
+                'department' => 'Operasional',
+            ]
+        );
+        $managerUser->syncRoles([$roleManager]);
     }
 }

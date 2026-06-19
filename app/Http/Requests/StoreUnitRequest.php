@@ -21,6 +21,7 @@ class StoreUnitRequest extends FormRequest
             'jenis_unit' => ['required', Rule::in(['Bus', 'Light Vehicle'])],
             'no_lambung' => ['nullable', 'string', 'max:50'],
             'status'     => ['required', Rule::in(['active', 'inactive'])],
+            'department' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -5,14 +5,15 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\DriverDashboardController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\MonitoringController;
-use App\Http\Controllers\P2hComplianceController;
-use App\Http\Controllers\UnitDowntimeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\P2hApprovalController;
+use App\Http\Controllers\P2hComplianceController;
 use App\Http\Controllers\P2hExportController;
 use App\Http\Controllers\P2hSessionController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UnitDowntimeController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect: role-aware
@@ -51,22 +52,38 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/p2h', [P2hSessionController::class, 'index'])->name('p2h.index');
     Route::get('/p2h/form', [P2hSessionController::class, 'create'])->name('p2h.create');
     Route::post('/p2h', [P2hSessionController::class, 'store'])->name('p2h.store');
-    Route::get('/p2h/{session}', [P2hSessionController::class, 'show'])->name('p2h.show');
-    Route::get('/p2h/{session}/export-pdf', [P2hExportController::class, 'exportPdf'])->name('p2h.export-pdf');
 
     // AJAX — cek slot unit hari ini
     Route::get('/api/p2h/check-slot', [P2hSessionController::class, 'checkSlot'])->name('p2h.check-slot');
+
+    // P2H Approval (Staff/Sr.Staff + Admin/Manager) — must be before /{session} to avoid conflict
+    Route::get('/p2h/approvals', [P2hApprovalController::class, 'index'])->name('p2h.approvals');
+    Route::get('/p2h/entries/{entry}/detail', [P2hApprovalController::class, 'detail'])->name('p2h.entry.detail');
+    Route::patch('/p2h/entries/{entry}/approve', [P2hApprovalController::class, 'approve'])->name('p2h.approve');
+    Route::patch('/p2h/entries/{entry}/reject', [P2hApprovalController::class, 'reject'])->name('p2h.reject');
+
+    Route::get('/p2h/{session}', [P2hSessionController::class, 'show'])->name('p2h.show');
+    Route::get('/p2h/{session}/export-pdf', [P2hExportController::class, 'exportPdf'])->name('p2h.export-pdf');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('/notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
 
-    // Monitoring PA & Downtime Log — admin & manager
+    // Monitoring P2H — admin, manager, dan driver staff/sr.staff (data dibatasi di controller)
+    Route::get('/monitoring', [MonitoringController::class, 'index'])
+        ->middleware(['role:admin|manager|driver'])
+        ->name('monitoring.index');
+
+    // Monitoring P2H — admin, manager, dan driver dengan jabatan Staff/Sr.Staff
+    Route::get('/p2h-compliance', [P2hComplianceController::class, 'index'])
+        ->middleware(['role:admin|manager|driver'])
+        ->name('p2h.compliance');
+
+    // Downtime Log — admin & manager
     Route::middleware(['role:admin|manager'])->group(function () {
-        Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
-        Route::get('/p2h-compliance', [P2hComplianceController::class, 'index'])->name('p2h.compliance');
-
         Route::get('/downtime', [UnitDowntimeController::class, 'index'])->name('downtime.index');
         Route::post('/downtime', [UnitDowntimeController::class, 'store'])->name('downtime.store');
         Route::patch('/downtime/{log}', [UnitDowntimeController::class, 'update'])->name('downtime.update');
@@ -89,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/units/import', [UnitController::class, 'import'])->middleware('throttle:5,1')->name('units.import');
         Route::resource('units', UnitController::class)->except(['show']);
 
+        Route::delete('/users/batch', [UserController::class, 'destroyBatch'])->name('users.batch-destroy');
         Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
         Route::get('/users/import-template', [UserController::class, 'importTemplate'])->name('users.import-template');

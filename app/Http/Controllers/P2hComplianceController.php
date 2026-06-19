@@ -17,6 +17,9 @@ class P2hComplianceController extends Controller
 
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        abort_unless($user->canViewApprovals(), 403);
+
         $request->validate([
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to'   => 'nullable|date_format:Y-m-d',

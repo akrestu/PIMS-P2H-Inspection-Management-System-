@@ -40,8 +40,24 @@ class NotificationController extends Controller
         $notification->markAsRead();
 
         $data = $notification->data;
-        $sessionId = $data['session_id'] ?? null;
+        $type = $data['type'] ?? 'critical_alert';
 
+        // Approval request → arahkan ke halaman persetujuan P2H
+        if ($type === 'lv_approval_request') {
+            return redirect()->route('p2h.approvals');
+        }
+
+        // Approval result → arahkan ke entry spesifik di detail sesi
+        $sessionId = $data['session_id'] ?? null;
+        if ($type === 'lv_approval_result' && $sessionId) {
+            $entryId = $data['entry_id'] ?? null;
+            return redirect()->route('p2h.show', array_filter([
+                'session' => $sessionId,
+                'entry'   => $entryId,
+            ], fn ($v) => $v !== null));
+        }
+
+        // Critical alert → arahkan ke detail sesi P2H
         if ($sessionId) {
             return redirect()->route('p2h.show', $sessionId);
         }
@@ -51,12 +67,32 @@ class NotificationController extends Controller
 
     public function markAllRead(Request $request): RedirectResponse
     {
-        $request->user()->unreadNotifications->markAsRead();
+        $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
         Inertia::flash('toast', [
             'type'        => 'success',
             'message'     => 'Semua notifikasi dibaca',
             'description' => 'Seluruh notifikasi telah ditandai sebagai sudah dibaca.',
+        ]);
+
+        return back();
+    }
+
+    public function destroy(Request $request, string $id): RedirectResponse
+    {
+        $request->user()->notifications()->findOrFail($id)->delete();
+
+        return back();
+    }
+
+    public function destroyAll(Request $request): RedirectResponse
+    {
+        $request->user()->notifications()->delete();
+
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => 'Notifikasi dihapus',
+            'description' => 'Seluruh notifikasi telah dihapus.',
         ]);
 
         return back();
