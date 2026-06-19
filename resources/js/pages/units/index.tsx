@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import {
     Trash2,
     Truck,
     Upload,
+    X,
     XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -367,6 +369,54 @@ function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; 
     );
 }
 
+/* ──────────────────── BatchDeleteDialog ────────────────── */
+function BatchDeleteDialog({
+    ids,
+    open,
+    onOpenChange,
+    onSuccess,
+}: {
+    ids: number[];
+    open: boolean;
+    onOpenChange: (o: boolean) => void;
+    onSuccess: () => void;
+}) {
+    const [processing, setProcessing] = useState(false);
+    const count = ids.length;
+
+    const confirm = () => {
+        setProcessing(true);
+        router.delete('/units/batch', {
+            data: { ids },
+            onSuccess: () => { onSuccess(); onOpenChange(false); },
+            onFinish: () => setProcessing(false),
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-sm">
+                <DialogHeader>
+                    <div className="bg-destructive/10 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full">
+                        <Trash2 className="text-destructive h-6 w-6" />
+                    </div>
+                    <DialogTitle className="text-center">Hapus {count} Unit?</DialogTitle>
+                    <DialogDescription className="text-center">
+                        <span className="font-semibold text-foreground">{count} unit</span> yang dipilih akan dihapus permanen dari sistem.
+                        Tindakan ini <span className="font-semibold text-destructive">tidak dapat dibatalkan</span>.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-2">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">Batal</Button>
+                    <Button variant="destructive" onClick={confirm} disabled={processing} className="flex-1">
+                        {processing ? 'Menghapus...' : `Hapus ${count} Unit`}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 /* ──────────────────────── Stat Card ────────────────────────── */
 function StatCard({ title, value, icon: Icon, colorClass }: { title: string; value: number; icon: React.ElementType; colorClass: string }) {
     return (
@@ -396,6 +446,19 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
     const [deleteUnit, setDeleteUnit] = useState<Unit | null>(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
+
+    // Batch selection state
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
+
+    const allIds = units.data.map((u) => u.id);
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
+    const someSelected = selectedIds.length > 0 && !allSelected;
+
+    const toggleAll = () => setSelectedIds(allSelected ? [] : allIds);
+    const toggleOne = (id: number) =>
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    const clearSelection = () => setSelectedIds([]);
 
     // Debounce search
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -486,6 +549,30 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                     </div>
                 </div>
 
+                {/* ── Batch Action Bar ── */}
+                {selectedIds.length > 0 && (
+                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={toggleAll}
+                                className="border-destructive/60 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                            />
+                            <span className="text-sm font-medium">
+                                <span className="text-destructive font-semibold">{selectedIds.length}</span> unit dipilih
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8 gap-1.5 text-muted-foreground">
+                                <X className="h-3.5 w-3.5" /> Batalkan
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => setBatchDeleteOpen(true)} className="h-8 gap-1.5">
+                                <Trash2 className="h-3.5 w-3.5" /> Hapus {selectedIds.length} Unit
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Stat Cards ── */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                     <StatCard title="Total Unit" value={stats.total} icon={Truck} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" />
@@ -575,7 +662,16 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="w-12 text-center">#</TableHead>
+                                        <TableHead className="w-10 pl-4">
+                                            <Checkbox
+                                                checked={allSelected}
+                                                ref={(el) => { if (el) (el as any).indeterminate = someSelected; }}
+                                                onCheckedChange={toggleAll}
+                                                aria-label="Pilih semua"
+                                                disabled={allIds.length === 0}
+                                            />
+                                        </TableHead>
+                                        <TableHead className="w-12 text-center hidden sm:table-cell">#</TableHead>
                                         <TableHead>No. Unit</TableHead>
                                         <TableHead>Jenis Unit</TableHead>
                                         <TableHead>No. Polisi</TableHead>
@@ -612,8 +708,15 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                         </TableRow>
                                     ) : (
                                         units.data.map((unit, idx) => (
-                                            <TableRow key={unit.id} className="group">
-                                                <TableCell className="text-muted-foreground text-center text-sm">
+                                            <TableRow key={unit.id} className={`group ${selectedIds.includes(unit.id) ? 'bg-destructive/5' : ''}`}>
+                                                <TableCell className="pl-4 w-10">
+                                                    <Checkbox
+                                                        checked={selectedIds.includes(unit.id)}
+                                                        onCheckedChange={() => toggleOne(unit.id)}
+                                                        aria-label={`Pilih ${unit.no_unit}`}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground text-center text-sm hidden sm:table-cell">
                                                     {(units.from ?? 1) + idx}
                                                 </TableCell>
                                                 <TableCell>
@@ -781,6 +884,14 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                     setDeleteOpen(o);
                     if (!o) setDeleteUnit(null);
                 }}
+            />
+
+            {/* ── Batch Delete Dialog ── */}
+            <BatchDeleteDialog
+                ids={selectedIds}
+                open={batchDeleteOpen}
+                onOpenChange={setBatchDeleteOpen}
+                onSuccess={clearSelection}
             />
         </TooltipProvider>
     );

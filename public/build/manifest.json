@@ -846,7 +846,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-B94VtOtN.js",
+    "file": "assets/app-pkzeJoKV.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1482,13 +1482,14 @@
     ]
   },
   "resources/js/pages/units/index.tsx": {
-    "file": "assets/units-BVkJmdDn.js",
+    "file": "assets/units-C8o5bR6q.js",
     "name": "units",
     "src": "resources/js/pages/units/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-HKHcPBqm.js",
       "_select-hBNrkGVt.js",
+      "_checkbox-CPqOZj69.js",
       "_button-BvWftimK.js",
       "_dropdown-menu-1MkV2n0s.js",
       "_label-DaQfC62Z.js",
@@ -1509,6 +1510,7 @@
       "_search-gnjyywl2.js",
       "_trash-2-DjVQaOIU.js",
       "_truck-JM9CNOTZ.js",
+      "_x-D_XV8HAO.js",
       "_badge-C6g9bImk.js",
       "_card-Ht8Ofw2g.js",
       "_dialog-CGoDlg0D.js",

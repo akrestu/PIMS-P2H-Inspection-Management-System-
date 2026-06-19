@@ -104,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/units/export', [UnitController::class, 'export'])->name('units.export');
         Route::get('/units/import-template', [UnitController::class, 'importTemplate'])->name('units.import-template');
         Route::post('/units/import', [UnitController::class, 'import'])->middleware('throttle:5,1')->name('units.import');
+        Route::delete('/units/batch', [UnitController::class, 'destroyBatch'])->name('units.batch-destroy');
         Route::resource('units', UnitController::class)->except(['show']);
 
         Route::delete('/users/batch', [UserController::class, 'destroyBatch'])->name('users.batch-destroy');

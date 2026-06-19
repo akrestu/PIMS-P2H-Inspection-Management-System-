@@ -107,6 +107,34 @@ class UnitController extends Controller
         return redirect()->route('units.index');
     }
 
+    public function destroyBatch(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:units,id',
+        ]);
+
+        $units   = Unit::whereIn('id', $request->ids)->get();
+        $deleted = $units->count();
+
+        foreach ($units as $unit) {
+            activity('unit')
+                ->causedBy(auth()->user())
+                ->withProperties(['no_unit' => $unit->no_unit, 'jenis_unit' => $unit->jenis_unit])
+                ->log("Menghapus unit (batch): {$unit->no_unit}");
+
+            $unit->delete();
+        }
+
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => "{$deleted} unit berhasil dihapus",
+            'description' => "Unit yang dipilih telah dihapus dari sistem.",
+        ]);
+
+        return redirect()->route('units.index');
+    }
+
     public function export(): BinaryFileResponse
     {
         $units = Unit::latest()->get();
@@ -128,19 +156,25 @@ class UnitController extends Controller
         Excel::import($import, $request->file('file'));
 
         $success = $import->successCount();
+        $updated = $import->updateCount();
         $errors  = $import->rowErrors();
+
+        $parts = [];
+        if ($success > 0) $parts[] = "{$success} unit baru ditambahkan";
+        if ($updated > 0) $parts[] = "{$updated} unit diperbarui";
+        $summary = implode(', ', $parts) ?: '0 perubahan';
 
         if (count($errors) > 0) {
             Inertia::flash('toast', [
                 'type'        => 'warning',
-                'message'     => "Import selesai dengan {$success} berhasil, " . count($errors) . ' gagal.',
+                'message'     => "Import selesai: {$summary}, " . count($errors) . ' baris gagal.',
                 'description' => implode(' | ', array_slice($errors, 0, 3)) . (count($errors) > 3 ? '...' : ''),
             ]);
         } else {
             Inertia::flash('toast', [
                 'type'        => 'success',
                 'message'     => 'Import berhasil',
-                'description' => "{$success} unit berhasil ditambahkan.",
+                'description' => $summary . '.',
             ]);
         }
 

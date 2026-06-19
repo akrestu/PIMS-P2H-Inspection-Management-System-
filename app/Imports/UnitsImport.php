@@ -10,13 +10,13 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class UnitsImport implements ToCollection, WithHeadingRow
 {
     private int $successCount = 0;
-    private array $rowErrors = [];
+    private int $updateCount  = 0;
+    private array $rowErrors  = [];
 
     public function collection(Collection $rows): void
     {
         foreach ($rows as $index => $row) {
-            $rowNum = $index + 2;
-
+            $rowNum    = $index + 2;
             $noUnit    = trim($row['no_unit'] ?? '');
             $jenisUnit = trim($row['jenis_unit'] ?? '');
             $noLambung = trim($row['no_lambung'] ?? '') ?: null;
@@ -35,11 +35,26 @@ class UnitsImport implements ToCollection, WithHeadingRow
                 $this->rowErrors[] = "Baris {$rowNum}: Status '{$status}' tidak valid (active / inactive).";
                 continue;
             }
-            if (Unit::where('no_unit', $noUnit)->exists()) {
-                $this->rowErrors[] = "Baris {$rowNum}: No. unit '{$noUnit}' sudah terdaftar.";
+
+            $existing = Unit::where('no_unit', $noUnit)->first();
+
+            // UPDATE — no_unit sudah ada: perbarui data
+            if ($existing) {
+                try {
+                    $existing->update([
+                        'jenis_unit' => $jenisUnit,
+                        'no_lambung' => $noLambung,
+                        'status'     => $status,
+                        'department' => $dept,
+                    ]);
+                    $this->updateCount++;
+                } catch (\Throwable $e) {
+                    $this->rowErrors[] = "Baris {$rowNum}: " . $e->getMessage();
+                }
                 continue;
             }
 
+            // CREATE — no_unit baru
             try {
                 Unit::create([
                     'no_unit'    => $noUnit,
@@ -55,13 +70,7 @@ class UnitsImport implements ToCollection, WithHeadingRow
         }
     }
 
-    public function successCount(): int
-    {
-        return $this->successCount;
-    }
-
-    public function rowErrors(): array
-    {
-        return $this->rowErrors;
-    }
+    public function successCount(): int { return $this->successCount; }
+    public function updateCount(): int  { return $this->updateCount; }
+    public function rowErrors(): array  { return $this->rowErrors; }
 }
