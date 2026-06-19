@@ -17,10 +17,11 @@ class UnitsImport implements ToCollection, WithHeadingRow
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2;
 
-            $noUnit   = trim($row['no_unit'] ?? '');
+            $noUnit    = trim($row['no_unit'] ?? '');
             $jenisUnit = trim($row['jenis_unit'] ?? '');
             $noLambung = trim($row['no_lambung'] ?? '') ?: null;
-            $status   = strtolower(trim($row['status'] ?? 'active'));
+            $status    = strtolower(trim($row['status'] ?? 'active'));
+            $dept      = trim($row['department'] ?? '') ?: null;
 
             if (empty($noUnit)) {
                 $this->rowErrors[] = "Baris {$rowNum}: No. unit wajib diisi.";
@@ -41,10 +42,11 @@ class UnitsImport implements ToCollection, WithHeadingRow
 
             try {
                 Unit::create([
-                    'no_unit'   => $noUnit,
+                    'no_unit'    => $noUnit,
                     'jenis_unit' => $jenisUnit,
                     'no_lambung' => $noLambung,
-                    'status'    => $status,
+                    'status'     => $status,
+                    'department' => $dept,
                 ]);
                 $this->successCount++;
             } catch (\Throwable $e) {

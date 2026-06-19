@@ -1077,7 +1077,7 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                         <SelectTrigger className="h-8 w-32 text-xs">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent side="top" position="popper">
                                             <SelectItem value="15">15 per halaman</SelectItem>
                                             <SelectItem value="50">50 per halaman</SelectItem>
                                             <SelectItem value="100">100 per halaman</SelectItem>

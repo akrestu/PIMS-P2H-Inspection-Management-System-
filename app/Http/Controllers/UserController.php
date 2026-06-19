@@ -282,26 +282,33 @@ class UserController extends Controller
         Excel::import($import, $request->file('file'));
 
         $success = $import->successCount();
+        $updated = $import->updateCount();
         $errors  = $import->rowErrors();
+
+        $parts = [];
+        if ($success > 0) $parts[] = "{$success} user baru ditambahkan";
+        if ($updated > 0) $parts[] = "{$updated} user diperbarui";
+        $summary = implode(', ', $parts) ?: '0 perubahan';
 
         if (count($errors) > 0) {
             Log::warning('Import user selesai dengan error', [
                 'user_id'     => auth()->id(),
                 'success'     => $success,
+                'updated'     => $updated,
                 'error_count' => count($errors),
                 'errors'      => $errors,
             ]);
 
             Inertia::flash('toast', [
                 'type'        => 'warning',
-                'message'     => "Import selesai dengan {$success} berhasil, " . count($errors) . ' gagal.',
+                'message'     => "Import selesai: {$summary}, " . count($errors) . ' baris gagal.',
                 'description' => implode(' | ', array_slice($errors, 0, 3)) . (count($errors) > 3 ? '...' : ''),
             ]);
         } else {
             Inertia::flash('toast', [
                 'type'        => 'success',
                 'message'     => 'Import berhasil',
-                'description' => "{$success} user berhasil ditambahkan.",
+                'description' => $summary . '.',
             ]);
         }
 

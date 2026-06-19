@@ -18,14 +18,14 @@ class UnitsImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
     public function array(): array
     {
         return [
-            ['LV-001', 'Light Vehicle', 'B-1234-XYZ', 'active'],
-            ['BUS-001', 'Bus', 'B-5678-ABC', 'active'],
+            ['LV-001', 'Light Vehicle', 'B-1234-XYZ', 'active', 'Production'],
+            ['BUS-001', 'Bus', 'B-5678-ABC', 'active', 'Maintenance'],
         ];
     }
 
     public function headings(): array
     {
-        return ['no_unit', 'jenis_unit', 'no_lambung', 'status'];
+        return ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department'];
     }
 
     public function title(): string
@@ -40,6 +40,7 @@ class UnitsImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
             'B' => 18,
             'C' => 18,
             'D' => 12,
+            'E' => 22,
         ];
     }
 
@@ -66,11 +67,12 @@ class UnitsImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                     'B' => 'Bus atau Light Vehicle (wajib)',
                     'C' => 'No. polisi (opsional)',
                     'D' => 'active atau inactive (wajib)',
+                    'E' => 'Nama departemen pemilik unit (opsional) — contoh: Production',
                 ];
 
                 $sheet->insertNewRowBefore(1, 1);
                 $sheet->setCellValue('A1', 'TEMPLATE IMPORT UNIT — Hapus baris contoh (baris 3–4) sebelum upload. Jangan ubah baris heading (baris 2).');
-                $sheet->mergeCells('A1:D1');
+                $sheet->mergeCells('A1:E1');
                 $sheet->getStyle('A1')->applyFromArray([
                     'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],
                     'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF3CD']],

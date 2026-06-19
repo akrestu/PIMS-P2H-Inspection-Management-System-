@@ -36,10 +36,16 @@ class User extends Authenticatable
         return $this->jabatan === 'Non Staff';
     }
 
-    /** Driver Non Staff yang submit P2H LV harus melalui approval */
+    /** Driver jabatan Sr.Staff tidak perlu memilih PIC saat mengisi P2H LV */
+    public function isSrStaff(): bool
+    {
+        return $this->jabatan === 'Sr.Staff';
+    }
+
+    /** Driver yang submit P2H LV harus melalui approval (semua kecuali Sr.Staff) */
     public function needsLvApproval(): bool
     {
-        return $this->isNonStaff();
+        return ! $this->isSrStaff();
     }
 
     /**

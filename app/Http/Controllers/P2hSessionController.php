@@ -168,9 +168,9 @@ class P2hSessionController extends Controller
                 $parafUrl = $filename;
             }
 
-            // Tentukan apakah entry ini perlu approval (semua driver yang mengisi LV)
+            // Tentukan apakah entry ini perlu approval: LV + user adalah Non Staff
             $unit = Unit::withTrashed()->find($data['unit_id']);
-            $needsApproval = $unit?->jenis_unit === 'Light Vehicle';
+            $needsApproval = $unit?->jenis_unit === 'Light Vehicle' && $user->needsLvApproval();
 
             // Buat user entry
             $entry = P2hUserEntry::create([

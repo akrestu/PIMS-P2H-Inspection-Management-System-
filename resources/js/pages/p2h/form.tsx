@@ -462,7 +462,9 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
 
     const selectedUnit = units.find((u) => u.id === Number(selectedUnitId));
 
-    const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle';
+    // Sr.Staff tidak memerlukan persetujuan PIC — Staff dan Non Staff tetap perlu
+    const isSrStaff = auth?.user?.jabatan === 'Sr.Staff';
+    const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
 
     const p2hScore = useMemo(() => {
         const total = inspectionItems.length;

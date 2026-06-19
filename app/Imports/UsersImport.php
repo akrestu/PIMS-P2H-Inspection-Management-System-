@@ -12,7 +12,8 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class UsersImport implements ToCollection, WithHeadingRow
 {
     private int $successCount = 0;
-    private array $rowErrors = [];
+    private int $updateCount  = 0;
+    private array $rowErrors  = [];
 
     public function headingRow(): int
     {
@@ -36,8 +37,6 @@ class UsersImport implements ToCollection, WithHeadingRow
 
             if (empty($name)) { $this->rowErrors[] = "Baris {$rowNum}: Nama lengkap wajib diisi."; continue; }
             if (empty($nik))  { $this->rowErrors[] = "Baris {$rowNum}: NIK wajib diisi."; continue; }
-            if (empty($password)) { $this->rowErrors[] = "Baris {$rowNum}: Password wajib diisi."; continue; }
-            if (strlen($password) < 8) { $this->rowErrors[] = "Baris {$rowNum}: Password minimal 8 karakter."; continue; }
             if (!in_array($role, ['admin', 'manager', 'driver'])) {
                 $this->rowErrors[] = "Baris {$rowNum}: Role '{$role}' tidak valid (admin/manager/driver).";
                 continue;
@@ -50,16 +49,47 @@ class UsersImport implements ToCollection, WithHeadingRow
                 $this->rowErrors[] = "Baris {$rowNum}: Department wajib diisi untuk role {$role}.";
                 continue;
             }
-            if (User::where('nik', $nik)->exists()) {
-                $this->rowErrors[] = "Baris {$rowNum}: NIK '{$nik}' sudah terdaftar.";
-                continue;
-            }
-            if ($email && User::where('email', $email)->exists()) {
-                $this->rowErrors[] = "Baris {$rowNum}: Email '{$email}' sudah terdaftar.";
-                continue;
-            }
             if ($jenisUnit && !in_array($jenisUnit, ['Bus', 'Light Vehicle'])) {
                 $this->rowErrors[] = "Baris {$rowNum}: Jenis unit '{$jenisUnit}' tidak valid (Bus / Light Vehicle).";
+                continue;
+            }
+
+            $existingUser = User::where('nik', $nik)->first();
+
+            // UPDATE — NIK sudah ada: perbarui data kecuali password
+            if ($existingUser) {
+                // Validasi email unik: boleh sama dengan milik user sendiri
+                if ($email && User::where('email', $email)->where('id', '!=', $existingUser->id)->exists()) {
+                    $this->rowErrors[] = "Baris {$rowNum}: Email '{$email}' sudah digunakan user lain.";
+                    continue;
+                }
+
+                try {
+                    DB::transaction(function () use ($existingUser, $name, $email, $role, $jabatan, $dept, $jenisUnit) {
+                        $existingUser->update([
+                            'name'       => $name,
+                            'email'      => $email,
+                            'jabatan'    => $role !== 'admin' ? $jabatan : null,
+                            'department' => $role !== 'admin' ? $dept : null,
+                            'jenis_unit' => $jenisUnit,
+                        ]);
+                        // Sync role jika berubah
+                        $existingUser->syncRoles([$role]);
+                    });
+
+                    $this->updateCount++;
+                } catch (\Throwable $e) {
+                    $this->rowErrors[] = "Baris {$rowNum}: " . $e->getMessage();
+                }
+
+                continue;
+            }
+
+            // CREATE — NIK baru: password wajib
+            if (empty($password)) { $this->rowErrors[] = "Baris {$rowNum}: Password wajib diisi untuk user baru."; continue; }
+            if (strlen($password) < 8) { $this->rowErrors[] = "Baris {$rowNum}: Password minimal 8 karakter."; continue; }
+            if ($email && User::where('email', $email)->exists()) {
+                $this->rowErrors[] = "Baris {$rowNum}: Email '{$email}' sudah terdaftar.";
                 continue;
             }
 
@@ -85,5 +115,6 @@ class UsersImport implements ToCollection, WithHeadingRow
     }
 
     public function successCount(): int { return $this->successCount; }
+    public function updateCount(): int  { return $this->updateCount; }
     public function rowErrors(): array  { return $this->rowErrors; }
 }

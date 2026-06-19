@@ -55,7 +55,11 @@ class StoreP2hRequest extends FormRequest
     public function requiresPicApprover(): bool
     {
         $unit = \App\Models\Unit::find($this->input('unit_id'));
-        return $unit?->jenis_unit === 'Light Vehicle';
+        if ($unit?->jenis_unit !== 'Light Vehicle') {
+            return false;
+        }
+        // Staff/Sr.Staff tidak perlu PIC — mereka sendiri bertindak sebagai approver
+        return $this->user()?->needsLvApproval() ?? true;
     }
 
     /** Department dari unit yang dipilih — dipakai untuk validasi PIC harus sedepartemen. */
