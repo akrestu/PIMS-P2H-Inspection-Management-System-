@@ -82,7 +82,8 @@ class P2hSessionController extends Controller
     public function create(): Response
     {
         $user = auth()->user();
-        $assignedUnits = $user->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit']);
+
+        $assignedUnits = $user->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit', 'units.department']);
 
         if ($assignedUnits->isNotEmpty()) {
             $units = $assignedUnits;
@@ -90,7 +91,7 @@ class P2hSessionController extends Controller
             $units = Unit::active()
                 ->when($user->jenis_unit, fn ($q) => $q->where('jenis_unit', $user->jenis_unit))
                 ->orderBy('no_unit')
-                ->get(['id', 'no_unit', 'jenis_unit']);
+                ->get(['id', 'no_unit', 'jenis_unit', 'department']);
         }
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 

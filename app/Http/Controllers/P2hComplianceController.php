@@ -57,6 +57,15 @@ class P2hComplianceController extends Controller
         if ($jenis) {
             $unitQuery->where('jenis_unit', $jenis);
         }
+
+        // Staff / Sr.Staff hanya lihat LV unit dari department sendiri
+        if (in_array($user->jabatan, ['Sr.Staff', 'Staff']) && $user->department) {
+            $unitQuery->where(function ($q) use ($user) {
+                $q->where('jenis_unit', '!=', 'Light Vehicle')
+                  ->orWhere('department', $user->department);
+            });
+        }
+
         $units = $unitQuery->get();
 
         // ── 3. Load sessions + entries + answers — 3 queries total (no N+1) ───

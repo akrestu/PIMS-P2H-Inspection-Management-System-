@@ -466,6 +466,15 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
     const isSrStaff = auth?.user?.jabatan === 'Sr.Staff';
     const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
 
+    // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
+    const filteredStaffUsers = staffUsers
+        .filter((s) => s.id !== auth?.user?.id)
+        .filter((s) =>
+            selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
+                ? s.department === selectedUnit.department
+                : true,
+        );
+
     const p2hScore = useMemo(() => {
         const total = inspectionItems.length;
         if (total === 0) return null;
@@ -758,7 +767,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                                                     <SheetClose asChild key={unit.id}>
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => setSelectedUnitId(String(unit.id))}
+                                                                            onClick={() => { setSelectedUnitId(String(unit.id)); setPicApproverId(''); }}
                                                                             className={cn(
                                                                                 'flex w-full items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors',
                                                                                 isSelected
@@ -960,7 +969,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                         </p>
                                     </div>
                                     <PicCombobox
-                                        staffUsers={staffUsers}
+                                        staffUsers={filteredStaffUsers}
                                         value={picApproverId}
                                         onChange={setPicApproverId}
                                     />
