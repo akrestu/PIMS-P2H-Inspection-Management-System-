@@ -7,6 +7,7 @@ use App\Exports\UsersImportTemplateExport;
 use App\Imports\UsersImport;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -178,7 +179,8 @@ class UserController extends Controller
 
         $deleted = 0;
         $skipped = 0;
-        DB::transaction(function () use ($request, $currentUser, &$deleted, &$skipped) {
+        $blocked = [];
+        DB::transaction(function () use ($request, $currentUser, &$deleted, &$skipped, &$blocked) {
             foreach ($request->ids as $id) {
                 $user = User::find($id);
                 if (! $user) {
@@ -190,21 +192,32 @@ class UserController extends Controller
                     $skipped++;
                     continue;
                 }
-                activity('user')
-                    ->causedBy($currentUser)
-                    ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
-                    ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
-                $user->delete();
-                $deleted++;
+                try {
+                    activity('user')
+                        ->causedBy($currentUser)
+                        ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
+                        ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
+                    $user->delete();
+                    $deleted++;
+                } catch (QueryException $e) {
+                    if ($e->getCode() === '23000') {
+                        $blocked[] = $user->name;
+                    } else {
+                        throw $e;
+                    }
+                }
             }
         });
 
+        $parts = [];
+        if ($deleted > 0) $parts[] = "{$deleted} user berhasil dihapus.";
+        if ($skipped > 0) $parts[] = "{$skipped} dilewati (akun sendiri / admin).";
+        if (count($blocked) > 0) $parts[] = count($blocked) . ' tidak dapat dihapus karena memiliki data P2H/downtime: ' . implode(', ', $blocked) . '.';
+
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => "{$deleted} user berhasil dihapus",
-            'description' => $skipped > 0
-                ? "{$skipped} user dilewati (akun sendiri / admin)."
-                : null,
+            'type'        => count($blocked) > 0 ? 'warning' : 'success',
+            'message'     => $deleted > 0 ? "{$deleted} user berhasil dihapus" : 'Tidak ada user yang dihapus',
+            'description' => implode(' ', array_filter($parts, fn($p) => $p !== "{$deleted} user berhasil dihapus.")),
         ]);
 
         return redirect()->route('users.index');
@@ -220,12 +233,24 @@ class UserController extends Controller
             return back()->withErrors(['error' => 'Tidak memiliki izin untuk menghapus akun admin.']);
         }
 
-        activity('user')
-            ->causedBy(auth()->user())
-            ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
-            ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
+        try {
+            activity('user')
+                ->causedBy(auth()->user())
+                ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
+                ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
 
-        $user->delete();
+            $user->delete();
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23000') {
+                Inertia::flash('toast', [
+                    'type'        => 'error',
+                    'message'     => 'User tidak dapat dihapus',
+                    'description' => "Akun {$user->name} memiliki data P2H atau downtime yang terkait. Hapus atau arsipkan data tersebut terlebih dahulu.",
+                ]);
+                return redirect()->route('users.index');
+            }
+            throw $e;
+        }
 
         Inertia::flash('toast', [
             'type'        => 'success',
