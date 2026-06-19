@@ -54,16 +54,22 @@ class P2hComplianceController extends Controller
 
         // ── 2. Units aktif (dengan optional jenis_unit filter) ────────────────
         $unitQuery = Unit::active()->orderBy('no_unit');
-        if ($jenis) {
-            $unitQuery->where('jenis_unit', $jenis);
-        }
 
-        // Staff / Sr.Staff hanya lihat LV unit dari department sendiri
-        if (in_array($user->jabatan, ['Sr.Staff', 'Staff']) && $user->department) {
-            $unitQuery->where(function ($q) use ($user) {
-                $q->where('jenis_unit', '!=', 'Light Vehicle')
-                  ->orWhere('department', $user->department);
-            });
+        $isStaffDriver = in_array($user->jabatan, ['Sr.Staff', 'Staff']);
+
+        if ($isStaffDriver) {
+            // Staff/Sr.Staff: tampilkan sesuai jenis_unit user, filter dept untuk LV
+            $userJenis = $user->jenis_unit; // 'Light Vehicle' atau 'Bus'
+            $unitQuery->when($jenis, fn ($q) => $q->where('jenis_unit', $jenis),
+                             fn ($q) => $q->when($userJenis, fn ($q2) => $q2->where('jenis_unit', $userJenis)));
+            if ($user->jenis_unit === 'Light Vehicle' && $user->department) {
+                $unitQuery->where('department', $user->department);
+            }
+        } else {
+            // Admin/Manager: filter opsional dari request saja
+            if ($jenis) {
+                $unitQuery->where('jenis_unit', $jenis);
+            }
         }
 
         $units = $unitQuery->get();

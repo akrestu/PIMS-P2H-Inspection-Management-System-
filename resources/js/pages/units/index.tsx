@@ -740,7 +740,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="hidden md:table-cell text-sm">
-                                                    {unit.jenis_unit === 'Light Vehicle' && unit.department
+                                                    {unit.department
                                                         ? unit.department
                                                         : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
