@@ -24,21 +24,20 @@ class UnitsExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
             return [];
         }
 
-        return $this->units->values()->map(function ($unit, $index) {
+        return $this->units->values()->map(function ($unit) {
             return [
-                $index + 1,
                 $unit->no_unit,
                 $unit->jenis_unit,
                 $unit->no_lambung ?? '',
                 $unit->status,
-                $unit->created_at?->format('d/m/Y H:i') ?? '',
+                $unit->department ?? '',
             ];
         })->toArray();
     }
 
     public function headings(): array
     {
-        return ['No', 'No. Unit', 'Jenis Unit', 'No. Polisi', 'Status', 'Tanggal Dibuat'];
+        return ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department'];
     }
 
     public function title(): string
@@ -49,12 +48,11 @@ class UnitsExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
     public function columnWidths(): array
     {
         return [
-            'A' => 6,
-            'B' => 16,
+            'A' => 18,
+            'B' => 18,
             'C' => 18,
-            'D' => 18,
-            'E' => 12,
-            'F' => 18,
+            'D' => 12,
+            'E' => 24,
         ];
     }
 
@@ -74,22 +72,18 @@ class UnitsExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $sheet->freezePane('A2');
+                $sheet->freezePane('A3');
 
-                $sheet->insertNewRowBefore(1, 2);
-                $sheet->setCellValue('A1', 'DATA UNIT — PT. Wahana Bandhawa Kencana');
-                $sheet->setCellValue('A2', 'Diekspor: ' . now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i'));
-                $sheet->mergeCells('A1:F1');
-                $sheet->mergeCells('A2:F2');
+                $sheet->insertNewRowBefore(1, 1);
+                $sheet->setCellValue('A1', 'DATA UNIT — Diekspor: ' . now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i') . ' — File ini dapat langsung digunakan sebagai template import.');
+                $sheet->mergeCells('A1:E1');
 
                 $sheet->getStyle('A1')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 13, 'color' => ['argb' => 'FF1E3A5F']],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                    'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],
+                    'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF3CD']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'wrapText' => true],
                 ]);
-                $sheet->getStyle('A2')->applyFromArray([
-                    'font'      => ['size' => 10, 'color' => ['argb' => 'FF555555']],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-                ]);
+                $sheet->getRowDimension(1)->setRowHeight(24);
             },
         ];
     }

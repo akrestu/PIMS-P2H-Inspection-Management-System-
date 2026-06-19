@@ -13,10 +13,12 @@ class UnitsImport implements ToCollection, WithHeadingRow
     private int $updateCount  = 0;
     private array $rowErrors  = [];
 
+    public function headingRow(): int { return 2; }
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $index => $row) {
-            $rowNum    = $index + 2;
+            $rowNum    = $index + 3;
             $noUnit    = trim($row['no_unit'] ?? '');
             $jenisUnit = trim($row['jenis_unit'] ?? '');
             $noLambung = trim($row['no_lambung'] ?? '') ?: null;
