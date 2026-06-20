@@ -466,6 +466,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
     const isSrStaff = auth?.user?.jabatan === 'Sr.Staff';
     const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
 
+    // Label jabatan PIC sesuai hierarki: Non-Staff → Staff, Staff → Sr.Staff
+    const picJabatanLabel = auth?.user?.jabatan === 'Non Staff' ? 'Staff'
+        : auth?.user?.jabatan === 'Staff' ? 'Sr.Staff'
+        : 'Staff/Sr.Staff';
+
     // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
     const eligibleStaff = staffUsers.filter((s) => s.id !== auth?.user?.id);
     const filteredStaffUsers = selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
@@ -581,7 +586,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
             if (checkingSlot) return 'Menunggu pengecekan slot…';
             if (!shift) return 'Shift wajib dipilih.';
             if (needsApproval) {
-                if (filteredStaffUsers.length === 0) return 'Tidak ada Staff/Sr.Staff yang tersedia sebagai PIC untuk unit ini. Hubungi admin.';
+                if (filteredStaffUsers.length === 0) return `Tidak ada ${picJabatanLabel} yang tersedia sebagai PIC untuk unit ini. Hubungi admin.`;
                 if (!picApproverId) return 'PIC yang akan menyetujui P2H wajib dipilih.';
                 if (!filteredStaffUsers.some((s) => String(s.id) === picApproverId)) return 'PIC yang dipilih tidak valid. Silakan pilih kembali.';
             }
@@ -968,7 +973,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                         <span className="text-destructive text-sm">*</span>
                                     </div>
                                     <CardDescription>
-                                        P2H untuk unit Light Vehicle memerlukan persetujuan. Pilih Staff/Sr.Staff yang akan memeriksa dan menandatangani form ini.
+                                        P2H untuk unit Light Vehicle memerlukan persetujuan. Pilih {picJabatanLabel} yang akan memeriksa dan menandatangani form ini.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="px-4 space-y-2">
@@ -979,7 +984,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                     </div>
                                     {filteredStaffUsers.length === 0 ? (
                                         <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-3 text-sm text-destructive">
-                                            Tidak ada Staff/Sr.Staff dari departemen <strong>{selectedUnit?.department}</strong> yang terdaftar. Hubungi admin untuk menambahkan PIC.
+                                            Tidak ada {picJabatanLabel} dari departemen <strong>{selectedUnit?.department}</strong> yang terdaftar. Hubungi admin untuk menambahkan PIC.
                                         </div>
                                     ) : (
                                         <PicCombobox

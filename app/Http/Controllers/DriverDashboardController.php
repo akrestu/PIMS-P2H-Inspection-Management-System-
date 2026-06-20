@@ -51,9 +51,9 @@ class DriverDashboardController extends Controller
                 return [
                     'id'            => $entry->id,
                     'session_id'    => $entry->p2h_session_id,
-                    'no_unit'       => $entry->session->unit->no_unit ?? '-',
-                    'jenis_unit'    => $entry->session->unit->jenis_unit ?? '-',
-                    'tanggal'       => $entry->session->tanggal->format('d/m/Y'),
+                    'no_unit'       => $entry->session?->unit?->no_unit ?? '-',
+                    'jenis_unit'    => $entry->session?->unit?->jenis_unit ?? '-',
+                    'tanggal'       => $entry->session?->tanggal?->format('d/m/Y') ?? '-',
                     'shift'         => $entry->shift,
                     'km_awal'       => $entry->km_awal,
                     'kondisi_akhir' => $entry->kondisi_akhir,
