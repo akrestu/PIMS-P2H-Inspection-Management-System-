@@ -141,7 +141,7 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                 </div>
             )}
             {entry.approval_status === 'approved' && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/20 p-3">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/20 p-3 space-y-1">
                     <div className="flex items-center gap-2">
                         <span className="text-emerald-600 dark:text-emerald-400">✓</span>
                         <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
@@ -153,6 +153,11 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                             )}
                         </p>
                     </div>
+                    {entry.catatan_approval && (
+                        <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                            <span className="font-semibold">Catatan: </span>{entry.catatan_approval}
+                        </p>
+                    )}
                 </div>
             )}
 

@@ -99,9 +99,12 @@ class P2hSessionController extends Controller
         }
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
-        $staffUsers = User::whereIn('jabatan', ['Staff', 'Sr.Staff'])
-            ->orderBy('name')
-            ->get(['id', 'name', 'jabatan', 'department']);
+        $picJabatanMap = ['Non Staff' => 'Staff', 'Staff' => 'Sr.Staff'];
+        $picJabatan    = $picJabatanMap[$user->jabatan] ?? null;
+
+        $staffUsers = $picJabatan
+            ? User::where('jabatan', $picJabatan)->orderBy('name')->get(['id', 'name', 'jabatan', 'department'])
+            : collect();
 
         return Inertia::render('p2h/form', [
             'units'           => $units,

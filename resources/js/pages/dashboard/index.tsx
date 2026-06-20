@@ -60,8 +60,10 @@ function formatDateId() {
     }).format(new Date());
 }
 
+const CRITICAL_ALERT_KEY = `critical_alert_dismissed_${new Date().toISOString().slice(0, 10)}`;
+
 export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, recentP2h }: Props) {
-    const [alertDismissed, setAlertDismissed] = useState(false);
+    const [alertDismissed, setAlertDismissed] = useState(() => localStorage.getItem(CRITICAL_ALERT_KEY) === '1');
     const hasCritical = metrics.critical_tidak_layak > 0;
     const hasTL = metrics.unit_tidak_layak_hari_ini > 0;
 
@@ -152,7 +154,7 @@ export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, rece
                                     </Link>
                                 </AlertDescription>
                                 <button
-                                    onClick={() => setAlertDismissed(true)}
+                                    onClick={() => { localStorage.setItem(CRITICAL_ALERT_KEY, '1'); setAlertDismissed(true); }}
                                     className="text-destructive/70 hover:text-destructive absolute top-3 right-3 transition-colors"
                                     aria-label="Tutup peringatan"
                                 >

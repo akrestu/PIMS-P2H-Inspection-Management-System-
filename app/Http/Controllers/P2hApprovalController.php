@@ -172,6 +172,7 @@ class P2hApprovalController extends Controller
 
         $request->validate([
             'signature' => 'required|string',
+            'catatan'   => 'nullable|string|max:500',
         ]);
 
         // Simpan tanda tangan approver sebelum masuk transaction
@@ -189,7 +190,9 @@ class P2hApprovalController extends Controller
             }
         }
 
-        $updated = DB::transaction(function () use ($entry, $user, $approverSignatureUrl) {
+        $catatan = $request->catatan ?: null;
+
+        $updated = DB::transaction(function () use ($entry, $user, $approverSignatureUrl, $catatan) {
             // lockForUpdate mencegah race condition double-approval
             $fresh = P2hUserEntry::lockForUpdate()->find($entry->id);
 
@@ -202,6 +205,7 @@ class P2hApprovalController extends Controller
                 'approver_id'            => $user->id,
                 'approved_at'            => now(),
                 'approver_signature_url' => $approverSignatureUrl,
+                'catatan_approval'       => $catatan,
             ]);
 
             return true;

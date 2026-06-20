@@ -222,6 +222,7 @@ function ReviewApproveSheet({
     const [loading, setLoading] = useState(false);
     const [sigEmpty, setSigEmpty] = useState(true);
     const [processing, setProcessing] = useState(false);
+    const [catatan, setCatatan] = useState('');
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
 
     useEffect(() => {
@@ -230,6 +231,7 @@ function ReviewApproveSheet({
         setLoading(true);
         setDetail(null);
         setSigEmpty(true);
+        setCatatan('');
         fetch(`/p2h/entries/${entry.id}/detail`)
             .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then((data) => { setDetail(data); setLoading(false); })
@@ -249,7 +251,7 @@ function ReviewApproveSheet({
             return;
         }
         setProcessing(true);
-        router.patch(`/p2h/entries/${entry.id}/approve`, { signature }, {
+        router.patch(`/p2h/entries/${entry.id}/approve`, { signature, catatan: catatan.trim() || null }, {
             onFinish: () => { setProcessing(false); onClose(); },
         });
     };
@@ -407,6 +409,19 @@ function ReviewApproveSheet({
 
                             <Separator />
 
+                            {/* Catatan approval */}
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Catatan Approval <span className="text-muted-foreground font-normal">(opsional)</span></Label>
+                                <Textarea
+                                    value={catatan}
+                                    onChange={(e) => setCatatan(e.target.value)}
+                                    placeholder="Tuliskan catatan atau pesan untuk driver..."
+                                    className="min-h-[72px] resize-none"
+                                    maxLength={500}
+                                />
+                                <p className="text-right text-xs text-muted-foreground">{catatan.length}/500</p>
+                            </div>
+
                             {/* Signature section */}
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
@@ -527,10 +542,14 @@ function EntryCard({ entry, onReview }: { entry: ApprovalEntry; onReview: (e: Ap
                 </div>
             </div>
 
-            {/* Rejection note */}
-            {entry.approval_status === 'rejected' && entry.catatan_approval && (
-                <div className="rounded-lg border border-red-100 bg-red-50 p-2.5 dark:border-red-900 dark:bg-red-950/20">
-                    <p className="text-xs text-red-700 dark:text-red-400">
+            {/* Catatan approval/rejection */}
+            {entry.catatan_approval && (
+                <div className={`rounded-lg border p-2.5 ${
+                    entry.approval_status === 'rejected'
+                        ? 'border-red-100 bg-red-50 dark:border-red-900 dark:bg-red-950/20'
+                        : 'border-emerald-100 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'
+                }`}>
+                    <p className={`text-xs ${entry.approval_status === 'rejected' ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
                         <span className="font-semibold">Catatan:</span> {entry.catatan_approval}
                     </p>
                 </div>

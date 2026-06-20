@@ -19,7 +19,7 @@ class StoreP2hRequest extends FormRequest
             'unit_id'                           => ['required', 'integer', Rule::exists('units', 'id')->where('status', 'active')->whereNull('deleted_at')],
             'pic_approver_id'                   => $this->requiresPicApprover()
                 ? ['required', 'integer', Rule::exists('users', 'id')
-                    ->whereIn('jabatan', ['Staff', 'Sr.Staff'])
+                    ->where('jabatan', $this->getRequiredPicJabatan())
                     ->when($this->getPicDepartment(), fn ($r, $dept) => $r->where('department', $dept))]
                 : ['nullable', 'integer'],
             'job_site'                          => ['nullable', 'string', 'max:100'],
@@ -79,6 +79,13 @@ class StoreP2hRequest extends FormRequest
         }
         // Staff/Sr.Staff tidak perlu PIC — mereka sendiri bertindak sebagai approver
         return $this->user()?->needsLvApproval() ?? true;
+    }
+
+    /** Jabatan PIC yang diizinkan berdasarkan jabatan submitter (hierarki approval). */
+    public function getRequiredPicJabatan(): string
+    {
+        $map = ['Non Staff' => 'Staff', 'Staff' => 'Sr.Staff'];
+        return $map[$this->user()?->jabatan] ?? 'Staff';
     }
 
     /** Department dari unit yang dipilih — dipakai untuk validasi PIC harus sedepartemen. */
