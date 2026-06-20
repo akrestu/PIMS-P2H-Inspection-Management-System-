@@ -76,10 +76,21 @@ class P2hApprovalController extends Controller
             ];
         });
 
+        // Hitung stats untuk header summary
+        $baseQuery = P2hUserEntry::whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
+            ->when($user->isStaffOnly(), fn ($q) => $q->where('pic_approver_id', $user->id));
+
+        $stats = [
+            'pending'           => (clone $baseQuery)->where('approval_status', 'pending')->count(),
+            'approved_today'    => (clone $baseQuery)->where('approval_status', 'approved')->whereDate('approved_at', today())->count(),
+            'rejected_today'    => (clone $baseQuery)->where('approval_status', 'rejected')->whereDate('approved_at', today())->count(),
+        ];
+
         return Inertia::render('p2h/approvals', [
             'entries'       => $mapped,
             'filters'       => $request->only(['status']),
             'canSeeAllDept' => $user->isPrivileged(),
+            'stats'         => $stats,
         ]);
     }
 
@@ -208,6 +219,14 @@ class P2hApprovalController extends Controller
             status: 'approved',
         ));
 
+        // Tandai notifikasi approval request terkait sebagai sudah dibaca
+        $user->notifications()
+            ->whereNull('read_at')
+            ->where('data->type', 'lv_approval_request')
+            ->where('data->entry_id', $entry->id)
+            ->update(['read_at' => now()]);
+        cache()->forget("recent_notifications_user_{$user->id}");
+
         Inertia::flash('toast', [
             'type'        => 'success',
             'message'     => 'P2H disetujui',
@@ -263,6 +282,14 @@ class P2hApprovalController extends Controller
             approver: $user,
             status: 'rejected',
         ));
+
+        // Tandai notifikasi approval request terkait sebagai sudah dibaca
+        $user->notifications()
+            ->whereNull('read_at')
+            ->where('data->type', 'lv_approval_request')
+            ->where('data->entry_id', $entry->id)
+            ->update(['read_at' => now()]);
+        cache()->forget("recent_notifications_user_{$user->id}");
 
         Inertia::flash('toast', [
             'type'        => 'warning',

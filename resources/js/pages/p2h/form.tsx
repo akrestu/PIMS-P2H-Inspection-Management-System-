@@ -173,7 +173,7 @@ function StepNavFooter({
     const isLastStep = step === totalSteps;
 
     return (
-        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:bottom-0">
+        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:bottom-0">
             {/* Progress bar — step 2 only */}
             {checklistProgress !== undefined && (
                 <div className="flex items-center gap-3 border-b px-4 py-2">

@@ -51,7 +51,11 @@ class P2hSessionController extends Controller
         // Driver hanya lihat P2H yang pernah ia isi
         if ($user->hasRole('driver')) {
             $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id));
+        } elseif ($user->isStaffOnly()) {
+            // Staff/Sr.Staff non-admin/manager: hanya lihat sesi dimana mereka jadi PIC approver
+            $query->whereHas('userEntries', fn ($q) => $q->where('pic_approver_id', $user->id));
         }
+        // Admin/manager: tidak ada filter tambahan → lihat semua
 
         $sessions = $query->latest()->paginate(15)->withQueryString();
 
@@ -96,6 +100,7 @@ class P2hSessionController extends Controller
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
         $staffUsers = User::whereIn('jabatan', ['Staff', 'Sr.Staff'])
+            ->whereDoesntHave('roles', fn ($q) => $q->where('name', 'driver'))
             ->orderBy('name')
             ->get(['id', 'name', 'jabatan', 'department']);
 

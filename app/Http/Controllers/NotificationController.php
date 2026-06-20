@@ -36,8 +36,10 @@ class NotificationController extends Controller
 
     public function markRead(Request $request, string $id): RedirectResponse
     {
-        $notification = $request->user()->notifications()->findOrFail($id);
+        $user = $request->user();
+        $notification = $user->notifications()->findOrFail($id);
         $notification->markAsRead();
+        cache()->forget("recent_notifications_user_{$user->id}");
 
         $data = $notification->data;
         $type = $data['type'] ?? 'critical_alert';
@@ -67,7 +69,9 @@ class NotificationController extends Controller
 
     public function markAllRead(Request $request): RedirectResponse
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $user = $request->user();
+        $user->unreadNotifications()->update(['read_at' => now()]);
+        cache()->forget("recent_notifications_user_{$user->id}");
 
         Inertia::flash('toast', [
             'type'        => 'success',

@@ -112,7 +112,7 @@ export function MobileSidebarTrigger() {
         <>
             {/* Bottom navigation bar — mobile only */}
             <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-                <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+                <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
                     <nav className="flex items-center justify-around">
                         {primaryNav.map((link) => {
                             const Icon = link.icon;
@@ -121,18 +121,18 @@ export function MobileSidebarTrigger() {
                                 <Link
                                     key={link.title}
                                     href={link.href}
-                                    className={`relative flex flex-col items-center gap-2 px-3 py-3 rounded-xl transition-all duration-150 min-w-[60px] ${
+                                    className={`relative flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-150 min-w-[56px] ${
                                         active
                                             ? 'text-primary'
                                             : 'text-muted-foreground hover:text-foreground'
                                     }`}
                                 >
                                     {active && (
-                                        <span className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary" />
+                                        <span className="absolute top-0 left-1/2 h-0.5 w-7 -translate-x-1/2 rounded-full bg-primary" />
                                     )}
                                     <div className="relative">
                                         <Icon
-                                            className={`h-7 w-7 transition-transform duration-150 ${
+                                            className={`h-6 w-6 transition-transform duration-150 ${
                                                 active ? 'scale-110' : ''
                                             }`}
                                         />
@@ -160,10 +160,10 @@ export function MobileSidebarTrigger() {
                         {hasMore && (
                             <button
                                 onClick={() => setShowMore(true)}
-                                className="relative flex flex-col items-center gap-2 px-3 py-3 rounded-xl transition-all duration-150 min-w-[60px] text-muted-foreground hover:text-foreground"
+                                className="relative flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-150 min-w-[56px] text-muted-foreground hover:text-foreground"
                             >
                                 <div className="relative">
-                                    <MoreHorizontal className="h-7 w-7" />
+                                    <MoreHorizontal className="h-6 w-6" />
                                     {moreHasBadge && (
                                         <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive" />
                                     )}

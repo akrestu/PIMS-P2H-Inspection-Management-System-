@@ -20,7 +20,13 @@ class StoreP2hRequest extends FormRequest
             'pic_approver_id'                   => $this->requiresPicApprover()
                 ? ['required', 'integer', Rule::exists('users', 'id')
                     ->whereIn('jabatan', ['Staff', 'Sr.Staff'])
-                    ->where('department', $this->getPicDepartment())]
+                    ->where('department', $this->getPicDepartment()),
+                    function (string $attribute, mixed $value, \Closure $fail) {
+                        $pic = \App\Models\User::find($value);
+                        if ($pic && $pic->hasRole('driver')) {
+                            $fail('PIC yang dipilih harus memiliki role staff, bukan driver.');
+                        }
+                    }]
                 : ['nullable', 'integer'],
             'job_site'                          => ['nullable', 'string', 'max:100'],
             'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],

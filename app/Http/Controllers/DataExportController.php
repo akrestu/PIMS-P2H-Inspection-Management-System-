@@ -341,6 +341,8 @@ class DataExportController extends Controller
 
         if ($user->hasRole('driver')) {
             $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id));
+        } elseif ($user->isStaffOnly()) {
+            $query->whereHas('userEntries', fn ($q) => $q->where('pic_approver_id', $user->id));
         }
 
         $sessions = $query->latest()->get()->map(function ($session) {
