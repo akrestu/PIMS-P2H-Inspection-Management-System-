@@ -133,30 +133,31 @@ class P2hSessionController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
-        DB::transaction(function () use ($data, $user, &$session) {
-            // Lock dulu sebelum create untuk prevent race condition
-            $session = P2hSession::where('unit_id', $data['unit_id'])
-                ->whereDate('tanggal', today())
-                ->lockForUpdate()
-                ->first();
+        // Resolve atau buat sesi di luar transaksi agar MySQL error (duplicate key)
+        // tidak membunuh transaksi utama yang menyimpan entry.
+        $session = P2hSession::where('unit_id', $data['unit_id'])
+            ->whereDate('tanggal', today())
+            ->first();
 
-            if (! $session) {
-                try {
-                    $session = P2hSession::create([
-                        'unit_id'    => $data['unit_id'],
-                        'tanggal'    => today(),
-                        'status'     => 'open',
-                        'created_by' => $user->id,
-                        'job_site'   => $data['job_site'] ?? null,
-                    ]);
-                } catch (\Illuminate\Database\QueryException $e) {
-                    if ($e->getCode() !== '23000') throw $e;
-                    // Race condition: sesi dibuat oleh request lain, ambil yang sudah ada
-                    $session = P2hSession::where('unit_id', $data['unit_id'])
-                        ->whereDate('tanggal', today())
-                        ->firstOrFail();
-                }
+        if (! $session) {
+            try {
+                $session = P2hSession::create([
+                    'unit_id'    => $data['unit_id'],
+                    'tanggal'    => today(),
+                    'status'     => 'open',
+                    'created_by' => $user->id,
+                    'job_site'   => $data['job_site'] ?? null,
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() !== '23000') throw $e;
+                // Race condition: sesi sudah dibuat request lain, ambil yang ada
+                $session = P2hSession::where('unit_id', $data['unit_id'])
+                    ->whereDate('tanggal', today())
+                    ->firstOrFail();
             }
+        }
+
+        DB::transaction(function () use ($data, $user, $session) {
 
             $nextSlot = $session->userEntries()->count() + 1;
 
