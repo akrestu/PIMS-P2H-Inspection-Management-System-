@@ -14,6 +14,7 @@ interface UnitPA {
     no_unit: string;
     jenis_unit: string;
     no_lambung: string | null;
+    department: string | null;
     compliance_pa: number | null;
     actual_pa: number | null;
     current_status: 'operation' | 'bd' | 'no_data';
@@ -33,16 +34,18 @@ interface P2hSummary {
 }
 
 interface MatrixCell {
-    session_id: number;
-    slots_filled: number;
-    total_tl: number;
-    status: 'layak' | 'bd';
+    session_id?: number;
+    slots_filled?: number;
+    total_tl?: number;
+    downtime_tipe?: string;
+    status: 'layak' | 'bd' | 'downtime';
 }
 
 interface MatrixRow {
     no_unit: string;
     jenis_unit: string;
     no_lambung: string | null;
+    department: string | null;
     cells: Record<string, MatrixCell | null>;
     filled_days: number;
     total_days: number;
@@ -96,8 +99,55 @@ function jenisLabel(jenis: string): string {
     return jenis;
 }
 
+/** Short label: "WLV 010" or "WLV 010 · B 9729 PBD" */
 function unitLabel(row: { no_unit: string; no_lambung: string | null }): string {
-    return row.no_lambung ? `${row.no_unit} (Lambung: ${row.no_lambung})` : row.no_unit;
+    return row.no_lambung ? `${row.no_unit} · ${row.no_lambung}` : row.no_unit;
+}
+
+function deptSuffix(row: { jenis_unit: string; department: string | null }): string {
+    return row.jenis_unit === 'Light Vehicle' && row.department ? ` (${row.department})` : '';
+}
+
+/** Group LV rows by department, returns sorted Map<deptName, rows[]>. */
+function groupLvByDept<T extends { jenis_unit: string; department: string | null }>(
+    items: T[],
+): Map<string, T[]> {
+    const map = new Map<string, T[]>();
+    for (const item of items) {
+        const key = item.department ?? '—';
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(item);
+    }
+    return new Map([...map.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+}
+
+/** Push items one-per-line, collapsing beyond `max`. */
+function pushCollapsed(lines: string[], items: string[], max = 5): void {
+    for (let i = 0; i < Math.min(items.length, max); i++) lines.push(items[i]);
+    if (items.length > max) lines.push(`  _...dan ${items.length - max} unit lainnya_`);
+}
+
+/** Join items into comma-separated lines of ~60 chars, collapse beyond `maxLines`. */
+function pushJoined(lines: string[], names: string[], max = 2): void {
+    const chunks: string[] = [];
+    let current = '';
+    for (const name of names) {
+        const next = current ? `${current}, ${name}` : name;
+        if (next.length > 60 && current) {
+            chunks.push(current);
+            current = name;
+        } else {
+            current = next;
+        }
+    }
+    if (current) chunks.push(current);
+
+    const shown = chunks.slice(0, max);
+    for (const chunk of shown) lines.push(chunk);
+
+    const shownNames = shown.join(', ').split(', ').length;
+    const remaining = names.length - shownNames;
+    if (remaining > 0) lines.push(`_...dan ${remaining} unit lainnya_`);
 }
 
 // ── PA Monitoring Formatter ───────────────────────────────────────────────────
@@ -106,25 +156,28 @@ export function formatPaReport(unitData: UnitPA[], summary: PaSummary, filters: 
     const threshold = summary.pa_threshold;
     const lines: string[] = [];
 
-    lines.push('*Laporan Ketersediaan Kendaraan*');
-    lines.push(`${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
-    if (filters.jenis_unit) lines.push(jenisLabel(filters.jenis_unit));
+    lines.push('*Laporan Ketersediaan Armada*');
+    const rangeStr = `${fmtDate(filters.date_from)} – ${fmtDate(filters.date_to)}`;
+    lines.push(filters.jenis_unit ? `${rangeStr} · ${jenisLabel(filters.jenis_unit)}` : rangeStr);
 
     lines.push('');
-    lines.push(`Beroperasi normal : ${summary.operation_count} unit`);
-    lines.push(`Rusak (breakdown) : ${summary.bd_count} unit`);
-    if (summary.no_data_count > 0) lines.push(`Belum ada data    : ${summary.no_data_count} unit`);
-    lines.push(`Ketersediaan rata-rata : *${summary.fleet_actual_pa ?? '-'}%*`);
-    lines.push(`Kepatuhan cek harian   : *${summary.fleet_compliance_pa ?? '-'}%*`);
+    lines.push(`Beroperasi    : *${summary.operation_count} unit*`);
+    lines.push(`Rusak (BD)    : *${summary.bd_count} unit*`);
+    if (summary.no_data_count > 0) lines.push(`Belum ada data: ${summary.no_data_count} unit`);
+    lines.push(`PA rata-rata  : *${summary.fleet_actual_pa ?? '-'}%*`);
+    lines.push(`Kepatuhan P2H : *${summary.fleet_compliance_pa ?? '-'}%*`);
 
     // --- BD units ---
     const bdUnits = unitData.filter((u) => u.current_status === 'bd');
     if (bdUnits.length > 0) {
         lines.push('');
-        lines.push(`*Kendaraan Rusak (${bdUnits.length})*`);
+        lines.push(`*Kendaraan Rusak — ${bdUnits.length} unit*`);
         for (const u of bdUnits) {
-            lines.push(`${unitLabel(u)} - ${jenisLabel(u.jenis_unit)}`);
-            lines.push(`  Tersedia ${u.actual_pa ?? '-'}%, jam rusak ${u.downtime_hours > 0 ? u.downtime_hours.toFixed(0) + ' jam' : '-'}, rusak ${u.bd_days} hari`);
+            lines.push(`${unitLabel(u)}${deptSuffix(u)}`);
+            const parts = [`PA ${u.actual_pa ?? '-'}%`];
+            if (u.downtime_hours > 0) parts.push(`downtime ${u.downtime_hours.toFixed(0)} jam`);
+            if (u.bd_days > 0) parts.push(`rusak ${u.bd_days} hari`);
+            lines.push(`  ${parts.join(' · ')}`);
         }
     }
 
@@ -135,11 +188,13 @@ export function formatPaReport(unitData: UnitPA[], summary: PaSummary, filters: 
 
     if (belowThreshold.length > 0) {
         lines.push('');
-        lines.push(`*Perlu Perhatian - Di bawah ${threshold}% (${belowThreshold.length})*`);
-        for (const u of belowThreshold) {
-            lines.push(`${unitLabel(u)} - ${jenisLabel(u.jenis_unit)}`);
-            lines.push(`  Tersedia ${u.actual_pa ?? '-'}%, cek harian ${u.compliance_pa ?? '-'}%, rusak ${u.bd_days} hari`);
-        }
+        lines.push(`*Perlu Perhatian — PA di bawah ${threshold}% (${belowThreshold.length} unit)*`);
+        const items = belowThreshold.map((u) => {
+            const parts = [`PA ${u.actual_pa ?? '-'}%`, `P2H ${u.compliance_pa ?? '-'}%`];
+            if (u.bd_days > 0) parts.push(`rusak ${u.bd_days} hari`);
+            return `${unitLabel(u)}${deptSuffix(u)}\n  ${parts.join(' · ')}`;
+        });
+        pushCollapsed(lines, items, 10);
     }
 
     // --- Normal units ---
@@ -149,24 +204,26 @@ export function formatPaReport(unitData: UnitPA[], summary: PaSummary, filters: 
 
     if (normalUnits.length > 0) {
         lines.push('');
-        lines.push(`*Beroperasi Normal (${normalUnits.length})*`);
-        for (const u of normalUnits) {
-            lines.push(`- ${unitLabel(u)} (${jenisLabel(u.jenis_unit)}) - Tersedia ${u.actual_pa ?? '-'}%, cek ${u.compliance_pa ?? '-'}%`);
-        }
+        lines.push(`*Beroperasi Normal — ${normalUnits.length} unit*`);
+        const items = normalUnits.map((u) => {
+            const parts: string[] = [];
+            if (u.actual_pa !== null) parts.push(`PA ${u.actual_pa}%`);
+            if (u.compliance_pa !== null) parts.push(`P2H ${u.compliance_pa}%`);
+            return `${unitLabel(u)}${deptSuffix(u)}${parts.length ? `\n  ${parts.join(' · ')}` : ''}`;
+        });
+        pushCollapsed(lines, items, 5);
     }
 
-    // --- No data units ---
+    // --- No data units (compact comma-joined) ---
     const noDataUnits = unitData.filter((u) => u.current_status === 'no_data');
     if (noDataUnits.length > 0) {
         lines.push('');
-        lines.push(`*Belum Ada Data (${noDataUnits.length})*`);
-        for (const u of noDataUnits) {
-            lines.push(`- ${unitLabel(u)} (${jenisLabel(u.jenis_unit)})`);
-        }
+        lines.push(`*Belum Ada Data — ${noDataUnits.length} unit*`);
+        pushJoined(lines, noDataUnits.map((u) => unitLabel(u)), 2);
     }
 
     lines.push('');
-    lines.push(`_PIMS - ${todayId()}_`);
+    lines.push(`_PIMS · ${todayId()}_`);
 
     return lines.join('\n');
 }
@@ -182,62 +239,80 @@ export function formatP2hReport(
     const lastDate = dates[dates.length - 1];
     const lines: string[] = [];
 
-    lines.push('*Pengingat Pengecekan Kendaraan Harian*');
-    lines.push(fmtDateShort(lastDate));
-    if (filters.jenis_unit) lines.push(jenisLabel(filters.jenis_unit));
+    lines.push('*Pengingat P2H Harian*');
+    const subtitle = filters.jenis_unit
+        ? `${fmtDateShort(lastDate)} · ${jenisLabel(filters.jenis_unit)}`
+        : fmtDateShort(lastDate);
+    lines.push(subtitle);
 
     const notFilled: MatrixRow[] = [];
+    const downtimeUnits: MatrixRow[] = [];
     const filledLayak: MatrixRow[] = [];
     const filledBd: MatrixRow[] = [];
 
     for (const row of matrix) {
         const cell = row.cells[lastDate];
-        if (!cell) notFilled.push(row);
-        else if (cell.status === 'bd') filledBd.push(row);
-        else filledLayak.push(row);
+        if (!cell) {
+            notFilled.push(row);
+        } else if (cell.status === 'downtime') {
+            downtimeUnits.push(row);
+        } else if (cell.status === 'bd') {
+            filledBd.push(row);
+        } else {
+            filledLayak.push(row);
+        }
     }
 
+    // --- Belum P2H: grouped by dept (unit number only, no plate) ---
     lines.push('');
     if (notFilled.length === 0) {
         lines.push('*Semua kendaraan sudah dicek hari ini.*');
     } else {
-        lines.push(`*Belum dicek (${notFilled.length} kendaraan)*`);
-        for (const row of notFilled) {
-            lines.push(`- ${unitLabel(row)} (${jenisLabel(row.jenis_unit)})`);
+        lines.push(`*Belum P2H — ${notFilled.length} unit*`);
+        const lvNotFilled = notFilled.filter((r) => r.jenis_unit === 'Light Vehicle');
+        const busNotFilled = notFilled.filter((r) => r.jenis_unit !== 'Light Vehicle');
+
+        if (lvNotFilled.length > 0) {
+            const byDept = groupLvByDept(lvNotFilled);
+            for (const [dept, rows] of byDept) {
+                lines.push(`${dept}: ${rows.map((r) => r.no_unit).join(', ')}`);
+            }
+        }
+        for (const row of busNotFilled) {
+            lines.push(row.no_unit);
+        }
+    }
+
+    // --- Sedang downtime ---
+    if (downtimeUnits.length > 0) {
+        lines.push('');
+        lines.push(`*Sedang BD/PM — ${downtimeUnits.length} unit*`);
+        lines.push('_(P2H tidak diperlukan)_');
+        for (const row of downtimeUnits) {
+            const tipe = row.cells[lastDate]?.downtime_tipe ?? 'BD';
+            lines.push(`${row.no_unit}${deptSuffix(row)} — ${tipe}`);
+        }
+    }
+
+    // --- Sudah P2H, Layak ---
+    if (filledLayak.length > 0) {
+        lines.push('');
+        lines.push(`*Sudah P2H, Layak — ${filledLayak.length} unit*`);
+        const items = filledLayak.map((r) => `${unitLabel(r)}${deptSuffix(r)}`);
+        pushCollapsed(lines, items, 5);
+    }
+
+    // --- Sudah P2H, Rusak ---
+    if (filledBd.length > 0) {
+        lines.push('');
+        lines.push(`*Sudah P2H, Rusak — ${filledBd.length} unit*`);
+        for (const row of filledBd) {
+            lines.push(`${unitLabel(row)}${deptSuffix(row)}`);
         }
     }
 
     lines.push('');
-    if (filledLayak.length === 0 && filledBd.length === 0) {
-        lines.push('Belum ada kendaraan yang dicek hari ini.');
-    } else {
-        if (filledLayak.length > 0) {
-            lines.push(`*Sudah dicek - Layak (${filledLayak.length} kendaraan)*`);
-            if (filledLayak.length <= 10) {
-                for (const row of filledLayak) {
-                    lines.push(`- ${unitLabel(row)} (${jenisLabel(row.jenis_unit)})`);
-                }
-            } else {
-                lines.push(`- ${filledLayak.length} kendaraan dinyatakan layak`);
-            }
-        }
-        if (filledBd.length > 0) {
-            lines.push('');
-            lines.push(`*Sudah dicek - Rusak (${filledBd.length} kendaraan)*`);
-            for (const row of filledBd) {
-                lines.push(`- ${unitLabel(row)} (${jenisLabel(row.jenis_unit)})`);
-            }
-        }
-    }
-
-    lines.push('');
-    lines.push(`Periode ${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
-    lines.push(`Kepatuhan pengisian : *${summary.fleet_compliance}%*`);
-    lines.push(`Hari terlewat       : ${summary.total_missed} hari`);
-    if (summary.total_bd_days > 0) lines.push(`Hari rusak          : ${summary.total_bd_days} hari`);
-
-    lines.push('');
-    lines.push(`_PIMS - ${todayId()}_`);
+    lines.push(`_PIMS · ${todayId()}_`);
 
     return lines.join('\n');
 }
@@ -251,15 +326,14 @@ export function formatP2hHistoryReport(
 ): string {
     const lines: string[] = [];
 
-    lines.push('*Laporan Pengecekan Kendaraan*');
-    lines.push(`${fmtDate(filters.date_from)} s/d ${fmtDate(filters.date_to)}`);
-    if (filters.jenis_unit) lines.push(jenisLabel(filters.jenis_unit));
+    lines.push('*Laporan Kepatuhan P2H*');
+    const rangeStr = `${fmtDate(filters.date_from)} – ${fmtDate(filters.date_to)}`;
+    lines.push(filters.jenis_unit ? `${rangeStr} · ${jenisLabel(filters.jenis_unit)}` : rangeStr);
 
-    lines.push('');
-    lines.push(`Kepatuhan armada         : *${summary.fleet_compliance}%*`);
-    lines.push(`Kendaraan sempurna (100%): ${summary.perfect_units} unit`);
-    lines.push(`Hari terlewat            : ${summary.total_missed} hari`);
-    if (summary.total_bd_days > 0) lines.push(`Hari rusak               : ${summary.total_bd_days} hari`);
+    if (summary.total_bd_days > 0) {
+        lines.push('');
+        lines.push(`Hari rusak : ${summary.total_bd_days} hari`);
+    }
 
     const sorted = [...matrix].sort((a, b) => a.compliance_pct - b.compliance_pct);
     const poor = sorted.filter((r) => r.compliance_pct < 70);
@@ -268,36 +342,30 @@ export function formatP2hHistoryReport(
 
     if (poor.length > 0) {
         lines.push('');
-        lines.push(`*Perlu Perhatian - di bawah 70% (${poor.length} kendaraan)*`);
-        for (const r of poor) {
-            const missed = r.total_days - r.filled_days;
-            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)})`);
-            lines.push(`  Dicek ${r.filled_days} dari ${r.total_days} hari, tidak dicek ${missed} hari`);
-        }
+        lines.push(`*Perlu Perhatian — di bawah 70% (${poor.length} unit)*`);
+        const items = poor.map((r) => `${unitLabel(r)}${deptSuffix(r)} — ${r.compliance_pct}% · ${r.filled_days}/${r.total_days} hari`);
+        pushCollapsed(lines, items, 10);
     }
 
     if (fair.length > 0) {
         lines.push('');
-        lines.push(`*Cukup Baik - 70% sampai 89% (${fair.length} kendaraan)*`);
-        for (const r of fair) {
-            const missed = r.total_days - r.filled_days;
-            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)}) - dicek ${r.filled_days}/${r.total_days} hari, terlewat ${missed} hari`);
-        }
+        lines.push(`*Cukup Baik — 70% s.d. 89% (${fair.length} unit)*`);
+        const items = fair.map((r) => `${unitLabel(r)}${deptSuffix(r)} — ${r.compliance_pct}% · ${r.filled_days}/${r.total_days} hari`);
+        pushCollapsed(lines, items, 10);
     }
 
     if (good.length > 0) {
         lines.push('');
-        lines.push(`*Baik - 90% ke atas (${good.length} kendaraan)*`);
-        for (const r of good) {
-            const detail = r.compliance_pct === 100
-                ? `sempurna, dicek setiap hari`
-                : `dicek ${r.filled_days} dari ${r.total_days} hari`;
-            lines.push(`- ${unitLabel(r)} (${jenisLabel(r.jenis_unit)}) - ${detail}`);
-        }
+        lines.push(`*Baik — 90% ke atas (${good.length} unit)*`);
+        const items = good.map((r) => {
+            const detail = r.compliance_pct === 100 ? 'sempurna' : `${r.compliance_pct}% · ${r.filled_days}/${r.total_days} hari`;
+            return `${unitLabel(r)}${deptSuffix(r)} — ${detail}`;
+        });
+        pushCollapsed(lines, items, 5);
     }
 
     lines.push('');
-    lines.push(`_PIMS - ${todayId()}_`);
+    lines.push(`_PIMS · ${todayId()}_`);
 
     return lines.join('\n');
 }

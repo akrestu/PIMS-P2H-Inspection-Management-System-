@@ -16,29 +16,29 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles, WithColumnWidths, WithEvents
 {
     public function __construct(
-        private array $sessions,
+        private array $rows,
         private array $filters,
     ) {}
 
     public function array(): array
     {
-        $rows = [];
+        $data = [];
         $no   = 1;
 
-        foreach ($this->sessions as $s) {
-            $rows[] = [
+        foreach ($this->rows as $r) {
+            $data[] = [
                 $no++,
-                $s['tanggal'],
-                $s['no_unit'],
-                $s['jenis_unit'],
-                $s['slot_terisi'] . 'x P2H',
-                $s['total_tl'] > 0 ? $s['total_tl'] . ' item TL' : 'Semua Layak',
-                $s['kondisi_akhir'] ?? '-',
-                ucfirst($s['status']),
+                $r['tanggal'],
+                $r['shift'],
+                $r['no_unit'],
+                $r['jenis_unit'],
+                $r['user'],
+                $r['hasil_detail'],
+                $r['status_unit'],
             ];
         }
 
-        return $rows;
+        return $data;
     }
 
     public function headings(): array
@@ -46,12 +46,12 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
         return [
             'No.',
             'Tanggal',
+            'Shift',
             'No. Unit',
             'Jenis Unit',
-            'Slot Terisi',
+            'User',
             'Hasil Pemeriksaan',
-            'Kondisi Akhir',
-            'Status Sesi',
+            'Status Unit',
         ];
     }
 
@@ -65,12 +65,12 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
         return [
             'A' => 5,
             'B' => 13,
-            'C' => 16,
+            'C' => 10,
             'D' => 16,
-            'E' => 12,
+            'E' => 14,
             'F' => 22,
-            'G' => 17,
-            'H' => 13,
+            'G' => 55,
+            'H' => 12,
         ];
     }
 
@@ -121,6 +121,12 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
                     'font'      => ['size' => 10, 'color' => ['argb' => 'FF555555']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
+
+                // Wrap text for column G (Hasil Pemeriksaan) so long content is readable
+                $lastRow = $sheet->getHighestRow();
+                if ($lastRow >= 5) {
+                    $sheet->getStyle("G5:G{$lastRow}")->getAlignment()->setWrapText(true);
+                }
 
                 $sheet->freezePane('A5');
             },

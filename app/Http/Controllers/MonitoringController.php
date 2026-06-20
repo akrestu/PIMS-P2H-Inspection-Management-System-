@@ -270,6 +270,7 @@ class MonitoringController extends Controller
                 'no_unit'        => $unit->no_unit,
                 'jenis_unit'     => $unit->jenis_unit,
                 'no_lambung'     => $unit->no_lambung,
+                'department'     => $unit->department,
                 'compliance_pa'  => $compliancePa,
                 'actual_pa'      => $actualPa,
                 'working_hours'  => round($workingHours, 1),

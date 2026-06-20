@@ -56,6 +56,7 @@ interface UnitPA {
     no_unit: string;
     jenis_unit: 'Bus' | 'Light Vehicle';
     no_lambung: string | null;
+    department: string | null;
     compliance_pa: number | null;
     actual_pa: number | null;
     working_hours: number;

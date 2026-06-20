@@ -55,6 +55,7 @@ interface MatrixRow {
     no_unit: string;
     jenis_unit: 'Bus' | 'Light Vehicle';
     no_lambung: string | null;
+    department: string | null;
     cells: Record<string, MatrixCell | null>;
     filled_days: number;
     total_days: number;

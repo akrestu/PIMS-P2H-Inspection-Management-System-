@@ -330,7 +330,7 @@ class DataExportController extends Controller
     private function buildHistoryP2hData(Request $request): array
     {
         $user  = $request->user();
-        $query = P2hSession::with(['unit', 'userEntries.answers'])
+        $query = P2hSession::with(['unit', 'userEntries.user', 'userEntries.answers.inspectionItem'])
             ->when($request->date_from, fn ($q) => $q->whereDate('tanggal', '>=', $request->date_from))
             ->when($request->date_to,   fn ($q) => $q->whereDate('tanggal', '<=', $request->date_to))
             ->when($request->no_unit,   fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$request->no_unit}%")))
@@ -345,23 +345,38 @@ class DataExportController extends Controller
             $query->whereHas('userEntries', fn ($q) => $q->where('pic_approver_id', $user->id));
         }
 
-        $sessions = $query->latest()->get()->map(function ($session) {
-            $kondisiValues = $session->userEntries->pluck('kondisi_akhir')->filter()->values();
-            $kondisiAkhir  = $kondisiValues->contains('BD')
-                ? 'BD'
-                : ($kondisiValues->isNotEmpty() ? 'Layak Pakai' : null);
+        $sessions = $query->latest('tanggal')->get();
 
-            return [
-                'id'            => $session->id,
-                'tanggal'       => $session->tanggal->format('d/m/Y'),
-                'no_unit'       => $session->unit->no_unit,
-                'jenis_unit'    => $session->unit->jenis_unit,
-                'slot_terisi'   => $session->userEntries->count(),
-                'total_tl'      => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
-                'kondisi_akhir' => $kondisiAkhir,
-                'status'        => $session->status,
-            ];
-        })->values()->toArray();
+        $rows = [];
+        foreach ($sessions as $session) {
+            foreach ($session->userEntries as $entry) {
+                $tlItems = $entry->answers
+                    ->where('kondisi', 'Tidak Layak')
+                    ->map(fn ($a) => $a->inspectionItem?->nama_item ?? '?')
+                    ->filter()
+                    ->values();
+
+                $hasilDetail  = $tlItems->isNotEmpty()
+                    ? 'TL: ' . $tlItems->implode(', ')
+                    : 'Semua Layak';
+
+                $statusUnit = match ($entry->kondisi_akhir) {
+                    'BD'         => 'BD',
+                    'Layak Pakai' => 'OP',
+                    default      => '-',
+                };
+
+                $rows[] = [
+                    'tanggal'      => $session->tanggal->format('d/m/Y'),
+                    'shift'        => $entry->shift ?? '-',
+                    'no_unit'      => $session->unit->no_unit,
+                    'jenis_unit'   => $session->unit->jenis_unit,
+                    'user'         => $entry->user?->name ?? '-',
+                    'hasil_detail' => $hasilDetail,
+                    'status_unit'  => $statusUnit,
+                ];
+            }
+        }
 
         $filters = [
             'date_from'  => $request->date_from,
@@ -372,6 +387,6 @@ class DataExportController extends Controller
             'user_id'    => $request->user_id,
         ];
 
-        return [$sessions, $filters];
+        return [$rows, $filters];
     }
 }
