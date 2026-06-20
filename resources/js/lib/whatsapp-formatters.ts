@@ -298,8 +298,22 @@ export function formatP2hReport(
     if (filledLayak.length > 0) {
         lines.push('');
         lines.push(`*Sudah P2H, Layak — ${filledLayak.length} unit*`);
-        const items = filledLayak.map((r) => `${unitLabel(r)}${deptSuffix(r)}`);
-        pushCollapsed(lines, items, 5);
+
+        const lvLayak  = filledLayak.filter((r) => r.jenis_unit === 'Light Vehicle');
+        const busLayak = filledLayak.filter((r) => r.jenis_unit !== 'Light Vehicle');
+
+        // LV: group by department, satu baris per dept
+        if (lvLayak.length > 0) {
+            const byDept = groupLvByDept(lvLayak);
+            for (const [dept, rows] of byDept) {
+                lines.push(`${dept}: ${rows.map((r) => r.no_unit).join(', ')}`);
+            }
+        }
+
+        // Bus: satu baris per unit
+        for (const row of busLayak) {
+            lines.push(row.no_unit);
+        }
     }
 
     // --- Sudah P2H, Rusak ---

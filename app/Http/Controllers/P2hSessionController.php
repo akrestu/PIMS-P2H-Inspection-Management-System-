@@ -141,13 +141,21 @@ class P2hSessionController extends Controller
                 ->first();
 
             if (! $session) {
-                $session = P2hSession::create([
-                    'unit_id'    => $data['unit_id'],
-                    'tanggal'    => today(),
-                    'status'     => 'open',
-                    'created_by' => $user->id,
-                    'job_site'   => $data['job_site'] ?? null,
-                ]);
+                try {
+                    $session = P2hSession::create([
+                        'unit_id'    => $data['unit_id'],
+                        'tanggal'    => today(),
+                        'status'     => 'open',
+                        'created_by' => $user->id,
+                        'job_site'   => $data['job_site'] ?? null,
+                    ]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($e->getCode() !== '23000') throw $e;
+                    // Race condition: sesi dibuat oleh request lain, ambil yang sudah ada
+                    $session = P2hSession::where('unit_id', $data['unit_id'])
+                        ->whereDate('tanggal', today())
+                        ->firstOrFail();
+                }
             }
 
             $nextSlot = $session->userEntries()->count() + 1;
