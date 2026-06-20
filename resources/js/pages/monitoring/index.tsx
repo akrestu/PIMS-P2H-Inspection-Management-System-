@@ -48,6 +48,7 @@ interface TimelineDay {
     score: number | null;
     status: 'operation' | 'bd' | 'no_data';
     has_override: boolean;
+    downtime_tipe?: 'BD' | 'PM' | 'Servis Berkala' | null;
 }
 
 interface UnitPA {
@@ -167,12 +168,19 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
         <TooltipProvider delayDuration={100}>
             <div className="flex items-center gap-px">
                 {visible.map((day) => {
-                    const colorClass =
-                        day.status === 'operation'
-                            ? 'bg-emerald-500'
-                            : day.status === 'bd'
-                              ? 'bg-red-500'
-                              : 'bg-muted';
+                    // Downtime tanpa P2H: warna khusus sesuai tipe
+                    const isDowntimeOnly = day.status === 'bd' && day.downtime_tipe != null;
+                    const colorClass = day.status === 'operation'
+                        ? 'bg-emerald-500'
+                        : day.status === 'bd'
+                            ? isDowntimeOnly
+                                ? day.downtime_tipe === 'PM'
+                                    ? 'bg-blue-400'
+                                    : day.downtime_tipe === 'Servis Berkala'
+                                        ? 'bg-purple-400'
+                                        : 'bg-orange-500'  // BD downtime
+                                : 'bg-red-500'             // BD dari P2H
+                            : 'bg-muted';
 
                     return (
                         <Tooltip key={day.date}>
@@ -191,7 +199,11 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">
                                 <p className="font-semibold">{formatDateShort(day.date)}</p>
-                                {day.score !== null ? (
+                                {day.downtime_tipe != null ? (
+                                    <p className="text-orange-400">
+                                        Downtime: {day.downtime_tipe}
+                                    </p>
+                                ) : day.score !== null ? (
                                     <>
                                         <p>
                                             Kelayakan:{' '}
@@ -476,7 +488,19 @@ function Legend({ threshold }: { threshold: number }) {
             </span>
             <span className="flex items-center gap-1.5">
                 <div className="h-3 w-3 rounded-sm bg-red-500" />
-                Breakdown
+                BD (P2H)
+            </span>
+            <span className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-sm bg-orange-500" />
+                BD (Downtime)
+            </span>
+            <span className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-sm bg-blue-400" />
+                PM (Downtime)
+            </span>
+            <span className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-sm bg-purple-400" />
+                Servis Berkala
             </span>
             <span className="flex items-center gap-1.5">
                 <div className="h-3 w-3 rounded-sm bg-muted border" />

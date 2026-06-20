@@ -1,6 +1,12 @@
 export type Jabatan = 'Sr.Staff' | 'Staff' | 'Non Staff';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
+export interface UnitDowntimeLogSummary {
+    id: number;
+    tipe: 'BD' | 'PM' | 'Servis Berkala';
+    jam_mulai: string;
+}
+
 export interface Unit {
     id: number;
     no_unit: string;
@@ -10,6 +16,7 @@ export interface Unit {
     department: string | null;
     created_at?: string;
     updated_at?: string;
+    downtime_logs?: UnitDowntimeLogSummary[];
 }
 
 export interface UserProfile {

@@ -19,6 +19,11 @@ class UnitController extends Controller
     public function index(Request $request): Response
     {
         $units = Unit::query()
+            ->with(['downtimeLogs' => function ($q) {
+                $q->whereNull('jam_selesai')
+                  ->latest('jam_mulai')
+                  ->select(['id', 'unit_id', 'tipe', 'jam_mulai']);
+            }])
             ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
             ->when($request->jenis_unit, fn ($q) => $q->where('jenis_unit', $request->jenis_unit))
             ->when($request->status, fn ($q) => $q->where('status', $request->status))

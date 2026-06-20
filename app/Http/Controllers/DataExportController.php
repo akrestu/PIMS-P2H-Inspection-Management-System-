@@ -346,14 +346,20 @@ class DataExportController extends Controller
         }
 
         $sessions = $query->latest()->get()->map(function ($session) {
+            $kondisiValues = $session->userEntries->pluck('kondisi_akhir')->filter()->values();
+            $kondisiAkhir  = $kondisiValues->contains('BD')
+                ? 'BD'
+                : ($kondisiValues->isNotEmpty() ? 'Layak Pakai' : null);
+
             return [
-                'id'          => $session->id,
-                'tanggal'     => $session->tanggal->format('d/m/Y'),
-                'no_unit'     => $session->unit->no_unit,
-                'jenis_unit'  => $session->unit->jenis_unit,
-                'slot_terisi' => $session->userEntries->count(),
-                'total_tl'    => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
-                'status'      => $session->status,
+                'id'            => $session->id,
+                'tanggal'       => $session->tanggal->format('d/m/Y'),
+                'no_unit'       => $session->unit->no_unit,
+                'jenis_unit'    => $session->unit->jenis_unit,
+                'slot_terisi'   => $session->userEntries->count(),
+                'total_tl'      => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
+                'kondisi_akhir' => $kondisiAkhir,
+                'status'        => $session->status,
             ];
         })->values()->toArray();
 

@@ -36,12 +36,17 @@ import { useState } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type CellStatus = 'layak' | 'bd';
+type CellStatus = 'layak' | 'bd' | 'downtime';
+type DowntimeTipe = 'BD' | 'PM' | 'Servis Berkala';
 
 interface MatrixCell {
-    session_id: number;
-    slots_filled: number;
-    total_tl: number;
+    // P2H fields (present when status is 'layak' or 'bd')
+    session_id?: number;
+    slots_filled?: number;
+    total_tl?: number;
+    // Downtime fields (present when status is 'downtime')
+    downtime_tipe?: DowntimeTipe;
+    // Always present
     status: CellStatus;
 }
 
@@ -93,22 +98,31 @@ function fmtLong(d: string): string {
     });
 }
 
-function cellClasses(status: CellStatus | null, highlightMissing: boolean): string {
-    if (status === null) {
+function cellClasses(cell: MatrixCell | null, highlightMissing: boolean): string {
+    if (cell === null) {
         return highlightMissing
             ? 'bg-red-50 text-red-400 dark:bg-red-950/20 ring-1 ring-inset ring-red-200 dark:ring-red-800'
             : 'bg-muted/40 text-muted-foreground/40';
     }
-    switch (status) {
+    switch (cell.status) {
         case 'layak':
             return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/60 cursor-pointer';
         case 'bd':
             return 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/60 cursor-pointer';
+        case 'downtime':
+            switch (cell.downtime_tipe) {
+                case 'BD':             return 'bg-rose-800 text-rose-100 dark:bg-rose-950 dark:text-rose-200';
+                case 'PM':             return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300';
+                case 'Servis Berkala': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300';
+                default:               return 'bg-muted/40 text-muted-foreground/40';
+            }
     }
 }
 
-function statusLabel(status: CellStatus): string {
-    return status === 'layak' ? 'Layak Pakai' : 'Breakdown';
+function statusLabel(cell: MatrixCell): string {
+    if (cell.status === 'layak') return 'Layak Pakai';
+    if (cell.status === 'bd') return 'Breakdown (P2H)';
+    return `Downtime: ${cell.downtime_tipe}`;
 }
 
 function complianceColor(pct: number): string {
@@ -344,18 +358,24 @@ function MatrixCellComponent({
     cell: MatrixCell | null;
     highlightMissing: boolean;
 }) {
+    const cellLabel = cell === null
+        ? (highlightMissing ? '!' : '–')
+        : cell.status === 'downtime'
+            ? (cell.downtime_tipe === 'BD' ? 'BD' : cell.downtime_tipe === 'PM' ? 'PM' : 'SB')
+            : `${cell.slots_filled}x`;
+
     const inner = (
         <div
             className={cn(
                 'flex h-10 w-full items-center justify-center rounded text-xs font-semibold transition-colors select-none',
-                cellClasses(cell?.status ?? null, highlightMissing),
+                cellClasses(cell, highlightMissing),
             )}
         >
-            {cell ? `${cell.slots_filled}x` : highlightMissing ? '!' : '–'}
+            {cellLabel}
         </div>
     );
 
-    if (!cell) return inner;
+    if (!cell || cell.status === 'downtime') return inner;
 
     return (
         <TooltipProvider delayDuration={100}>
@@ -373,7 +393,7 @@ function MatrixCellComponent({
                     </p>
                     <p>
                         Item TL:{' '}
-                        <span className={cn('font-bold', cell.total_tl > 0 ? 'text-red-400' : 'text-emerald-400')}>
+                        <span className={cn('font-bold', (cell.total_tl ?? 0) > 0 ? 'text-red-400' : 'text-emerald-400')}>
                             {cell.total_tl}
                         </span>
                     </p>
@@ -383,7 +403,7 @@ function MatrixCellComponent({
                             'font-bold',
                             cell.status === 'layak' ? 'text-emerald-400' : 'text-red-400',
                         )}>
-                            {statusLabel(cell.status)}
+                            {statusLabel(cell)}
                         </span>
                     </p>
                 </TooltipContent>
@@ -397,7 +417,10 @@ function MatrixCellComponent({
 function MatrixLegend() {
     const items = [
         { label: 'Layak Pakai', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' },
-        { label: 'Breakdown', cls: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400' },
+        { label: 'BD (P2H)', cls: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400' },
+        { label: 'BD (Downtime)', cls: 'bg-rose-800 text-rose-100 dark:bg-rose-950 dark:text-rose-200' },
+        { label: 'PM (Downtime)', cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+        { label: 'Servis Berkala', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
         { label: 'Tidak ada P2H', cls: 'bg-muted/40 text-muted-foreground/40' },
     ];
     return (

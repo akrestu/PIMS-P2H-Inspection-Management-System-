@@ -76,16 +76,49 @@ class MonitoringController extends Controller
             ->get()
             ->groupBy('unit_id');
 
-        // ── Batch load semua downtime logs sekaligus (hindari N+1 per unit) ──
+        // ── Batch load downtime logs ──────────────────────────────────────────
         $unitIds = $units->pluck('id');
+
+        // Hanya completed logs untuk kalkulasi PA Aktual (W/(W+S))
         $downtimeLogs = UnitDowntimeLog::whereIn('unit_id', $unitIds)
             ->completed()
             ->inRange($dateFrom, $dateTo)
             ->get()
             ->groupBy('unit_id');
 
+        // Semua logs (termasuk ongoing) dalam range untuk status + timeline
+        $allDowntimeLogs = UnitDowntimeLog::whereIn('unit_id', $unitIds)
+            ->inRange($dateFrom, $dateTo)
+            ->orderBy('jam_mulai')
+            ->get(['id', 'unit_id', 'tipe', 'jam_mulai', 'jam_selesai'])
+            ->groupBy('unit_id');
+
+        // Daftar tanggal dalam range (untuk iterasi timeline + downtime map)
+        $dates = [];
+        $cursor = $from->copy();
+        while ($cursor->lte($to)) {
+            $dates[] = $cursor->toDateString();
+            $cursor->addDay();
+        }
+
+        // Map per-hari: [unit_id][date] => tipe (log pertama yang overlap menang)
+        $downtimeByDate = [];
+        foreach ($allDowntimeLogs as $uid => $logs) {
+            foreach ($logs as $log) {
+                foreach ($dates as $date) {
+                    $dayStart = $date . ' 00:00:00';
+                    $dayEnd   = $date . ' 23:59:59';
+                    $overlaps = $log->jam_mulai->toDateTimeString() <= $dayEnd
+                        && ($log->jam_selesai === null || $log->jam_selesai->toDateTimeString() >= $dayStart);
+                    if ($overlaps && ! isset($downtimeByDate[$uid][$date])) {
+                        $downtimeByDate[$uid][$date] = $log->tipe;
+                    }
+                }
+            }
+        }
+
         // ── Hitung PA per unit ────────────────────────────────────────────────
-        $unitData = $units->map(function (Unit $unit) use ($sessions, $from, $to, $dateFrom, $dateTo, $downtimeLogs) {
+        $unitData = $units->map(function (Unit $unit) use ($sessions, $from, $to, $dateFrom, $dateTo, $downtimeLogs, $downtimeByDate, $allDowntimeLogs, $dates) {
             $unitSessions = $sessions->get($unit->id, collect());
 
             // Group sesi per tanggal
@@ -143,8 +176,13 @@ class MonitoringController extends Controller
                 ];
             });
 
-            $operationDays  = $dailyData->where('effective_status', 'operation')->count();
-            $bdDays         = $dailyData->where('effective_status', 'bd')->count();
+            $operationDays = $dailyData->where('effective_status', 'operation')->count();
+
+            // bd_days: dari P2H + hari downtime tanpa P2H
+            $downtimeOnlyDays = collect($dates)->filter(function ($date) use ($sessionsByDate, $unit, $downtimeByDate) {
+                return ! isset($sessionsByDate[$date]) && isset($downtimeByDate[$unit->id][$date]);
+            })->count();
+            $bdDays = $dailyData->where('effective_status', 'bd')->count() + $downtimeOnlyDays;
 
             // Compliance PA (formula lama: berbasis score checklist)
             $compliancePa = $totalDaysWithSession > 0
@@ -160,7 +198,7 @@ class MonitoringController extends Controller
                 $actualPa = round(min(100.0, max(0.0, $raw)), 1);
             }
 
-            // ── Status saat ini (dari sesi terbaru) ───────────────────────────
+            // ── Status saat ini (dari sesi terbaru, fallback ke downtime) ────────
             $latestSession = $unitSessions->sortByDesc('tanggal')->first();
             $currentScore  = null;
             $currentStatus = 'no_data';
@@ -191,19 +229,32 @@ class MonitoringController extends Controller
                 }
             }
 
+            // Jika masih no_data, cek apakah ada ongoing downtime saat ini
+            if ($currentStatus === 'no_data') {
+                $hasOngoing = $allDowntimeLogs->get($unit->id, collect())
+                    ->filter(fn ($l) => $l->jam_selesai === null)
+                    ->isNotEmpty();
+                if ($hasOngoing) {
+                    $currentStatus = 'bd';
+                }
+            }
+
             // ── Timeline sparkline ────────────────────────────────────────────
             $timeline = collect();
-            $cursor   = $from->copy();
-            while ($cursor->lte($to)) {
-                $dateStr = $cursor->toDateString();
-                $day     = $dailyData->get($dateStr);
+            foreach ($dates as $dateStr) {
+                $day       = $dailyData->get($dateStr);
+                $dtTipe    = $downtimeByDate[$unit->id][$dateStr] ?? null;
+
+                // Status: P2H ada → ikut P2H; tidak ada P2H tapi ada downtime → bd
+                $status = $day ? $day['effective_status'] : ($dtTipe ? 'bd' : 'no_data');
+
                 $timeline->push([
-                    'date'         => $dateStr,
-                    'score'        => $day['compliance_score'] ?? null,
-                    'status'       => $day['effective_status'] ?? 'no_data',
-                    'has_override' => $day['has_override'] ?? false,
+                    'date'          => $dateStr,
+                    'score'         => $day['compliance_score'] ?? null,
+                    'status'        => $status,
+                    'has_override'  => $day['has_override'] ?? false,
+                    'downtime_tipe' => $day ? null : $dtTipe, // hanya tampilkan jika tidak ada P2H
                 ]);
-                $cursor->addDay();
             }
 
             // Total TL dalam range

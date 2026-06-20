@@ -26,6 +26,7 @@ class P2hApprovalController extends Controller
             'user:id,name,nik,jabatan,department',
             'session.unit:id,no_unit,jenis_unit,department',
             'pic:id,name,jabatan',
+            'approver:id,name',
             'answers.inspectionItem',
         ])
         ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
@@ -211,6 +212,7 @@ class P2hApprovalController extends Controller
                 ->with('error', 'Entry ini sudah diproses oleh user lain.');
         }
 
+        $entry->refresh();
         $entry->load(['session.unit', 'user']);
         $entry->user?->notify(new LvP2hApprovalResult(
             session: $entry->session,
@@ -223,7 +225,7 @@ class P2hApprovalController extends Controller
         $user->notifications()
             ->whereNull('read_at')
             ->where('data->type', 'lv_approval_request')
-            ->where('data->entry_id', $entry->id)
+            ->where('data->entry_id', (string) $entry->id)
             ->update(['read_at' => now()]);
         cache()->forget("recent_notifications_user_{$user->id}");
 
@@ -275,6 +277,7 @@ class P2hApprovalController extends Controller
                 ->with('error', 'Entry ini sudah diproses oleh user lain.');
         }
 
+        $entry->refresh();
         $entry->load(['session.unit', 'user']);
         $entry->user?->notify(new LvP2hApprovalResult(
             session: $entry->session,
@@ -287,7 +290,7 @@ class P2hApprovalController extends Controller
         $user->notifications()
             ->whereNull('read_at')
             ->where('data->type', 'lv_approval_request')
-            ->where('data->entry_id', $entry->id)
+            ->where('data->entry_id', (string) $entry->id)
             ->update(['read_at' => now()]);
         cache()->forget("recent_notifications_user_{$user->id}");
 

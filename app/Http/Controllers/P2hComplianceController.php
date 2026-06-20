@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\P2hSession;
 use App\Models\Unit;
+use App\Models\UnitDowntimeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -55,11 +56,9 @@ class P2hComplianceController extends Controller
         // ── 2. Units aktif (dengan optional jenis_unit filter) ────────────────
         $unitQuery = Unit::active()->orderBy('no_unit');
 
-        $isStaffDriver = in_array($user->jabatan, ['Sr.Staff', 'Staff']);
-
-        if ($isStaffDriver) {
+        if ($user->isStaffOnly()) {
             // Staff/Sr.Staff: tampilkan sesuai jenis_unit user, filter dept untuk LV
-            $userJenis = $user->jenis_unit; // 'Light Vehicle' atau 'Bus'
+            $userJenis = $user->jenis_unit;
             $unitQuery->when($jenis, fn ($q) => $q->where('jenis_unit', $jenis),
                              fn ($q) => $q->when($userJenis, fn ($q2) => $q2->where('jenis_unit', $userJenis)));
             if ($user->jenis_unit === 'Light Vehicle' && $user->department) {
@@ -84,6 +83,24 @@ class P2hComplianceController extends Controller
                 $sessionMap[$session->unit_id][$session->tanggal->toDateString()] = $session;
             });
 
+        // ── 3b. Load downtime logs dan buat map [unit_id][date] => tipe ──────
+        $downtimeMap = [];
+        UnitDowntimeLog::whereIn('unit_id', $units->pluck('id'))
+            ->inRange($dateFrom, $dateTo)
+            ->orderBy('jam_mulai')
+            ->get(['id', 'unit_id', 'tipe', 'jam_mulai', 'jam_selesai'])
+            ->each(function ($log) use (&$downtimeMap, $dates) {
+                foreach ($dates as $date) {
+                    $dayStart = $date . ' 00:00:00';
+                    $dayEnd   = $date . ' 23:59:59';
+                    $overlaps = $log->jam_mulai <= $dayEnd
+                        && ($log->jam_selesai === null || $log->jam_selesai >= $dayStart);
+                    if ($overlaps && ! isset($downtimeMap[$log->unit_id][$date])) {
+                        $downtimeMap[$log->unit_id][$date] = $log->tipe;
+                    }
+                }
+            });
+
         // ── 4. Build matrix rows ──────────────────────────────────────────────
         $matrix      = [];
         $totalFilled = 0;
@@ -105,8 +122,13 @@ class P2hComplianceController extends Controller
                 $session = $sessionMap[$unit->id][$date] ?? null;
 
                 if (! $session || $session->userEntries->isEmpty()) {
-                    $row['cells'][$date] = null;
-                    $totalMissed++;
+                    $downtimeTipe = $downtimeMap[$unit->id][$date] ?? null;
+                    $row['cells'][$date] = $downtimeTipe
+                        ? ['downtime_tipe' => $downtimeTipe, 'status' => 'downtime']
+                        : null;
+                    if (! $downtimeTipe) {
+                        $totalMissed++;
+                    }
                     continue;
                 }
 
@@ -170,7 +192,7 @@ class P2hComplianceController extends Controller
 
         foreach ($dates as $date) {
             $filled = collect($matrix)
-                ->filter(fn ($r) => $r['cells'][$date] !== null)
+                ->filter(fn ($r) => $r['cells'][$date] !== null && ($r['cells'][$date]['status'] ?? null) !== 'downtime')
                 ->count();
             $columnSummary[$date] = ['filled' => $filled, 'total' => $totalUnits];
         }

@@ -184,14 +184,14 @@ function StepNavFooter({
                 </div>
             )}
 
-            <div className="px-4 py-3">
+            <div className="px-4 py-2">
                 {isLastStep ? (
                     <Button
                         type="button"
                         size="lg"
                         onClick={onSubmit}
                         disabled={submitDisabled}
-                        className="h-13 w-full gap-2 text-base font-bold"
+                        className="h-11 w-full gap-2 text-base font-bold"
                     >
                         {submitting ? (
                             <>
@@ -213,7 +213,7 @@ function StepNavFooter({
                                 variant="outline"
                                 size="lg"
                                 onClick={onPrev}
-                                className="h-13 flex-1 gap-1.5"
+                                className="h-11 flex-1 gap-1.5"
                             >
                                 <ChevronLeft data-icon="inline-start" />
                                 Kembali
@@ -223,7 +223,7 @@ function StepNavFooter({
                             type="button"
                             size="lg"
                             onClick={onNext}
-                            className="h-13 flex-1 gap-1.5 font-semibold"
+                            className="h-11 flex-1 gap-1.5 font-semibold"
                         >
                             <span className="flex flex-col items-start leading-tight sm:flex-row sm:items-center sm:gap-1.5">
                                 <span>{step === totalSteps - 1 ? 'Lanjut ke Konfirmasi' : 'Lanjutkan'}</span>
@@ -413,7 +413,7 @@ function PicCombobox({
 
 // ─── Main Form ────────────────────────────────────────────────────────────────
 export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
-    const { auth, options } = usePage<{ auth: { user: { name: string; nik?: string | null; jabatan?: string } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
+    const { auth, options } = usePage<{ auth: { user: { id: number; name: string; nik?: string | null; jabatan?: string } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
     const jobSiteOptions = options?.job_sites ?? ['PT. WBK Site MAS', 'PT. WBK Site BAU'];
     const shiftOptions = options?.shifts ?? ['Shift I', 'Shift II'];
 
@@ -468,10 +468,17 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
 
     // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
     const eligibleStaff = staffUsers.filter((s) => s.id !== auth?.user?.id);
-    const sameDepStaff = selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
+    const filteredStaffUsers = selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
         ? eligibleStaff.filter((s) => s.department === selectedUnit.department)
         : eligibleStaff;
-    const filteredStaffUsers = sameDepStaff.length > 0 ? sameDepStaff : eligibleStaff;
+
+    // Hapus picApproverId jika tidak lagi ada di filteredStaffUsers (misal: unit berubah atau draft lama)
+    useEffect(() => {
+        if (needsApproval && picApproverId && !filteredStaffUsers.some((s) => String(s.id) === picApproverId)) {
+            setPicApproverId('');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filteredStaffUsers]);
 
     const p2hScore = useMemo(() => {
         const total = inspectionItems.length;
@@ -573,7 +580,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
             if (!selectedUnitId) return 'Pilih unit terlebih dahulu.';
             if (checkingSlot) return 'Menunggu pengecekan slot…';
             if (!shift) return 'Shift wajib dipilih.';
-            if (needsApproval && !picApproverId) return 'PIC yang akan menyetujui P2H wajib dipilih.';
+            if (needsApproval) {
+                if (filteredStaffUsers.length === 0) return 'Tidak ada Staff/Sr.Staff yang tersedia sebagai PIC untuk unit ini. Hubungi admin.';
+                if (!picApproverId) return 'PIC yang akan menyetujui P2H wajib dipilih.';
+                if (!filteredStaffUsers.some((s) => String(s.id) === picApproverId)) return 'PIC yang dipilih tidak valid. Silakan pilih kembali.';
+            }
         }
         if (s === 2) {
             for (const item of inspectionItems) {
@@ -678,7 +689,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
         <>
             <Head title="Form P2H" />
 
-            <div ref={topRef} className="flex min-h-screen flex-col pb-52 md:pb-24">
+            <div ref={topRef} className="flex min-h-screen flex-col pb-40 md:pb-20">
 
                 {/* ── Sticky Top Header ── */}
                 <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -966,11 +977,17 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                             PIC yang dipilih akan mendapat notifikasi dan wajib me-review serta menandatangani P2H Anda sebelum dinyatakan valid.
                                         </p>
                                     </div>
-                                    <PicCombobox
-                                        staffUsers={filteredStaffUsers}
-                                        value={picApproverId}
-                                        onChange={setPicApproverId}
-                                    />
+                                    {filteredStaffUsers.length === 0 ? (
+                                        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-3 text-sm text-destructive">
+                                            Tidak ada Staff/Sr.Staff dari departemen <strong>{selectedUnit?.department}</strong> yang terdaftar. Hubungi admin untuk menambahkan PIC.
+                                        </div>
+                                    ) : (
+                                        <PicCombobox
+                                            staffUsers={filteredStaffUsers}
+                                            value={picApproverId}
+                                            onChange={setPicApproverId}
+                                        />
+                                    )}
                                     {picApproverId && (() => {
                                         const pic = staffUsers.find((s) => String(s.id) === picApproverId);
                                         return pic ? (

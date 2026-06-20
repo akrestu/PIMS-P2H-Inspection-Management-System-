@@ -47,9 +47,11 @@
 {{-- Quick stats --}}
 @php
     $totalSessions = count($sessions);
-    $adaTl = collect($sessions)->where('total_tl', '>', 0)->count();
-    $semuaLayak = $totalSessions - $adaTl;
-    $completed = collect($sessions)->where('status', 'completed')->count();
+    $adaTl         = collect($sessions)->where('total_tl', '>', 0)->count();
+    $semuaLayak    = $totalSessions - $adaTl;
+    $bdCount       = collect($sessions)->where('kondisi_akhir', 'BD')->count();
+    $layakCount    = collect($sessions)->where('kondisi_akhir', 'Layak Pakai')->count();
+    $completed     = collect($sessions)->where('status', 'completed')->count();
 @endphp
 
 <div class="stats">
@@ -58,8 +60,12 @@
         <div class="value blue">{{ $totalSessions }}</div>
     </div>
     <div class="stat-box">
-        <div class="label">Semua Layak</div>
-        <div class="value green">{{ $semuaLayak }}</div>
+        <div class="label">Layak Pakai</div>
+        <div class="value green">{{ $layakCount }}</div>
+    </div>
+    <div class="stat-box">
+        <div class="label">BD</div>
+        <div class="value red">{{ $bdCount }}</div>
     </div>
     <div class="stat-box">
         <div class="label">Ada Item TL</div>
@@ -68,12 +74,6 @@
     <div class="stat-box">
         <div class="label">Sesi Selesai</div>
         <div class="value">{{ $completed }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="label">Tingkat Kelayakan</div>
-        <div class="value {{ $totalSessions > 0 && ($semuaLayak / $totalSessions * 100) >= 90 ? 'green' : 'red' }}">
-            {{ $totalSessions > 0 ? round($semuaLayak / $totalSessions * 100, 1) : 0 }}%
-        </div>
     </div>
 </div>
 
@@ -86,7 +86,7 @@
             <th>Jenis Unit</th>
             <th class="text-center">Slot</th>
             <th class="text-center">Item TL</th>
-            <th class="text-center">Kelayakan</th>
+            <th class="text-center">Kondisi Akhir</th>
             <th class="text-center">Status Sesi</th>
         </tr>
     </thead>
@@ -102,10 +102,12 @@
                 {{ $s['total_tl'] > 0 ? $s['total_tl'] : '0' }}
             </td>
             <td class="text-center">
-                @if ($s['total_tl'] > 0)
-                    <span class="badge badge-tl">Ada TL</span>
+                @if (($s['kondisi_akhir'] ?? null) === 'BD')
+                    <span class="badge badge-tl">BD</span>
+                @elseif (($s['kondisi_akhir'] ?? null) === 'Layak Pakai')
+                    <span class="badge badge-layak">Layak Pakai</span>
                 @else
-                    <span class="badge badge-layak">Layak</span>
+                    <span class="badge badge-open">-</span>
                 @endif
             </td>
             <td class="text-center">
@@ -129,7 +131,7 @@
 </table>
 
 <div class="footer">
-    <p>Total {{ $totalSessions }} sesi P2H · {{ $semuaLayak }} layak · {{ $adaTl }} ada item TL</p>
+    <p>Total {{ $totalSessions }} sesi P2H · {{ $layakCount }} Layak Pakai · {{ $bdCount }} BD · {{ $adaTl }} ada item TL</p>
     <p style="margin-top:3px;">Dokumen ini digenerate otomatis oleh sistem PIMS — PT. Wahana Bandhawa Kencana</p>
 </div>
 

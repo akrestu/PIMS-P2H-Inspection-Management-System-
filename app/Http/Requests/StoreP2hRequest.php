@@ -20,13 +20,7 @@ class StoreP2hRequest extends FormRequest
             'pic_approver_id'                   => $this->requiresPicApprover()
                 ? ['required', 'integer', Rule::exists('users', 'id')
                     ->whereIn('jabatan', ['Staff', 'Sr.Staff'])
-                    ->where('department', $this->getPicDepartment()),
-                    function (string $attribute, mixed $value, \Closure $fail) {
-                        $pic = \App\Models\User::find($value);
-                        if ($pic && $pic->hasRole('driver')) {
-                            $fail('PIC yang dipilih harus memiliki role staff, bukan driver.');
-                        }
-                    }]
+                    ->when($this->getPicDepartment(), fn ($r, $dept) => $r->where('department', $dept))]
                 : ['nullable', 'integer'],
             'job_site'                          => ['nullable', 'string', 'max:100'],
             'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],
@@ -37,7 +31,7 @@ class StoreP2hRequest extends FormRequest
             'answers'                           => ['required', 'array', 'size:' . \App\Models\P2hInspectionItem::active()->count()],
             'answers.*.inspection_item_id'      => ['required', 'integer', 'exists:p2h_inspection_items,id'],
             'answers.*.kondisi'                 => ['required', Rule::in(['Layak', 'Tidak Layak'])],
-            'answers.*.keterangan'              => ['nullable', 'string', 'required_if:answers.*.kondisi,Tidak Layak'],
+            'answers.*.keterangan'              => ['nullable', 'string'],
             'service_info'                      => ['nullable', 'array'],
             'service_info.servis_mingguan'      => ['nullable', 'boolean'],
             'service_info.servis_berkala'       => ['nullable', 'boolean'],
@@ -56,6 +50,25 @@ class StoreP2hRequest extends FormRequest
                 Rule::requiredIf(fn () => $this->isOverrideDecision()),
             ],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'pic_approver_id.required' => 'PIC yang akan menyetujui P2H wajib dipilih.',
+            'pic_approver_id.exists'   => 'PIC yang dipilih tidak valid atau bukan dari departemen yang sama dengan unit.',
+        ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($v) {
+            foreach ($this->input('answers', []) as $i => $ans) {
+                if (($ans['kondisi'] ?? null) === 'Tidak Layak' && empty(trim($ans['keterangan'] ?? ''))) {
+                    $v->errors()->add("answers.$i.keterangan", 'Keterangan wajib diisi untuk item Tidak Layak.');
+                }
+            }
+        });
     }
 
     public function requiresPicApprover(): bool

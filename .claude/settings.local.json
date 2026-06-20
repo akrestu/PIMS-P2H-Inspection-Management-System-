@@ -27,7 +27,8 @@
       "Skill(code-review:*)",
       "Bash(npm list *)",
       "Bash(php -r ' *)",
-      "Bash(Get-Content \"d:\\\\COMPANY_DATA\\\\01_IT_AND_DATABASE\\\\04_APPLICATION\\\\PIMS\\\\storage\\\\logs\\\\laravel.log\" -Tail 80)"
+      "Bash(Get-Content \"d:\\\\COMPANY_DATA\\\\01_IT_AND_DATABASE\\\\04_APPLICATION\\\\PIMS\\\\storage\\\\logs\\\\laravel.log\" -Tail 80)",
+      "Bash(php -l app/Http/Requests/StoreP2hRequest.php)"
     ]
   }
 }

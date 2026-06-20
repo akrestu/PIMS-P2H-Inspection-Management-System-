@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Unit } from '@/types/pims';
+import type { Unit, UnitDowntimeLogSummary } from '@/types/pims';
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     Bus,
@@ -434,6 +434,36 @@ function StatCard({ title, value, icon: Icon, colorClass }: { title: string; val
     );
 }
 
+/* ──────────────────── Operational Status Badge ─────────────── */
+type DowntimeTipe = 'BD' | 'PM' | 'Servis Berkala';
+
+const downtimeConfig: Record<DowntimeTipe, { label: string; cls: string; dot: string }> = {
+    'BD':             { label: 'BD',    cls: 'border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400',       dot: 'bg-red-500' },
+    'PM':             { label: 'PM',    cls: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400',   dot: 'bg-blue-500' },
+    'Servis Berkala': { label: 'Servis',cls: 'border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-400', dot: 'bg-purple-500' },
+};
+
+function OperationalStatusBadge({ downtimeLogs }: { downtimeLogs?: UnitDowntimeLogSummary[] }) {
+    const ongoing = downtimeLogs?.[0] ?? null;
+
+    if (!ongoing) {
+        return (
+            <Badge variant="outline" className="border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400">
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                Operation
+            </Badge>
+        );
+    }
+
+    const { label, cls, dot } = downtimeConfig[ongoing.tipe as DowntimeTipe] ?? downtimeConfig['BD'];
+    return (
+        <Badge variant="outline" className={cls}>
+            <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
+            {label}
+        </Badge>
+    );
+}
+
 /* ──────────────────────── Main Page ────────────────────────── */
 export default function UnitsIndex({ units, filters, stats }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
@@ -677,13 +707,14 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                         <TableHead>No. Polisi</TableHead>
                                         <TableHead className="hidden md:table-cell">Departemen</TableHead>
                                         <TableHead>Status</TableHead>
+                                        <TableHead>Status Operasional</TableHead>
                                         <TableHead className="w-14 text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {units.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7}>
+                                            <TableCell colSpan={8}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="bg-muted rounded-full p-4">
                                                         <Package className="text-muted-foreground h-8 w-8" />
@@ -756,6 +787,9 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                                         <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`} />
                                                         {unit.status === 'active' ? 'Active' : 'Inactive'}
                                                     </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <OperationalStatusBadge downtimeLogs={unit.downtime_logs} />
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
