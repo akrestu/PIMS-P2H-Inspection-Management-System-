@@ -39,9 +39,12 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     // Dashboard — admin & manager only; driver diarahkan ke /driver/dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('role:admin|manager')
-        ->name('dashboard');
+    Route::get('/dashboard', function () {
+        if (auth()->user()->hasRole('driver')) {
+            return redirect()->route('driver.dashboard');
+        }
+        return app(DashboardController::class)->index(request());
+    })->middleware('role:admin|manager|driver')->name('dashboard');
 
     // Driver Dashboard
     Route::get('/driver/dashboard', [DriverDashboardController::class, 'index'])
