@@ -467,13 +467,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
     const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
 
     // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
-    const filteredStaffUsers = staffUsers
-        .filter((s) => s.id !== auth?.user?.id)
-        .filter((s) =>
-            selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
-                ? s.department === selectedUnit.department
-                : true,
-        );
+    const eligibleStaff = staffUsers.filter((s) => s.id !== auth?.user?.id);
+    const sameDepStaff = selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
+        ? eligibleStaff.filter((s) => s.department === selectedUnit.department)
+        : eligibleStaff;
+    const filteredStaffUsers = sameDepStaff.length > 0 ? sameDepStaff : eligibleStaff;
 
     const p2hScore = useMemo(() => {
         const total = inspectionItems.length;

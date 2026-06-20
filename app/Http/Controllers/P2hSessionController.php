@@ -100,7 +100,6 @@ class P2hSessionController extends Controller
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
         $staffUsers = User::whereIn('jabatan', ['Staff', 'Sr.Staff'])
-            ->whereDoesntHave('roles', fn ($q) => $q->where('name', 'driver'))
             ->orderBy('name')
             ->get(['id', 'name', 'jabatan', 'department']);
 
