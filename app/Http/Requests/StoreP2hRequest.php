@@ -16,7 +16,7 @@ class StoreP2hRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'unit_id'                           => ['required', 'integer', 'exists:units,id', Rule::exists('units', 'id')->where('status', 'active')],
+            'unit_id'                           => ['required', 'integer', Rule::exists('units', 'id')->where('status', 'active')->whereNull('deleted_at')],
             'pic_approver_id'                   => $this->requiresPicApprover()
                 ? ['required', 'integer', Rule::exists('users', 'id')
                     ->whereIn('jabatan', ['Staff', 'Sr.Staff'])

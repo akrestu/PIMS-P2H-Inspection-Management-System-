@@ -135,7 +135,10 @@ class P2hSessionController extends Controller
 
         // Resolve atau buat sesi di luar transaksi agar MySQL error (duplicate key)
         // tidak membunuh transaksi utama yang menyimpan entry.
-        $session = P2hSession::where('unit_id', $data['unit_id'])
+        // withTrashed() penting: jika sesi pernah soft-deleted, unique constraint MySQL
+        // tetap memblokir INSERT sehingga kita harus restore, bukan membuat baru.
+        $session = P2hSession::withTrashed()
+            ->where('unit_id', $data['unit_id'])
             ->whereDate('tanggal', today())
             ->first();
 
@@ -150,11 +153,18 @@ class P2hSessionController extends Controller
                 ]);
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($e->getCode() !== '23000') throw $e;
-                // Race condition: sesi sudah dibuat request lain, ambil yang ada
-                $session = P2hSession::where('unit_id', $data['unit_id'])
+                // Race condition: sesi sudah dibuat request lain, ambil termasuk soft-deleted
+                $session = P2hSession::withTrashed()
+                    ->where('unit_id', $data['unit_id'])
                     ->whereDate('tanggal', today())
                     ->firstOrFail();
             }
+        }
+
+        // Jika sesi pernah di-soft-delete, restore agar bisa digunakan kembali
+        if ($session->trashed()) {
+            $session->restore();
+            $session->update(['status' => 'open']);
         }
 
         DB::transaction(function () use ($data, $user, $session) {
