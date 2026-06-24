@@ -847,7 +847,6 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
         if (s === 4) {
             if (!kondisiAkhir) return 'Keputusan kondisi akhir unit wajib dipilih.';
             if (isOverride && !justifikasiKondisi.trim()) return 'Alasan keputusan wajib diisi karena berbeda dari rekomendasi sistem.';
-            if (attachments.length === 0) return 'Lampiran foto wajib ditambahkan (min. 1 foto).';
             if (sigEmpty || sigPadRef.current?.isEmpty()) return 'Tanda tangan wajib dibuat.';
         }
         return null;
@@ -1715,15 +1714,15 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                             </Card>
 
                             {/* Lampiran Foto */}
-                            <Card className={attachments.length === 0 ? 'border-destructive/40' : ''}>
+                            <Card>
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <ImagePlus className="h-4 w-4 text-muted-foreground" />
                                         <CardTitle className="text-base">
-                                            Lampiran Foto <span className="text-destructive">*</span>
+                                            Lampiran Foto
                                         </CardTitle>
                                     </div>
-                                    <CardDescription>Lampirkan minimal 1 foto sebagai bukti pemeriksaan. Foto akan dikompresi otomatis.</CardDescription>
+                                    <CardDescription>Lampirkan foto sebagai bukti pemeriksaan (opsional). Foto akan dikompresi otomatis.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="px-4 space-y-3">
                                     {/* Tombol ambil/pilih foto — pakai label agar capture berfungsi reliabel di mobile */}

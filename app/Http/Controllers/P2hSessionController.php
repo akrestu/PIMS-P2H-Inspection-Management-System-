@@ -177,7 +177,7 @@ class P2hSessionController extends Controller
             $session->update(['status' => 'open']);
         }
 
-        DB::transaction(function () use ($data, $user, $session) {
+        DB::transaction(function () use ($data, $user, $session, $request) {
 
             $nextSlot = $session->userEntries()->count() + 1;
 
