@@ -239,11 +239,9 @@ export function formatP2hReport(
     const lastDate = dates[dates.length - 1];
     const lines: string[] = [];
 
-    lines.push('*Pengingat P2H Harian*');
-    const subtitle = filters.jenis_unit
-        ? `${fmtDateShort(lastDate)} · ${jenisLabel(filters.jenis_unit)}`
-        : fmtDateShort(lastDate);
-    lines.push(subtitle);
+    lines.push('*PIMS - Daily P2H Reminder*');
+    const jenisStr = filters.jenis_unit ? ` · (${filters.jenis_unit})` : '';
+    lines.push(`${fmtDateShort(lastDate)}${jenisStr}`);
 
     const notFilled: MatrixRow[] = [];
     const downtimeUnits: MatrixRow[] = [];
@@ -263,7 +261,7 @@ export function formatP2hReport(
         }
     }
 
-    // --- Belum P2H: grouped by dept (unit number only, no plate) ---
+    // --- Belum P2H ---
     lines.push('');
     if (notFilled.length === 0) {
         lines.push('*Semua kendaraan sudah dicek hari ini.*');
@@ -279,7 +277,7 @@ export function formatP2hReport(
             }
         }
         for (const row of busNotFilled) {
-            lines.push(row.no_unit);
+            lines.push(`* ${row.no_unit}`);
         }
     }
 
@@ -290,7 +288,7 @@ export function formatP2hReport(
         lines.push('_(P2H tidak diperlukan)_');
         for (const row of downtimeUnits) {
             const tipe = row.cells[lastDate]?.downtime_tipe ?? 'BD';
-            lines.push(`${row.no_unit}${deptSuffix(row)} — ${tipe}`);
+            lines.push(`* ${row.no_unit}${deptSuffix(row)} — ${tipe}`);
         }
     }
 
@@ -302,7 +300,6 @@ export function formatP2hReport(
         const lvLayak  = filledLayak.filter((r) => r.jenis_unit === 'Light Vehicle');
         const busLayak = filledLayak.filter((r) => r.jenis_unit !== 'Light Vehicle');
 
-        // LV: group by department, satu baris per dept
         if (lvLayak.length > 0) {
             const byDept = groupLvByDept(lvLayak);
             for (const [dept, rows] of byDept) {
@@ -310,9 +307,8 @@ export function formatP2hReport(
             }
         }
 
-        // Bus: satu baris per unit
         for (const row of busLayak) {
-            lines.push(row.no_unit);
+            lines.push(`* ${row.no_unit}`);
         }
     }
 
@@ -321,10 +317,12 @@ export function formatP2hReport(
         lines.push('');
         lines.push(`*Sudah P2H, Rusak — ${filledBd.length} unit*`);
         for (const row of filledBd) {
-            lines.push(`${unitLabel(row)}${deptSuffix(row)}`);
+            lines.push(`* ${unitLabel(row)}${deptSuffix(row)}`);
         }
     }
 
+    lines.push('');
+    lines.push('Terimakasih, atas partisipasinya.');
     lines.push('');
     lines.push(`_PIMS · ${todayId()}_`);
 
