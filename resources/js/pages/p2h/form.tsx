@@ -18,9 +18,9 @@ import type { AnswerState, P2hInspectionItem, Unit } from '@/types/pims';
 import { Head, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import {
-    AlertCircle,
     AlertTriangle,
     ArrowRight,
+    Camera,
     Check,
     CheckCircle2,
     ChevronDown,
@@ -29,10 +29,12 @@ import {
     Droplets,
     Fuel,
     Gauge,
-    Hash,
+    ImagePlus,
     Loader2,
+    MapPin,
     Moon,
     PenLine,
+    Plus,
     Search,
     Send,
     ShieldAlert,
@@ -65,9 +67,70 @@ interface SlotInfo {
     slot_terisi: number;
     slot_tersedia: boolean;
     next_slot: number;
+    last_hm_km_akhir: number | null;
 }
 
 const SECTION_ORDER: P2hInspectionItem['section'][] = ['A', 'B', 'C'];
+
+const LOKASI_OPTIONS = [
+    'Tambang / Pit',
+    'Jalan Hauling OB',
+    'Jalan Hauling COAL',
+    'Disposal',
+    'Sump',
+    'Area Parkir',
+    'Pit Stop / Area Refueling',
+    'Workshop',
+    'Warehouse',
+    'Laydown B3',
+    'TPS Limbah B3',
+    'Office',
+    'Stock Room',
+    'Crusher Stock Pile',
+    'Mess',
+    'Katering',
+    'Jalan Warga / Raya',
+    'Area Vendor',
+    'Water Fill',
+    'Washing Pad',
+    'Area Pembagian Nasi',
+    'Unit/Peralatan',
+    'Sarana',
+    'Area Diversi Sungai Kungkilan',
+    'Area Akses Senapo',
+    'Container Produksi',
+    'Container HSE &/ GA',
+];
+
+function toProperCase(str: string): string {
+    return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+async function compressImage(file: File, maxWidth = 1280, quality = 0.75): Promise<File> {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const scale = Math.min(1, maxWidth / img.width);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d')!;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) { resolve(file); return; }
+                    resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+                },
+                'image/jpeg',
+                quality,
+            );
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+    });
+}
 
 const STEPS = [
     { id: 1, label: 'Unit & Shift', icon: Wrench },
@@ -173,7 +236,7 @@ function StepNavFooter({
     const isLastStep = step === totalSteps;
 
     return (
-        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:bottom-0">
+        <div className="sticky bottom-0 z-40 mt-auto border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             {/* Progress bar — step 2 only */}
             {checklistProgress !== undefined && (
                 <div className="flex items-center gap-3 border-b px-4 py-2">
@@ -411,6 +474,127 @@ function PicCombobox({
     );
 }
 
+// ─── Lokasi Combobox ─────────────────────────────────────────────────────────
+function LokasiCombobox({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+}) {
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const filtered = query.trim()
+        ? LOKASI_OPTIONS.filter((l) => l.toLowerCase().includes(query.toLowerCase()))
+        : LOKASI_OPTIONS;
+
+    const queryProper = query.trim() ? toProperCase(query.trim()) : '';
+    const isExactMatch = LOKASI_OPTIONS.some((l) => l.toLowerCase() === query.trim().toLowerCase());
+
+    const select = (v: string) => {
+        onChange(v);
+        setSheetOpen(false);
+        setQuery('');
+    };
+
+    const addManual = () => {
+        if (queryProper) { onChange(queryProper); setSheetOpen(false); setQuery(''); }
+    };
+
+    return (
+        <>
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={() => { setSheetOpen(true); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSheetOpen(true); } }}
+                className={cn(
+                    'flex h-11 w-full cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm transition-colors',
+                    value ? 'border-input' : 'border-input text-muted-foreground',
+                )}
+            >
+                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate">{value || 'Pilih atau ketik lokasi kerja'}</span>
+                {value && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onChange(''); }}
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+                {!value && <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
+            </div>
+
+            <Sheet open={sheetOpen} onOpenChange={(o) => { setSheetOpen(o); if (!o) setQuery(''); }}>
+                <SheetContent
+                    side="bottom"
+                    className="h-dvh rounded-none flex flex-col p-0"
+                >
+                    {/* Header */}
+                    <SheetHeader className="shrink-0 px-4 pt-4 pb-0">
+                        <SheetTitle>Pilih Lokasi Kerja</SheetTitle>
+                    </SheetHeader>
+
+                    {/* Search input — sticky, tidak ikut scroll */}
+                    <div className="shrink-0 px-4 py-3">
+                        <div className="flex items-center gap-2 rounded-lg border px-3 h-11">
+                            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <input
+                                ref={inputRef}
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Cari atau ketik lokasi baru…"
+                                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                            />
+                            {query && (
+                                <button type="button" onClick={() => setQuery('')}>
+                                    <X className="h-4 w-4 text-muted-foreground" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* List — flex-1 min-h-0 agar bisa scroll dalam flex container */}
+                    <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6 space-y-1.5">
+                        {queryProper && !isExactMatch && (
+                            <button
+                                type="button"
+                                onClick={addManual}
+                                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-primary/40 px-4 py-3 text-left text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+                            >
+                                <Plus className="h-4 w-4 shrink-0" />
+                                Tambahkan: <span className="ml-1 font-semibold">{queryProper}</span>
+                            </button>
+                        )}
+                        {filtered.map((lokasi) => (
+                            <button
+                                key={lokasi}
+                                type="button"
+                                onClick={() => select(lokasi)}
+                                className={cn(
+                                    'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:bg-accent',
+                                    value === lokasi && 'border-primary bg-primary/5 font-medium',
+                                )}
+                            >
+                                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                <span className="flex-1">{lokasi}</span>
+                                {value === lokasi && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                            </button>
+                        ))}
+                        {filtered.length === 0 && !queryProper && (
+                            <p className="py-4 text-center text-sm text-muted-foreground">Tidak ada lokasi yang cocok.</p>
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </>
+    );
+}
+
 // ─── Main Form ────────────────────────────────────────────────────────────────
 export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
     const { auth, options } = usePage<{ auth: { user: { id: number; name: string; nik?: string | null; jabatan?: string } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
@@ -455,6 +639,10 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
     const [hmKmAkhir, setHmKmAkhir] = useState(draft.hmKmAkhir ?? '');
     const [kondisiAkhir, setKondisiAkhir] = useState<'Layak Pakai' | 'BD' | ''>(draft.kondisiAkhir ?? '');
     const [justifikasiKondisi, setJustifikasiKondisi] = useState(draft.justifikasiKondisi ?? '');
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
+    const [compressing, setCompressing] = useState(false);
+    const [compressingItems, setCompressingItems] = useState<Record<number, boolean>>({});
     const [submitting, setSubmitting] = useState(false);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
@@ -580,11 +768,67 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
         }));
     }, []);
 
+    const [itemAttachments, setItemAttachments] = useState<Record<number, File[]>>({});
+    const [itemAttachmentPreviews, setItemAttachmentPreviews] = useState<Record<number, string[]>>({});
+
+    const handleItemAttachmentChange = useCallback(async (itemId: number, files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        setCompressingItems((prev) => ({ ...prev, [itemId]: true }));
+        try {
+            const compressed = await Promise.all(Array.from(files).map((f) => compressImage(f)));
+            setItemAttachments((prev) => ({ ...prev, [itemId]: [...(prev[itemId] ?? []), ...compressed] }));
+            const previews = compressed.map((f) => URL.createObjectURL(f));
+            setItemAttachmentPreviews((prev) => ({ ...prev, [itemId]: [...(prev[itemId] ?? []), ...previews] }));
+        } finally {
+            setCompressingItems((prev) => ({ ...prev, [itemId]: false }));
+        }
+    }, []);
+
+    const removeItemAttachment = useCallback((itemId: number, idx: number) => {
+        setItemAttachments((prev) => {
+            const arr = [...(prev[itemId] ?? [])];
+            arr.splice(idx, 1);
+            return { ...prev, [itemId]: arr };
+        });
+        setItemAttachmentPreviews((prev) => {
+            const arr = [...(prev[itemId] ?? [])];
+            URL.revokeObjectURL(arr[idx]);
+            arr.splice(idx, 1);
+            return { ...prev, [itemId]: arr };
+        });
+    }, []);
+
+    const handleAttachmentFiles = useCallback(async (files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        setCompressing(true);
+        try {
+            const compressed = await Promise.all(Array.from(files).map((f) => compressImage(f)));
+            setAttachments((prev) => [...prev, ...compressed]);
+            const previews = compressed.map((f) => URL.createObjectURL(f));
+            setAttachmentPreviews((prev) => [...prev, ...previews]);
+        } finally {
+            setCompressing(false);
+        }
+    }, []);
+
+    const removeAttachment = useCallback((idx: number) => {
+        setAttachments((prev) => { const a = [...prev]; a.splice(idx, 1); return a; });
+        setAttachmentPreviews((prev) => {
+            const a = [...prev];
+            URL.revokeObjectURL(a[idx]);
+            a.splice(idx, 1);
+            return a;
+        });
+    }, []);
+
     const validateStep = (s: number): string | null => {
         if (s === 1) {
             if (!selectedUnitId) return 'Pilih unit terlebih dahulu.';
             if (checkingSlot) return 'Menunggu pengecekan slot…';
             if (!shift) return 'Shift wajib dipilih.';
+            if (kmAwal && slotInfo?.last_hm_km_akhir != null && Number(kmAwal) < slotInfo.last_hm_km_akhir) {
+                return `HM/KM Awal tidak boleh lebih rendah dari HM/KM Akhir sebelumnya (${slotInfo.last_hm_km_akhir.toLocaleString('id-ID')}).`;
+            }
             if (needsApproval) {
                 if (filteredStaffUsers.length === 0) return `Tidak ada ${picJabatanLabel} yang tersedia sebagai PIC untuk unit ini. Hubungi admin.`;
                 if (!picApproverId) return 'PIC yang akan menyetujui P2H wajib dipilih.';
@@ -603,6 +847,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
         if (s === 4) {
             if (!kondisiAkhir) return 'Keputusan kondisi akhir unit wajib dipilih.';
             if (isOverride && !justifikasiKondisi.trim()) return 'Alasan keputusan wajib diisi karena berbeda dari rekomendasi sistem.';
+            if (attachments.length === 0) return 'Lampiran foto wajib ditambahkan (min. 1 foto).';
             if (sigEmpty || sigPadRef.current?.isEmpty()) return 'Tanda tangan wajib dibuat.';
         }
         return null;
@@ -641,6 +886,12 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
 
         clearDraft();
 
+        // Build payload — attachments require forceFormData
+        const itemAttachmentsFlat: Record<string, File[]> = {};
+        Object.entries(itemAttachments).forEach(([itemId, files]) => {
+            if (files.length > 0) itemAttachmentsFlat[`item_attachments[${itemId}][]`] = files;
+        });
+
         router.post('/p2h', {
             unit_id: Number(selectedUnitId),
             job_site: jobSite || null,
@@ -664,7 +915,10 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                 km_unit: kmUnit ? Number(kmUnit) : null,
                 jumlah_liter: jumlahLiter ? Number(jumlahLiter) : null,
             },
+            attachments,
+            ...itemAttachmentsFlat,
         }, {
+            forceFormData: true,
             onSuccess: () => {
                 router.visit('/p2h', { replace: true });
             },
@@ -694,7 +948,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
         <>
             <Head title="Form P2H" />
 
-            <div ref={topRef} className="flex min-h-screen flex-col pb-40 md:pb-20">
+            <div ref={topRef} className="flex min-h-dvh flex-col">
 
                 {/* ── Sticky Top Header ── */}
                 <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -724,7 +978,7 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                 </div>
 
                 {/* ── Step Content ── */}
-                <div className="flex flex-col gap-4 p-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pb-6">
 
                     {/* ══════════════════════════════════════════
                         STEP 1 — Unit & Shift
@@ -850,16 +1104,6 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                             <p className="truncate text-base font-semibold">{auth?.user?.name ?? '-'}</p>
                                         </div>
                                     </div>
-                                    <Separator />
-                                    <div className="flex items-center gap-3 py-3">
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                            <Hash className="h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm text-muted-foreground">NIK</p>
-                                            <p className="truncate text-base font-semibold">{auth?.user?.nik ?? '-'}</p>
-                                        </div>
-                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -884,15 +1128,8 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                         </Select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="lokasi-kerja" className="text-sm font-medium">Lokasi Kerja</Label>
-                                        <Input
-                                            id="lokasi-kerja"
-                                            type="text"
-                                            value={lokasiKerja}
-                                            onChange={(e) => setLokasiKerja(e.target.value)}
-                                            placeholder="Contoh: Pit 3, Hauling Road"
-                                            className="h-11 text-sm"
-                                        />
+                                        <Label className="text-sm font-medium">Lokasi Kerja</Label>
+                                        <LokasiCombobox value={lokasiKerja} onChange={setLokasiKerja} />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -907,11 +1144,21 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                     <CardDescription>Lihat odometer/hourmeter kendaraan (opsional)</CardDescription>
                                 </CardHeader>
                                 <CardContent className="px-4 space-y-2">
+                                    {slotInfo?.last_hm_km_akhir != null && (
+                                        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-900 dark:bg-blue-950/20">
+                                            <Gauge className="h-4 w-4 shrink-0 text-blue-500" />
+                                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                                                HM/KM Akhir sesi sebelumnya:{' '}
+                                                <strong>{slotInfo.last_hm_km_akhir.toLocaleString('id-ID')}</strong>
+                                                {' '}— nilai awal tidak boleh lebih rendah
+                                            </p>
+                                        </div>
+                                    )}
                                     <Input
                                         id="km-awal"
                                         type="number"
                                         inputMode="numeric"
-                                        min={0}
+                                        min={slotInfo?.last_hm_km_akhir ?? 0}
                                         value={kmAwal}
                                         onChange={(e) => setKmAwal(e.target.value)}
                                         placeholder="Contoh: 12500"
@@ -920,6 +1167,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                     {kmAwal && (
                                         <p className="text-xs text-muted-foreground">
                                             = {Number(kmAwal).toLocaleString('id-ID')}
+                                        </p>
+                                    )}
+                                    {kmAwal && slotInfo?.last_hm_km_akhir != null && Number(kmAwal) < slotInfo.last_hm_km_akhir && (
+                                        <p className="text-xs text-destructive font-medium">
+                                            Nilai tidak boleh kurang dari {slotInfo.last_hm_km_akhir.toLocaleString('id-ID')}
                                         </p>
                                     )}
                                 </CardContent>
@@ -1072,6 +1324,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                             answers={answers}
                                             onChange={handleKondisiChange}
                                             onKeteranganChange={handleKeteranganChange}
+                                            itemAttachments={itemAttachments}
+                                            itemAttachmentPreviews={itemAttachmentPreviews}
+                                            compressingItems={compressingItems}
+                                            onItemAttachmentChange={handleItemAttachmentChange}
+                                            onRemoveItemAttachment={removeItemAttachment}
                                             defaultOpen={section === 'A'}
                                         />
                                     );
@@ -1453,6 +1710,94 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                         <p className="text-xs text-muted-foreground">
                                             = {Number(hmKmAkhir).toLocaleString('id-ID')}
                                         </p>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Lampiran Foto */}
+                            <Card className={attachments.length === 0 ? 'border-destructive/40' : ''}>
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center gap-2">
+                                        <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                                        <CardTitle className="text-base">
+                                            Lampiran Foto <span className="text-destructive">*</span>
+                                        </CardTitle>
+                                    </div>
+                                    <CardDescription>Lampirkan minimal 1 foto sebagai bukti pemeriksaan. Foto akan dikompresi otomatis.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="px-4 space-y-3">
+                                    {/* Tombol ambil/pilih foto — pakai label agar capture berfungsi reliabel di mobile */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <label className={cn(
+                                            'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
+                                            compressing
+                                                ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
+                                                : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
+                                        )}>
+                                            <Camera className="h-4 w-4" />
+                                            Ambil Foto
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                disabled={compressing}
+                                                className="hidden"
+                                                onChange={(e) => handleAttachmentFiles(e.target.files)}
+                                            />
+                                        </label>
+                                        <label className={cn(
+                                            'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
+                                            compressing
+                                                ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
+                                                : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
+                                        )}>
+                                            <ImagePlus className="h-4 w-4" />
+                                            Dari Galeri
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                disabled={compressing}
+                                                className="hidden"
+                                                onChange={(e) => handleAttachmentFiles(e.target.files)}
+                                            />
+                                        </label>
+                                    </div>
+
+                                    {/* Indikator kompresi */}
+                                    {compressing && (
+                                        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5">
+                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                            <p className="text-xs text-muted-foreground">Memproses foto…</p>
+                                        </div>
+                                    )}
+
+                                    {/* Grid preview */}
+                                    {attachmentPreviews.length > 0 && (
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {attachmentPreviews.map((src, idx) => (
+                                                <div key={idx} className="relative aspect-square">
+                                                    <img
+                                                        src={src}
+                                                        alt={`Foto ${idx + 1}`}
+                                                        className="h-full w-full rounded-lg object-cover border"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeAttachment(idx)}
+                                                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white shadow"
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {!compressing && attachments.length === 0 && (
+                                        <p className="text-xs text-destructive">Wajib melampirkan minimal 1 foto</p>
+                                    )}
+                                    {attachments.length > 0 && (
+                                        <p className="text-xs text-muted-foreground">{attachments.length} foto terlampir</p>
                                     )}
                                 </CardContent>
                             </Card>

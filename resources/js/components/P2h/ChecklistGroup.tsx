@@ -12,6 +12,11 @@ interface Props {
     answers: Record<number, AnswerState>;
     onChange: (id: number, kondisi: 'Layak' | 'Tidak Layak') => void;
     onKeteranganChange: (id: number, keterangan: string) => void;
+    itemAttachments: Record<number, File[]>;
+    itemAttachmentPreviews: Record<number, string[]>;
+    compressingItems: Record<number, boolean>;
+    onItemAttachmentChange: (id: number, files: FileList | null) => void;
+    onRemoveItemAttachment: (id: number, idx: number) => void;
     defaultOpen?: boolean;
 }
 
@@ -42,6 +47,11 @@ export default function ChecklistGroup({
     answers,
     onChange,
     onKeteranganChange,
+    itemAttachments,
+    itemAttachmentPreviews,
+    compressingItems,
+    onItemAttachmentChange,
+    onRemoveItemAttachment,
     defaultOpen = false,
 }: Props) {
     const [open, setOpen] = useState(defaultOpen);
@@ -106,6 +116,11 @@ export default function ChecklistGroup({
                             answer={answers[item.id] ?? { inspection_item_id: item.id, kondisi: null, keterangan: '' }}
                             onChange={onChange}
                             onKeteranganChange={onKeteranganChange}
+                            attachments={itemAttachments[item.id] ?? []}
+                            attachmentPreviews={itemAttachmentPreviews[item.id] ?? []}
+                            compressing={compressingItems[item.id] ?? false}
+                            onAttachmentChange={onItemAttachmentChange}
+                            onRemoveAttachment={onRemoveItemAttachment}
                         />
                     ))}
                 </div>

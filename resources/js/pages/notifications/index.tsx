@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { PimsNotification } from '@/types/pims';
+import { cn } from '@/lib/utils';
 import { Head, router } from '@inertiajs/react';
 import {
     AlertTriangle,
@@ -25,8 +26,8 @@ import {
     ExternalLink,
     Inbox,
     Loader2,
+    MailCheck,
     Trash2,
-    TriangleAlert,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -51,7 +52,7 @@ interface Props {
 function relativeTime(dateStr: string): string {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
     if (diff < 60) return 'Baru saja';
-    if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} mnt lalu`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
     if (diff < 604800) return `${Math.floor(diff / 86400)} hari lalu`;
     return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -88,10 +89,10 @@ function getTypeConfig(data: PimsNotification['data']) {
         return {
             icon: ClipboardCheck,
             iconClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
-            borderClass: 'border-l-amber-400 bg-amber-50/60 dark:bg-amber-950/20',
-            hoverClass: 'hover:bg-amber-50 dark:hover:bg-amber-950/30',
+            borderColor: 'border-l-amber-400',
+            bgUnread: 'bg-amber-50/40 dark:bg-amber-950/15',
             badge: (
-                <Badge variant="secondary" className="gap-1 border-amber-200 bg-amber-100 text-amber-700 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                <Badge variant="secondary" className="gap-1 border-amber-200 bg-amber-100 text-amber-700 text-xs font-medium dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                     <ClipboardCheck className="h-3 w-3" />
                     Permintaan Persetujuan
                 </Badge>
@@ -107,19 +108,17 @@ function getTypeConfig(data: PimsNotification['data']) {
             iconClass: approved
                 ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
                 : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
-            borderClass: approved
-                ? 'border-l-green-400 bg-green-50/60 dark:bg-green-950/20'
-                : 'border-l-red-400 bg-red-50/60 dark:bg-red-950/20',
-            hoverClass: approved
-                ? 'hover:bg-green-50 dark:hover:bg-green-950/30'
-                : 'hover:bg-red-50 dark:hover:bg-red-950/30',
+            borderColor: approved ? 'border-l-green-400' : 'border-l-red-400',
+            bgUnread: approved
+                ? 'bg-green-50/40 dark:bg-green-950/15'
+                : 'bg-red-50/40 dark:bg-red-950/15',
             badge: approved ? (
-                <Badge variant="secondary" className="gap-1 border-green-200 bg-green-100 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400">
+                <Badge variant="secondary" className="gap-1 border-green-200 bg-green-100 text-green-700 text-xs font-medium dark:border-green-800 dark:bg-green-900/30 dark:text-green-400">
                     <CheckCircle className="h-3 w-3" />
                     Disetujui
                 </Badge>
             ) : (
-                <Badge variant="destructive" className="gap-1 text-xs">
+                <Badge variant="destructive" className="gap-1 text-xs font-medium">
                     <XCircle className="h-3 w-3" />
                     Ditolak
                 </Badge>
@@ -129,12 +128,12 @@ function getTypeConfig(data: PimsNotification['data']) {
     }
 
     return {
-        icon: TriangleAlert,
+        icon: AlertTriangle,
         iconClass: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
-        borderClass: 'border-l-red-500 bg-red-50/60 dark:bg-red-950/20',
-        hoverClass: 'hover:bg-red-50 dark:hover:bg-red-950/30',
+        borderColor: 'border-l-red-500',
+        bgUnread: 'bg-red-50/40 dark:bg-red-950/15',
         badge: (
-            <Badge variant="destructive" className="gap-1 text-xs">
+            <Badge variant="destructive" className="gap-1 text-xs font-medium">
                 <AlertTriangle className="h-3 w-3" />
                 Critical Alert
             </Badge>
@@ -153,6 +152,11 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
         router.patch(`/notifications/${notif.id}/read`);
     };
 
+    const handleMarkRead = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        router.patch(`/notifications/${notif.id}/read`, {}, { preserveScroll: true });
+    };
+
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         router.delete(`/notifications/${notif.id}`, { preserveScroll: true });
@@ -160,7 +164,13 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
 
     return (
         <div
-            className={`relative flex cursor-pointer gap-3 rounded-xl border border-l-4 p-4 transition-colors ${config.borderClass} ${config.hoverClass} ${!isUnread ? '!border-l-border !bg-card hover:!bg-muted/30' : ''}`}
+            className={cn(
+                'group relative flex cursor-pointer gap-3 rounded-xl border border-l-4 p-4 transition-all duration-150',
+                'hover:shadow-sm',
+                isUnread
+                    ? cn(config.borderColor, config.bgUnread, 'hover:brightness-[0.97] dark:hover:brightness-110')
+                    : 'border-l-border bg-card hover:bg-muted/30',
+            )}
             onClick={handleClick}
             role="button"
             tabIndex={0}
@@ -168,8 +178,11 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
         >
             {/* Icon */}
             <div className="shrink-0 pt-0.5">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${isUnread ? config.iconClass : 'bg-muted text-muted-foreground'}`}>
-                    <Icon className="h-4.5 w-4.5" />
+                <div className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-full',
+                    isUnread ? config.iconClass : 'bg-muted text-muted-foreground',
+                )}>
+                    <Icon className="h-[18px] w-[18px]" />
                 </div>
             </div>
 
@@ -179,7 +192,7 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                 <div className="flex flex-wrap items-center gap-1.5">
                     {config.badge}
                     {isUnread && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                             <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                             Belum dibaca
                         </span>
@@ -234,39 +247,58 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                 )}
 
                 {/* Footer: timestamp + action hint */}
-                <div className="flex items-center justify-between pt-0.5">
+                <div className="flex items-center justify-between pt-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <time className="text-muted-foreground cursor-default text-xs">
+                            <time className="text-muted-foreground cursor-default text-xs tabular-nums">
                                 {relativeTime(notif.created_at)}
                             </time>
                         </TooltipTrigger>
-                        <TooltipContent>{fullDateTime(notif.created_at)}</TooltipContent>
+                        <TooltipContent side="bottom">{fullDateTime(notif.created_at)}</TooltipContent>
                     </Tooltip>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                         {isUnread ? config.actionHint : 'Lihat detail'}
                         <ExternalLink className="h-3 w-3" />
                     </span>
                 </div>
             </div>
 
-            {/* Unread dot + delete — always visible */}
-            <div className="flex shrink-0 flex-col items-center gap-2 pt-0.5">
+            {/* Right column: unread dot + actions (visible on hover) */}
+            <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
                 {isUnread && (
-                    <span className="h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-background" />
                 )}
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <button
-                            onClick={handleDelete}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                            aria-label="Hapus notifikasi"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent>Hapus notifikasi ini</TooltipContent>
-                </Tooltip>
+                <div className={cn(
+                    'flex flex-col gap-1 transition-opacity',
+                    'opacity-0 group-hover:opacity-100',
+                )}>
+                    {isUnread && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={handleMarkRead}
+                                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                    aria-label="Tandai sudah dibaca"
+                                >
+                                    <MailCheck className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">Tandai sudah dibaca</TooltipContent>
+                        </Tooltip>
+                    )}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={handleDelete}
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                aria-label="Hapus notifikasi"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">Hapus notifikasi</TooltipContent>
+                    </Tooltip>
+                </div>
             </div>
         </div>
     );
@@ -276,13 +308,15 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
 function DateGroup({ label, notifications }: { label: string; notifications: PimsNotification[] }) {
     return (
         <div className="space-y-2">
-            <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-                <div className="flex-1 border-t" />
+            <div className="flex items-center gap-2.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{label}</span>
+                <div className="flex-1 border-t border-dashed" />
             </div>
-            {notifications.map((notif) => (
-                <NotificationCard key={notif.id} notif={notif} />
-            ))}
+            <div className="space-y-2">
+                {notifications.map((notif) => (
+                    <NotificationCard key={notif.id} notif={notif} />
+                ))}
+            </div>
         </div>
     );
 }
@@ -290,50 +324,133 @@ function DateGroup({ label, notifications }: { label: string; notifications: Pim
 /* ─────────────── Empty State ───────────────────────────────── */
 function EmptyState({ tab }: { tab: string }) {
     const config = {
-        all: { icon: Inbox, title: 'Belum ada notifikasi', desc: 'Notifikasi dari aktivitas P2H (critical alert, persetujuan) akan muncul di sini.' },
-        unread: { icon: BellOff, title: 'Semua sudah dibaca', desc: 'Tidak ada notifikasi yang belum dibaca saat ini.' },
-        read: { icon: Bell, title: 'Belum ada yang dibaca', desc: 'Notifikasi yang sudah kamu baca akan tampil di sini.' },
+        all: {
+            icon: Inbox,
+            title: 'Belum ada notifikasi',
+            desc: 'Notifikasi dari aktivitas P2H seperti critical alert dan permintaan persetujuan akan muncul di sini.',
+        },
+        unread: {
+            icon: BellOff,
+            title: 'Semua sudah dibaca',
+            desc: 'Tidak ada notifikasi yang belum dibaca saat ini.',
+        },
+        read: {
+            icon: Bell,
+            title: 'Belum ada yang dibaca',
+            desc: 'Notifikasi yang sudah dibaca akan tampil di sini.',
+        },
     }[tab] ?? { icon: Inbox, title: 'Kosong', desc: '' };
     const Icon = config.icon;
     return (
         <div className="flex flex-col items-center gap-4 py-20 text-center">
-            <div className="rounded-full bg-muted p-5">
-                <Icon className="h-10 w-10 text-muted-foreground" />
+            <div className="rounded-2xl bg-muted p-5">
+                <Icon className="h-10 w-10 text-muted-foreground/60" />
             </div>
-            <div>
+            <div className="space-y-1">
                 <p className="text-base font-semibold">{config.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{config.desc}</p>
+                <p className="max-w-xs text-sm text-muted-foreground">{config.desc}</p>
             </div>
         </div>
     );
 }
 
-/* ─────────────────── Filter Tab Button ─────────────────────── */
+/* ─────────────────── Filter Tab ─────────────────────────────── */
+type FilterValue = 'all' | 'unread' | 'read';
+
 function FilterTab({
     active, label, count, accent, onClick,
 }: {
-    active: boolean; label: string; count?: number; accent?: 'red'; onClick: () => void;
+    active: boolean; label: string; count?: number; accent?: 'red' | 'blue'; onClick: () => void;
 }) {
     return (
         <button
             onClick={onClick}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={cn(
+                'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150',
                 active
-                    ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
-                    : 'text-muted-foreground hover:text-foreground'
-            }`}
+                    ? 'bg-background text-foreground shadow-sm ring-1 ring-border/60'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50',
+            )}
         >
             {label}
             {count !== undefined && count > 0 && (
-                <span className={`rounded px-1.5 py-0.5 text-xs tabular-nums ${
+                <span className={cn(
+                    'rounded-md px-1.5 py-0.5 text-xs tabular-nums font-semibold',
                     accent === 'red'
                         ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                        : 'bg-muted text-muted-foreground'
-                }`}>
+                        : 'bg-muted text-muted-foreground',
+                )}>
                     {count}
                 </span>
             )}
         </button>
+    );
+}
+
+/* ─────────── Pagination ─────────────────────────────────────── */
+function Pagination({
+    current_page,
+    last_page,
+    from,
+    to,
+    total,
+    onPage,
+}: {
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+    onPage: (p: number) => void;
+}) {
+    const pages = Array.from({ length: last_page }, (_, i) => i + 1)
+        .filter((p) => p === 1 || p === last_page || Math.abs(p - current_page) <= 1)
+        .reduce<(number | '...')[]>((acc, p, i, arr) => {
+            if (i > 0 && (arr[i - 1] as number) !== p - 1) acc.push('...');
+            acc.push(p);
+            return acc;
+        }, []);
+
+    return (
+        <div className="flex items-center justify-between border-t pt-4">
+            <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{from}–{to}</span> dari{' '}
+                <span className="font-medium text-foreground">{total}</span> notifikasi
+            </p>
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="outline" size="sm"
+                    disabled={current_page === 1}
+                    onClick={() => onPage(current_page - 1)}
+                    className="h-8 w-8 p-0"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {pages.map((p, i) =>
+                    p === '...' ? (
+                        <span key={`e-${i}`} className="px-1 text-sm text-muted-foreground">…</span>
+                    ) : (
+                        <Button
+                            key={p}
+                            size="sm"
+                            variant={p === current_page ? 'default' : 'outline'}
+                            onClick={() => onPage(p as number)}
+                            className="h-8 w-8 p-0"
+                        >
+                            {p}
+                        </Button>
+                    ),
+                )}
+                <Button
+                    variant="outline" size="sm"
+                    disabled={current_page === last_page}
+                    onClick={() => onPage(current_page + 1)}
+                    className="h-8 w-8 p-0"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
     );
 }
 
@@ -343,7 +460,7 @@ export default function NotificationsIndex({ notifications, unread_count, total_
     const [clearingAll, setClearingAll] = useState(false);
     const [showClearDialog, setShowClearDialog] = useState(false);
 
-    const handleFilterChange = (value: string) => {
+    const handleFilterChange = (value: FilterValue) => {
         router.get('/notifications', { filter: value === 'all' ? undefined : value }, { preserveState: false });
     };
 
@@ -367,7 +484,6 @@ export default function NotificationsIndex({ notifications, unread_count, total_
 
     const readCount = total_count - unread_count;
 
-    // Group notifications by date
     const grouped = notifications.data.reduce<Record<string, PimsNotification[]>>((acc, notif) => {
         const label = getDateGroupLabel(notif.created_at);
         if (!acc[label]) acc[label] = [];
@@ -380,42 +496,49 @@ export default function NotificationsIndex({ notifications, unread_count, total_
     return (
         <TooltipProvider>
             <Head title="Notifikasi" />
-            <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+            <div className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
 
                 {/* ── Header ── */}
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <div className="flex items-center gap-2.5">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                                <Bell className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold tracking-tight">Notifikasi</h1>
-                                <p className="text-xs text-muted-foreground">
-                                    {unread_count > 0
-                                        ? `${unread_count} belum dibaca · ${total_count} total`
-                                        : `${total_count} notifikasi · semua sudah dibaca`}
-                                </p>
-                            </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <Bell className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold tracking-tight">Notifikasi</h1>
+                            <p className="text-xs text-muted-foreground">
+                                {unread_count > 0
+                                    ? <><span className="font-semibold text-foreground">{unread_count}</span> belum dibaca · {total_count} total</>
+                                    : <>{total_count} notifikasi · semua sudah dibaca</>
+                                }
+                            </p>
                         </div>
                     </div>
 
                     {total_count > 0 && (
                         <div className="flex items-center gap-2">
                             {unread_count > 0 && (
-                                <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markingAll} className="gap-1.5 text-xs">
-                                    {markingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
+                                <Button
+                                    variant="outline" size="sm"
+                                    onClick={handleMarkAllRead}
+                                    disabled={markingAll}
+                                    className="h-8 gap-1.5 text-xs"
+                                >
+                                    {markingAll
+                                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        : <CheckCheck className="h-3.5 w-3.5" />}
                                     {markingAll ? 'Memproses…' : 'Tandai Semua Dibaca'}
                                 </Button>
                             )}
                             <Button
-                                variant="ghost"
-                                size="sm"
+                                variant="ghost" size="sm"
                                 onClick={() => setShowClearDialog(true)}
                                 disabled={clearingAll}
-                                className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="h-8 gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                             >
-                                {clearingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                {clearingAll
+                                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    : <Trash2 className="h-3.5 w-3.5" />}
                                 {clearingAll ? 'Menghapus…' : 'Hapus Semua'}
                             </Button>
                         </div>
@@ -423,7 +546,7 @@ export default function NotificationsIndex({ notifications, unread_count, total_
                 </div>
 
                 {/* ── Filter tabs ── */}
-                <div className="flex items-center gap-1 rounded-xl bg-muted/60 p-1">
+                <div className="flex items-center gap-1 rounded-xl bg-muted/50 p-1 border">
                     <FilterTab
                         active={filter === 'all'}
                         label="Semua"
@@ -456,76 +579,32 @@ export default function NotificationsIndex({ notifications, unread_count, total_
                                 <DateGroup key={label} label={label} notifications={grouped[label]} />
                             ))}
 
-                        {/* Pagination */}
-                        {notifications.last_page > 1 && (
-                            <div className="flex items-center justify-between border-t pt-4">
-                                <p className="text-sm text-muted-foreground">
-                                    {notifications.from}–{notifications.to} dari{' '}
-                                    <span className="font-medium">{notifications.total}</span> notifikasi
-                                </p>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="outline" size="sm"
-                                        disabled={notifications.current_page === 1}
-                                        onClick={() => gotoPage(notifications.current_page - 1)}
-                                        className="h-8 gap-1"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                        Prev
-                                    </Button>
-                                    <div className="flex gap-1">
-                                        {Array.from({ length: notifications.last_page }, (_, i) => i + 1)
-                                            .filter((p) => p === 1 || p === notifications.last_page || Math.abs(p - notifications.current_page) <= 1)
-                                            .reduce<(number | '...')[]>((acc, p, i, arr) => {
-                                                if (i > 0 && (arr[i - 1] as number) !== p - 1) acc.push('...');
-                                                acc.push(p);
-                                                return acc;
-                                            }, [])
-                                            .map((p, i) =>
-                                                p === '...' ? (
-                                                    <span key={`e-${i}`} className="px-1 py-1 text-sm text-muted-foreground">…</span>
-                                                ) : (
-                                                    <Button
-                                                        key={p}
-                                                        size="sm"
-                                                        variant={p === notifications.current_page ? 'default' : 'outline'}
-                                                        onClick={() => gotoPage(p as number)}
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        {p}
-                                                    </Button>
-                                                ),
-                                            )}
-                                    </div>
-                                    <Button
-                                        variant="outline" size="sm"
-                                        disabled={notifications.current_page === notifications.last_page}
-                                        onClick={() => gotoPage(notifications.current_page + 1)}
-                                        className="h-8 gap-1"
-                                    >
-                                        Next
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {notifications.last_page === 1 && (
-                            <p className="border-t pt-4 text-sm text-muted-foreground">
-                                Total <span className="font-medium">{notifications.total}</span> notifikasi
+                        {notifications.last_page > 1 ? (
+                            <Pagination
+                                current_page={notifications.current_page}
+                                last_page={notifications.last_page}
+                                from={notifications.from}
+                                to={notifications.to}
+                                total={notifications.total}
+                                onPage={gotoPage}
+                            />
+                        ) : (
+                            <p className="border-t pt-4 text-xs text-muted-foreground">
+                                Total <span className="font-medium text-foreground">{notifications.total}</span> notifikasi
                             </p>
                         )}
                     </div>
                 )}
             </div>
 
+            {/* ── Clear all dialog ── */}
             <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Hapus semua notifikasi?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Sebanyak <span className="font-semibold text-foreground">{total_count} notifikasi</span> akan dihapus secara permanen.
-                            Tindakan ini tidak dapat dibatalkan.
+                            Sebanyak <span className="font-semibold text-foreground">{total_count} notifikasi</span> akan
+                            dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

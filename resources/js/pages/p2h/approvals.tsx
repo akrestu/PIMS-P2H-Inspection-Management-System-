@@ -150,14 +150,12 @@ function StatCard({
         red:   'text-red-700 dark:text-red-300',
     };
     return (
-        <div className={`flex items-center gap-3 rounded-xl border p-3.5 ${colors[color]}`}>
-            <div className={`rounded-lg p-2 bg-white/60 dark:bg-black/20 ${iconColors[color]}`}>
+        <div className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center ${colors[color]}`}>
+            <div className={`rounded-lg p-1.5 bg-white/60 dark:bg-black/20 ${iconColors[color]}`}>
                 <Icon className="h-4 w-4" />
             </div>
-            <div>
-                <p className={`text-2xl font-bold tabular-nums ${valueColors[color]}`}>{value}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-            </div>
+            <p className={`text-2xl font-bold tabular-nums leading-none ${valueColors[color]}`}>{value}</p>
+            <p className="text-[10px] leading-tight text-muted-foreground">{label}</p>
         </div>
     );
 }
@@ -600,7 +598,7 @@ function StatusFilterTab({
     return (
         <button
             onClick={onClick}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
+            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
                 active
                     ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
                     : 'text-muted-foreground hover:text-foreground'
@@ -651,8 +649,8 @@ export default function P2hApprovals({ entries, filters, canSeeAllDept, stats }:
                             <h1 className="text-xl font-bold tracking-tight">Persetujuan P2H Unit LV</h1>
                             <p className="text-sm text-muted-foreground">
                                 {canSeeAllDept
-                                    ? 'Semua P2H Light Vehicle yang memerlukan verifikasi'
-                                    : 'P2H LV yang menunjuk Anda sebagai PIC verifikasi'}
+                                    ? 'P2H Light Vehicle yang memerlukan verifikasi'
+                                    : 'P2H LV dengan Anda sebagai PIC verifikasi'}
                             </p>
                         </div>
                     </div>
@@ -666,14 +664,16 @@ export default function P2hApprovals({ entries, filters, canSeeAllDept, stats }:
                 </div>
 
                 {/* ── Status filter ── */}
-                <div className="flex items-center gap-1 rounded-xl bg-muted/60 p-1">
-                    <StatusFilterTab value="pending" label="Menunggu" icon={Clock} active={activeStatus === 'pending'} onClick={() => setStatus('pending')} />
-                    <StatusFilterTab value="approved" label="Disetujui" icon={CheckCircle2} active={activeStatus === 'approved'} onClick={() => setStatus('approved')} />
-                    <StatusFilterTab value="rejected" label="Ditolak" icon={XCircle} active={activeStatus === 'rejected'} onClick={() => setStatus('rejected')} />
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-1 rounded-xl bg-muted/60 p-1">
+                        <StatusFilterTab value="pending" label="Menunggu" icon={Clock} active={activeStatus === 'pending'} onClick={() => setStatus('pending')} />
+                        <StatusFilterTab value="approved" label="Disetujui" icon={CheckCircle2} active={activeStatus === 'approved'} onClick={() => setStatus('approved')} />
+                        <StatusFilterTab value="rejected" label="Ditolak" icon={XCircle} active={activeStatus === 'rejected'} onClick={() => setStatus('rejected')} />
+                    </div>
                     {entries.total > 0 && (
-                        <span className="ml-auto pr-2 text-xs text-muted-foreground tabular-nums">
-                            {entries.total} entri
-                        </span>
+                        <p className="px-1 text-xs text-muted-foreground tabular-nums">
+                            {entries.total} entri ditemukan
+                        </p>
                     )}
                 </div>
 

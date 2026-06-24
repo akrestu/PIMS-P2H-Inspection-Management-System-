@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreP2hRequest;
+use App\Models\P2hAttachment;
 use App\Models\P2hChecklistAnswer;
 use App\Models\P2hFuelLog;
 use App\Models\P2hInspectionItem;
@@ -123,11 +124,17 @@ class P2hSessionController extends Controller
 
         $slotTerisi = $session ? $session->userEntries()->count() : 0;
 
+        $lastEntry = P2hUserEntry::whereHas('session', fn($q) => $q->where('unit_id', $request->unit_id))
+            ->whereNotNull('hm_km_akhir')
+            ->latest('id')
+            ->first();
+
         return response()->json([
-            'session_id'    => $session?->id,
-            'slot_terisi'   => $slotTerisi,
-            'slot_tersedia' => true,
-            'next_slot'     => $slotTerisi + 1,
+            'session_id'       => $session?->id,
+            'slot_terisi'      => $slotTerisi,
+            'slot_tersedia'    => true,
+            'next_slot'        => $slotTerisi + 1,
+            'last_hm_km_akhir' => $lastEntry?->hm_km_akhir,
         ]);
     }
 
@@ -240,6 +247,28 @@ class P2hSessionController extends Controller
                     ['p2h_user_entry_id' => $entry->id],
                     $data['fuel_log']
                 ));
+            }
+
+            // Simpan attachment utama form (wajib)
+            foreach ($request->file('attachments', []) as $file) {
+                $path = $file->store("p2h-attachments/{$entry->id}", 'public');
+                P2hAttachment::create([
+                    'p2h_user_entry_id'  => $entry->id,
+                    'inspection_item_id' => null,
+                    'path'               => $path,
+                ]);
+            }
+
+            // Simpan attachment per item checklist (opsional)
+            foreach ($request->file('item_attachments', []) as $itemId => $files) {
+                foreach ((array) $files as $file) {
+                    $path = $file->store("p2h-attachments/{$entry->id}/items/{$itemId}", 'public');
+                    P2hAttachment::create([
+                        'p2h_user_entry_id'  => $entry->id,
+                        'inspection_item_id' => (int) $itemId,
+                        'path'               => $path,
+                    ]);
+                }
             }
 
             // Hitung score entry ini dan update best_compliance_score di sesi

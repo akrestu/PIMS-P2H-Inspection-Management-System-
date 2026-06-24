@@ -17,6 +17,7 @@ import {
     ShieldCheck,
     Users,
 } from 'lucide-react';
+import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useState } from 'react';
 
 type NavItem = {
@@ -35,6 +36,7 @@ type NavItem = {
  */
 export function MobileSidebarTrigger() {
     const [showMore, setShowMore] = useState(false);
+    const scrollDir = useScrollDirection();
     const { isCurrentUrl } = useCurrentUrl();
     const { auth, notifications } = usePage<{
         auth: { user: { roles: string[]; jabatan?: string | null } | null };
@@ -111,9 +113,9 @@ export function MobileSidebarTrigger() {
     return (
         <>
             {/* Bottom navigation bar — mobile only */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+            <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ease-in-out ${scrollDir === 'down' ? 'translate-y-full' : 'translate-y-0'}`}>
                 <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-                    <nav className="flex items-center justify-around">
+                    <nav className="flex items-center">
                         {primaryNav.map((link) => {
                             const Icon = link.icon;
                             const active = isCurrentUrl(link.href);
@@ -121,7 +123,7 @@ export function MobileSidebarTrigger() {
                                 <Link
                                     key={link.title}
                                     href={link.href}
-                                    className={`relative flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-150 min-w-[56px] ${
+                                    className={`relative flex flex-1 flex-col items-center gap-1 px-1 py-2 rounded-xl transition-all duration-150 ${
                                         active
                                             ? 'text-primary'
                                             : 'text-muted-foreground hover:text-foreground'
@@ -132,7 +134,7 @@ export function MobileSidebarTrigger() {
                                     )}
                                     <div className="relative">
                                         <Icon
-                                            className={`h-6 w-6 transition-transform duration-150 ${
+                                            className={`h-5 w-5 transition-transform duration-150 ${
                                                 active ? 'scale-110' : ''
                                             }`}
                                         />
@@ -146,13 +148,12 @@ export function MobileSidebarTrigger() {
                                         )}
                                     </div>
                                     <span
-                                        className={`text-xs leading-none ${
+                                        className={`text-[10px] leading-none whitespace-nowrap ${
                                             active ? 'font-semibold' : 'font-medium'
                                         }`}
                                     >
                                         {link.title}
                                     </span>
-
                                 </Link>
                             );
                         })}
@@ -160,15 +161,15 @@ export function MobileSidebarTrigger() {
                         {hasMore && (
                             <button
                                 onClick={() => setShowMore(true)}
-                                className="relative flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-150 min-w-[56px] text-muted-foreground hover:text-foreground"
+                                className="relative flex flex-1 flex-col items-center gap-1 px-1 py-2 rounded-xl transition-all duration-150 text-muted-foreground hover:text-foreground"
                             >
                                 <div className="relative">
-                                    <MoreHorizontal className="h-6 w-6" />
+                                    <MoreHorizontal className="h-5 w-5" />
                                     {moreHasBadge && (
                                         <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive" />
                                     )}
                                 </div>
-                                <span className="text-xs font-medium leading-none">Lainnya</span>
+                                <span className="text-[10px] font-medium leading-none whitespace-nowrap">Lainnya</span>
                             </button>
                         )}
                     </nav>

@@ -41,6 +41,12 @@ class StoreP2hRequest extends FormRequest
             'fuel_log'                          => ['nullable', 'array'],
             'fuel_log.km_unit'                  => ['nullable', 'integer', 'min:0'],
             'fuel_log.jumlah_liter'             => ['nullable', 'numeric', 'min:0'],
+            // Attachments
+            'attachments'                       => ['required', 'array', 'min:1'],
+            'attachments.*'                     => ['required', 'image', 'max:5120'],
+            'item_attachments'                  => ['nullable', 'array'],
+            'item_attachments.*'                => ['nullable', 'array'],
+            'item_attachments.*.*'              => ['image', 'max:5120'],
             // Final justification oleh operator
             'kondisi_akhir'                     => ['required', Rule::in(['Layak Pakai', 'BD'])],
             'justifikasi_kondisi'               => [
