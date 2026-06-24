@@ -56,6 +56,14 @@ export interface P2hFuelLog {
     jumlah_liter: number | null;
 }
 
+export interface P2hAttachment {
+    id: number;
+    p2h_user_entry_id: number;
+    inspection_item_id: number | null;
+    path: string;
+    url: string;
+}
+
 export interface P2hUserEntry {
     id: number;
     p2h_session_id: number;
@@ -82,6 +90,7 @@ export interface P2hUserEntry {
     pic?: Pick<UserProfile, 'id' | 'name' | 'jabatan'>;
     answers?: P2hChecklistAnswer[];
     fuel_log?: P2hFuelLog;
+    attachments?: P2hAttachment[];
 }
 
 export interface P2hServiceInfo {

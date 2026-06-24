@@ -364,7 +364,7 @@ class P2hSessionController extends Controller
             ]);
         }
 
-        return redirect()->route('p2h.show', $session->id);
+        return redirect()->route('p2h.index');
     }
 
     public function destroy(P2hSession $session): RedirectResponse
@@ -451,6 +451,7 @@ class P2hSessionController extends Controller
             'userEntries.pic',
             'userEntries.answers.inspectionItem',
             'userEntries.fuelLog',
+            'userEntries.attachments',
             'serviceInfo',
         ]);
 

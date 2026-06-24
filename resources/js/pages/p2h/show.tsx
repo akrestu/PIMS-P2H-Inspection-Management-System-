@@ -431,6 +431,38 @@ function EntryDetail({ entry, inspectionItems }: { entry: P2hUserEntry; inspecti
                     </CardContent>
                 </Card>
             )}
+            {/* ── Lampiran Foto ── */}
+            {(entry.attachments ?? []).filter(a => a.inspection_item_id === null).length > 0 && (
+                <Card>
+                    <CardHeader className="pb-2 pt-4">
+                        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            Lampiran Foto
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pb-4">
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {(entry.attachments ?? [])
+                                .filter(a => a.inspection_item_id === null)
+                                .map(attachment => (
+                                    <a
+                                        key={attachment.id}
+                                        href={`/storage/${attachment.path}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block overflow-hidden rounded-xl border border-border"
+                                    >
+                                        <img
+                                            src={`/storage/${attachment.path}`}
+                                            alt="Lampiran foto"
+                                            className="aspect-square w-full object-cover"
+                                        />
+                                    </a>
+                                ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }

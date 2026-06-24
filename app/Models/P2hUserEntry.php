@@ -44,6 +44,11 @@ class P2hUserEntry extends Model
         return $this->hasOne(P2hFuelLog::class);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(P2hAttachment::class);
+    }
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_id');
