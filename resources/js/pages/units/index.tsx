@@ -174,13 +174,17 @@ function UnitFormSheet({
                             <Label htmlFor="department" className="text-sm font-medium">
                                 Departemen <span className="text-muted-foreground text-xs">(opsional)</span>
                             </Label>
-                            <Input
-                                id="department"
-                                value={data.department}
-                                onChange={(e) => setData('department', e.target.value)}
-                                placeholder="Contoh: Operasional"
-                                className="h-10"
-                            />
+                            <Select value={data.department || ''} onValueChange={(v) => setData('department', v === '__none__' ? '' : v)}>
+                                <SelectTrigger id="department" className="h-10">
+                                    <SelectValue placeholder="Pilih departemen..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">— Tidak ada —</SelectItem>
+                                    {['Management', 'Production', 'Maintenance', 'Supply Chain', 'Engineering', 'HSE', 'HRGA'].map((d) => (
+                                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             <p className="text-xs text-muted-foreground">
                                 Staff/Sr.Staff departemen ini dapat melihat & menyetujui P2H unit LV ini.
                             </p>

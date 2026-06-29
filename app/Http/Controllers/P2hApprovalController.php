@@ -110,6 +110,7 @@ class P2hApprovalController extends Controller
             'answers.inspectionItem',
             'fuelLog',
             'pic:id,name,jabatan',
+            'attachments',
         ]);
 
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
@@ -157,6 +158,10 @@ class P2hApprovalController extends Controller
             'score'                => $score,
             'tl_count'             => $tlCount,
             'grouped_answers'      => $groupedAnswers,
+            'attachments'          => $entry->attachments
+                ->where('inspection_item_id', null)
+                ->map(fn($a) => ['url' => Storage::disk('public')->url($a->path)])
+                ->values(),
         ]);
     }
 

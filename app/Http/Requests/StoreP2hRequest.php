@@ -20,7 +20,9 @@ class StoreP2hRequest extends FormRequest
             'pic_approver_id'                   => $this->requiresPicApprover()
                 ? ['required', 'integer', Rule::exists('users', 'id')
                     ->where('jabatan', $this->getRequiredPicJabatan())
-                    ->when($this->getPicDepartment(), fn ($r, $dept) => $r->where('department', $dept))]
+                    ->when($this->getPicDepartment(), fn ($r, $dept) => $r->where(
+                        fn ($q) => $q->where('department', $dept)->orWhereNull('department')
+                    ))]
                 : ['nullable', 'integer'],
             'job_site'                          => ['nullable', 'string', 'max:100'],
             'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],

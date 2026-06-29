@@ -86,6 +86,7 @@ interface EntryDetail {
     score: number;
     tl_count: number;
     grouped_answers: Record<string, ChecklistAnswerDetail[]>;
+    attachments: { url: string }[];
 }
 
 interface PaginatedEntries {
@@ -404,6 +405,24 @@ function ReviewApproveSheet({
                                     );
                                 })}
                             </div>
+
+                            {/* Lampiran foto unit */}
+                            {detail.attachments.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-sm font-semibold">Lampiran Foto Unit</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {detail.attachments.map((att, i) => (
+                                            <a key={i} href={att.url} target="_blank" rel="noreferrer">
+                                                <img
+                                                    src={att.url}
+                                                    alt={`Foto unit ${i + 1}`}
+                                                    className="w-full rounded-lg border object-cover aspect-video"
+                                                />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <Separator />
 

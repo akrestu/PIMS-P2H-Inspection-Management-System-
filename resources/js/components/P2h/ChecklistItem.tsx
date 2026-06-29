@@ -81,24 +81,35 @@ export default function ChecklistItem({
                 </button>
             </div>
 
-            {/* Keterangan + Attachment (muncul jika Tidak Layak) */}
-            {isTidakLayak && (
+            {/* Keterangan — wajib jika Tidak Layak, opsional jika Layak */}
+            {(isTidakLayak || isLayak) && (
                 <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                     <div>
-                        <p className="mb-1.5 text-sm font-medium text-red-700 dark:text-red-400">
-                            Wajib: Jelaskan kerusakan / kondisi yang ditemukan
-                        </p>
+                        {isTidakLayak ? (
+                            <p className="mb-1.5 text-sm font-medium text-red-700 dark:text-red-400">
+                                Wajib: Jelaskan kerusakan / kondisi yang ditemukan
+                            </p>
+                        ) : (
+                            <p className="mb-1.5 text-sm font-medium text-muted-foreground">
+                                Catatan (opsional)
+                            </p>
+                        )}
                         <Textarea
-                            placeholder="Contoh: Ban bocor, tekanan hanya 20 psi..."
+                            placeholder={isTidakLayak ? 'Contoh: Ban bocor, tekanan hanya 20 psi...' : 'Tambahkan catatan jika diperlukan…'}
                             value={answer.keterangan}
                             onChange={(e) => onKeteranganChange(item.id, e.target.value)}
-                            className="min-h-[72px] border-red-300 text-base focus-visible:ring-red-400 dark:border-red-800"
-                            required
+                            className={cn(
+                                'min-h-[72px] text-base',
+                                isTidakLayak
+                                    ? 'border-red-300 focus-visible:ring-red-400 dark:border-red-800'
+                                    : 'min-h-[56px]',
+                            )}
+                            required={isTidakLayak}
                         />
                     </div>
 
-                    {/* Attachment per item — label wrapping input agar capture berfungsi reliabel di mobile */}
-                    <div>
+                    {/* Attachment per item — hanya untuk Tidak Layak */}
+                    {isTidakLayak && <div>
                         <p className="mb-1.5 text-xs font-medium text-muted-foreground">Lampiran Foto Bukti (opsional)</p>
                         <div className="flex items-center gap-2">
                             <label className={cn(
@@ -162,7 +173,7 @@ export default function ChecklistItem({
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </div>}
                 </div>
             )}
         </div>

@@ -660,9 +660,10 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
         : 'Staff/Sr.Staff';
 
     // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
+    // Staff tanpa department (null/kosong) dianggap universal — bisa approve semua unit
     const eligibleStaff = staffUsers.filter((s) => s.id !== auth?.user?.id);
     const filteredStaffUsers = selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
-        ? eligibleStaff.filter((s) => s.department === selectedUnit.department)
+        ? eligibleStaff.filter((s) => !s.department || s.department === selectedUnit.department)
         : eligibleStaff;
 
     // Hapus picApproverId jika tidak lagi ada di filteredStaffUsers (misal: unit berubah atau draft lama)
@@ -1669,8 +1670,8 @@ export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
                                         </div>
                                     )}
 
-                                    {/* Catatan opsional — saat sesuai rekomendasi */}
-                                    {kondisiAkhir && !isOverride && (
+                                    {/* Catatan opsional — saat layak pakai atau sesuai rekomendasi */}
+                                    {kondisiAkhir && (kondisiAkhir === 'Layak Pakai' || !isOverride) && (
                                         <div className="space-y-1.5">
                                             <Label className="text-sm font-medium text-muted-foreground">Catatan Tambahan (opsional)</Label>
                                             <Textarea
