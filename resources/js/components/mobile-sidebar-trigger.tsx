@@ -114,7 +114,7 @@ export function MobileSidebarTrigger() {
         <>
             {/* Bottom navigation bar — mobile only */}
             <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ease-in-out ${scrollDir === 'down' ? 'translate-y-full' : 'translate-y-0'}`}>
-                <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+                <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
                     <nav className="flex items-center">
                         {primaryNav.map((link) => {
                             const Icon = link.icon;
@@ -123,7 +123,7 @@ export function MobileSidebarTrigger() {
                                 <Link
                                     key={link.title}
                                     href={link.href}
-                                    className={`relative flex flex-1 flex-col items-center gap-1 px-1 py-2 rounded-xl transition-all duration-150 ${
+                                    className={`relative flex flex-1 flex-col items-center gap-1.5 px-1 py-2.5 rounded-xl transition-all duration-150 ${
                                         active
                                             ? 'text-primary'
                                             : 'text-muted-foreground hover:text-foreground'
@@ -134,7 +134,7 @@ export function MobileSidebarTrigger() {
                                     )}
                                     <div className="relative">
                                         <Icon
-                                            className={`h-5 w-5 transition-transform duration-150 ${
+                                            className={`h-6 w-6 transition-transform duration-150 ${
                                                 active ? 'scale-110' : ''
                                             }`}
                                         />
@@ -148,7 +148,7 @@ export function MobileSidebarTrigger() {
                                         )}
                                     </div>
                                     <span
-                                        className={`text-[10px] leading-none whitespace-nowrap ${
+                                        className={`text-[11px] leading-none whitespace-nowrap ${
                                             active ? 'font-semibold' : 'font-medium'
                                         }`}
                                     >
@@ -161,15 +161,15 @@ export function MobileSidebarTrigger() {
                         {hasMore && (
                             <button
                                 onClick={() => setShowMore(true)}
-                                className="relative flex flex-1 flex-col items-center gap-1 px-1 py-2 rounded-xl transition-all duration-150 text-muted-foreground hover:text-foreground"
+                                className="relative flex flex-1 flex-col items-center gap-1.5 px-1 py-2.5 rounded-xl transition-all duration-150 text-muted-foreground hover:text-foreground"
                             >
                                 <div className="relative">
-                                    <MoreHorizontal className="h-5 w-5" />
+                                    <MoreHorizontal className="h-6 w-6" />
                                     {moreHasBadge && (
                                         <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive" />
                                     )}
                                 </div>
-                                <span className="text-[10px] font-medium leading-none whitespace-nowrap">Lainnya</span>
+                                <span className="text-[11px] font-medium leading-none whitespace-nowrap">Lainnya</span>
                             </button>
                         )}
                     </nav>

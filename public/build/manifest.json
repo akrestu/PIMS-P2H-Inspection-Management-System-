@@ -24,8 +24,8 @@
       "_utils-JIlG_aW7.js"
     ]
   },
-  "_app-layout-FJ3Xop8v.js": {
-    "file": "assets/app-layout-FJ3Xop8v.js",
+  "_app-layout-BwOtolNV.js": {
+    "file": "assets/app-layout-BwOtolNV.js",
     "name": "app-layout",
     "imports": [
       "_jsx-runtime-HKHcPBqm.js",
@@ -848,7 +848,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-itS0b2mX.css",
+    "file": "assets/app-kjqvVhdd.css",
     "name": "app",
     "names": [
       "app.css"
@@ -857,7 +857,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-CTbKTbM_.js",
+    "file": "assets/app-B9Sj1Ohp.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -867,7 +867,7 @@
       "_separator-DlJr5uN8.js",
       "_tooltip-BdR8AVx3.js",
       "_utils-JIlG_aW7.js",
-      "_app-layout-FJ3Xop8v.js",
+      "_app-layout-BwOtolNV.js",
       "_circle-check-9KbgsuPE.js",
       "_circle-x-DyseRHds.js",
       "_loader-circle-DUQZstoi.js",
@@ -1410,7 +1410,7 @@
     ]
   },
   "resources/js/pages/settings/app.tsx": {
-    "file": "assets/app-JMx-7QVV.js",
+    "file": "assets/app-DfGFLabI.js",
     "name": "app",
     "src": "resources/js/pages/settings/app.tsx",
     "isDynamicEntry": true,
@@ -1418,7 +1418,7 @@
       "_jsx-runtime-HKHcPBqm.js",
       "_button-BvWftimK.js",
       "_utils-JIlG_aW7.js",
-      "_app-layout-FJ3Xop8v.js",
+      "_app-layout-BwOtolNV.js",
       "_plus-DJtCIUIP.js",
       "_trash-2-DjVQaOIU.js",
       "_dist-CJmC2ois.js",

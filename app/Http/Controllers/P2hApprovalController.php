@@ -169,6 +169,7 @@ class P2hApprovalController extends Controller
     {
         $user = $request->user();
         abort_unless($user->canViewApprovals(), 403);
+        abort_if($user->id === $entry->user_id, 403, 'Tidak dapat menyetujui P2H milik sendiri.');
         abort_unless(
             $user->id === $entry->pic_approver_id || $user->isPrivileged(),
             403,
@@ -251,6 +252,7 @@ class P2hApprovalController extends Controller
     {
         $user = $request->user();
         abort_unless($user->canViewApprovals(), 403);
+        abort_if($user->id === $entry->user_id, 403, 'Tidak dapat menolak P2H milik sendiri.');
         abort_unless(
             $user->id === $entry->pic_approver_id || $user->isPrivileged(),
             403,

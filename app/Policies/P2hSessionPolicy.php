@@ -13,8 +13,11 @@ class P2hSessionPolicy
             return true;
         }
 
-        // Driver hanya bisa lihat jika pernah mengisi salah satu entry
-        return $session->userEntries()->where('user_id', $user->id)->exists();
+        // Driver hanya bisa lihat jika pernah mengisi atau menjadi PIC approver salah satu entry
+        return $session->userEntries()
+            ->where('user_id', $user->id)
+            ->orWhere('pic_approver_id', $user->id)
+            ->exists();
     }
 
     // Hanya admin yang boleh hapus sesi P2H (karena menyangkut audit trail)

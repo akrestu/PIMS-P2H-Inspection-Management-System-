@@ -65,6 +65,26 @@ class UnitDowntimeController extends Controller
         ]);
     }
 
+    /** Cek apakah rentang waktu bertabrakan dengan log downtime unit lain yang sudah ada. */
+    private function hasOverlap(int $unitId, string $jamMulai, ?string $jamSelesai, ?int $excludeId = null): bool
+    {
+        return UnitDowntimeLog::where('unit_id', $unitId)
+            ->when($excludeId, fn ($q) => $q->whereKeyNot($excludeId))
+            ->where(function ($q) use ($jamMulai, $jamSelesai) {
+                // existing.jam_mulai < new.jam_selesai (atau tak terbatas jika new masih berjalan)
+                $q->where(function ($q2) use ($jamSelesai) {
+                    if ($jamSelesai !== null) {
+                        $q2->where('jam_mulai', '<', $jamSelesai);
+                    }
+                })
+                ->where(function ($q3) use ($jamMulai) {
+                    // existing.jam_selesai > new.jam_mulai, atau existing masih berjalan (null)
+                    $q3->whereNull('jam_selesai')->orWhere('jam_selesai', '>', $jamMulai);
+                });
+            })
+            ->exists();
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -74,6 +94,10 @@ class UnitDowntimeController extends Controller
             'jam_selesai' => ['nullable', 'date', 'after:jam_mulai'],
             'keterangan'  => ['nullable', 'string', 'max:500'],
         ]);
+
+        if ($this->hasOverlap($data['unit_id'], $data['jam_mulai'], $data['jam_selesai'] ?? null)) {
+            return back()->withErrors(['jam_mulai' => 'Rentang waktu bertabrakan dengan log downtime unit ini yang sudah ada.']);
+        }
 
         UnitDowntimeLog::create([
             ...$data,
@@ -98,6 +122,10 @@ class UnitDowntimeController extends Controller
             'jam_selesai' => ['nullable', 'date', 'after:jam_mulai'],
             'keterangan'  => ['nullable', 'string', 'max:500'],
         ]);
+
+        if ($this->hasOverlap($data['unit_id'], $data['jam_mulai'], $data['jam_selesai'] ?? null, $log->id)) {
+            return back()->withErrors(['jam_mulai' => 'Rentang waktu bertabrakan dengan log downtime unit ini yang sudah ada.']);
+        }
 
         $log->update($data);
 

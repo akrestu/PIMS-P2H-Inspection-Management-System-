@@ -179,7 +179,9 @@ class P2hSessionController extends Controller
 
         DB::transaction(function () use ($data, $user, $session, $request) {
 
-            $nextSlot = $session->userEntries()->count() + 1;
+            // Lock baris sesi agar penghitungan slot antar submit bersamaan tidak balapan
+            $lockedSession = P2hSession::whereKey($session->id)->lockForUpdate()->first();
+            $nextSlot = $lockedSession->userEntries()->count() + 1;
 
             // Simpan signature
             $parafUrl = null;
@@ -312,8 +314,15 @@ class P2hSessionController extends Controller
             if ($needsApproval && ! empty($data['pic_approver_id'])) {
                 $pic = \App\Models\User::find($data['pic_approver_id']);
                 if (! $pic) {
-                    // PIC tidak ditemukan — reset approval agar entry tidak tergantung selamanya
-                    $entry->update(['approval_status' => null, 'pic_approver_id' => null]);
+                    // PIC tidak ditemukan — entry tetap 'pending' (bukan auto-valid), lempar ke admin
+                    $entry->update(['pic_approver_id' => null]);
+                    foreach (\App\Models\User::role('admin')->get() as $admin) {
+                        $admin->notify(new LvP2hApprovalRequest(
+                            session: $session,
+                            entry: $entry,
+                            submitter: $user,
+                        ));
+                    }
                 } else {
                     $pic->notify(new LvP2hApprovalRequest(
                         session: $session,

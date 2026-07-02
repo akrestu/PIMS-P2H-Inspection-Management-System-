@@ -339,10 +339,12 @@ class DataExportController extends Controller
             ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
             ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
-        if ($user->hasRole('driver')) {
+        if ($user->isStaffOnly()) {
+            // Staff/Sr.Staff bisa jadi submitter maupun PIC approver — tampilkan keduanya
+            $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id)
+                ->orWhere('pic_approver_id', $user->id));
+        } elseif ($user->hasRole('driver')) {
             $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id));
-        } elseif ($user->isStaffOnly()) {
-            $query->whereHas('userEntries', fn ($q) => $q->where('pic_approver_id', $user->id));
         }
 
         $sessions = $query->latest('tanggal')->get();

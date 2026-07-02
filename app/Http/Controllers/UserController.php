@@ -71,6 +71,10 @@ class UserController extends Controller
             'assigned_unit_ids.*' => 'integer|exists:units,id',
         ]);
 
+        if ($validated['role'] === 'admin' && ! auth()->user()->hasRole('admin')) {
+            return back()->withErrors(['role' => 'Tidak memiliki izin untuk membuat akun admin.']);
+        }
+
         DB::transaction(function () use ($validated) {
             $user = User::create([
                 'name'       => $validated['name'],
@@ -122,6 +126,15 @@ class UserController extends Controller
             'assigned_unit_ids'   => 'nullable|array',
             'assigned_unit_ids.*' => 'integer|exists:units,id',
         ]);
+
+        if ($user->id === auth()->id() && $validated['role'] !== $user->getRoleNames()->first()) {
+            return back()->withErrors(['role' => 'Tidak dapat mengubah role akun sendiri.']);
+        }
+
+        if (! auth()->user()->hasRole('admin')
+            && ($validated['role'] === 'admin' || $user->hasRole('admin'))) {
+            return back()->withErrors(['role' => 'Tidak memiliki izin untuk mengubah role akun admin.']);
+        }
 
         DB::transaction(function () use ($validated, $user) {
             $userData = [

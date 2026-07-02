@@ -36,6 +36,11 @@ class MonitoringController extends Controller
         // Clamp max range ke 90 hari
         $from = Carbon::parse($dateFrom);
         $to   = Carbon::parse($dateTo);
+        if ($from->gt($to)) {
+            [$from, $to] = [$to, $from];
+            $dateFrom = $from->toDateString();
+            $dateTo   = $to->toDateString();
+        }
         if ($from->diffInDays($to) > 90) {
             $from     = $to->copy()->subDays(89);
             $dateFrom = $from->toDateString();
