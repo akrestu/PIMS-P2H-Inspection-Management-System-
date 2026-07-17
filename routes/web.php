@@ -100,6 +100,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
         Route::get('/app-settings', [AppSettingController::class, 'index'])->name('app-settings.index');
         Route::post('/app-settings', [AppSettingController::class, 'update'])->name('app-settings.update');
+        Route::delete('/units/{id}/force', [UnitController::class, 'forceDestroy'])->name('units.force-delete');
     });
 
     // Admin & Manager
@@ -108,6 +109,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/units/import-template', [UnitController::class, 'importTemplate'])->name('units.import-template');
         Route::post('/units/import', [UnitController::class, 'import'])->middleware('throttle:5,1')->name('units.import');
         Route::delete('/units/batch', [UnitController::class, 'destroyBatch'])->name('units.batch-destroy');
+        Route::get('/units/trashed', [UnitController::class, 'trashed'])->name('units.trashed');
+        Route::post('/units/{id}/restore', [UnitController::class, 'restore'])->name('units.restore');
         Route::resource('units', UnitController::class)->except(['show']);
 
         Route::delete('/users/batch', [UserController::class, 'destroyBatch'])->name('users.batch-destroy');

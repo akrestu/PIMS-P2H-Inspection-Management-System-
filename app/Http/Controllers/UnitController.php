@@ -6,9 +6,11 @@ use App\Exports\UnitsExport;
 use App\Exports\UnitsImportTemplateExport;
 use App\Http\Requests\StoreUnitRequest;
 use App\Imports\UnitsImport;
+use App\Models\P2hSession;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -106,7 +108,7 @@ class UnitController extends Controller
         Inertia::flash('toast', [
             'type'        => 'success',
             'message'     => 'Unit berhasil dihapus',
-            'description' => "Unit {$noUnit} telah dihapus dari sistem.",
+            'description' => "Unit {$noUnit} telah dipindahkan ke sampah dan dapat dipulihkan kembali.",
         ]);
 
         return redirect()->route('units.index');
@@ -134,10 +136,76 @@ class UnitController extends Controller
         Inertia::flash('toast', [
             'type'        => 'success',
             'message'     => "{$deleted} unit berhasil dihapus",
-            'description' => "Unit yang dipilih telah dihapus dari sistem.",
+            'description' => "Unit yang dipilih telah dipindahkan ke sampah dan dapat dipulihkan kembali.",
         ]);
 
         return redirect()->route('units.index');
+    }
+
+    public function trashed(Request $request): Response
+    {
+        $units = Unit::onlyTrashed()
+            ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
+            ->orderByDesc('deleted_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render('units/trashed', [
+            'units'   => $units,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore(int $id): RedirectResponse
+    {
+        $unit = Unit::onlyTrashed()->findOrFail($id);
+        $noUnit = $unit->no_unit;
+
+        $unit->restore();
+
+        activity('unit')
+            ->causedBy(auth()->user())
+            ->performedOn($unit)
+            ->log("Memulihkan unit: {$noUnit}");
+
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => 'Unit berhasil dipulihkan',
+            'description' => "Unit {$noUnit} telah dikembalikan ke daftar unit aktif.",
+        ]);
+
+        return redirect()->route('units.trashed');
+    }
+
+    public function forceDestroy(int $id): RedirectResponse
+    {
+        $unit = Unit::withTrashed()->findOrFail($id);
+        $noUnit = $unit->no_unit;
+
+        $sessionCount = DB::transaction(function () use ($unit) {
+            $sessions = P2hSession::withTrashed()->where('unit_id', $unit->id)->get();
+
+            foreach ($sessions as $session) {
+                $session->forceDelete();
+            }
+
+            $unit->forceDelete();
+
+            return $sessions->count();
+        });
+
+        activity('unit')
+            ->causedBy(auth()->user())
+            ->withProperties(['no_unit' => $noUnit, 'p2h_sessions_deleted' => $sessionCount])
+            ->log("Menghapus permanen unit: {$noUnit} (beserta {$sessionCount} P2H terkait)");
+
+        Inertia::flash('toast', [
+            'type'        => 'success',
+            'message'     => 'Unit dihapus permanen',
+            'description' => "Unit {$noUnit} beserta {$sessionCount} P2H terkait telah dihapus permanen dari sistem.",
+        ]);
+
+        return redirect()->route('units.trashed');
     }
 
     public function export(): BinaryFileResponse

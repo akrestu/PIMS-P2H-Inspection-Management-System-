@@ -340,8 +340,8 @@ function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; 
                     </div>
                     <DialogTitle className="text-center">Hapus Unit?</DialogTitle>
                     <DialogDescription className="text-center">
-                        Unit <span className="text-foreground font-semibold">{unit?.no_unit}</span> akan dihapus permanen dari sistem.
-                        Tindakan ini <span className="font-semibold text-destructive">tidak dapat dibatalkan</span>.
+                        Unit <span className="text-foreground font-semibold">{unit?.no_unit}</span> akan dipindahkan ke sampah.
+                        Unit yang dihapus dapat <span className="font-semibold">dipulihkan kembali</span> dari halaman Sampah, atau dihapus permanen dari sana.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="rounded-lg border p-3 text-sm space-y-1">
@@ -365,7 +365,7 @@ function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; 
                         Batal
                     </Button>
                     <Button variant="destructive" onClick={handleConfirm} disabled={processing} className="flex-1">
-                        {processing ? 'Menghapus...' : 'Hapus Permanen'}
+                        {processing ? 'Menghapus...' : 'Hapus Unit'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -406,8 +406,8 @@ function BatchDeleteDialog({
                     </div>
                     <DialogTitle className="text-center">Hapus {count} Unit?</DialogTitle>
                     <DialogDescription className="text-center">
-                        <span className="font-semibold text-foreground">{count} unit</span> yang dipilih akan dihapus permanen dari sistem.
-                        Tindakan ini <span className="font-semibold text-destructive">tidak dapat dibatalkan</span>.
+                        <span className="font-semibold text-foreground">{count} unit</span> yang dipilih akan dipindahkan ke sampah.
+                        Unit yang dihapus dapat <span className="font-semibold">dipulihkan kembali</span> dari halaman Sampah, atau dihapus permanen dari sana.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-2">
@@ -558,6 +558,16 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                         <p className="text-muted-foreground mt-0.5 text-sm">Kelola data kendaraan Bus & Light Vehicle.</p>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <a href="/units/trashed">
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <Trash2 className="h-4 w-4" /> Sampah
+                                    </Button>
+                                </a>
+                            </TooltipTrigger>
+                            <TooltipContent>Lihat unit yang telah dihapus</TooltipContent>
+                        </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="gap-2">
