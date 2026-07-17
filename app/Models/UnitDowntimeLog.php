@@ -19,7 +19,7 @@ class UnitDowntimeLog extends Model
 
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsTo(Unit::class)->withTrashed();
     }
 
     public function creator(): BelongsTo
