@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -413,8 +412,8 @@ function UserFormFields<T extends {
     );
 }
 
-/* ─────────────────── AddUserSheet ───────────────────────────── */
-function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
+/* ─────────────────── AddUserDialog ──────────────────────────── */
+function AddUserDialog({ open, onOpenChange, units }: { open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', nik: '', email: '', password: '', role: '',
         jabatan: '', department: '', jenis_unit: '', assigned_unit_ids: [] as number[],
@@ -427,28 +426,28 @@ function AddUserSheet({ open, onOpenChange, units }: { open: boolean; onOpenChan
     };
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col" side="right">
-                <SheetHeader className="border-b pb-4">
-                    <SheetTitle>Tambah User Baru</SheetTitle>
-                    <SheetDescription>Buat akun user dengan role dan jabatan yang sesuai.</SheetDescription>
-                </SheetHeader>
-                <form id="user-add-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+                <DialogHeader className="border-b px-6 py-4">
+                    <DialogTitle>Tambah User Baru</DialogTitle>
+                    <DialogDescription>Buat akun user dengan role dan jabatan yang sesuai.</DialogDescription>
+                </DialogHeader>
+                <form id="user-add-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
                     <UserFormFields data={data} setData={setData} errors={errors} units={units} />
                 </form>
-                <SheetFooter className="border-t pt-4">
+                <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
                     <Button type="submit" form="user-add-form" disabled={processing} className="flex-1">
                         {processing ? 'Menyimpan...' : 'Tambah User'}
                     </Button>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
-/* ─────────────────── EditUserSheet ──────────────────────────── */
-function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
+/* ─────────────────── EditUserDialog ─────────────────────────── */
+function EditUserDialog({ user, open, onOpenChange, units }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
     const { data, setData, put, processing, errors, reset } = useForm({
         name: user?.name ?? '',
         nik: user?.nik ?? '',
@@ -488,9 +487,9 @@ function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | nu
     if (!user) return null;
 
     return (
-        <Sheet key={user.id} open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col" side="right">
-                <SheetHeader className="border-b pb-4">
+        <Dialog key={user.id} open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+                <DialogHeader className="border-b px-6 py-4">
                     <div className="flex items-center gap-3 pb-1">
                         <Avatar className={`h-10 w-10 ${avatarColor(user.name)}`}>
                             <AvatarFallback className={`text-sm font-bold text-white ${avatarColor(user.name)}`}>
@@ -502,20 +501,20 @@ function EditUserSheet({ user, open, onOpenChange, units }: { user: UserRow | nu
                             <p className="text-muted-foreground text-xs">{user.email || '—'}</p>
                         </div>
                     </div>
-                    <SheetTitle>Edit User</SheetTitle>
-                    <SheetDescription>Perbarui data akun, role, jabatan, dan profil user.</SheetDescription>
-                </SheetHeader>
-                <form id="user-edit-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+                    <DialogTitle>Edit User</DialogTitle>
+                    <DialogDescription>Perbarui data akun, role, jabatan, dan profil user.</DialogDescription>
+                </DialogHeader>
+                <form id="user-edit-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
                     <UserFormFields data={data} setData={setData} errors={errors} units={units} isEdit />
                 </form>
-                <SheetFooter className="border-t pt-4">
+                <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
                     <Button type="submit" form="user-edit-form" disabled={processing} className="flex-1">
                         {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                     </Button>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -635,19 +634,19 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
     };
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col" side="right">
-                <SheetHeader className="border-b pb-4">
-                    <SheetTitle className="flex items-center gap-2">
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+                <DialogHeader className="border-b px-6 py-4">
+                    <DialogTitle className="flex items-center gap-2">
                         <Upload className="h-5 w-5 text-muted-foreground" />
                         Import User dari Excel
-                    </SheetTitle>
-                    <SheetDescription>
+                    </DialogTitle>
+                    <DialogDescription>
                         Upload file Excel (.xlsx/.xls) sesuai format template. Baris yang error akan dilaporkan dan dilewati.
-                    </SheetDescription>
-                </SheetHeader>
+                    </DialogDescription>
+                </DialogHeader>
 
-                <form id="import-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
+                <form id="import-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
                     <div className="rounded-lg border border-dashed p-4 text-center space-y-2">
                         <FileSpreadsheet className="h-8 w-8 text-muted-foreground mx-auto" />
                         <p className="text-sm font-medium">
@@ -687,14 +686,14 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
                     </a>
                 </form>
 
-                <SheetFooter className="border-t pt-4">
+                <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
                     <Button type="submit" form="import-form" disabled={!file || processing} className="flex-1">
                         {processing ? 'Mengimport...' : 'Import Sekarang'}
                     </Button>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -1125,9 +1124,9 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                 </Card>
             </div>
 
-            <AddUserSheet open={addOpen} onOpenChange={setAddOpen} units={units} />
+            <AddUserDialog open={addOpen} onOpenChange={setAddOpen} units={units} />
             <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
-            <EditUserSheet user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} />
+            <EditUserDialog user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} />
             <DeleteDialog user={deleteUser} open={!!deleteUser} onOpenChange={(o) => { if (!o) setDeleteUser(null); }} />
             <BatchDeleteDialog ids={selectedIds} open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen} onSuccess={clearSelection} />
         </TooltipProvider>

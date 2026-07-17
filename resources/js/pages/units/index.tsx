@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Unit, UnitDowntimeLogSummary } from '@/types/pims';
@@ -62,8 +61,8 @@ interface Props {
     stats: Stats;
 }
 
-/* ─────────────────── UnitFormSheet (Add / Edit) ─────────────── */
-function UnitFormSheet({
+/* ─────────────────── UnitFormDialog (Add / Edit) ─────────────── */
+function UnitFormDialog({
     unit,
     open,
     onOpenChange,
@@ -106,14 +105,14 @@ function UnitFormSheet({
     };
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col" side="right">
-                <SheetHeader className="border-b pb-4">
-                    <SheetTitle className="text-lg">{unit ? 'Edit Unit' : 'Tambah Unit Baru'}</SheetTitle>
-                    <SheetDescription>{unit ? `Perbarui data untuk unit ${unit.no_unit}` : 'Isi formulir berikut untuk mendaftarkan unit baru.'}</SheetDescription>
-                </SheetHeader>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+                <DialogHeader className="border-b px-6 py-4">
+                    <DialogTitle className="text-lg">{unit ? 'Edit Unit' : 'Tambah Unit Baru'}</DialogTitle>
+                    <DialogDescription>{unit ? `Perbarui data untuk unit ${unit.no_unit}` : 'Isi formulir berikut untuk mendaftarkan unit baru.'}</DialogDescription>
+                </DialogHeader>
 
-                <form id="unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
+                <form id="unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
                     {/* No. Unit */}
                     <div className="space-y-1.5">
                         <Label htmlFor="no_unit" className="text-sm font-medium">
@@ -219,16 +218,16 @@ function UnitFormSheet({
                     </div>
                 </form>
 
-                <SheetFooter className="border-t pt-4">
+                <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
                         Batal
                     </Button>
                     <Button type="submit" form="unit-form" disabled={processing} className="flex-1">
                         {processing ? 'Menyimpan...' : unit ? 'Simpan Perubahan' : 'Tambah Unit'}
                     </Button>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -253,19 +252,19 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
     };
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col" side="right">
-                <SheetHeader className="border-b pb-4">
-                    <SheetTitle className="flex items-center gap-2">
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+                <DialogHeader className="border-b px-6 py-4">
+                    <DialogTitle className="flex items-center gap-2">
                         <Upload className="h-5 w-5 text-muted-foreground" />
                         Import Unit dari Excel
-                    </SheetTitle>
-                    <SheetDescription>
+                    </DialogTitle>
+                    <DialogDescription>
                         Upload file Excel (.xlsx/.xls) sesuai format template. Baris yang error akan dilaporkan dan dilewati.
-                    </SheetDescription>
-                </SheetHeader>
+                    </DialogDescription>
+                </DialogHeader>
 
-                <form id="import-unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
+                <form id="import-unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
                     <div className="rounded-lg border border-dashed p-4 text-center space-y-2">
                         <FileSpreadsheet className="h-8 w-8 text-muted-foreground mx-auto" />
                         <p className="text-sm font-medium">
@@ -305,14 +304,14 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
                     </a>
                 </form>
 
-                <SheetFooter className="border-t pt-4">
+                <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
                     <Button type="submit" form="import-unit-form" disabled={!file || processing} className="flex-1">
                         {processing ? 'Mengimport...' : 'Import Sekarang'}
                     </Button>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -914,7 +913,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
             <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
 
             {/* ── Sheet: Add / Edit ── */}
-            <UnitFormSheet
+            <UnitFormDialog
                 key={editUnit?.id ?? 'add'}
                 unit={editUnit}
                 open={sheetOpen}
