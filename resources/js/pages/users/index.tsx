@@ -126,7 +126,7 @@ function RoleSelect({ value, onChange, error }: { value: string; onChange: (v: s
         <div className="space-y-1.5">
             <Label className="text-sm font-medium">Role <span className="text-destructive">*</span></Label>
             <Select value={value} onValueChange={onChange}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                     <SelectValue placeholder="Pilih role..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -162,7 +162,7 @@ function JabatanSelect({ value, onChange, error }: { value: string; onChange: (v
         <div className="space-y-1.5">
             <Label className="text-sm font-medium">Jabatan <span className="text-destructive">*</span></Label>
             <Select value={value || ''} onValueChange={onChange}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                     <SelectValue placeholder="Pilih jabatan..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -185,7 +185,7 @@ function JenisUnitSelect({ value, onChange, error }: { value: string; onChange: 
                 <span className="text-muted-foreground ml-1 font-normal">(opsional)</span>
             </Label>
             <Select value={value || '__all__'} onValueChange={(v) => onChange(v === '__all__' ? '' : v)}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                     <SelectValue placeholder="Semua unit (tidak dibatasi)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -375,7 +375,7 @@ function UserFormFields<T extends {
                     <div className="space-y-1.5">
                         <Label className="text-sm font-medium">Departemen <span className="text-destructive">*</span></Label>
                         <Select value={data.department || ''} onValueChange={(v) => setData('department' as keyof T, v)}>
-                            <SelectTrigger className="h-10">
+                            <SelectTrigger className="h-10 w-full">
                                 <SelectValue placeholder="Pilih departemen..." />
                             </SelectTrigger>
                             <SelectContent>

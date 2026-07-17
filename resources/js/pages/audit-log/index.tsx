@@ -89,7 +89,7 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                                 value={filters.log_name ?? 'all'}
                                 onValueChange={(v) => applyFilter({ log_name: v === 'all' ? undefined : v })}
                             >
-                                <SelectTrigger className="h-9">
+                                <SelectTrigger className="h-9 w-full">
                                     <SelectValue placeholder="Semua kategori" />
                                 </SelectTrigger>
                                 <SelectContent>

@@ -184,7 +184,7 @@ function DowntimeDialog({
                             onValueChange={(v) => setData('unit_id', v)}
                             disabled={closeOnly}
                         >
-                            <SelectTrigger><SelectValue placeholder="Pilih unit…" /></SelectTrigger>
+                            <SelectTrigger className="w-full"><SelectValue placeholder="Pilih unit…" /></SelectTrigger>
                             <SelectContent>
                                 {allUnits.map((u) => (
                                     <SelectItem key={u.id} value={String(u.id)}>
@@ -201,7 +201,7 @@ function DowntimeDialog({
                         <div className="space-y-1.5">
                             <Label>Tipe Downtime <span className="text-destructive">*</span></Label>
                             <Select value={data.tipe} onValueChange={(v) => setData('tipe', v)}>
-                                <SelectTrigger><SelectValue placeholder="Pilih tipe…" /></SelectTrigger>
+                                <SelectTrigger className="w-full"><SelectValue placeholder="Pilih tipe…" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="BD">Breakdown (BD)</SelectItem>
                                     <SelectItem value="PM">Preventive Maintenance (PM)</SelectItem>
@@ -392,7 +392,7 @@ export default function DowntimeIndex({ logs, allUnits, filters, ongoingCount }:
                                 <div className="space-y-1.5">
                                     <Label className="text-xs text-muted-foreground">Unit</Label>
                                     <Select value={form.unit_id ?? 'all'} onValueChange={(v) => setForm({ ...form, unit_id: v === 'all' ? undefined : v })}>
-                                        <SelectTrigger className="h-10"><SelectValue placeholder="Semua unit" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua unit" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Semua unit</SelectItem>
                                             {allUnits.map((u) => (
@@ -404,7 +404,7 @@ export default function DowntimeIndex({ logs, allUnits, filters, ongoingCount }:
                                 <div className="space-y-1.5">
                                     <Label className="text-xs text-muted-foreground">Status</Label>
                                     <Select value={form.status ?? 'all'} onValueChange={(v) => setForm({ ...form, status: v === 'all' ? undefined : v })}>
-                                        <SelectTrigger className="h-10"><SelectValue placeholder="Semua status" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua status" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Semua</SelectItem>
                                             <SelectItem value="ongoing">Sedang BD (Ongoing)</SelectItem>

@@ -481,7 +481,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                         value={form.jenis_unit ?? 'all'}
                                         onValueChange={(v) => setForm({ ...form, jenis_unit: v === 'all' ? undefined : v })}
                                     >
-                                        <SelectTrigger className="h-10"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Semua jenis</SelectItem>
                                             <SelectItem value="Bus">Bus</SelectItem>
@@ -495,7 +495,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                         value={form.hasil ?? 'all'}
                                         onValueChange={(v) => setForm({ ...form, hasil: v === 'all' ? undefined : v })}
                                     >
-                                        <SelectTrigger className="h-10"><SelectValue placeholder="Semua hasil" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua hasil" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Semua hasil</SelectItem>
                                             <SelectItem value="ada_tl">Ada Item Tidak Layak</SelectItem>
@@ -510,7 +510,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                             value={form.user_id ?? 'all'}
                                             onValueChange={(v) => setForm({ ...form, user_id: v === 'all' ? undefined : v })}
                                         >
-                                            <SelectTrigger className="h-10"><SelectValue placeholder="Semua driver" /></SelectTrigger>
+                                            <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua driver" /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="all">Semua driver</SelectItem>
                                                 {allUsers.map((u) => (

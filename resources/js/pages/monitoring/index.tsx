@@ -725,7 +725,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                                         value={form.unit_id ?? 'all'}
                                         onValueChange={(v) => setForm({ ...form, unit_id: v === 'all' ? undefined : v })}
                                     >
-                                        <SelectTrigger className="h-10"><SelectValue placeholder="Semua unit" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua unit" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Semua unit</SelectItem>
                                             {allUnits.map((u) => (
@@ -743,7 +743,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                                             value={form.jenis_unit ?? 'all'}
                                             onValueChange={(v) => setForm({ ...form, jenis_unit: v === 'all' ? undefined : v })}
                                         >
-                                            <SelectTrigger className="h-10"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
+                                            <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="all">Semua jenis</SelectItem>
                                                 <SelectItem value="Bus">Bus</SelectItem>

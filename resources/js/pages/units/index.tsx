@@ -174,7 +174,7 @@ function UnitFormDialog({
                                 Departemen <span className="text-muted-foreground text-xs">(opsional)</span>
                             </Label>
                             <Select value={data.department || ''} onValueChange={(v) => setData('department', v === '__none__' ? '' : v)}>
-                                <SelectTrigger id="department" className="h-10">
+                                <SelectTrigger id="department" className="h-10 w-full">
                                     <SelectValue placeholder="Pilih departemen..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -197,7 +197,7 @@ function UnitFormDialog({
                             Status <span className="text-destructive">*</span>
                         </Label>
                         <Select value={data.status} onValueChange={(v) => setData('status', v as Unit['status'])}>
-                            <SelectTrigger className="h-10">
+                            <SelectTrigger className="h-10 w-full">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

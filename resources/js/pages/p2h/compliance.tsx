@@ -321,7 +321,7 @@ function FilterBar({
                                     value={form.jenis_unit ?? 'all'}
                                     onValueChange={(v) => setForm({ ...form, jenis_unit: v === 'all' ? undefined : v })}
                                 >
-                                    <SelectTrigger className="h-10">
+                                    <SelectTrigger className="h-10 w-full">
                                         <SelectValue placeholder="Semua jenis" />
                                     </SelectTrigger>
                                     <SelectContent>
