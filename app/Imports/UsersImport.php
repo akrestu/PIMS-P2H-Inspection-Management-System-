@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Models\Site;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ class UsersImport implements ToCollection, WithHeadingRow
             $jabatan   = trim($row['jabatan'] ?? '');
             $dept      = trim($row['department'] ?? '');
             $jenisUnit = trim($row['jenis_unit'] ?? '') ?: null;
+            $siteName  = trim($row['site'] ?? '') ?: null;
 
             if (empty($name)) { $this->rowErrors[] = "Baris {$rowNum}: Nama lengkap wajib diisi."; continue; }
             if (empty($nik))  { $this->rowErrors[] = "Baris {$rowNum}: NIK wajib diisi."; continue; }
@@ -54,6 +56,16 @@ class UsersImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            $siteId = null;
+            if ($siteName) {
+                $site = Site::where('name', $siteName)->first();
+                if (! $site) {
+                    $this->rowErrors[] = "Baris {$rowNum}: Site '{$siteName}' tidak ditemukan.";
+                    continue;
+                }
+                $siteId = $site->id;
+            }
+
             $existingUser = User::where('nik', $nik)->first();
 
             // UPDATE — NIK sudah ada: perbarui data kecuali password
@@ -65,13 +77,14 @@ class UsersImport implements ToCollection, WithHeadingRow
                 }
 
                 try {
-                    DB::transaction(function () use ($existingUser, $name, $email, $role, $jabatan, $dept, $jenisUnit) {
+                    DB::transaction(function () use ($existingUser, $name, $email, $role, $jabatan, $dept, $jenisUnit, $siteId) {
                         $existingUser->update([
                             'name'       => $name,
                             'email'      => $email,
                             'jabatan'    => $role !== 'admin' ? $jabatan : null,
                             'department' => $role !== 'admin' ? $dept : null,
                             'jenis_unit' => $jenisUnit,
+                            'site_id'    => $siteId,
                         ]);
                         // Sync role jika berubah
                         $existingUser->syncRoles([$role]);
@@ -94,7 +107,7 @@ class UsersImport implements ToCollection, WithHeadingRow
             }
 
             try {
-                DB::transaction(function () use ($name, $nik, $email, $password, $role, $jabatan, $dept, $jenisUnit) {
+                DB::transaction(function () use ($name, $nik, $email, $password, $role, $jabatan, $dept, $jenisUnit, $siteId) {
                     $user = User::create([
                         'name'       => $name,
                         'nik'        => $nik,
@@ -103,6 +116,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                         'jabatan'    => $role !== 'admin' ? $jabatan : null,
                         'department' => $role !== 'admin' ? $dept : null,
                         'jenis_unit' => $jenisUnit,
+                        'site_id'    => $siteId,
                     ]);
                     $user->assignRole($role);
                 });

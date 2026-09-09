@@ -58,7 +58,6 @@ class HandleInertiaRequests extends Middleware
                 'wa_number' => config('app.contact_wa', '085156650598'),
             ],
             'options' => [
-                'job_sites'               => AppSetting::get('job_sites', config('app.job_sites', ['PT. WBK Site MAS', 'PT. WBK Site BAU'])),
                 'shifts'                  => AppSetting::get('shifts', ['Shift I', 'Shift II']),
                 'session_lifetime_minutes' => (int) config('session.lifetime', 120),
             ],

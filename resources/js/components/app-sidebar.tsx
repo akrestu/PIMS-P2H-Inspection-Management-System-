@@ -25,6 +25,7 @@ import {
     ClipboardPlus,
     ClockAlert,
     LayoutGrid,
+    MapPin,
     Settings2,
     ShieldCheck,
     Users,
@@ -80,6 +81,11 @@ export function AppSidebar() {
                               title: 'Unit',
                               href: '/units',
                               icon: Car,
+                          },
+                          {
+                              title: 'Site',
+                              href: '/sites',
+                              icon: MapPin,
                           },
                           {
                               title: 'Manajemen User',

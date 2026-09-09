@@ -36,6 +36,7 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
                 $user->jabatan ?? '',
                 $user->department ?? '',
                 $user->jenis_unit ?? '',
+                $user->site?->name ?? '',
                 $user->created_at?->format('d/m/Y H:i') ?? '',
             ];
         })->toArray();
@@ -43,7 +44,7 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
 
     public function headings(): array
     {
-        return ['No', 'Nama Lengkap', 'NIK / NRPP', 'Email', 'Role', 'Jabatan', 'Departemen', 'Jenis Unit', 'Tanggal Dibuat'];
+        return ['No', 'Nama Lengkap', 'NIK / NRPP', 'Email', 'Role', 'Jabatan', 'Departemen', 'Jenis Unit', 'Site', 'Tanggal Dibuat'];
     }
 
     public function title(): string
@@ -62,7 +63,8 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
             'F' => 14,
             'G' => 22,
             'H' => 16,
-            'I' => 18,
+            'I' => 22,
+            'J' => 18,
         ];
     }
 
@@ -87,8 +89,8 @@ class UsersExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
                 $sheet->insertNewRowBefore(1, 2);
                 $sheet->setCellValue('A1', 'DATA USER — PT. Wahana Bandhawa Kencana');
                 $sheet->setCellValue('A2', 'Diekspor: ' . now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i'));
-                $sheet->mergeCells('A1:I1');
-                $sheet->mergeCells('A2:I2');
+                $sheet->mergeCells('A1:J1');
+                $sheet->mergeCells('A2:J2');
 
                 $sheet->getStyle('A1')->applyFromArray([
                     'font'      => ['bold' => true, 'size' => 13, 'color' => ['argb' => 'FF1E3A5F']],

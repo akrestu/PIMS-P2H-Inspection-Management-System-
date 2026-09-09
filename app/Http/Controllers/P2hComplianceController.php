@@ -64,6 +64,9 @@ class P2hComplianceController extends Controller
             if ($user->jenis_unit === 'Light Vehicle' && $user->department) {
                 $unitQuery->where('department', $user->department);
             }
+            if ($user->site_id) {
+                $unitQuery->where('site_id', $user->site_id);
+            }
         } else {
             // Admin/Manager: filter opsional dari request saja
             if ($jenis) {

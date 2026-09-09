@@ -22,6 +22,7 @@ class StoreUnitRequest extends FormRequest
             'no_lambung' => ['nullable', 'string', 'max:50'],
             'status'     => ['required', Rule::in(['active', 'inactive'])],
             'department' => ['nullable', 'string', 'max:255'],
+            'site_id'    => ['nullable', 'integer', Rule::exists('sites', 'id')->whereNull('deleted_at')],
         ];
     }
 }

@@ -62,7 +62,8 @@ class MonitoringController extends Controller
         // Staff/Sr.Staff murni hanya lihat LV dept mereka
         if ($authUser->isStaffOnly()) {
             $unitQuery->where('jenis_unit', 'Light Vehicle')
-                      ->where('department', $authUser->department);
+                      ->where('department', $authUser->department)
+                      ->where('site_id', $authUser->site_id);
         }
         $units = $unitQuery->get();
 
@@ -76,6 +77,7 @@ class MonitoringController extends Controller
                 fn ($q) => $q->whereHas('unit', fn ($u) => $u
                     ->where('jenis_unit', 'Light Vehicle')
                     ->where('department', $authUser->department)
+                    ->where('site_id', $authUser->site_id)
                 )
             )
             ->get()
@@ -319,7 +321,9 @@ class MonitoringController extends Controller
 
         $allUnitsQuery = Unit::active()->orderBy('no_unit');
         if ($authUser->isStaffOnly()) {
-            $allUnitsQuery->where('jenis_unit', 'Light Vehicle')->where('department', $authUser->department);
+            $allUnitsQuery->where('jenis_unit', 'Light Vehicle')
+                ->where('department', $authUser->department)
+                ->where('site_id', $authUser->site_id);
         }
         $allUnits = $allUnitsQuery->get(['id', 'no_unit', 'jenis_unit']);
 

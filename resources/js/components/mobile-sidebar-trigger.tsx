@@ -12,6 +12,7 @@ import {
     ClipboardPlus,
     ClockAlert,
     LayoutGrid,
+    MapPin,
     MoreHorizontal,
     Settings2,
     ShieldCheck,
@@ -68,6 +69,7 @@ export function MobileSidebarTrigger() {
             { title: 'Downtime Log', href: '/downtime', icon: ClockAlert },
             { title: 'Riwayat P2H', href: '/p2h', icon: ClipboardList },
             { title: 'Unit', href: '/units', icon: Car },
+            { title: 'Site', href: '/sites', icon: MapPin },
             { title: 'Manajemen User', href: '/users', icon: Users },
             { title: 'Notifikasi', href: '/notifications', icon: Bell, badge: unreadCount },
             ...(isAdmin

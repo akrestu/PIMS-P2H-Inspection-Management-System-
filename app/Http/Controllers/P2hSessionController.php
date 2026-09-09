@@ -10,6 +10,7 @@ use App\Models\P2hInspectionItem;
 use App\Models\P2hServiceInfo;
 use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
+use App\Models\Site;
 use App\Models\Unit;
 use App\Models\User;
 use App\Notifications\CriticalItemAlert;
@@ -95,6 +96,7 @@ class P2hSessionController extends Controller
         } else {
             $units = Unit::active()
                 ->when($user->jenis_unit, fn ($q) => $q->where('jenis_unit', $user->jenis_unit))
+                ->when($user->isStaffOnly() && $user->site_id, fn ($q) => $q->where('site_id', $user->site_id))
                 ->orderBy('no_unit')
                 ->get(['id', 'no_unit', 'jenis_unit', 'department']);
         }
@@ -111,6 +113,7 @@ class P2hSessionController extends Controller
             'units'           => $units,
             'inspectionItems' => $inspectionItems,
             'staffUsers'      => $staffUsers,
+            'sites'           => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

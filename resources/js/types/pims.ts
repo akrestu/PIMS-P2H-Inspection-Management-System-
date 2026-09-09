@@ -7,6 +7,14 @@ export interface UnitDowntimeLogSummary {
     jam_mulai: string;
 }
 
+export interface Site {
+    id: number;
+    name: string;
+    status: 'active' | 'inactive';
+    created_at?: string;
+    updated_at?: string;
+}
+
 export interface Unit {
     id: number;
     no_unit: string;
@@ -14,6 +22,8 @@ export interface Unit {
     no_lambung: string | null;
     status: 'active' | 'inactive';
     department: string | null;
+    site_id: number | null;
+    site?: Pick<Site, 'id' | 'name'> | null;
     created_at?: string;
     updated_at?: string;
     downtime_logs?: UnitDowntimeLogSummary[];
@@ -27,6 +37,8 @@ export interface UserProfile {
     jabatan: Jabatan | null;
     department: string | null;
     jenis_unit: string | null;
+    site_id: number | null;
+    site?: Pick<Site, 'id' | 'name'> | null;
     roles: string[];
     units?: Pick<Unit, 'id' | 'no_unit' | 'jenis_unit'>[];
 }

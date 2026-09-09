@@ -56,10 +56,16 @@ interface StaffUser {
     department: string;
 }
 
+interface SiteOption {
+    id: number;
+    name: string;
+}
+
 interface Props {
     units: Unit[];
     inspectionItems: P2hInspectionItem[];
     staffUsers: StaffUser[];
+    sites: SiteOption[];
 }
 
 interface SlotInfo {
@@ -596,9 +602,9 @@ function LokasiCombobox({
 }
 
 // ─── Main Form ────────────────────────────────────────────────────────────────
-export default function P2hForm({ units, inspectionItems, staffUsers }: Props) {
-    const { auth, options } = usePage<{ auth: { user: { id: number; name: string; nik?: string | null; jabatan?: string } | null }; options: { job_sites: string[]; shifts: string[] } }>().props;
-    const jobSiteOptions = options?.job_sites ?? ['PT. WBK Site MAS', 'PT. WBK Site BAU'];
+export default function P2hForm({ units, inspectionItems, staffUsers, sites }: Props) {
+    const { auth, options } = usePage<{ auth: { user: { id: number; name: string; nik?: string | null; jabatan?: string } | null }; options: { shifts: string[] } }>().props;
+    const jobSiteOptions = sites.map((s) => s.name);
     const shiftOptions = options?.shifts ?? ['Shift I', 'Shift II'];
 
     // Dibaca sekali pada mount — mencegah re-read localStorage di strict mode double-render

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\UsersExport;
 use App\Exports\UsersImportTemplateExport;
 use App\Imports\UsersImport;
+use App\Models\Site;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Database\QueryException;
@@ -24,7 +25,7 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = User::with(['roles', 'units'])
+        $query = User::with(['roles', 'units', 'site'])
             ->when($request->search, function ($q) use ($request) {
                 $q->where(function ($inner) use ($request) {
                     $inner->where('name', 'like', "%{$request->search}%")
@@ -53,6 +54,7 @@ class UserController extends Controller
             'filters' => $request->only(['search', 'role', 'jabatan', 'per_page']),
             'stats'   => $stats,
             'units'   => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit']),
+            'sites'   => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -67,6 +69,7 @@ class UserController extends Controller
             'jabatan'             => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
             'department'          => 'required_unless:role,admin|nullable|string|max:255',
             'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
+            'site_id'             => ['nullable', 'integer', Rule::exists('sites', 'id')->whereNull('deleted_at')],
             'assigned_unit_ids'   => 'nullable|array',
             'assigned_unit_ids.*' => 'integer|exists:units,id',
         ]);
@@ -84,6 +87,7 @@ class UserController extends Controller
                 'jabatan'    => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
                 'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
                 'jenis_unit' => $validated['jenis_unit'] ?? null,
+                'site_id'    => $validated['site_id'] ?? null,
             ]);
             $user->assignRole($validated['role']);
 
@@ -123,6 +127,7 @@ class UserController extends Controller
             'jabatan'             => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
             'department'          => 'required_unless:role,admin|nullable|string|max:255',
             'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
+            'site_id'             => ['nullable', 'integer', Rule::exists('sites', 'id')->whereNull('deleted_at')],
             'assigned_unit_ids'   => 'nullable|array',
             'assigned_unit_ids.*' => 'integer|exists:units,id',
         ]);
@@ -144,6 +149,7 @@ class UserController extends Controller
                 'jabatan'    => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
                 'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
                 'jenis_unit' => $validated['jenis_unit'] ?? null,
+                'site_id'    => $validated['site_id'] ?? null,
             ];
             if (! empty($validated['password'])) {
                 $userData['password'] = Hash::make($validated['password']);
@@ -276,7 +282,7 @@ class UserController extends Controller
 
     public function export(): BinaryFileResponse
     {
-        $users = User::with(['roles', 'units'])->latest()->get();
+        $users = User::with(['roles', 'units', 'site'])->latest()->get();
         return Excel::download(new UsersExport($users), 'users_' . now()->format('Ymd_His') . '.xlsx');
     }
 

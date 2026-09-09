@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Models\Site;
 use App\Models\Unit;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -24,6 +25,7 @@ class UnitsImport implements ToCollection, WithHeadingRow
             $noLambung = trim($row['no_lambung'] ?? '') ?: null;
             $status    = strtolower(trim($row['status'] ?? 'active'));
             $dept      = trim($row['department'] ?? '') ?: null;
+            $siteName  = trim($row['site'] ?? '') ?: null;
 
             // Normalize jenis_unit — case-insensitive, terima LV/Bus/Light Vehicle
             $jenisUnitMap = ['bus' => 'Bus', 'light vehicle' => 'Light Vehicle', 'lv' => 'Light Vehicle'];
@@ -42,6 +44,16 @@ class UnitsImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            $siteId = null;
+            if ($siteName) {
+                $site = Site::where('name', $siteName)->first();
+                if (! $site) {
+                    $this->rowErrors[] = "Baris {$rowNum}: Site '{$siteName}' tidak ditemukan.";
+                    continue;
+                }
+                $siteId = $site->id;
+            }
+
             // Cek termasuk soft-deleted agar tidak bentrok unique constraint
             $existing = Unit::withTrashed()->where('no_unit', $noUnit)->first();
 
@@ -56,6 +68,7 @@ class UnitsImport implements ToCollection, WithHeadingRow
                         'no_lambung' => $noLambung,
                         'status'     => $status,
                         'department' => $dept,
+                        'site_id'    => $siteId,
                     ]);
                     $this->updateCount++;
                 } catch (\Throwable $e) {
@@ -72,6 +85,7 @@ class UnitsImport implements ToCollection, WithHeadingRow
                     'no_lambung' => $noLambung,
                     'status'     => $status,
                     'department' => $dept,
+                    'site_id'    => $siteId,
                 ]);
                 $this->successCount++;
             } catch (\Throwable $e) {

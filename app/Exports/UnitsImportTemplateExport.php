@@ -18,14 +18,14 @@ class UnitsImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
     public function array(): array
     {
         return [
-            ['LV-001', 'Light Vehicle', 'B-1234-XYZ', 'active', 'Production'],
-            ['BUS-001', 'Bus', 'B-5678-ABC', 'active', 'Maintenance'],
+            ['LV-001', 'Light Vehicle', 'B-1234-XYZ', 'active', 'Production', 'PT. WBK Site MAS'],
+            ['BUS-001', 'Bus', 'B-5678-ABC', 'active', 'Maintenance', 'PT. WBK Site BAU'],
         ];
     }
 
     public function headings(): array
     {
-        return ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department'];
+        return ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department', 'site'];
     }
 
     public function title(): string
@@ -41,6 +41,7 @@ class UnitsImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
             'C' => 18,
             'D' => 12,
             'E' => 22,
+            'F' => 22,
         ];
     }
 
@@ -68,11 +69,12 @@ class UnitsImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                     'C' => 'No. polisi (opsional)',
                     'D' => 'active atau inactive (wajib)',
                     'E' => 'Nama departemen pemilik unit (opsional) — contoh: Production',
+                    'F' => 'Nama site (opsional) — harus sama persis dengan data Site yang ada di menu Site',
                 ];
 
                 $sheet->insertNewRowBefore(1, 1);
                 $sheet->setCellValue('A1', 'TEMPLATE IMPORT UNIT — Hapus baris contoh (baris 3–4) sebelum upload. Jangan ubah baris heading (baris 2).');
-                $sheet->mergeCells('A1:E1');
+                $sheet->mergeCells('A1:F1');
                 $sheet->getStyle('A1')->applyFromArray([
                     'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],
                     'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF3CD']],

@@ -24,7 +24,7 @@ class StoreP2hRequest extends FormRequest
                         fn ($q) => $q->where('department', $dept)->orWhereNull('department')
                     ))]
                 : ['nullable', 'integer'],
-            'job_site'                          => ['nullable', 'string', 'max:100'],
+            'job_site'                          => ['nullable', 'string', 'max:100', Rule::exists('sites', 'name')->where('status', 'active')],
             'lokasi_kerja'                      => ['nullable', 'string', 'max:100'],
             'km_awal'                           => ['nullable', 'integer', 'min:0'],
             'hm_km_akhir'                       => ['nullable', 'integer', 'min:0'],

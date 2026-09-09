@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Unit, UnitDowntimeLogSummary } from '@/types/pims';
+import { SiteSelect } from '@/components/site-select';
+import type { Site, Unit, UnitDowntimeLogSummary } from '@/types/pims';
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     Bus,
@@ -59,15 +60,18 @@ interface Props {
     units: PaginatedData;
     filters: Filters;
     stats: Stats;
+    sites: Site[];
 }
 
 /* ─────────────────── UnitFormDialog (Add / Edit) ─────────────── */
 function UnitFormDialog({
     unit,
+    sites,
     open,
     onOpenChange,
 }: {
     unit?: Unit;
+    sites: Site[];
     open: boolean;
     onOpenChange: (o: boolean) => void;
 }) {
@@ -77,6 +81,7 @@ function UnitFormDialog({
         no_lambung: unit?.no_lambung ?? '',
         status: unit?.status ?? 'active',
         department: unit?.department ?? '',
+        site_id: unit?.site_id ?? null,
     });
 
     useEffect(() => {
@@ -86,6 +91,7 @@ function UnitFormDialog({
             no_lambung: unit?.no_lambung ?? '',
             status: unit?.status ?? 'active',
             department: unit?.department ?? '',
+            site_id: unit?.site_id ?? null,
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit?.id]);
@@ -190,6 +196,14 @@ function UnitFormDialog({
                             {errors.department && <p className="text-destructive text-xs">{errors.department}</p>}
                         </div>
                     )}
+
+                    {/* Site */}
+                    <SiteSelect
+                        sites={sites}
+                        value={data.site_id}
+                        onChange={(id) => setData('site_id', id)}
+                        error={errors.site_id}
+                    />
 
                     {/* Status */}
                     <div className="space-y-1.5">
@@ -468,7 +482,7 @@ function OperationalStatusBadge({ downtimeLogs }: { downtimeLogs?: UnitDowntimeL
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UnitsIndex({ units, filters, stats }: Props) {
+export default function UnitsIndex({ units, filters, stats, sites }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_unit ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
@@ -719,6 +733,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                         <TableHead>Jenis Unit</TableHead>
                                         <TableHead>No. Polisi</TableHead>
                                         <TableHead className="hidden md:table-cell">Departemen</TableHead>
+                                        <TableHead className="hidden md:table-cell">Site</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Status Operasional</TableHead>
                                         <TableHead className="w-14 text-right">Aksi</TableHead>
@@ -727,7 +742,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                 <TableBody>
                                     {units.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8}>
+                                            <TableCell colSpan={9}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="bg-muted rounded-full p-4">
                                                         <Package className="text-muted-foreground h-8 w-8" />
@@ -786,6 +801,11 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
                                                 <TableCell className="hidden md:table-cell text-sm">
                                                     {unit.department
                                                         ? unit.department
+                                                        : <span className="text-muted-foreground">—</span>}
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell text-sm">
+                                                    {unit.site
+                                                        ? unit.site.name
                                                         : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
                                                 <TableCell>
@@ -916,6 +936,7 @@ export default function UnitsIndex({ units, filters, stats }: Props) {
             <UnitFormDialog
                 key={editUnit?.id ?? 'add'}
                 unit={editUnit}
+                sites={sites}
                 open={sheetOpen}
                 onOpenChange={(o) => {
                     setSheetOpen(o);

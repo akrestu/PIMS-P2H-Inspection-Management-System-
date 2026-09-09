@@ -7,6 +7,7 @@ use App\Exports\UnitsImportTemplateExport;
 use App\Http\Requests\StoreUnitRequest;
 use App\Imports\UnitsImport;
 use App\Models\P2hSession;
+use App\Models\Site;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class UnitController extends Controller
     public function index(Request $request): Response
     {
         $units = Unit::query()
-            ->with(['downtimeLogs' => function ($q) {
+            ->with(['site:id,name', 'downtimeLogs' => function ($q) {
                 $q->whereNull('jam_selesai')
                   ->latest('jam_mulai')
                   ->select(['id', 'unit_id', 'tipe', 'jam_mulai']);
@@ -45,6 +46,7 @@ class UnitController extends Controller
             'units'   => $units,
             'filters' => $request->only(['search', 'jenis_unit', 'status']),
             'stats'   => $stats,
+            'sites'   => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -145,6 +147,7 @@ class UnitController extends Controller
     public function trashed(Request $request): Response
     {
         $units = Unit::onlyTrashed()
+            ->with('site:id,name')
             ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
             ->orderByDesc('deleted_at')
             ->paginate(15)
@@ -210,7 +213,7 @@ class UnitController extends Controller
 
     public function export(): BinaryFileResponse
     {
-        $units = Unit::latest()->get();
+        $units = Unit::with('site:id,name')->latest()->get();
         return Excel::download(new UnitsExport($units), 'units_' . now()->format('Ymd_His') . '.xlsx');
     }
 

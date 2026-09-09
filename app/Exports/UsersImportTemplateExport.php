@@ -18,13 +18,13 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
     public function array(): array
     {
         return [
-            ['John Doe', '1234567890', 'john@email.com', 'Password123!', 'driver', 'Non Staff', 'Operasional', 'Bus'],
+            ['John Doe', '1234567890', 'john@email.com', 'Password123!', 'driver', 'Non Staff', 'Operasional', 'Bus', 'PT. WBK Site MAS'],
         ];
     }
 
     public function headings(): array
     {
-        return ['nama_lengkap', 'nik', 'email', 'password', 'role', 'jabatan', 'department', 'jenis_unit'];
+        return ['nama_lengkap', 'nik', 'email', 'password', 'role', 'jabatan', 'department', 'jenis_unit', 'site'];
     }
 
     public function title(): string
@@ -43,6 +43,7 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
             'F' => 14,
             'G' => 22,
             'H' => 16,
+            'I' => 22,
         ];
     }
 
@@ -73,11 +74,12 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                     'F' => 'Sr.Staff / Staff / Non Staff (wajib kecuali role admin)',
                     'G' => 'Nama departemen (wajib kecuali role admin)',
                     'H' => 'Bus atau Light Vehicle (opsional)',
+                    'I' => 'Nama site (opsional) — harus sama persis dengan data Site yang ada di menu Site',
                 ];
 
                 $sheet->insertNewRowBefore(1, 1);
                 $sheet->setCellValue('A1', 'TEMPLATE IMPORT USER — Hapus baris contoh (baris 3) sebelum upload. Jangan ubah baris heading (baris 2).');
-                $sheet->mergeCells('A1:H1');
+                $sheet->mergeCells('A1:I1');
                 $sheet->getStyle('A1')->applyFromArray([
                     'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],
                     'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF3CD']],

@@ -31,13 +31,14 @@ class UnitsExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
                 $unit->no_lambung ?? '',
                 $unit->status,
                 $unit->department ?? '',
+                $unit->site?->name ?? '',
             ];
         })->toArray();
     }
 
     public function headings(): array
     {
-        return ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department'];
+        return ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department', 'site'];
     }
 
     public function title(): string
@@ -53,6 +54,7 @@ class UnitsExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
             'C' => 18,
             'D' => 12,
             'E' => 24,
+            'F' => 24,
         ];
     }
 
@@ -76,7 +78,7 @@ class UnitsExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
 
                 $sheet->insertNewRowBefore(1, 1);
                 $sheet->setCellValue('A1', 'DATA UNIT — Diekspor: ' . now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i') . ' — File ini dapat langsung digunakan sebagai template import.');
-                $sheet->mergeCells('A1:E1');
+                $sheet->mergeCells('A1:F1');
 
                 $sheet->getStyle('A1')->applyFromArray([
                     'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],

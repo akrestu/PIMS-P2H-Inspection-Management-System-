@@ -7,7 +7,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             contact: { wa_number: string };
-            options: { job_sites: string[]; shifts: string[]; session_lifetime_minutes: number };
+            options: { shifts: string[]; session_lifetime_minutes: number };
             [key: string]: unknown;
         };
     }

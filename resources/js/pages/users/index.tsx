@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SiteSelect } from '@/components/site-select';
+import type { Site } from '@/types/pims';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     ChevronLeft,
@@ -57,6 +59,8 @@ interface UserRow {
     jabatan: Jabatan | null;
     department: string | null;
     jenis_unit: string | null;
+    site_id: number | null;
+    site?: Pick<Site, 'id' | 'name'> | null;
     roles: { name: Role }[];
     units?: UnitOption[];
 }
@@ -82,6 +86,7 @@ interface Props {
     filters: { search?: string; role?: string; jabatan?: string; per_page?: string };
     stats: Stats;
     units: UnitOption[];
+    sites: Site[];
 }
 
 /* ─────────────────── Helpers ────────────────────────────────── */
@@ -291,14 +296,15 @@ function AssignedUnitsSelect({
 /* ─────────────────── UserFormFields (shared) ────────────────── */
 function UserFormFields<T extends {
     name: string; nik: string; email: string; password: string; role: string;
-    jabatan: string; department: string; jenis_unit: string; assigned_unit_ids: number[];
+    jabatan: string; department: string; jenis_unit: string; site_id: number | null; assigned_unit_ids: number[];
 }>({
-    data, setData, errors, units, isEdit = false,
+    data, setData, errors, units, sites, isEdit = false,
 }: {
     data: T;
     setData: (key: keyof T, value: any) => void;
     errors: Partial<Record<keyof T, string>>;
     units: UnitOption[];
+    sites: Site[];
     isEdit?: boolean;
 }) {
     const [showPwd, setShowPwd] = useState(false);
@@ -368,6 +374,13 @@ function UserFormFields<T extends {
 
             <RoleSelect value={data.role} onChange={(v) => setData('role' as keyof T, v)} error={errors.role as string | undefined} />
 
+            <SiteSelect
+                sites={sites}
+                value={data.site_id}
+                onChange={(id) => setData('site_id' as keyof T, id)}
+                error={errors.site_id as string | undefined}
+            />
+
             {needsProfile && (
                 <>
                     <JabatanSelect value={data.jabatan} onChange={(v) => setData('jabatan' as keyof T, v)} error={errors.jabatan as string | undefined} />
@@ -413,10 +426,10 @@ function UserFormFields<T extends {
 }
 
 /* ─────────────────── AddUserDialog ──────────────────────────── */
-function AddUserDialog({ open, onOpenChange, units }: { open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
+function AddUserDialog({ open, onOpenChange, units, sites }: { open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[]; sites: Site[] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', nik: '', email: '', password: '', role: '',
-        jabatan: '', department: '', jenis_unit: '', assigned_unit_ids: [] as number[],
+        jabatan: '', department: '', jenis_unit: '', site_id: null as number | null, assigned_unit_ids: [] as number[],
     });
 
     const handleClose = () => { reset(); onOpenChange(false); };
@@ -433,7 +446,7 @@ function AddUserDialog({ open, onOpenChange, units }: { open: boolean; onOpenCha
                     <DialogDescription>Buat akun user dengan role dan jabatan yang sesuai.</DialogDescription>
                 </DialogHeader>
                 <form id="user-add-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
-                    <UserFormFields data={data} setData={setData} errors={errors} units={units} />
+                    <UserFormFields data={data} setData={setData} errors={errors} units={units} sites={sites} />
                 </form>
                 <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
@@ -447,7 +460,7 @@ function AddUserDialog({ open, onOpenChange, units }: { open: boolean; onOpenCha
 }
 
 /* ─────────────────── EditUserDialog ─────────────────────────── */
-function EditUserDialog({ user, open, onOpenChange, units }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[] }) {
+function EditUserDialog({ user, open, onOpenChange, units, sites }: { user: UserRow | null; open: boolean; onOpenChange: (o: boolean) => void; units: UnitOption[]; sites: Site[] }) {
     const { data, setData, put, processing, errors, reset } = useForm({
         name: user?.name ?? '',
         nik: user?.nik ?? '',
@@ -457,6 +470,7 @@ function EditUserDialog({ user, open, onOpenChange, units }: { user: UserRow | n
         jabatan: user?.jabatan ?? '',
         department: user?.department ?? '',
         jenis_unit: user?.jenis_unit ?? '',
+        site_id: user?.site_id ?? null,
         assigned_unit_ids: user?.units?.map((u) => u.id) ?? [] as number[],
     });
 
@@ -471,6 +485,7 @@ function EditUserDialog({ user, open, onOpenChange, units }: { user: UserRow | n
                 jabatan: user.jabatan ?? '',
                 department: user.department ?? '',
                 jenis_unit: user.jenis_unit ?? '',
+                site_id: user.site_id ?? null,
                 assigned_unit_ids: user.units?.map((u) => u.id) ?? [],
             });
         }
@@ -505,7 +520,7 @@ function EditUserDialog({ user, open, onOpenChange, units }: { user: UserRow | n
                     <DialogDescription>Perbarui data akun, role, jabatan, dan profil user.</DialogDescription>
                 </DialogHeader>
                 <form id="user-edit-form" onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
-                    <UserFormFields data={data} setData={setData} errors={errors} units={units} isEdit />
+                    <UserFormFields data={data} setData={setData} errors={errors} units={units} sites={sites} isEdit />
                 </form>
                 <DialogFooter className="border-t px-6 py-4">
                     <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
@@ -715,7 +730,7 @@ function StatCard({ title, value, icon: Icon, colorClass }: {
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UsersIndex({ users, filters, stats, units }: Props) {
+export default function UsersIndex({ users, filters, stats, units, sites }: Props) {
     const { auth } = usePage<{ auth: { user: { id: number } } }>().props;
     const currentUserId = auth.user.id;
 
@@ -935,13 +950,14 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                         <TableHead>Role</TableHead>
                                         <TableHead className="hidden md:table-cell">Jabatan</TableHead>
                                         <TableHead className="hidden lg:table-cell">Departemen</TableHead>
+                                        <TableHead className="hidden lg:table-cell">Site</TableHead>
                                         <TableHead className="w-14 text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {users.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6}>
+                                            <TableCell colSpan={7}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="bg-muted rounded-full p-4">
                                                         <Users className="text-muted-foreground h-8 w-8" />
@@ -1026,6 +1042,10 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                                                     ) : (
                                                         <span className="text-muted-foreground">—</span>
                                                     )}
+                                                </TableCell>
+
+                                                <TableCell className="hidden text-sm lg:table-cell">
+                                                    {u.site ? u.site.name : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
 
                                                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -1124,9 +1144,9 @@ export default function UsersIndex({ users, filters, stats, units }: Props) {
                 </Card>
             </div>
 
-            <AddUserDialog open={addOpen} onOpenChange={setAddOpen} units={units} />
+            <AddUserDialog open={addOpen} onOpenChange={setAddOpen} units={units} sites={sites} />
             <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
-            <EditUserDialog user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} />
+            <EditUserDialog user={editUser} open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }} key={editUser?.id ?? 'none'} units={units} sites={sites} />
             <DeleteDialog user={deleteUser} open={!!deleteUser} onOpenChange={(o) => { if (!o) setDeleteUser(null); }} />
             <BatchDeleteDialog ids={selectedIds} open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen} onSuccess={clearSelection} />
         </TooltipProvider>

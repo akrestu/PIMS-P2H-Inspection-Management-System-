@@ -14,8 +14,7 @@ class AppSettingController extends Controller
     {
         return Inertia::render('settings/app', [
             'settings' => [
-                'job_sites' => AppSetting::get('job_sites', config('app.job_sites', ['PT. WBK Site MAS', 'PT. WBK Site BAU'])),
-                'shifts'    => AppSetting::get('shifts', ['Shift I', 'Shift II']),
+                'shifts' => AppSetting::get('shifts', ['Shift I', 'Shift II']),
             ],
         ]);
     }
@@ -23,13 +22,10 @@ class AppSettingController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'job_sites'   => ['required', 'array', 'min:1'],
-            'job_sites.*' => ['required', 'string', 'max:100'],
-            'shifts'      => ['required', 'array', 'min:1'],
-            'shifts.*'    => ['required', 'string', 'max:50'],
+            'shifts'   => ['required', 'array', 'min:1'],
+            'shifts.*' => ['required', 'string', 'max:50'],
         ]);
 
-        AppSetting::set('job_sites', $validated['job_sites']);
         AppSetting::set('shifts', $validated['shifts']);
 
         Inertia::flash('toast', [

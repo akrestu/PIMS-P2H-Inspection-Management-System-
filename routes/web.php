@@ -11,6 +11,7 @@ use App\Http\Controllers\P2hApprovalController;
 use App\Http\Controllers\P2hComplianceController;
 use App\Http\Controllers\P2hExportController;
 use App\Http\Controllers\P2hSessionController;
+use App\Http\Controllers\SiteController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UnitDowntimeController;
 use App\Http\Controllers\UserController;
@@ -101,6 +102,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/app-settings', [AppSettingController::class, 'index'])->name('app-settings.index');
         Route::post('/app-settings', [AppSettingController::class, 'update'])->name('app-settings.update');
         Route::delete('/units/{id}/force', [UnitController::class, 'forceDestroy'])->name('units.force-delete');
+        Route::delete('/sites/{id}/force', [SiteController::class, 'forceDestroy'])->name('sites.force-delete');
     });
 
     // Admin & Manager
@@ -112,6 +114,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/units/trashed', [UnitController::class, 'trashed'])->name('units.trashed');
         Route::post('/units/{id}/restore', [UnitController::class, 'restore'])->name('units.restore');
         Route::resource('units', UnitController::class)->except(['show']);
+
+        Route::delete('/sites/batch', [SiteController::class, 'destroyBatch'])->name('sites.batch-destroy');
+        Route::get('/sites/trashed', [SiteController::class, 'trashed'])->name('sites.trashed');
+        Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');
+        Route::resource('sites', SiteController::class)->except(['show']);
 
         Route::delete('/users/batch', [UserController::class, 'destroyBatch'])->name('users.batch-destroy');
         Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
