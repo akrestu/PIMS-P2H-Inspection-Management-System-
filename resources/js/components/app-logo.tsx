@@ -10,7 +10,7 @@ export default function AppLogo() {
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-bold tracking-wide">PIMS</span>
-                <span className="text-sidebar-foreground/50 truncate text-[10px] font-medium">
+                <span className="truncate text-[10px] font-medium text-sidebar-foreground/50">
                     P2H &amp; Inspection System
                 </span>
             </div>

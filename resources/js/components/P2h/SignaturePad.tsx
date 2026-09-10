@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface Props {
     onEnd?: () => void;
@@ -16,11 +16,17 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     const restoreSignature = useCallback(() => {
-        if (!savedDataUrl.current || !sigPadRef.current) return;
+        if (!savedDataUrl.current || !sigPadRef.current) {
+            return;
+        }
+
         const canvas = sigPadRef.current.getCanvas();
         // re-draw setelah browser selesai layout
         requestAnimationFrame(() => {
-            if (!savedDataUrl.current || !sigPadRef.current) return;
+            if (!savedDataUrl.current || !sigPadRef.current) {
+                return;
+            }
+
             sigPadRef.current.fromDataURL(savedDataUrl.current, {
                 width: canvas.offsetWidth,
                 height: canvas.offsetHeight,
@@ -29,7 +35,8 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
     }, [sigPadRef]);
 
     const handleEnd = () => {
-        savedDataUrl.current = sigPadRef.current?.toDataURL('image/png') ?? null;
+        savedDataUrl.current =
+            sigPadRef.current?.toDataURL('image/png') ?? null;
         setHasSig(true);
         onEnd?.();
     };
@@ -46,6 +53,7 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
         const observer = containerRef.current
             ? new ResizeObserver(restoreSignature)
             : null;
+
         if (containerRef.current && observer) {
             observer.observe(containerRef.current);
         }
@@ -54,7 +62,9 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
         const onScroll = () => restoreSignature();
         // visibilitychange: tab background/foreground
         const onVisibility = () => {
-            if (document.visibilityState === 'visible') restoreSignature();
+            if (document.visibilityState === 'visible') {
+                restoreSignature();
+            }
         };
         // pageshow: kembali dari bfcache
         const onPageShow = () => restoreSignature();
@@ -77,14 +87,26 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
             <div
                 ref={containerRef}
                 className={cn(
-                    'relative rounded-xl border-2 border-dashed transition-colors overflow-hidden',
-                    hasSig ? 'border-primary bg-white dark:bg-gray-950' : 'border-muted-foreground/30 bg-muted/20',
+                    'relative overflow-hidden rounded-xl border-2 border-dashed transition-colors',
+                    hasSig
+                        ? 'border-primary bg-white dark:bg-gray-950'
+                        : 'border-muted-foreground/30 bg-muted/20',
                 )}
             >
                 {!hasSig && (
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground/50">
-                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 113.181 3.182L7.5 19.212l-4.5 1 1-4.5L16.862 3.487z" />
+                        <svg
+                            className="h-8 w-8"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16.862 3.487a2.25 2.25 0 113.181 3.182L7.5 19.212l-4.5 1 1-4.5L16.862 3.487z"
+                            />
                         </svg>
                         <span className="text-xs">Tanda tangan di sini</span>
                     </div>
@@ -94,7 +116,11 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
                     penColor="#1e293b"
                     canvasProps={{
                         className: 'w-full',
-                        style: { height: '160px', touchAction: 'none', display: 'block' },
+                        style: {
+                            height: '160px',
+                            touchAction: 'none',
+                            display: 'block',
+                        },
                     }}
                     onEnd={handleEnd}
                 />
@@ -104,13 +130,21 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
             <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                     {hasSig ? (
-                        <span className="font-medium text-green-600 dark:text-green-400">Tanda tangan tersimpan</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                            Tanda tangan tersimpan
+                        </span>
                     ) : (
                         'Gunakan jari atau mouse untuk menandatangani'
                     )}
                 </p>
                 {hasSig && (
-                    <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="h-8 text-muted-foreground hover:text-destructive">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClear}
+                        className="h-8 text-muted-foreground hover:text-destructive"
+                    >
                         <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                         Ulangi
                     </Button>

@@ -24,13 +24,13 @@ class NotificationController extends Controller
         $notifications = $query->paginate(15)->withQueryString();
 
         $unreadCount = $request->user()->unreadNotifications()->count();
-        $totalCount  = $request->user()->notifications()->count();
+        $totalCount = $request->user()->notifications()->count();
 
         return Inertia::render('notifications/index', [
             'notifications' => $notifications,
-            'unread_count'  => $unreadCount,
-            'total_count'   => $totalCount,
-            'filter'        => $filter,
+            'unread_count' => $unreadCount,
+            'total_count' => $totalCount,
+            'filter' => $filter,
         ]);
     }
 
@@ -53,9 +53,10 @@ class NotificationController extends Controller
         $sessionId = $data['session_id'] ?? null;
         if ($type === 'lv_approval_result' && $sessionId) {
             $entryId = $data['entry_id'] ?? null;
+
             return redirect()->route('p2h.show', array_filter([
                 'session' => $sessionId,
-                'entry'   => $entryId,
+                'entry' => $entryId,
             ], fn ($v) => $v !== null));
         }
 
@@ -74,8 +75,8 @@ class NotificationController extends Controller
         cache()->forget("recent_notifications_user_{$user->id}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Semua notifikasi dibaca',
+            'type' => 'success',
+            'message' => 'Semua notifikasi dibaca',
             'description' => 'Seluruh notifikasi telah ditandai sebagai sudah dibaca.',
         ]);
 
@@ -84,18 +85,22 @@ class NotificationController extends Controller
 
     public function destroy(Request $request, string $id): RedirectResponse
     {
-        $request->user()->notifications()->findOrFail($id)->delete();
+        $user = $request->user();
+        $user->notifications()->findOrFail($id)->delete();
+        cache()->forget("recent_notifications_user_{$user->id}");
 
         return back();
     }
 
     public function destroyAll(Request $request): RedirectResponse
     {
-        $request->user()->notifications()->delete();
+        $user = $request->user();
+        $user->notifications()->delete();
+        cache()->forget("recent_notifications_user_{$user->id}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Notifikasi dihapus',
+            'type' => 'success',
+            'message' => 'Notifikasi dihapus',
             'description' => 'Seluruh notifikasi telah dihapus.',
         ]);
 

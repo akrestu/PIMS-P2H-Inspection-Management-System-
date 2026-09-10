@@ -17,7 +17,11 @@ export default function AuthSplitLayout({
                     href={home()}
                     className="relative z-20 flex items-center text-lg font-medium"
                 >
-                    <img src="/logo.png" alt="PIMS Logo" className="mr-2 size-8 object-contain" />
+                    <img
+                        src="/logo.png"
+                        alt="PIMS Logo"
+                        className="mr-2 size-8 object-contain"
+                    />
                     {name}
                 </Link>
             </div>
@@ -27,7 +31,11 @@ export default function AuthSplitLayout({
                         href={home()}
                         className="relative z-20 flex items-center justify-center lg:hidden"
                     >
-                        <img src="/logo.png" alt="PIMS Logo" className="h-10 object-contain sm:h-12" />
+                        <img
+                            src="/logo.png"
+                            alt="PIMS Logo"
+                            className="h-10 object-contain sm:h-12"
+                        />
                     </Link>
                     <div className="flex flex-col items-start gap-2 text-left sm:items-center sm:text-center">
                         <h1 className="text-xl font-medium">{title}</h1>

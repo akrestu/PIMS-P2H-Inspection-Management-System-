@@ -3,17 +3,17 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles, WithColumnWidths, WithEvents
+class HistoryP2hExport implements FromArray, WithColumnWidths, WithEvents, WithHeadings, WithStyles, WithTitle
 {
     public function __construct(
         private array $rows,
@@ -23,7 +23,7 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
     public function array(): array
     {
         $data = [];
-        $no   = 1;
+        $no = 1;
 
         foreach ($this->rows as $r) {
             $data[] = [
@@ -78,8 +78,8 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
     {
         return [
             1 => [
-                'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-                'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
         ];
@@ -96,29 +96,29 @@ class HistoryP2hExport implements FromArray, WithHeadings, WithTitle, WithStyles
                 $sheet->setCellValue('A2', 'PT. Wahana Bandhawa Kencana');
 
                 $periodeLabel = 'Semua periode';
-                if (!empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
+                if (! empty($this->filters['date_from']) || ! empty($this->filters['date_to'])) {
                     $from = $this->filters['date_from'] ?? '-';
-                    $to   = $this->filters['date_to'] ?? '-';
+                    $to = $this->filters['date_to'] ?? '-';
                     $periodeLabel = "Periode: {$from} s/d {$to}";
                 }
-                if (!empty($this->filters['jenis_unit'])) {
-                    $periodeLabel .= ' · ' . $this->filters['jenis_unit'];
+                if (! empty($this->filters['jenis_unit'])) {
+                    $periodeLabel .= ' · '.$this->filters['jenis_unit'];
                 }
-                if (!empty($this->filters['no_unit'])) {
-                    $periodeLabel .= ' · Unit: ' . $this->filters['no_unit'];
+                if (! empty($this->filters['no_unit'])) {
+                    $periodeLabel .= ' · Unit: '.$this->filters['no_unit'];
                 }
                 $sheet->setCellValue('A3', $periodeLabel);
 
                 foreach (['A1', 'A2', 'A3'] as $cell) {
-                    $sheet->mergeCells($cell . ':H' . substr($cell, 1));
+                    $sheet->mergeCells($cell.':H'.substr($cell, 1));
                 }
 
                 $sheet->getStyle('A1')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 13, 'color' => ['argb' => 'FF1E3A5F']],
+                    'font' => ['bold' => true, 'size' => 13, 'color' => ['argb' => 'FF1E3A5F']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
                 $sheet->getStyle('A2:A3')->applyFromArray([
-                    'font'      => ['size' => 10, 'color' => ['argb' => 'FF555555']],
+                    'font' => ['size' => 10, 'color' => ['argb' => 'FF555555']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
 

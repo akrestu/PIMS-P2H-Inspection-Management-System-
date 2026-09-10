@@ -1,9 +1,13 @@
-import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-import type { AnswerState, P2hInspectionItem } from '@/types/pims';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import type { AnswerState, P2hInspectionItem } from '@/types/pims';
 import ChecklistItem from './ChecklistItem';
 
 interface Props {
@@ -23,13 +27,15 @@ interface Props {
 const sectionConfig = {
     A: {
         label: 'A — Pemeriksaan Keliling Unit / Di Luar Kabin',
-        headerClass: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900',
+        headerClass:
+            'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900',
         badgeClass: 'bg-blue-600 text-white hover:bg-blue-600',
         dotClass: 'bg-blue-500',
     },
     B: {
         label: 'B — Pemeriksaan Dari Dalam Kabin',
-        headerClass: 'bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900',
+        headerClass:
+            'bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900',
         badgeClass: 'bg-indigo-600 text-white hover:bg-indigo-600',
         dotClass: 'bg-indigo-500',
     },
@@ -57,10 +63,20 @@ export default function ChecklistGroup({
     const [open, setOpen] = useState(defaultOpen);
     const config = sectionConfig[section];
 
-    const filledCount = items.filter((item) => answers[item.id]?.kondisi !== null && answers[item.id]?.kondisi !== undefined).length;
+    const filledCount = items.filter(
+        (item) =>
+            answers[item.id]?.kondisi !== null &&
+            answers[item.id]?.kondisi !== undefined,
+    ).length;
     const allFilled = filledCount === items.length;
-    const hasTL = items.some((item) => answers[item.id]?.kondisi === 'Tidak Layak');
-    const hasAATL = items.some((item) => answers[item.id]?.kondisi === 'Tidak Layak' && item.kode_bahaya === 'AA');
+    const hasTL = items.some(
+        (item) => answers[item.id]?.kondisi === 'Tidak Layak',
+    );
+    const hasAATL = items.some(
+        (item) =>
+            answers[item.id]?.kondisi === 'Tidak Layak' &&
+            item.kode_bahaya === 'AA',
+    );
 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
@@ -75,23 +91,39 @@ export default function ChecklistGroup({
                     )}
                 >
                     <div className="flex items-center gap-2.5">
-                        <span className={cn('h-2.5 w-2.5 rounded-full shrink-0', config.dotClass)} />
-                        <span className="text-base font-semibold">Seksi {config.label}</span>
-                        <Badge className={cn('text-sm px-2 py-0', config.badgeClass)}>
+                        <span
+                            className={cn(
+                                'h-2.5 w-2.5 shrink-0 rounded-full',
+                                config.dotClass,
+                            )}
+                        />
+                        <span className="text-base font-semibold">
+                            Seksi {config.label}
+                        </span>
+                        <Badge
+                            className={cn(
+                                'px-2 py-0 text-sm',
+                                config.badgeClass,
+                            )}
+                        >
                             {items.length} item
                         </Badge>
                     </div>
                     <div className="flex items-center gap-2">
                         {hasAATL && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400">
                                 Stop!
                             </span>
                         )}
                         <span
                             className={cn(
-                                'text-xs font-medium px-2 py-0.5 rounded-full',
-                                allFilled && !hasTL && 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
-                                allFilled && hasTL && 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+                                'rounded-full px-2 py-0.5 text-xs font-medium',
+                                allFilled &&
+                                    !hasTL &&
+                                    'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
+                                allFilled &&
+                                    hasTL &&
+                                    'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
                                 !allFilled && 'bg-muted text-muted-foreground',
                             )}
                         >
@@ -107,17 +139,25 @@ export default function ChecklistGroup({
                 </button>
             </CollapsibleTrigger>
 
-            <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-1 data-[state=open]:slide-in-from-top-1 duration-200">
+            <CollapsibleContent className="overflow-hidden duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-1 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1">
                 <div className="mt-2 space-y-2">
                     {items.map((item) => (
                         <ChecklistItem
                             key={item.id}
                             item={item}
-                            answer={answers[item.id] ?? { inspection_item_id: item.id, kondisi: null, keterangan: '' }}
+                            answer={
+                                answers[item.id] ?? {
+                                    inspection_item_id: item.id,
+                                    kondisi: null,
+                                    keterangan: '',
+                                }
+                            }
                             onChange={onChange}
                             onKeteranganChange={onKeteranganChange}
                             attachments={itemAttachments[item.id] ?? []}
-                            attachmentPreviews={itemAttachmentPreviews[item.id] ?? []}
+                            attachmentPreviews={
+                                itemAttachmentPreviews[item.id] ?? []
+                            }
                             compressing={compressingItems[item.id] ?? false}
                             onAttachmentChange={onItemAttachmentChange}
                             onRemoveAttachment={onRemoveItemAttachment}

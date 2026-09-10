@@ -1,8 +1,8 @@
-import NotificationBell from '@/components/Layout/NotificationBell';
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import NotificationBell from '@/components/Layout/NotificationBell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -94,7 +94,11 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     Navigation menu
                                 </SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
-                                    <img src="/logo.png" alt="PIMS Logo" className="h-6 w-6 object-contain" />
+                                    <img
+                                        src="/logo.png"
+                                        alt="PIMS Logo"
+                                        className="h-6 w-6 object-contain"
+                                    />
                                 </SheetHeader>
                                 <div className="flex h-full flex-1 flex-col space-y-4 p-4">
                                     <div className="flex h-full flex-col justify-between text-sm">

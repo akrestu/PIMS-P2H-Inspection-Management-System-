@@ -389,8 +389,8 @@
             <td style="width:50%">
                 <div class="role">Dibuat oleh :</div>
                 <div class="space">
-                    @if($entry->paraf_url)
-                        <img src="{{ storage_path('app/public/' . $entry->paraf_url) }}" class="sig-img" alt="paraf driver">
+                    @if($entry->driver_signature_path)
+                        <img src="{{ $entry->driver_signature_path }}" class="sig-img" alt="paraf driver">
                     @endif
                 </div>
                 <div class="nl">
@@ -403,8 +403,8 @@
             <td style="width:50%">
                 <div class="role">Diverifikasi oleh :</div>
                 <div class="space">
-                    @if($showApvr && $entry->approver_signature_url)
-                        <img src="{{ storage_path('app/public/' . $entry->approver_signature_url) }}" class="sig-img" alt="paraf approver">
+                    @if($showApvr && $entry->approver_signature_path)
+                        <img src="{{ $entry->approver_signature_path }}" class="sig-img" alt="paraf approver">
                     @endif
                 </div>
                 <div class="nl">

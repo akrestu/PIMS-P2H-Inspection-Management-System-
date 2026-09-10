@@ -15,28 +15,28 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Notifications\CriticalItemAlert;
 use App\Notifications\LvP2hApprovalRequest;
-use App\Policies\P2hSessionPolicy;
+use App\Support\HistoricalInspectionItems;
+use App\Support\P2hFileStorage;
+use App\Support\SignatureImage;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\Permission\Models\Role;
 
 class P2hSessionController extends Controller
 {
     public function index(Request $request): Response
     {
         $request->validate([
-            'date_from'  => 'nullable|date_format:Y-m-d',
-            'date_to'    => 'nullable|date_format:Y-m-d',
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'date_to' => 'nullable|date_format:Y-m-d',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
-            'hasil'      => 'nullable|in:ada_tl,semua_layak',
-            'user_id'    => 'nullable|integer|exists:users,id',
+            'hasil' => 'nullable|in:ada_tl,semua_layak',
+            'user_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $user = $request->user();
@@ -50,12 +50,11 @@ class P2hSessionController extends Controller
             ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
             ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
-        // Driver hanya lihat P2H yang pernah ia isi
-        if ($user->hasRole('driver')) {
+        if ($user->isStaffOnly()) {
+            $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id)
+                ->orWhere('pic_approver_id', $user->id));
+        } elseif ($user->hasRole('driver')) {
             $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id));
-        } elseif ($user->isStaffOnly()) {
-            // Staff/Sr.Staff non-admin/manager: hanya lihat sesi dimana mereka jadi PIC approver
-            $query->whereHas('userEntries', fn ($q) => $q->where('pic_approver_id', $user->id));
         }
         // Admin/manager: tidak ada filter tambahan → lihat semua
 
@@ -63,13 +62,13 @@ class P2hSessionController extends Controller
 
         $mapped = $sessions->through(function ($session) {
             return [
-                'id'          => $session->id,
-                'tanggal'     => $session->tanggal->format('Y-m-d'),
-                'no_unit'     => $session->unit->no_unit,
-                'jenis_unit'  => $session->unit->jenis_unit,
+                'id' => $session->id,
+                'tanggal' => $session->tanggal->format('Y-m-d'),
+                'no_unit' => $session->unit->no_unit,
+                'jenis_unit' => $session->unit->jenis_unit,
                 'slot_terisi' => $session->userEntries->count(),
-                'total_tl'    => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
-                'status'      => $session->status,
+                'total_tl' => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
+                'status' => $session->status,
             ];
         });
 
@@ -80,7 +79,7 @@ class P2hSessionController extends Controller
 
         return Inertia::render('p2h/index', [
             'sessions' => $mapped,
-            'filters'  => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'user_id']),
+            'filters' => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'user_id']),
             'allUsers' => $allUsers,
         ]);
     }
@@ -91,52 +90,67 @@ class P2hSessionController extends Controller
 
         $assignedUnits = $user->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit', 'units.department']);
 
-        if ($assignedUnits->isNotEmpty()) {
+        if ($user->isPrivileged()) {
+            $units = Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit', 'department']);
+        } elseif ($assignedUnits->isNotEmpty()) {
             $units = $assignedUnits;
-        } else {
+        } elseif ($user->site_id !== null || $user->jenis_unit !== null) {
             $units = Unit::active()
                 ->when($user->jenis_unit, fn ($q) => $q->where('jenis_unit', $user->jenis_unit))
-                ->when($user->isStaffOnly() && $user->site_id, fn ($q) => $q->where('site_id', $user->site_id))
+                ->when($user->site_id, fn ($q) => $q->where('site_id', $user->site_id))
                 ->orderBy('no_unit')
                 ->get(['id', 'no_unit', 'jenis_unit', 'department']);
+        } else {
+            $units = collect();
         }
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
         $picJabatanMap = ['Non Staff' => 'Staff', 'Staff' => 'Sr.Staff'];
-        $picJabatan    = $picJabatanMap[$user->jabatan] ?? null;
+        $picJabatan = $picJabatanMap[$user->jabatan] ?? null;
 
         $staffUsers = $picJabatan
-            ? User::where('jabatan', $picJabatan)->orderBy('name')->get(['id', 'name', 'jabatan', 'department'])
+            ? User::role('driver')
+                ->where('jabatan', $picJabatan)
+                ->when(! $user->isPrivileged() && $user->site_id, fn ($q) => $q->where('site_id', $user->site_id))
+                ->orderBy('name')
+                ->get(['id', 'name', 'jabatan', 'department'])
             : collect();
 
         return Inertia::render('p2h/form', [
-            'units'           => $units,
+            'units' => $units,
             'inspectionItems' => $inspectionItems,
-            'staffUsers'      => $staffUsers,
-            'sites'           => Site::active()->orderBy('name')->get(['id', 'name']),
+            'staffUsers' => $staffUsers,
+            'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function checkSlot(Request $request): JsonResponse
     {
-        $request->validate(['unit_id' => 'required|exists:units,id']);
+        $request->validate(['unit_id' => 'required|integer']);
+
+        $unit = Unit::findOrFail($request->integer('unit_id'));
+        abort_unless($request->user()->canAccessP2hUnit($unit), 403);
 
         $session = P2hSession::where('unit_id', $request->unit_id)
             ->whereDate('tanggal', today())
             ->first();
 
         $slotTerisi = $session ? $session->userEntries()->count() : 0;
+        $nextSlot = $session
+            ? ((int) $session->userEntries()->withTrashed()->max('user_slot')) + 1
+            : 1;
 
-        $lastEntry = P2hUserEntry::whereHas('session', fn($q) => $q->where('unit_id', $request->unit_id))
+        $lastEntry = P2hUserEntry::whereHas('session', fn ($q) => $q->where('unit_id', $request->unit_id))
+            ->operational()
             ->whereNotNull('hm_km_akhir')
             ->latest('id')
             ->first();
 
         return response()->json([
-            'session_id'       => $session?->id,
-            'slot_terisi'      => $slotTerisi,
-            'slot_tersedia'    => true,
-            'next_slot'        => $slotTerisi + 1,
+            'session_id' => $session?->id,
+            'slot_terisi' => $slotTerisi,
+            'slot_tersedia' => true,
+            'next_slot' => $nextSlot,
             'last_hm_km_akhir' => $lastEntry?->hm_km_akhir,
         ]);
     }
@@ -158,14 +172,16 @@ class P2hSessionController extends Controller
         if (! $session) {
             try {
                 $session = P2hSession::create([
-                    'unit_id'    => $data['unit_id'],
-                    'tanggal'    => today(),
-                    'status'     => 'open',
+                    'unit_id' => $data['unit_id'],
+                    'tanggal' => today(),
+                    'status' => 'open',
                     'created_by' => $user->id,
-                    'job_site'   => $data['job_site'] ?? null,
+                    'job_site' => $data['job_site'] ?? null,
                 ]);
-            } catch (\Illuminate\Database\QueryException $e) {
-                if ($e->getCode() !== '23000') throw $e;
+            } catch (QueryException $e) {
+                if ($e->getCode() !== '23000') {
+                    throw $e;
+                }
                 // Race condition: sesi sudah dibuat request lain, ambil termasuk soft-deleted
                 $session = P2hSession::withTrashed()
                     ->where('unit_id', $data['unit_id'])
@@ -180,162 +196,157 @@ class P2hSessionController extends Controller
             $session->update(['status' => 'open']);
         }
 
-        DB::transaction(function () use ($data, $user, $session, $request) {
+        $storedPaths = [];
+        $createdEntry = null;
+        $criticalTL = collect();
+        $inspectionItems = P2hInspectionItem::whereIn(
+            'id',
+            collect($data['answers'])->pluck('inspection_item_id')
+        )->get()->keyBy('id');
 
-            // Lock baris sesi agar penghitungan slot antar submit bersamaan tidak balapan
-            $lockedSession = P2hSession::whereKey($session->id)->lockForUpdate()->first();
-            $nextSlot = $lockedSession->userEntries()->count() + 1;
+        try {
+            DB::transaction(function () use ($data, $user, $session, $request, $inspectionItems, &$storedPaths, &$createdEntry, &$criticalTL) {
 
-            // Simpan signature
-            $parafUrl = null;
-            if (! empty($data['paraf'])) {
-                $base64  = preg_replace('/^data:image\/\w+;base64,/', '', $data['paraf']);
-                $imgData = base64_decode($base64, strict: true);
+                // Lock baris sesi agar penghitungan slot antar submit bersamaan tidak balapan
+                $lockedSession = P2hSession::whereKey($session->id)->lockForUpdate()->first();
+                $isFirstActiveEntry = ! $lockedSession->userEntries()->exists();
+                $nextSlot = ((int) $lockedSession->userEntries()->withTrashed()->max('user_slot')) + 1;
 
-                // Validasi bahwa data adalah gambar PNG/JPEG yang valid
-                if ($imgData === false) {
-                    throw new \InvalidArgumentException('Data tanda tangan tidak valid.');
+                // Simpan signature
+                $parafUrl = null;
+                if (! empty($data['paraf'])) {
+                    $parafUrl = SignatureImage::store($data['paraf']);
+                    $storedPaths[] = $parafUrl;
                 }
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mime  = $finfo->buffer($imgData);
-                if (! in_array($mime, ['image/png', 'image/jpeg', 'image/webp'], true)) {
-                    throw new \InvalidArgumentException('Format tanda tangan tidak didukung.');
-                }
 
-                $filename = 'signatures/' . Str::uuid() . '.png';
-                Storage::disk('public')->put($filename, $imgData);
-                $parafUrl = $filename;
-            }
+                // Tentukan apakah entry ini perlu approval: LV + user adalah Non Staff
+                $unit = Unit::withTrashed()->find($data['unit_id']);
+                $needsApproval = $unit?->jenis_unit === 'Light Vehicle' && $user->needsLvApproval();
 
-            // Tentukan apakah entry ini perlu approval: LV + user adalah Non Staff
-            $unit = Unit::withTrashed()->find($data['unit_id']);
-            $needsApproval = $unit?->jenis_unit === 'Light Vehicle' && $user->needsLvApproval();
-
-            // Buat user entry
-            $entry = P2hUserEntry::create([
-                'p2h_session_id'      => $session->id,
-                'user_id'             => $user->id,
-                'user_slot'           => $nextSlot,
-                'lokasi_kerja'        => $data['lokasi_kerja'] ?? null,
-                'km_awal'             => $data['km_awal'] ?? null,
-                'hm_km_akhir'         => $data['hm_km_akhir'] ?? null,
-                'shift'               => $data['shift'],
-                'paraf_url'           => $parafUrl,
-                'submitted_at'        => now(),
-                'kondisi_akhir'       => $data['kondisi_akhir'],
-                'justifikasi_kondisi' => $data['justifikasi_kondisi'] ?? null,
-                'approval_status'     => $needsApproval ? 'pending' : null,
-                'pic_approver_id'     => $needsApproval ? ($data['pic_approver_id']) : null,
-            ]);
-
-            // Simpan jawaban checklist
-            foreach ($data['answers'] as $answer) {
-                P2hChecklistAnswer::create([
-                    'p2h_user_entry_id'  => $entry->id,
-                    'inspection_item_id' => $answer['inspection_item_id'],
-                    'kondisi'            => $answer['kondisi'],
-                    'keterangan'         => $answer['keterangan'] ?? null,
+                // Buat user entry
+                $entry = P2hUserEntry::create([
+                    'p2h_session_id' => $session->id,
+                    'user_id' => $user->id,
+                    'user_slot' => $nextSlot,
+                    'lokasi_kerja' => $data['lokasi_kerja'] ?? null,
+                    'km_awal' => $data['km_awal'] ?? null,
+                    'hm_km_akhir' => $data['hm_km_akhir'] ?? null,
+                    'shift' => $data['shift'],
+                    'paraf_url' => $parafUrl,
+                    'submitted_at' => now(),
+                    'kondisi_akhir' => $data['kondisi_akhir'],
+                    'justifikasi_kondisi' => $data['justifikasi_kondisi'] ?? null,
+                    'approval_status' => $needsApproval ? 'pending' : null,
+                    'pic_approver_id' => $needsApproval ? ($data['pic_approver_id']) : null,
                 ]);
-            }
+                $createdEntry = $entry;
 
-            // Simpan service info (hanya untuk slot 1)
-            if ($nextSlot === 1 && ! empty($data['service_info'])) {
-                P2hServiceInfo::create(array_merge(
-                    ['p2h_session_id' => $session->id],
-                    $data['service_info']
-                ));
-            }
-
-            // Simpan fuel log
-            if (! empty($data['fuel_log'])) {
-                P2hFuelLog::create(array_merge(
-                    ['p2h_user_entry_id' => $entry->id],
-                    $data['fuel_log']
-                ));
-            }
-
-            // Simpan attachment utama form (wajib)
-            foreach ($request->file('attachments', []) as $file) {
-                $path = $file->store("p2h-attachments/{$entry->id}", 'public');
-                P2hAttachment::create([
-                    'p2h_user_entry_id'  => $entry->id,
-                    'inspection_item_id' => null,
-                    'path'               => $path,
-                ]);
-            }
-
-            // Simpan attachment per item checklist (opsional)
-            foreach ($request->file('item_attachments', []) as $itemId => $files) {
-                foreach ((array) $files as $file) {
-                    $path = $file->store("p2h-attachments/{$entry->id}/items/{$itemId}", 'public');
-                    P2hAttachment::create([
-                        'p2h_user_entry_id'  => $entry->id,
-                        'inspection_item_id' => (int) $itemId,
-                        'path'               => $path,
+                // Simpan jawaban checklist
+                foreach ($data['answers'] as $answer) {
+                    $item = $inspectionItems->get($answer['inspection_item_id']);
+                    P2hChecklistAnswer::create([
+                        'p2h_user_entry_id' => $entry->id,
+                        'inspection_item_id' => $answer['inspection_item_id'],
+                        'kondisi' => $answer['kondisi'],
+                        'keterangan' => $answer['keterangan'] ?? null,
+                        'item_nama' => $item?->nama_item,
+                        'item_section' => $item?->section,
+                        'item_kode_bahaya' => $item?->kode_bahaya,
+                        'item_urutan' => $item?->urutan,
                     ]);
                 }
-            }
 
-            // Hitung score entry ini dan update best_compliance_score di sesi
-            $totalAnswers = count($data['answers']);
-            $layakAnswers = collect($data['answers'])->where('kondisi', 'Layak')->count();
-            $entryScore   = $totalAnswers > 0 ? round(($layakAnswers / $totalAnswers) * 100, 1) : null;
-
-            if ($entryScore !== null) {
-                $current = $session->best_compliance_score;
-                if ($current === null || $entryScore > $current) {
-                    $session->update(['best_compliance_score' => $entryScore]);
+                // Refresh service info saat sesi aktif dimulai kembali setelah seluruh entry dihapus.
+                if ($isFirstActiveEntry && ! empty($data['service_info'])) {
+                    P2hServiceInfo::updateOrCreate(
+                        ['p2h_session_id' => $session->id],
+                        $data['service_info'],
+                    );
                 }
-            }
 
-            // Cek item kode_bahaya AA + Tidak Layak → notifikasi admin
-            $criticalTL = $entry->answers()
-                ->with('inspectionItem')
-                ->where('kondisi', 'Tidak Layak')
-                ->whereHas('inspectionItem', fn ($q) => $q->where('kode_bahaya', 'AA'))
-                ->get();
-
-            if ($criticalTL->isNotEmpty()) {
-                // Throttle: satu notifikasi per unit per hari, hindari spam saat banyak submit bersamaan
-                $alertKey = "critical_alert_sent_unit_{$session->unit_id}_" . today()->toDateString();
-                $alreadySent = cache()->get($alertKey, false);
-
-                if (! $alreadySent) {
-                    cache()->put($alertKey, true, now()->endOfDay());
-                    $admins = \App\Models\User::role('admin')->get();
-                    foreach ($admins as $admin) {
-                        $admin->notify(new CriticalItemAlert(
-                            session: $session,
-                            entry: $entry,
-                            criticalItems: $criticalTL,
-                        ));
-                    }
-                }
-            }
-
-            // Kirim notifikasi approval hanya ke PIC yang dipilih oleh submitter
-            if ($needsApproval && ! empty($data['pic_approver_id'])) {
-                $pic = \App\Models\User::find($data['pic_approver_id']);
-                if (! $pic) {
-                    // PIC tidak ditemukan — entry tetap 'pending' (bukan auto-valid), lempar ke admin
-                    $entry->update(['pic_approver_id' => null]);
-                    foreach (\App\Models\User::role('admin')->get() as $admin) {
-                        $admin->notify(new LvP2hApprovalRequest(
-                            session: $session,
-                            entry: $entry,
-                            submitter: $user,
-                        ));
-                    }
-                } else {
-                    $pic->notify(new LvP2hApprovalRequest(
-                        session: $session,
-                        entry: $entry,
-                        submitter: $user,
+                // Simpan fuel log
+                if (! empty($data['fuel_log'])) {
+                    P2hFuelLog::create(array_merge(
+                        ['p2h_user_entry_id' => $entry->id],
+                        $data['fuel_log']
                     ));
                 }
+
+                // Simpan attachment utama form (wajib)
+                foreach ($request->file('attachments', []) as $file) {
+                    $path = $file->store("p2h-attachments/{$entry->id}", 'local');
+
+                    if ($path === false) {
+                        throw new \RuntimeException('Lampiran P2H gagal disimpan.');
+                    }
+
+                    $storedPaths[] = $path;
+                    P2hAttachment::create([
+                        'p2h_user_entry_id' => $entry->id,
+                        'inspection_item_id' => null,
+                        'path' => $path,
+                    ]);
+                }
+
+                // Simpan attachment per item checklist (opsional)
+                foreach ($request->file('item_attachments', []) as $itemId => $files) {
+                    foreach ((array) $files as $file) {
+                        $path = $file->store("p2h-attachments/{$entry->id}/items/{$itemId}", 'local');
+
+                        if ($path === false) {
+                            throw new \RuntimeException('Lampiran checklist gagal disimpan.');
+                        }
+
+                        $storedPaths[] = $path;
+                        P2hAttachment::create([
+                            'p2h_user_entry_id' => $entry->id,
+                            'inspection_item_id' => (int) $itemId,
+                            'path' => $path,
+                        ]);
+                    }
+                }
+
+                // Scope perhitungan memastikan entry pending/rejected tidak ikut score.
+                $session->recomputeBestComplianceScore();
+
+                // Cek item kode_bahaya AA + Tidak Layak → notifikasi admin
+                $criticalTL = $entry->answers()
+                    ->with('inspectionItem')
+                    ->where('kondisi', 'Tidak Layak')
+                    ->whereHas('inspectionItem', fn ($q) => $q->where('kode_bahaya', 'AA'))
+                    ->get();
+
+            });
+        } catch (\Throwable $exception) {
+            P2hFileStorage::delete($storedPaths);
+
+            throw $exception;
+        }
+
+        try {
+            if ($criticalTL->isNotEmpty()) {
+                $alertKey = "critical_alert_sent_unit_{$session->unit_id}_".today()->toDateString();
+                if (cache()->add($alertKey, true, now()->endOfDay())) {
+                    foreach (User::role('admin')->get() as $admin) {
+                        $admin->notify(new CriticalItemAlert($session, $createdEntry, $criticalTL));
+                    }
+                }
             }
 
-        }, attempts: 3);
+            if ($createdEntry?->approval_status === 'pending' && $createdEntry->pic_approver_id) {
+                $pic = User::find($createdEntry->pic_approver_id);
+                $pic?->notify(new LvP2hApprovalRequest($session, $createdEntry, $user));
+                if ($pic) {
+                    cache()->forget("recent_notifications_user_{$pic->id}");
+                    cache()->forget("pending_approvals_user_{$pic->id}");
+                }
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('Notifikasi P2H gagal dikirim setelah data tersimpan.', [
+                'entry_id' => $createdEntry?->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         $session = P2hSession::where('unit_id', $data['unit_id'])
             ->whereDate('tanggal', today())
@@ -357,21 +368,21 @@ class P2hSessionController extends Controller
 
         if ($hasCritical) {
             Inertia::flash('toast', [
-                'type'        => 'error',
-                'message'     => 'P2H disimpan — Ada item Critical TL!',
+                'type' => 'error',
+                'message' => 'P2H disimpan — Ada item Critical TL!',
                 'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item kode bahaya AA (Stop) yang tidak layak. Admin telah diberitahu.",
             ]);
         } elseif ($isPendingApproval) {
             $picName = $latestEntry?->pic?->name ?? 'PIC yang dipilih';
             Inertia::flash('toast', [
-                'type'        => 'warning',
-                'message'     => 'P2H disubmit — Menunggu Verifikasi',
+                'type' => 'warning',
+                'message' => 'P2H disubmit — Menunggu Verifikasi',
                 'description' => "P2H unit {$session->unit->no_unit} menunggu persetujuan dari {$picName}.",
             ]);
         } else {
             Inertia::flash('toast', [
-                'type'        => 'success',
-                'message'     => 'P2H berhasil disimpan',
+                'type' => 'success',
+                'message' => 'P2H berhasil disimpan',
                 'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}.",
             ]);
         }
@@ -387,7 +398,7 @@ class P2hSessionController extends Controller
             ->causedBy(auth()->user())
             ->performedOn($session)
             ->withProperties([
-                'unit'    => $session->unit?->no_unit,
+                'unit' => $session->unit?->no_unit,
                 'tanggal' => $session->tanggal?->toDateString(),
             ])
             ->log("Menghapus sesi P2H unit {$session->unit?->no_unit} tanggal {$session->tanggal?->toDateString()}");
@@ -395,7 +406,7 @@ class P2hSessionController extends Controller
         $session->delete();
 
         Inertia::flash('toast', [
-            'type'    => 'success',
+            'type' => 'success',
             'message' => 'Sesi P2H berhasil dihapus',
         ]);
 
@@ -415,6 +426,8 @@ class P2hSessionController extends Controller
             if ($session->userEntries()->count() === 0) {
                 $session->delete();
                 $sessionDeleted = true;
+            } else {
+                $session->recomputeBestComplianceScore();
             }
         });
 
@@ -423,29 +436,30 @@ class P2hSessionController extends Controller
                 ->causedBy(auth()->user())
                 ->performedOn($entry)
                 ->withProperties([
-                    'unit'    => $session->unit?->no_unit,
+                    'unit' => $session->unit?->no_unit,
                     'tanggal' => $session->tanggal?->toDateString(),
-                    'shift'   => $entry->shift,
-                    'slot'    => $entry->user_slot,
+                    'shift' => $entry->shift,
+                    'slot' => $entry->user_slot,
                 ])
                 ->log("Menghapus entry P2H slot {$entry->user_slot} unit {$session->unit?->no_unit}");
         } catch (\Throwable $e) {
             Log::warning('Activity log gagal dicatat', [
                 'entry_id' => $entry->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
 
         if ($sessionDeleted) {
             Inertia::flash('toast', [
-                'type'    => 'success',
+                'type' => 'success',
                 'message' => 'Entry terakhir dihapus, sesi P2H dihapus otomatis',
             ]);
+
             return redirect()->route('p2h.index');
         }
 
         Inertia::flash('toast', [
-            'type'    => 'success',
+            'type' => 'success',
             'message' => 'Entry shift berhasil dihapus',
         ]);
 
@@ -456,8 +470,18 @@ class P2hSessionController extends Controller
     {
         $this->authorize('view', $session);
 
+        $entryScope = function ($query) use ($request) {
+            $user = $request->user();
+            if ($user->isStaffOnly()) {
+                $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('pic_approver_id', $user->id));
+            } elseif (! $user->isPrivileged()) {
+                $query->where('user_id', $user->id);
+            }
+        };
+
         $session->load([
             'unit',
+            'userEntries' => $entryScope,
             'userEntries.user',
             'userEntries.approver',
             'userEntries.pic',
@@ -467,10 +491,22 @@ class P2hSessionController extends Controller
             'serviceInfo',
         ]);
 
-        $inspectionItems = P2hInspectionItem::active()->ordered()->get();
+        $inspectionItems = HistoricalInspectionItems::fromEntries($session->userEntries);
+
+        $session->userEntries->each(function (P2hUserEntry $entry) {
+            if ($entry->paraf_url) {
+                $entry->setAttribute('paraf_url', route('p2h.signature', [$entry, 'submitter']));
+            }
+            if ($entry->approver_signature_url) {
+                $entry->setAttribute('approver_signature_url', route('p2h.signature', [$entry, 'approver']));
+            }
+            $entry->attachments->each(fn (P2hAttachment $attachment) => $attachment->setAttribute(
+                'path', route('p2h.attachment', $attachment)
+            ));
+        });
 
         return Inertia::render('p2h/show', [
-            'session'        => $session,
+            'session' => $session,
             'inspectionItems' => $inspectionItems,
         ]);
     }

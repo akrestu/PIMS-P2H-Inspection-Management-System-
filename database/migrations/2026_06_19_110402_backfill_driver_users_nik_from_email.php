@@ -26,7 +26,7 @@ return new class extends Migration
 
         foreach ($affected as $user) {
             DB::table('users')->where('id', $user->id)->update([
-                'nik' => 'FIXNIK-' . $user->id,
+                'nik' => 'FIXNIK-'.$user->id,
             ]);
         }
     }

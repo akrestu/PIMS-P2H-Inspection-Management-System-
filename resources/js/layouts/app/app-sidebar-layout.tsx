@@ -12,12 +12,14 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
-            <AppContent variant="sidebar" id="main-scroll-area" className="h-svh overflow-x-hidden overflow-y-auto">
+            <AppContent
+                variant="sidebar"
+                id="main-scroll-area"
+                className="h-svh overflow-x-hidden overflow-y-auto"
+            >
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {/* Add bottom padding on mobile so content isn't hidden behind the bottom nav bar */}
-                <div className="pb-36 md:pb-0">
-                    {children}
-                </div>
+                <div className="pb-36 md:pb-0">{children}</div>
             </AppContent>
             {/* Floating bottom nav — mobile only */}
             <MobileSidebarTrigger />

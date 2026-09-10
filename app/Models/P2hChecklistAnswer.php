@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class P2hChecklistAnswer extends Model
 {
-    protected $fillable = ['p2h_user_entry_id', 'inspection_item_id', 'kondisi', 'keterangan'];
+    protected $fillable = [
+        'p2h_user_entry_id', 'inspection_item_id', 'kondisi', 'keterangan',
+        'item_nama', 'item_section', 'item_kode_bahaya', 'item_urutan',
+    ];
 
     public function userEntry(): BelongsTo
     {

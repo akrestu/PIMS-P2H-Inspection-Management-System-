@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,8 +40,8 @@ class ProfileController extends Controller
         $request->user()->save();
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Profil berhasil diperbarui',
+            'type' => 'success',
+            'message' => 'Profil berhasil diperbarui',
             'description' => 'Perubahan data profil Anda telah disimpan.',
         ]);
 
@@ -54,10 +55,19 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        Auth::logout();
+        try {
+            $user->delete();
+        } catch (QueryException $exception) {
+            if ($exception->getCode() !== '23000') {
+                throw $exception;
+            }
 
-        $user->delete();
+            return back()->withErrors([
+                'password' => 'Akun tidak dapat dihapus karena memiliki histori P2H atau downtime. Hubungi administrator untuk menonaktifkan akun.',
+            ]);
+        }
 
+        Auth::guard('web')->forgetUser();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

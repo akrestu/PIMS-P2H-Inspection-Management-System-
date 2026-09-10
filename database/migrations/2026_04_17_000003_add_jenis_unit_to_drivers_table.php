@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::table('drivers', function (Blueprint $table) {
             $table->enum('jenis_unit', ['Bus', 'Light Vehicle'])
-                  ->nullable()
-                  ->default(null)
-                  ->after('department');
+                ->nullable()
+                ->default(null)
+                ->after('department');
         });
     }
 

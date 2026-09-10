@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Unit extends Model
 {
     use SoftDeletes;
+
     protected $fillable = ['no_unit', 'jenis_unit', 'no_lambung', 'status', 'department', 'site_id'];
 
     public function site(): BelongsTo
@@ -36,6 +37,11 @@ class Unit extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('status', 'active');
+        return $query
+            ->where($query->qualifyColumn('status'), 'active')
+            ->where(function (Builder $query) {
+                $query->whereNull($query->qualifyColumn('site_id'))
+                    ->orWhereHas('site', fn (Builder $site) => $site->where('status', 'active'));
+            });
     }
 }

@@ -1,1 +1,0 @@
-import{i as e}from"./utils-JIlG_aW7.js";var t=e(`ChevronDown`,[[`path`,{d:`m6 9 6 6 6-6`,key:`qrunsl`}]]);export{t};

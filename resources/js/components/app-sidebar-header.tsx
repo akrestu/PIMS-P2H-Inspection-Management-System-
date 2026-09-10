@@ -1,12 +1,17 @@
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, LogOut } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, LogOut } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { logout } from '@/routes';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
@@ -33,7 +38,7 @@ export function AppSidebarHeader({
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <SidebarTrigger className="-ml-1 hidden h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors md:flex" />
+                            <SidebarTrigger className="-ml-1 hidden h-8 w-8 rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:flex" />
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="text-xs">
                             Toggle sidebar{' '}
@@ -65,13 +70,16 @@ export function AppSidebarHeader({
                                 as="button"
                                 method="post"
                                 onClick={handleLogout}
-                                className="md:hidden inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
                             >
                                 <LogOut className="h-4 w-4" />
                                 <span className="sr-only">Logout</span>
                             </Link>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs md:hidden">
+                        <TooltipContent
+                            side="bottom"
+                            className="text-xs md:hidden"
+                        >
                             Logout
                         </TooltipContent>
                     </Tooltip>
@@ -94,7 +102,7 @@ export function AppSidebarHeader({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="relative h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                className="relative h-8 w-8 rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                                 asChild
                             >
                                 <Link href="/notifications">
@@ -102,9 +110,11 @@ export function AppSidebarHeader({
                                     {unreadCount > 0 && (
                                         <Badge
                                             variant="destructive"
-                                            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] font-bold leading-none"
+                                            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] leading-none font-bold"
                                         >
-                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                            {unreadCount > 9
+                                                ? '9+'
+                                                : unreadCount}
                                         </Badge>
                                     )}
                                     <span className="sr-only">Notifikasi</span>

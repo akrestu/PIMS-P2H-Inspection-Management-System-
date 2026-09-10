@@ -5,50 +5,65 @@ namespace App\Imports;
 use App\Models\Site;
 use App\Models\Unit;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class UnitsImport implements ToCollection, WithHeadingRow
 {
     private int $successCount = 0;
-    private int $updateCount  = 0;
-    private array $rowErrors  = [];
 
-    public function headingRow(): int { return 2; }
+    private int $updateCount = 0;
+
+    private array $rowErrors = [];
+
+    public function headingRow(): int
+    {
+        return 2;
+    }
 
     public function collection(Collection $rows): void
     {
         foreach ($rows as $index => $row) {
-            $rowNum    = $index + 3;
-            $noUnit    = trim($row['no_unit'] ?? '');
+            $rowNum = $index + 3;
+            $noUnit = trim($row['no_unit'] ?? '');
             $jenisUnit = trim($row['jenis_unit'] ?? '');
             $noLambung = trim($row['no_lambung'] ?? '') ?: null;
-            $status    = strtolower(trim($row['status'] ?? 'active'));
-            $dept      = trim($row['department'] ?? '') ?: null;
-            $siteName  = trim($row['site'] ?? '') ?: null;
+            $status = strtolower(trim($row['status'] ?? 'active'));
+            $dept = trim($row['department'] ?? '') ?: null;
+            $siteName = trim($row['site'] ?? '') ?: null;
 
             // Normalize jenis_unit — case-insensitive, terima LV/Bus/Light Vehicle
             $jenisUnitMap = ['bus' => 'Bus', 'light vehicle' => 'Light Vehicle', 'lv' => 'Light Vehicle'];
-            $jenisUnit    = $jenisUnitMap[strtolower($jenisUnit)] ?? $jenisUnit;
+            $jenisUnit = $jenisUnitMap[strtolower($jenisUnit)] ?? $jenisUnit;
 
             if (empty($noUnit)) {
                 $this->rowErrors[] = "Baris {$rowNum}: No. unit wajib diisi.";
+
                 continue;
             }
-            if (!in_array($jenisUnit, ['Bus', 'Light Vehicle'])) {
+            if (mb_strlen($noUnit) > 255 || ($noLambung && mb_strlen($noLambung) > 50) || ($dept && mb_strlen($dept) > 255)) {
+                $this->rowErrors[] = "Baris {$rowNum}: Panjang No. unit, No. lambung, atau department melebihi batas.";
+
+                continue;
+            }
+            if (! in_array($jenisUnit, ['Bus', 'Light Vehicle'])) {
                 $this->rowErrors[] = "Baris {$rowNum}: Jenis unit '{$jenisUnit}' tidak valid (Bus / Light Vehicle).";
+
                 continue;
             }
-            if (!in_array($status, ['active', 'inactive'])) {
+            if (! in_array($status, ['active', 'inactive'])) {
                 $this->rowErrors[] = "Baris {$rowNum}: Status '{$status}' tidak valid (active / inactive).";
+
                 continue;
             }
 
             $siteId = null;
             if ($siteName) {
-                $site = Site::where('name', $siteName)->first();
+                $site = Site::active()->where('name', $siteName)->first();
                 if (! $site) {
                     $this->rowErrors[] = "Baris {$rowNum}: Site '{$siteName}' tidak ditemukan.";
+
                     continue;
                 }
                 $siteId = $site->id;
@@ -66,35 +81,49 @@ class UnitsImport implements ToCollection, WithHeadingRow
                     $existing->update([
                         'jenis_unit' => $jenisUnit,
                         'no_lambung' => $noLambung,
-                        'status'     => $status,
+                        'status' => $status,
                         'department' => $dept,
-                        'site_id'    => $siteId,
+                        'site_id' => $siteId,
                     ]);
                     $this->updateCount++;
                 } catch (\Throwable $e) {
-                    $this->rowErrors[] = "Baris {$rowNum}: " . $e->getMessage();
+                    Log::warning('Import unit gagal.', ['row' => $rowNum, 'error' => $e->getMessage()]);
+                    $this->rowErrors[] = "Baris {$rowNum}: Data gagal disimpan.";
                 }
+
                 continue;
             }
 
             // CREATE — no_unit baru
             try {
                 Unit::create([
-                    'no_unit'    => $noUnit,
+                    'no_unit' => $noUnit,
                     'jenis_unit' => $jenisUnit,
                     'no_lambung' => $noLambung,
-                    'status'     => $status,
+                    'status' => $status,
                     'department' => $dept,
-                    'site_id'    => $siteId,
+                    'site_id' => $siteId,
                 ]);
                 $this->successCount++;
             } catch (\Throwable $e) {
-                $this->rowErrors[] = "Baris {$rowNum}: " . $e->getMessage();
+                Log::warning('Import unit gagal.', ['row' => $rowNum, 'error' => $e->getMessage()]);
+                $this->rowErrors[] = "Baris {$rowNum}: Data gagal disimpan.";
             }
         }
     }
 
-    public function successCount(): int { return $this->successCount; }
-    public function updateCount(): int  { return $this->updateCount; }
-    public function rowErrors(): array  { return $this->rowErrors; }
+    public function successCount(): int
+    {
+        return $this->successCount;
+    }
+
+    public function updateCount(): int
+    {
+        return $this->updateCount;
+    }
+
+    public function rowErrors(): array
+    {
+        return $this->rowErrors;
+    }
 }

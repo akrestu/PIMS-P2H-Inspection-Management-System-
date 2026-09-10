@@ -1,5 +1,5 @@
-import { useClipboard } from '@/hooks/use-clipboard';
 import { toast } from 'sonner';
+import { useClipboard } from '@/hooks/use-clipboard';
 
 export function useWhatsAppShare() {
     const [, copy] = useClipboard();
@@ -8,8 +8,13 @@ export function useWhatsAppShare() {
         const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
         const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
 
-        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        if (
+            !newWindow ||
+            newWindow.closed ||
+            typeof newWindow.closed === 'undefined'
+        ) {
             const success = await copy(message);
+
             if (success) {
                 toast.success('Pesan disalin ke clipboard', {
                     description: 'Tempelkan di WhatsApp secara manual.',

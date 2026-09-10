@@ -1,7 +1,19 @@
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Bell, CheckCircle, ClipboardCheck, XCircle } from 'lucide-react';
+import {
+    AlertTriangle,
+    Bell,
+    CheckCircle,
+    ClipboardCheck,
+    XCircle,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface RecentNotification {
     id: string;
@@ -22,26 +34,41 @@ interface NotificationsSharedProp {
 }
 
 function notifIcon(type?: string, status?: string) {
-    if (type === 'lv_approval_request') return <ClipboardCheck className="h-4 w-4 text-amber-500" />;
-    if (type === 'lv_approval_result') {
-        return status === 'approved'
-            ? <CheckCircle className="h-4 w-4 text-green-500" />
-            : <XCircle className="h-4 w-4 text-red-500" />;
+    if (type === 'lv_approval_request') {
+        return <ClipboardCheck className="h-4 w-4 text-amber-500" />;
     }
+
+    if (type === 'lv_approval_result') {
+        return status === 'approved' ? (
+            <CheckCircle className="h-4 w-4 text-green-500" />
+        ) : (
+            <XCircle className="h-4 w-4 text-red-500" />
+        );
+    }
+
     return <AlertTriangle className="h-4 w-4 text-red-500" />;
 }
 
 function notifLabel(data: RecentNotification['data']): string {
     const unit = data.no_unit ? `Unit ${data.no_unit}` : '';
-    if (data.type === 'lv_approval_request') return `Persetujuan LV — ${unit}`;
-    if (data.type === 'lv_approval_result') {
-        return data.status === 'approved' ? `Disetujui — ${unit}` : `Ditolak — ${unit}`;
+
+    if (data.type === 'lv_approval_request') {
+        return `Persetujuan LV — ${unit}`;
     }
+
+    if (data.type === 'lv_approval_result') {
+        return data.status === 'approved'
+            ? `Disetujui — ${unit}`
+            : `Ditolak — ${unit}`;
+    }
+
     return `Critical Alert — ${unit}`;
 }
 
 export default function NotificationBell() {
-    const { notifications } = usePage<{ notifications: NotificationsSharedProp }>().props;
+    const { notifications } = usePage<{
+        notifications: NotificationsSharedProp;
+    }>().props;
     const unreadCount = notifications?.unread_count ?? 0;
     const recent = notifications?.recent ?? [];
 
@@ -55,7 +82,7 @@ export default function NotificationBell() {
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold">
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                     )}
@@ -64,7 +91,7 @@ export default function NotificationBell() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
                 <div className="flex items-center justify-between px-3 py-2">
-                    <span className="font-semibold text-sm">Notifikasi</span>
+                    <span className="text-sm font-semibold">Notifikasi</span>
                     {unreadCount > 0 && (
                         <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600 dark:bg-red-900 dark:text-red-200">
                             {unreadCount} belum dibaca
@@ -82,15 +109,22 @@ export default function NotificationBell() {
                                 onClick={() => handleNotifClick(notif.id)}
                             >
                                 <div className="mt-0.5 shrink-0">
-                                    {notifIcon(notif.data.type, notif.data.status)}
+                                    {notifIcon(
+                                        notif.data.type,
+                                        notif.data.status,
+                                    )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className={`truncate text-xs font-medium ${!notif.read_at ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                    <p
+                                        className={`truncate text-xs font-medium ${!notif.read_at ? 'text-foreground' : 'text-muted-foreground'}`}
+                                    >
                                         {notifLabel(notif.data)}
                                     </p>
-                                    {(notif.data.driver_name || notif.data.submitter) && (
+                                    {(notif.data.driver_name ||
+                                        notif.data.submitter) && (
                                         <p className="truncate text-xs text-muted-foreground">
-                                            {notif.data.driver_name ?? notif.data.submitter}
+                                            {notif.data.driver_name ??
+                                                notif.data.submitter}
                                         </p>
                                     )}
                                 </div>
@@ -108,7 +142,10 @@ export default function NotificationBell() {
                 )}
 
                 <DropdownMenuItem asChild>
-                    <Link href="/notifications" className="w-full cursor-pointer text-xs text-muted-foreground justify-center">
+                    <Link
+                        href="/notifications"
+                        className="w-full cursor-pointer justify-center text-xs text-muted-foreground"
+                    >
                         Lihat semua notifikasi
                     </Link>
                 </DropdownMenuItem>

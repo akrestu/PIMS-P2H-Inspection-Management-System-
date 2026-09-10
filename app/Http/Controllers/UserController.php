@@ -14,11 +14,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UserController extends Controller
@@ -29,50 +29,60 @@ class UserController extends Controller
             ->when($request->search, function ($q) use ($request) {
                 $q->where(function ($inner) use ($request) {
                     $inner->where('name', 'like', "%{$request->search}%")
-                          ->orWhere('nik', 'like', "%{$request->search}%")
-                          ->orWhere('email', 'like', "%{$request->search}%")
-                          ->orWhere('department', 'like', "%{$request->search}%");
+                        ->orWhere('nik', 'like', "%{$request->search}%")
+                        ->orWhere('email', 'like', "%{$request->search}%")
+                        ->orWhere('department', 'like', "%{$request->search}%");
                 });
             })
             ->when($request->role, fn ($q) => $q->role($request->role))
             ->when($request->jabatan, fn ($q) => $q->where('jabatan', $request->jabatan))
             ->latest();
 
-        $perPage = $request->per_page === 'all' ? $query->count() : (int) ($request->per_page ?? 15);
-        $perPage = ($request->per_page === 'all' || in_array($perPage, [15, 50, 100])) ? max(1, $perPage) : 15;
+        $perPage = (int) ($request->per_page ?? 15);
+        $perPage = in_array($perPage, [15, 50, 100], true) ? $perPage : 15;
         $users = $query->paginate($perPage)->withQueryString();
 
         $stats = [
-            'total'   => User::count(),
-            'admin'   => User::role('admin')->count(),
+            'total' => User::count(),
+            'admin' => User::role('admin')->count(),
             'manager' => User::role('manager')->count(),
-            'driver'  => User::role('driver')->count(),
+            'driver' => User::role('driver')->count(),
         ];
 
         return Inertia::render('users/index', [
-            'users'   => $users,
+            'users' => $users,
             'filters' => $request->only(['search', 'role', 'jabatan', 'per_page']),
-            'stats'   => $stats,
-            'units'   => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit']),
-            'sites'   => Site::active()->orderBy('name')->get(['id', 'name']),
+            'stats' => $stats,
+            'units' => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit', 'site_id']),
+            'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'                => 'required|string|max:255',
-            'nik'                 => 'required|string|max:20|unique:users,nik',
-            'email'               => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->whereNotNull('email')],
-            'password'            => ['required', Password::defaults()],
-            'role'                => 'required|in:admin,manager,driver',
-            'jabatan'             => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
-            'department'          => 'required_unless:role,admin|nullable|string|max:255',
-            'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
-            'site_id'             => ['nullable', 'integer', Rule::exists('sites', 'id')->whereNull('deleted_at')],
-            'assigned_unit_ids'   => 'nullable|array',
-            'assigned_unit_ids.*' => 'integer|exists:units,id',
+            'name' => 'required|string|max:255',
+            'nik' => 'required|string|max:20|unique:users,nik',
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->whereNotNull('email')],
+            'password' => ['required', Password::defaults()],
+            'role' => 'required|in:admin,manager,driver',
+            'jabatan' => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
+            'department' => 'required_unless:role,admin|nullable|string|max:255',
+            'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
+            'site_id' => ['nullable', 'integer', Rule::exists('sites', 'id')->where('status', 'active')->whereNull('deleted_at')],
+            'assigned_unit_ids' => 'nullable|array',
+            'assigned_unit_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('units', 'id')->where('status', 'active')->whereNull('deleted_at'),
+            ],
         ]);
+
+        if (! $this->assignedUnitsAreCompatible($validated)) {
+            return back()->withErrors([
+                'assigned_unit_ids' => 'Unit yang dipilih harus aktif dan sesuai dengan site serta kategori unit user.',
+            ]);
+        }
 
         if ($validated['role'] === 'admin' && ! auth()->user()->hasRole('admin')) {
             return back()->withErrors(['role' => 'Tidak memiliki izin untuk membuat akun admin.']);
@@ -80,14 +90,14 @@ class UserController extends Controller
 
         DB::transaction(function () use ($validated) {
             $user = User::create([
-                'name'       => $validated['name'],
-                'nik'        => $validated['nik'],
-                'email'      => $validated['email'] ?? null,
-                'password'   => Hash::make($validated['password']),
-                'jabatan'    => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
+                'name' => $validated['name'],
+                'nik' => $validated['nik'],
+                'email' => $validated['email'] ?? null,
+                'password' => Hash::make($validated['password']),
+                'jabatan' => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
                 'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
                 'jenis_unit' => $validated['jenis_unit'] ?? null,
-                'site_id'    => $validated['site_id'] ?? null,
+                'site_id' => $validated['site_id'] ?? null,
             ]);
             $user->assignRole($validated['role']);
 
@@ -99,17 +109,17 @@ class UserController extends Controller
                 ->causedBy(auth()->user())
                 ->performedOn($user)
                 ->withProperties([
-                    'role'       => $validated['role'],
-                    'jabatan'    => $user->jabatan,
+                    'role' => $validated['role'],
+                    'jabatan' => $user->jabatan,
                     'department' => $user->department,
-                    'nik'        => $validated['nik'],
+                    'nik' => $validated['nik'],
                 ])
                 ->log("Membuat user baru: {$user->name} ({$validated['role']})");
         });
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'User berhasil ditambahkan',
+            'type' => 'success',
+            'message' => 'User berhasil ditambahkan',
             'description' => "Akun {$validated['name']} berhasil dibuat.",
         ]);
 
@@ -119,18 +129,28 @@ class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'name'                => 'required|string|max:255',
-            'nik'                 => ['required', 'string', 'max:20', Rule::unique('users', 'nik')->ignore($user->id)],
-            'email'               => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)->whereNotNull('email')],
-            'role'                => 'required|in:admin,manager,driver',
-            'password'            => ['nullable', Password::defaults()],
-            'jabatan'             => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
-            'department'          => 'required_unless:role,admin|nullable|string|max:255',
-            'jenis_unit'          => 'nullable|in:Bus,Light Vehicle',
-            'site_id'             => ['nullable', 'integer', Rule::exists('sites', 'id')->whereNull('deleted_at')],
-            'assigned_unit_ids'   => 'nullable|array',
-            'assigned_unit_ids.*' => 'integer|exists:units,id',
+            'name' => 'required|string|max:255',
+            'nik' => ['required', 'string', 'max:20', Rule::unique('users', 'nik')->ignore($user->id)],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)->whereNotNull('email')],
+            'role' => 'required|in:admin,manager,driver',
+            'password' => ['nullable', Password::defaults()],
+            'jabatan' => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
+            'department' => 'required_unless:role,admin|nullable|string|max:255',
+            'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
+            'site_id' => ['nullable', 'integer', Rule::exists('sites', 'id')->where('status', 'active')->whereNull('deleted_at')],
+            'assigned_unit_ids' => 'nullable|array',
+            'assigned_unit_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('units', 'id')->where('status', 'active')->whereNull('deleted_at'),
+            ],
         ]);
+
+        if (! $this->assignedUnitsAreCompatible($validated)) {
+            return back()->withErrors([
+                'assigned_unit_ids' => 'Unit yang dipilih harus aktif dan sesuai dengan site serta kategori unit user.',
+            ]);
+        }
 
         if ($user->id === auth()->id() && $validated['role'] !== $user->getRoleNames()->first()) {
             return back()->withErrors(['role' => 'Tidak dapat mengubah role akun sendiri.']);
@@ -143,13 +163,13 @@ class UserController extends Controller
 
         DB::transaction(function () use ($validated, $user) {
             $userData = [
-                'name'       => $validated['name'],
-                'nik'        => $validated['nik'],
-                'email'      => $validated['email'] ?? null,
-                'jabatan'    => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
+                'name' => $validated['name'],
+                'nik' => $validated['nik'],
+                'email' => $validated['email'] ?? null,
+                'jabatan' => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
                 'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
                 'jenis_unit' => $validated['jenis_unit'] ?? null,
-                'site_id'    => $validated['site_id'] ?? null,
+                'site_id' => $validated['site_id'] ?? null,
             ];
             if (! empty($validated['password'])) {
                 $userData['password'] = Hash::make($validated['password']);
@@ -170,17 +190,17 @@ class UserController extends Controller
                 ->causedBy(auth()->user())
                 ->performedOn($user)
                 ->withProperties([
-                    'role_lama'  => $oldRole,
-                    'role_baru'  => $validated['role'],
-                    'jabatan'    => $user->jabatan,
+                    'role_lama' => $oldRole,
+                    'role_baru' => $validated['role'],
+                    'jabatan' => $user->jabatan,
                     'department' => $user->department,
                 ])
-                ->log("Memperbarui user: {$user->name}" . ($oldRole !== $validated['role'] ? " (role: {$oldRole} → {$validated['role']})" : ''));
+                ->log("Memperbarui user: {$user->name}".($oldRole !== $validated['role'] ? " (role: {$oldRole} → {$validated['role']})" : ''));
         });
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Data user diperbarui',
+            'type' => 'success',
+            'message' => 'Data user diperbarui',
             'description' => "Data {$validated['name']} berhasil diperbarui.",
         ]);
 
@@ -190,7 +210,7 @@ class UserController extends Controller
     public function destroyBatch(Request $request): RedirectResponse
     {
         $request->validate([
-            'ids'   => 'required|array|min:1',
+            'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:users,id',
         ]);
 
@@ -204,11 +224,13 @@ class UserController extends Controller
                 $user = User::find($id);
                 if (! $user) {
                     $skipped++;
+
                     continue;
                 }
                 // Lewati akun sendiri atau admin (jika bukan admin)
                 if ($user->id == $currentUser->id || (! $currentUser->hasRole('admin') && $user->hasRole('admin'))) {
                     $skipped++;
+
                     continue;
                 }
                 try {
@@ -229,14 +251,20 @@ class UserController extends Controller
         });
 
         $parts = [];
-        if ($deleted > 0) $parts[] = "{$deleted} user berhasil dihapus.";
-        if ($skipped > 0) $parts[] = "{$skipped} dilewati (akun sendiri / admin).";
-        if (count($blocked) > 0) $parts[] = count($blocked) . ' tidak dapat dihapus karena memiliki data P2H/downtime: ' . implode(', ', $blocked) . '.';
+        if ($deleted > 0) {
+            $parts[] = "{$deleted} user berhasil dihapus.";
+        }
+        if ($skipped > 0) {
+            $parts[] = "{$skipped} dilewati (akun sendiri / admin).";
+        }
+        if (count($blocked) > 0) {
+            $parts[] = count($blocked).' tidak dapat dihapus karena memiliki data P2H/downtime: '.implode(', ', $blocked).'.';
+        }
 
         Inertia::flash('toast', [
-            'type'        => count($blocked) > 0 ? 'warning' : 'success',
-            'message'     => $deleted > 0 ? "{$deleted} user berhasil dihapus" : 'Tidak ada user yang dihapus',
-            'description' => implode(' ', array_filter($parts, fn($p) => $p !== "{$deleted} user berhasil dihapus.")),
+            'type' => count($blocked) > 0 ? 'warning' : 'success',
+            'message' => $deleted > 0 ? "{$deleted} user berhasil dihapus" : 'Tidak ada user yang dihapus',
+            'description' => implode(' ', array_filter($parts, fn ($p) => $p !== "{$deleted} user berhasil dihapus.")),
         ]);
 
         return redirect()->route('users.index');
@@ -262,18 +290,19 @@ class UserController extends Controller
         } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 Inertia::flash('toast', [
-                    'type'        => 'error',
-                    'message'     => 'User tidak dapat dihapus',
+                    'type' => 'error',
+                    'message' => 'User tidak dapat dihapus',
                     'description' => "Akun {$user->name} memiliki data P2H atau downtime yang terkait. Hapus atau arsipkan data tersebut terlebih dahulu.",
                 ]);
+
                 return redirect()->route('users.index');
             }
             throw $e;
         }
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'User berhasil dihapus',
+            'type' => 'success',
+            'message' => 'User berhasil dihapus',
             'description' => "Akun {$user->name} dihapus dari sistem.",
         ]);
 
@@ -283,12 +312,13 @@ class UserController extends Controller
     public function export(): BinaryFileResponse
     {
         $users = User::with(['roles', 'units', 'site'])->latest()->get();
-        return Excel::download(new UsersExport($users), 'users_' . now()->format('Ymd_His') . '.xlsx');
+
+        return Excel::download(new UsersExport($users), 'users_'.now()->format('Ymd_His').'.xlsx');
     }
 
     public function importTemplate(): BinaryFileResponse
     {
-        return Excel::download(new UsersImportTemplateExport(), 'template_import_users.xlsx');
+        return Excel::download(new UsersImportTemplateExport, 'template_import_users.xlsx');
     }
 
     public function import(Request $request): RedirectResponse
@@ -297,40 +327,59 @@ class UserController extends Controller
             'file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
         ]);
 
-        $import = new UsersImport();
+        $import = new UsersImport($request->user());
         Excel::import($import, $request->file('file'));
 
         $success = $import->successCount();
         $updated = $import->updateCount();
-        $errors  = $import->rowErrors();
+        $errors = $import->rowErrors();
 
         $parts = [];
-        if ($success > 0) $parts[] = "{$success} user baru ditambahkan";
-        if ($updated > 0) $parts[] = "{$updated} user diperbarui";
+        if ($success > 0) {
+            $parts[] = "{$success} user baru ditambahkan";
+        }
+        if ($updated > 0) {
+            $parts[] = "{$updated} user diperbarui";
+        }
         $summary = implode(', ', $parts) ?: '0 perubahan';
 
         if (count($errors) > 0) {
             Log::warning('Import user selesai dengan error', [
-                'user_id'     => auth()->id(),
-                'success'     => $success,
-                'updated'     => $updated,
+                'user_id' => auth()->id(),
+                'success' => $success,
+                'updated' => $updated,
                 'error_count' => count($errors),
-                'errors'      => $errors,
+                'errors' => $errors,
             ]);
 
             Inertia::flash('toast', [
-                'type'        => 'warning',
-                'message'     => "Import selesai: {$summary}, " . count($errors) . ' baris gagal.',
-                'description' => implode(' | ', array_slice($errors, 0, 3)) . (count($errors) > 3 ? '...' : ''),
+                'type' => 'warning',
+                'message' => "Import selesai: {$summary}, ".count($errors).' baris gagal.',
+                'description' => implode(' | ', array_slice($errors, 0, 3)).(count($errors) > 3 ? '...' : ''),
             ]);
         } else {
             Inertia::flash('toast', [
-                'type'        => 'success',
-                'message'     => 'Import berhasil',
-                'description' => $summary . '.',
+                'type' => 'success',
+                'message' => 'Import berhasil',
+                'description' => $summary.'.',
             ]);
         }
 
         return redirect()->route('users.index');
+    }
+
+    private function assignedUnitsAreCompatible(array $data): bool
+    {
+        $unitIds = collect($data['assigned_unit_ids'] ?? [])->map(fn ($id) => (int) $id)->unique();
+
+        if (($data['role'] ?? null) !== 'driver' || $unitIds->isEmpty()) {
+            return true;
+        }
+
+        return Unit::active()
+            ->whereIn('id', $unitIds)
+            ->when($data['site_id'] ?? null, fn ($query, $siteId) => $query->where('site_id', $siteId))
+            ->when($data['jenis_unit'] ?? null, fn ($query, $jenisUnit) => $query->where('jenis_unit', $jenisUnit))
+            ->count() === $unitIds->count();
     }
 }

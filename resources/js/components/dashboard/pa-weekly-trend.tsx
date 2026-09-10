@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
 import {
     Bar,
@@ -10,6 +9,13 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 
 interface PaPoint {
     label: string;
@@ -23,12 +29,24 @@ interface CustomTooltipProps {
 }
 
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-    if (!active || !payload?.length) return null;
+    if (!active || !payload?.length) {
+        return null;
+    }
+
     const pa = payload[0].value;
+
     return (
-        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
+        <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-md">
             <p className="font-semibold text-foreground">{label}</p>
-            <p className={pa >= 80 ? 'text-emerald-600' : pa >= 60 ? 'text-amber-600' : 'text-red-600'}>
+            <p
+                className={
+                    pa >= 80
+                        ? 'text-emerald-600'
+                        : pa >= 60
+                          ? 'text-amber-600'
+                          : 'text-red-600'
+                }
+            >
                 PA: <strong>{pa}%</strong>
             </p>
         </div>
@@ -37,8 +55,8 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
     const latest = data[data.length - 1]?.pa ?? 0;
-    const prev   = data[data.length - 2]?.pa ?? latest;
-    const trend  = latest - prev;
+    const prev = data[data.length - 2]?.pa ?? latest;
+    const trend = latest - prev;
 
     return (
         <Card className="h-full">
@@ -50,16 +68,26 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
                 <CardDescription className="flex items-center gap-2 text-xs">
                     <span>Physical Availability 4 minggu terakhir</span>
                     {trend !== 0 && (
-                        <span className={`font-semibold ${trend > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {trend > 0 ? '▲' : '▼'} {Math.abs(trend).toFixed(1)}%
+                        <span
+                            className={`font-semibold ${trend > 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                        >
+                            {trend > 0 ? '▲' : '▼'} {Math.abs(trend).toFixed(1)}
+                            %
                         </span>
                     )}
                 </CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
                 <ResponsiveContainer width="100%" height={180}>
-                    <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
+                    <BarChart
+                        data={data}
+                        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                    >
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            className="stroke-border"
+                        />
                         <XAxis
                             dataKey="label"
                             tick={{ fontSize: 10 }}
@@ -75,7 +103,10 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
                             tickFormatter={(v) => `${v}%`}
                             className="fill-muted-foreground"
                         />
-                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} />
+                        <Tooltip
+                            content={<CustomTooltip />}
+                            cursor={{ fill: 'hsl(var(--muted))' }}
+                        />
                         <Bar dataKey="pa" radius={[4, 4, 0, 0]} maxBarSize={48}>
                             {data.map((entry, idx) => (
                                 <Cell
@@ -84,8 +115,8 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
                                         entry.pa >= 80
                                             ? 'hsl(142 76% 36%)'
                                             : entry.pa >= 60
-                                            ? 'hsl(38 92% 50%)'
-                                            : 'hsl(0 84% 60%)'
+                                              ? 'hsl(38 92% 50%)'
+                                              : 'hsl(0 84% 60%)'
                                     }
                                 />
                             ))}
@@ -96,15 +127,24 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
                 {/* Legend */}
                 <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(142 76% 36%)' }} />
+                        <span
+                            className="h-2.5 w-2.5 rounded-sm"
+                            style={{ background: 'hsl(142 76% 36%)' }}
+                        />
                         ≥ 80% (Baik)
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(38 92% 50%)' }} />
+                        <span
+                            className="h-2.5 w-2.5 rounded-sm"
+                            style={{ background: 'hsl(38 92% 50%)' }}
+                        />
                         60–79% (Cukup)
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(0 84% 60%)' }} />
+                        <span
+                            className="h-2.5 w-2.5 rounded-sm"
+                            style={{ background: 'hsl(0 84% 60%)' }}
+                        />
                         &lt; 60% (Rendah)
                     </span>
                 </div>

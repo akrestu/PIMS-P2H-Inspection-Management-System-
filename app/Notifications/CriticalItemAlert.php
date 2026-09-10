@@ -26,13 +26,13 @@ class CriticalItemAlert extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'type'           => 'critical_alert',
-            'session_id'     => $this->session->id,
-            'no_unit'        => $this->session->unit->no_unit,
-            'driver_name'    => $this->entry->user->name,
-            'submitted_at'   => $this->entry->submitted_at?->toISOString(),
+            'type' => 'critical_alert',
+            'session_id' => $this->session->id,
+            'no_unit' => $this->session->unit->no_unit,
+            'driver_name' => $this->entry->user->name,
+            'submitted_at' => $this->entry->submitted_at?->toISOString(),
             'critical_items' => $this->criticalItems->map(fn ($answer) => [
-                'nama_item'  => $answer->inspectionItem->nama_item,
+                'nama_item' => $answer->inspectionItem->nama_item,
                 'keterangan' => $answer->keterangan,
             ])->toArray(),
         ];

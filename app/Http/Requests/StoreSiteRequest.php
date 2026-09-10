@@ -17,7 +17,7 @@ class StoreSiteRequest extends FormRequest
         $siteId = $this->route('site')?->id;
 
         return [
-            'name'   => ['required', 'string', 'max:255', Rule::unique('sites', 'name')->ignore($siteId)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('sites', 'name')->ignore($siteId)],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
     }

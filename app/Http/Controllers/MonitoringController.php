@@ -23,26 +23,26 @@ class MonitoringController extends Controller
     {
         $request->validate([
             'date_from' => 'nullable|date_format:Y-m-d',
-            'date_to'   => 'nullable|date_format:Y-m-d',
-            'unit_id'   => 'nullable|integer|exists:units,id',
-            'jenis_unit'=> 'nullable|in:Bus,Light Vehicle',
+            'date_to' => 'nullable|date_format:Y-m-d',
+            'unit_id' => 'nullable|integer|exists:units,id',
+            'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
         ]);
 
         $dateFrom = $request->input('date_from', now()->startOfMonth()->toDateString());
-        $dateTo   = $request->input('date_to', now()->toDateString());
-        $unitId   = $request->input('unit_id');
-        $jenis    = $request->input('jenis_unit');
+        $dateTo = $request->input('date_to', now()->toDateString());
+        $unitId = $request->input('unit_id');
+        $jenis = $request->input('jenis_unit');
 
         // Clamp max range ke 90 hari
         $from = Carbon::parse($dateFrom);
-        $to   = Carbon::parse($dateTo);
+        $to = Carbon::parse($dateTo);
         if ($from->gt($to)) {
             [$from, $to] = [$to, $from];
             $dateFrom = $from->toDateString();
-            $dateTo   = $to->toDateString();
+            $dateTo = $to->toDateString();
         }
         if ($from->diffInDays($to) > 90) {
-            $from     = $to->copy()->subDays(89);
+            $from = $to->copy()->subDays(89);
             $dateFrom = $from->toDateString();
         }
 
@@ -62,13 +62,18 @@ class MonitoringController extends Controller
         // Staff/Sr.Staff murni hanya lihat LV dept mereka
         if ($authUser->isStaffOnly()) {
             $unitQuery->where('jenis_unit', 'Light Vehicle')
-                      ->where('department', $authUser->department)
-                      ->where('site_id', $authUser->site_id);
+                ->where('department', $authUser->department)
+                ->where('site_id', $authUser->site_id);
         }
         $units = $unitQuery->get();
 
         // ── Semua sesi dalam range ────────────────────────────────────────────
-        $sessions = P2hSession::with(['unit', 'userEntries.answers'])
+        $sessions = P2hSession::with([
+            'unit',
+            'userEntries' => fn ($query) => $query->operational(),
+            'userEntries.answers',
+        ])
+            ->whereHas('userEntries', fn ($query) => $query->operational())
             ->whereBetween('tanggal', [$dateFrom, $dateTo])
             ->when($unitId, fn ($q) => $q->where('unit_id', $unitId))
             ->when($jenis, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $jenis)))
@@ -113,8 +118,8 @@ class MonitoringController extends Controller
         foreach ($allDowntimeLogs as $uid => $logs) {
             foreach ($logs as $log) {
                 foreach ($dates as $date) {
-                    $dayStart = $date . ' 00:00:00';
-                    $dayEnd   = $date . ' 23:59:59';
+                    $dayStart = $date.' 00:00:00';
+                    $dayEnd = $date.' 23:59:59';
                     $overlaps = $log->jam_mulai->toDateTimeString() <= $dayEnd
                         && ($log->jam_selesai === null || $log->jam_selesai->toDateTimeString() >= $dayStart);
                     if ($overlaps && ! isset($downtimeByDate[$uid][$date])) {
@@ -132,7 +137,7 @@ class MonitoringController extends Controller
             $sessionsByDate = $unitSessions->groupBy(fn ($s) => $s->tanggal->toDateString());
 
             $totalDaysWithSession = $sessionsByDate->count();
-            $totalDays            = $from->diffInDays($to) + 1;
+            $totalDays = $from->diffInDays($to) + 1;
 
             // ── Daily status + compliance score ──────────────────────────────
             $dailyData = $sessionsByDate->map(function (Collection $daySessions) {
@@ -148,6 +153,7 @@ class MonitoringController extends Controller
                             }
                         }
                     }
+
                     return $totalAnswers > 0 ? round(($layakAnswers / $totalAnswers) * 100, 1) : null;
                 })->filter()->max();
 
@@ -168,7 +174,7 @@ class MonitoringController extends Controller
                 // 3. Fallback ke compliance score
                 if ($kondisiEntries->contains('BD')) {
                     $effectiveStatus = 'bd';
-                } elseif ($kondisiEntries->isNotEmpty() && !$kondisiEntries->contains('BD')) {
+                } elseif ($kondisiEntries->isNotEmpty() && ! $kondisiEntries->contains('BD')) {
                     $effectiveStatus = 'operation';
                 } elseif ($bestScore !== null) {
                     $effectiveStatus = $bestScore >= self::PA_THRESHOLD ? 'operation' : 'bd';
@@ -179,7 +185,7 @@ class MonitoringController extends Controller
                 return [
                     'compliance_score' => $bestScore,
                     'effective_status' => $effectiveStatus,
-                    'has_override'     => $hasOverride,
+                    'has_override' => $hasOverride,
                 ];
             });
 
@@ -197,17 +203,21 @@ class MonitoringController extends Controller
                 : null;
 
             // ── PA Aktual: W / (W + S) ────────────────────────────────────────
-            $workingHours  = $this->calculateWorkingHours($unitSessions);
-            $downtimeHours = $this->sumDowntimeHours($downtimeLogs->get($unit->id, collect()));
+            $workingHours = $this->calculateWorkingHours($unitSessions);
+            $downtimeHours = $this->sumDowntimeHours(
+                $downtimeLogs->get($unit->id, collect()),
+                $dateFrom,
+                $dateTo,
+            );
             $actualPa = null;
             if (($workingHours + $downtimeHours) > 0) {
-                $raw      = $workingHours / ($workingHours + $downtimeHours) * 100;
+                $raw = $workingHours / ($workingHours + $downtimeHours) * 100;
                 $actualPa = round(min(100.0, max(0.0, $raw)), 1);
             }
 
             // ── Status saat ini (dari sesi terbaru, fallback ke downtime) ────────
             $latestSession = $unitSessions->sortByDesc('tanggal')->first();
-            $currentScore  = null;
+            $currentScore = null;
             $currentStatus = 'no_data';
 
             if ($latestSession) {
@@ -230,7 +240,7 @@ class MonitoringController extends Controller
                         }
                     }
                     if ($totalAnswers > 0) {
-                        $currentScore  = round(($layakAnswers / $totalAnswers) * 100, 1);
+                        $currentScore = round(($layakAnswers / $totalAnswers) * 100, 1);
                         $currentStatus = $currentScore >= self::PA_THRESHOLD ? 'operation' : 'bd';
                     }
                 }
@@ -249,17 +259,17 @@ class MonitoringController extends Controller
             // ── Timeline sparkline ────────────────────────────────────────────
             $timeline = collect();
             foreach ($dates as $dateStr) {
-                $day       = $dailyData->get($dateStr);
-                $dtTipe    = $downtimeByDate[$unit->id][$dateStr] ?? null;
+                $day = $dailyData->get($dateStr);
+                $dtTipe = $downtimeByDate[$unit->id][$dateStr] ?? null;
 
                 // Status: P2H ada → ikut P2H; tidak ada P2H tapi ada downtime → bd
                 $status = $day ? $day['effective_status'] : ($dtTipe ? 'bd' : 'no_data');
 
                 $timeline->push([
-                    'date'          => $dateStr,
-                    'score'         => $day['compliance_score'] ?? null,
-                    'status'        => $status,
-                    'has_override'  => $day['has_override'] ?? false,
+                    'date' => $dateStr,
+                    'score' => $day['compliance_score'] ?? null,
+                    'status' => $status,
+                    'has_override' => $day['has_override'] ?? false,
                     'downtime_tipe' => $day ? null : $dtTipe, // hanya tampilkan jika tidak ada P2H
                 ]);
             }
@@ -273,31 +283,31 @@ class MonitoringController extends Controller
             }
 
             return [
-                'id'             => $unit->id,
-                'no_unit'        => $unit->no_unit,
-                'jenis_unit'     => $unit->jenis_unit,
-                'no_lambung'     => $unit->no_lambung,
-                'department'     => $unit->department,
-                'compliance_pa'  => $compliancePa,
-                'actual_pa'      => $actualPa,
-                'working_hours'  => round($workingHours, 1),
+                'id' => $unit->id,
+                'no_unit' => $unit->no_unit,
+                'jenis_unit' => $unit->jenis_unit,
+                'no_lambung' => $unit->no_lambung,
+                'department' => $unit->department,
+                'compliance_pa' => $compliancePa,
+                'actual_pa' => $actualPa,
+                'working_hours' => round($workingHours, 1),
                 'downtime_hours' => round($downtimeHours, 1),
-                'has_time_data'  => $workingHours > 0,
-                'current_score'  => $currentScore,
+                'has_time_data' => $workingHours > 0,
+                'current_score' => $currentScore,
                 'current_status' => $currentStatus,
-                'latest_date'    => $latestSession?->tanggal->toDateString(),
+                'latest_date' => $latestSession?->tanggal->toDateString(),
                 'total_sessions' => $totalDaysWithSession,
-                'total_days'     => $totalDays,
+                'total_days' => $totalDays,
                 'operation_days' => $operationDays,
-                'bd_days'        => $bdDays,
-                'total_tl'       => $totalTL,
-                'timeline'       => $timeline->values(),
+                'bd_days' => $bdDays,
+                'total_tl' => $totalTL,
+                'timeline' => $timeline->values(),
             ];
         })->values();
 
         // ── Fleet summary ─────────────────────────────────────────────────────
-        $withCompliance  = $unitData->filter(fn ($u) => $u['compliance_pa'] !== null);
-        $withActual      = $unitData->filter(fn ($u) => $u['actual_pa'] !== null);
+        $withCompliance = $unitData->filter(fn ($u) => $u['compliance_pa'] !== null);
+        $withActual = $unitData->filter(fn ($u) => $u['actual_pa'] !== null);
 
         $fleetCompliancePa = $withCompliance->count() > 0
             ? round($withCompliance->avg('compliance_pa'), 1)
@@ -308,15 +318,15 @@ class MonitoringController extends Controller
             : null;
 
         $summary = [
-            'fleet_compliance_pa'   => $fleetCompliancePa,
-            'fleet_actual_pa'       => $fleetActualPa,
-            'total_units'           => $units->count(),
-            'operation_count'       => $unitData->where('current_status', 'operation')->count(),
-            'bd_count'              => $unitData->where('current_status', 'bd')->count(),
-            'no_data_count'         => $unitData->where('current_status', 'no_data')->count(),
-            'units_with_time_data'  => $unitData->where('has_time_data', true)->count(),
-            'pa_threshold'          => self::PA_THRESHOLD,
-            'shift_hours'           => self::SHIFT_HOURS,
+            'fleet_compliance_pa' => $fleetCompliancePa,
+            'fleet_actual_pa' => $fleetActualPa,
+            'total_units' => $units->count(),
+            'operation_count' => $unitData->where('current_status', 'operation')->count(),
+            'bd_count' => $unitData->where('current_status', 'bd')->count(),
+            'no_data_count' => $unitData->where('current_status', 'no_data')->count(),
+            'units_with_time_data' => $unitData->where('has_time_data', true)->count(),
+            'pa_threshold' => self::PA_THRESHOLD,
+            'shift_hours' => self::SHIFT_HOURS,
         ];
 
         $allUnitsQuery = Unit::active()->orderBy('no_unit');
@@ -329,11 +339,11 @@ class MonitoringController extends Controller
 
         return Inertia::render('monitoring/index', [
             'unitData' => $unitData,
-            'summary'  => $summary,
-            'filters'  => [
-                'date_from'  => $dateFrom,
-                'date_to'    => $dateTo,
-                'unit_id'    => $unitId,
+            'summary' => $summary,
+            'filters' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'unit_id' => $unitId,
                 'jenis_unit' => $jenis,
             ],
             'allUnits' => $allUnits,
@@ -350,18 +360,19 @@ class MonitoringController extends Controller
         $uniqueShifts = [];
         foreach ($unitSessions as $session) {
             foreach ($session->userEntries as $entry) {
-                $key = $session->tanggal->toDateString() . '_' . ($entry->shift ?? 'unknown');
+                $key = $session->tanggal->toDateString().'_'.($entry->shift ?? 'unknown');
                 $uniqueShifts[$key] = true;
             }
         }
+
         return count($uniqueShifts) * self::SHIFT_HOURS;
     }
 
     /**
      * S = total jam downtime dari collection yang sudah di-batch-load.
      */
-    private function sumDowntimeHours(Collection $logs): float
+    private function sumDowntimeHours(Collection $logs, string $dateFrom, string $dateTo): float
     {
-        return $logs->sum(fn ($log) => $log->duration_hours ?? 0.0);
+        return $logs->sum(fn (UnitDowntimeLog $log) => $log->durationHoursWithin($dateFrom, $dateTo));
     }
 }

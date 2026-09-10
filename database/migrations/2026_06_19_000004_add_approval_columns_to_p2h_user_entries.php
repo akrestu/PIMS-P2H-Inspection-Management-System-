@@ -11,13 +11,13 @@ return new class extends Migration
         Schema::table('p2h_user_entries', function (Blueprint $table) {
             // null = tidak perlu approval; non-null = LV submitted by non-staff
             $table->enum('approval_status', ['pending', 'approved', 'rejected'])
-                  ->nullable()
-                  ->after('justifikasi_kondisi');
+                ->nullable()
+                ->after('justifikasi_kondisi');
             $table->foreignId('approver_id')
-                  ->nullable()
-                  ->after('approval_status')
-                  ->constrained('users')
-                  ->nullOnDelete();
+                ->nullable()
+                ->after('approval_status')
+                ->constrained('users')
+                ->nullOnDelete();
             $table->timestamp('approved_at')->nullable()->after('approver_id');
             $table->text('catatan_approval')->nullable()->after('approved_at');
 

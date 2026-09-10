@@ -9,7 +9,10 @@ export default function PageLoader() {
         let timer: ReturnType<typeof setTimeout> | null = null;
 
         const startHandler = router.on('start', (e) => {
-            if ((e as CustomEvent).detail?.visit?.prefetch) return;
+            if ((e as CustomEvent).detail?.visit?.prefetch) {
+                return;
+            }
+
             timer = setTimeout(() => {
                 flushSync(() => setLoading(true));
             }, 150);
@@ -20,17 +23,23 @@ export default function PageLoader() {
                 clearTimeout(timer);
                 timer = null;
             }
+
             setLoading(false);
         });
 
         return () => {
             startHandler();
             finishHandler();
-            if (timer !== null) clearTimeout(timer);
+
+            if (timer !== null) {
+                clearTimeout(timer);
+            }
         };
     }, []);
 
-    if (!loading) return null;
+    if (!loading) {
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">

@@ -7,17 +7,26 @@ export function useScrollDirection(): 'up' | 'down' {
 
     useEffect(() => {
         const el = document.getElementById('main-scroll-area');
-        if (!el) return;
+
+        if (!el) {
+            return;
+        }
+
         let lastY = el.scrollTop;
 
         const onScroll = () => {
             const currentY = el.scrollTop;
-            if (Math.abs(currentY - lastY) < THRESHOLD) return;
+
+            if (Math.abs(currentY - lastY) < THRESHOLD) {
+                return;
+            }
+
             setDirection(currentY > lastY ? 'down' : 'up');
             lastY = currentY;
         };
 
         el.addEventListener('scroll', onScroll, { passive: true });
+
         return () => el.removeEventListener('scroll', onScroll);
     }, []);
 

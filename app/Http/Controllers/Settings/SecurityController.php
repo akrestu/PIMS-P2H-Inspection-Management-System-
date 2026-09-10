@@ -54,8 +54,8 @@ class SecurityController extends Controller implements HasMiddleware
         ]);
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Password berhasil diperbarui',
+            'type' => 'success',
+            'message' => 'Password berhasil diperbarui',
             'description' => 'Gunakan password baru Anda pada login berikutnya.',
         ]);
 

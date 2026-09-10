@@ -17,7 +17,9 @@ class LvP2hApprovalRequest extends Notification implements ShouldQueue
         public readonly P2hSession $session,
         public readonly P2hUserEntry $entry,
         public readonly User $submitter,
-    ) {}
+    ) {
+        $this->afterCommit();
+    }
 
     public function via(object $notifiable): array
     {
@@ -27,13 +29,13 @@ class LvP2hApprovalRequest extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'type'         => 'lv_approval_request',
-            'entry_id'     => $this->entry->id,
-            'session_id'   => $this->session->id,
-            'no_unit'      => $this->session->unit?->no_unit ?? '-',
-            'submitter'    => $this->submitter->name,
-            'shift'        => $this->entry->shift,
-            'tanggal'      => $this->session->tanggal?->format('d/m/Y'),
+            'type' => 'lv_approval_request',
+            'entry_id' => $this->entry->id,
+            'session_id' => $this->session->id,
+            'no_unit' => $this->session->unit?->no_unit ?? '-',
+            'submitter' => $this->submitter->name,
+            'shift' => $this->entry->shift,
+            'tanggal' => $this->session->tanggal?->format('d/m/Y'),
             'submitted_at' => $this->entry->submitted_at?->toIso8601String(),
         ];
     }

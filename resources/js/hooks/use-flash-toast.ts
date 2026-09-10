@@ -13,11 +13,20 @@ function fireToast(data: FlashToast): void {
     };
 
     switch (data.type) {
-        case 'success': toast.success(data.message, options); break;
-        case 'error':   toast.error(data.message, options);   break;
-        case 'warning': toast.warning(data.message, options); break;
-        case 'info':    toast.info(data.message, options);    break;
-        default:        toast(data.message, options);
+        case 'success':
+            toast.success(data.message, options);
+            break;
+        case 'error':
+            toast.error(data.message, options);
+            break;
+        case 'warning':
+            toast.warning(data.message, options);
+            break;
+        case 'info':
+            toast.info(data.message, options);
+            break;
+        default:
+            toast(data.message, options);
     }
 }
 
@@ -30,18 +39,28 @@ export function useFlashToast(): void {
     // ── Source 1: Inertia::flash() events (same-page flash, e.g. profile update) ──
     useEffect(() => {
         return router.on('flash', (event) => {
-            const data = (event as CustomEvent).detail?.flash?.toast as FlashToast | undefined;
-            if (data) fireToast(data);
+            const data = (event as CustomEvent).detail?.flash?.toast as
+                | FlashToast
+                | undefined;
+
+            if (data) {
+                fireToast(data);
+            }
         });
     }, []);
 
     // ── Source 2: Shared prop flash (redirect-based, set in HandleInertiaRequests) ──
     useEffect(() => {
-        if (!flash) return;
+        if (!flash) {
+            return;
+        }
 
         // Build a stable key to deduplicate across re-renders
         const key = `${flash.type}:${flash.message}`;
-        if (lastFlashRef.current === key) return;
+
+        if (lastFlashRef.current === key) {
+            return;
+        }
 
         lastFlashRef.current = key;
         fireToast(flash);

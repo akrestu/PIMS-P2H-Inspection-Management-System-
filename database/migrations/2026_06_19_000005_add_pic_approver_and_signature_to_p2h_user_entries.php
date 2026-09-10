@@ -25,8 +25,8 @@ return new class extends Migration
             ->whereNull('pic_approver_id')
             ->update([
                 'approval_status' => null,
-                'approver_id'     => null,
-                'approved_at'     => null,
+                'approver_id' => null,
+                'approved_at' => null,
             ]);
     }
 

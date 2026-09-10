@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ class UnitDowntimeLog extends Model
     ];
 
     protected $casts = [
-        'jam_mulai'   => 'datetime',
+        'jam_mulai' => 'datetime',
         'jam_selesai' => 'datetime',
     ];
 
@@ -37,7 +38,27 @@ class UnitDowntimeLog extends Model
         }
 
         $minutes = $this->jam_selesai->diffInMinutes($this->jam_mulai, absolute: true);
+
         return round($minutes / 60, 2);
+    }
+
+    /** Durasi yang hanya dihitung pada batas periode laporan. */
+    public function durationHoursWithin(string $from, string $to): float
+    {
+        if ($this->jam_selesai === null) {
+            return 0.0;
+        }
+
+        $rangeStart = Carbon::parse($from)->startOfDay();
+        $rangeEnd = Carbon::parse($to)->endOfDay();
+        $start = $this->jam_mulai->greaterThan($rangeStart) ? $this->jam_mulai : $rangeStart;
+        $end = $this->jam_selesai->lessThan($rangeEnd) ? $this->jam_selesai : $rangeEnd;
+
+        if ($end->lessThanOrEqualTo($start)) {
+            return 0.0;
+        }
+
+        return round($start->diffInSeconds($end) / 3600, 2);
     }
 
     /**
@@ -54,10 +75,10 @@ class UnitDowntimeLog extends Model
     public function scopeInRange(Builder $query, string $from, string $to): Builder
     {
         return $query
-            ->where('jam_mulai', '<=', $to . ' 23:59:59')
+            ->where('jam_mulai', '<=', $to.' 23:59:59')
             ->where(function (Builder $q) use ($from) {
                 $q->whereNull('jam_selesai')
-                  ->orWhere('jam_selesai', '>=', $from . ' 00:00:00');
+                    ->orWhere('jam_selesai', '>=', $from.' 00:00:00');
             });
     }
 }

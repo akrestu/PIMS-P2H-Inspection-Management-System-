@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AppSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,7 +15,7 @@ class AppSettingController extends Controller
     {
         return Inertia::render('settings/app', [
             'settings' => [
-                'shifts' => AppSetting::get('shifts', ['Shift I', 'Shift II']),
+                'shifts' => AppSetting::shifts(),
             ],
         ]);
     }
@@ -22,14 +23,14 @@ class AppSettingController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'shifts'   => ['required', 'array', 'min:1'],
-            'shifts.*' => ['required', 'string', 'max:50'],
+            'shifts' => ['required', 'array', 'min:1', 'max:2'],
+            'shifts.*' => ['required', 'string', 'distinct', Rule::in(AppSetting::SUPPORTED_SHIFTS)],
         ]);
 
         AppSetting::set('shifts', $validated['shifts']);
 
         Inertia::flash('toast', [
-            'type'    => 'success',
+            'type' => 'success',
             'message' => 'Pengaturan aplikasi berhasil disimpan',
         ]);
 

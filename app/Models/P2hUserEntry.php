@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class P2hUserEntry extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'p2h_session_id', 'user_id', 'user_slot', 'lokasi_kerja', 'km_awal', 'hm_km_akhir',
         'paraf_url', 'shift', 'submitted_at',
@@ -21,7 +23,7 @@ class P2hUserEntry extends Model
 
     protected $casts = [
         'submitted_at' => 'datetime',
-        'approved_at'  => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function session(): BelongsTo
@@ -63,6 +65,15 @@ class P2hUserEntry extends Model
     public function isValid(): bool
     {
         return $this->approval_status === null || $this->approval_status === 'approved';
+    }
+
+    /** Entry yang sudah sah untuk perhitungan operasional dan laporan. */
+    public function scopeOperational(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('approval_status')
+                ->orWhere('approval_status', 'approved');
+        });
     }
 
     public function getTidakLayakCountAttribute(): int

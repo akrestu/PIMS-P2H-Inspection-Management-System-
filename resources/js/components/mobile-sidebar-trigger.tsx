@@ -1,6 +1,3 @@
-import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
@@ -18,8 +15,16 @@ import {
     ShieldCheck,
     Users,
 } from 'lucide-react';
-import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useScrollDirection } from '@/hooks/use-scroll-direction';
 
 type NavItem = {
     title: string;
@@ -62,20 +67,42 @@ export function MobileSidebarTrigger() {
             { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
             { title: 'Monitoring', href: '/monitoring', icon: Activity },
             { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
-            { title: 'Persetujuan', href: '/p2h/approvals', icon: ClipboardCheck, badge: pendingApprovals },
+            {
+                title: 'Persetujuan',
+                href: '/p2h/approvals',
+                icon: ClipboardCheck,
+                badge: pendingApprovals,
+            },
         ];
         moreNav = [
-            { title: 'Monitoring P2H', href: '/p2h-compliance', icon: CalendarCheck },
+            {
+                title: 'Monitoring P2H',
+                href: '/p2h-compliance',
+                icon: CalendarCheck,
+            },
             { title: 'Downtime Log', href: '/downtime', icon: ClockAlert },
             { title: 'Riwayat P2H', href: '/p2h', icon: ClipboardList },
             { title: 'Unit', href: '/units', icon: Car },
             { title: 'Site', href: '/sites', icon: MapPin },
             { title: 'Manajemen User', href: '/users', icon: Users },
-            { title: 'Notifikasi', href: '/notifications', icon: Bell, badge: unreadCount },
+            {
+                title: 'Notifikasi',
+                href: '/notifications',
+                icon: Bell,
+                badge: unreadCount,
+            },
             ...(isAdmin
                 ? [
-                      { title: 'Audit Log', href: '/audit-log', icon: ShieldCheck },
-                      { title: 'Pengaturan', href: '/app-settings', icon: Settings2 },
+                      {
+                          title: 'Audit Log',
+                          href: '/audit-log',
+                          icon: ShieldCheck,
+                      },
+                      {
+                          title: 'Pengaturan',
+                          href: '/app-settings',
+                          icon: Settings2,
+                      },
                   ]
                 : []),
         ];
@@ -84,18 +111,37 @@ export function MobileSidebarTrigger() {
             { title: 'Dashboard', href: '/driver/dashboard', icon: LayoutGrid },
             { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
             { title: 'Riwayat', href: '/p2h', icon: ClipboardList },
-            { title: 'Persetujuan', href: '/p2h/approvals', icon: ClipboardCheck, badge: pendingApprovals },
+            {
+                title: 'Persetujuan',
+                href: '/p2h/approvals',
+                icon: ClipboardCheck,
+                badge: pendingApprovals,
+            },
         ];
         moreNav = [
-            { title: 'Monitoring P2H', href: '/p2h-compliance', icon: CalendarCheck },
-            { title: 'Notifikasi', href: '/notifications', icon: Bell, badge: unreadCount },
+            {
+                title: 'Monitoring P2H',
+                href: '/p2h-compliance',
+                icon: CalendarCheck,
+            },
+            {
+                title: 'Notifikasi',
+                href: '/notifications',
+                icon: Bell,
+                badge: unreadCount,
+            },
         ];
     } else if (isDriver) {
         primaryNav = [
             { title: 'Dashboard', href: '/driver/dashboard', icon: LayoutGrid },
             { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
             { title: 'Riwayat', href: '/p2h', icon: ClipboardList },
-            { title: 'Notifikasi', href: '/notifications', icon: Bell, badge: unreadCount },
+            {
+                title: 'Notifikasi',
+                href: '/notifications',
+                icon: Bell,
+                badge: unreadCount,
+            },
         ];
     } else {
         // Fallback for any other role/jabatan combo
@@ -103,9 +149,21 @@ export function MobileSidebarTrigger() {
             { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
             { title: 'Riwayat', href: '/p2h', icon: ClipboardList },
             ...(canApprove
-                ? [{ title: 'Persetujuan', href: '/p2h/approvals', icon: ClipboardCheck, badge: pendingApprovals }]
+                ? [
+                      {
+                          title: 'Persetujuan',
+                          href: '/p2h/approvals',
+                          icon: ClipboardCheck,
+                          badge: pendingApprovals,
+                      },
+                  ]
                 : []),
-            { title: 'Notifikasi', href: '/notifications', icon: Bell, badge: unreadCount },
+            {
+                title: 'Notifikasi',
+                href: '/notifications',
+                icon: Bell,
+                badge: unreadCount,
+            },
         ];
     }
 
@@ -115,17 +173,20 @@ export function MobileSidebarTrigger() {
     return (
         <>
             {/* Bottom navigation bar — mobile only */}
-            <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ease-in-out ${scrollDir === 'down' ? 'translate-y-full' : 'translate-y-0'}`}>
-                <div className="border-t border-border/60 bg-background/90 backdrop-blur-md px-2 pb-safe pt-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div
+                className={`fixed right-0 bottom-0 left-0 z-50 transition-transform duration-300 ease-in-out md:hidden ${scrollDir === 'down' ? 'translate-y-full' : 'translate-y-0'}`}
+            >
+                <div className="pb-safe border-t border-border/60 bg-background/90 px-2 pt-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-md">
                     <nav className="flex items-center">
                         {primaryNav.map((link) => {
                             const Icon = link.icon;
                             const active = isCurrentUrl(link.href);
+
                             return (
                                 <Link
                                     key={link.title}
                                     href={link.href}
-                                    className={`relative flex flex-1 flex-col items-center gap-1.5 px-1 py-2.5 rounded-xl transition-all duration-150 ${
+                                    className={`relative flex flex-1 flex-col items-center gap-1.5 rounded-xl px-1 py-2.5 transition-all duration-150 ${
                                         active
                                             ? 'text-primary'
                                             : 'text-muted-foreground hover:text-foreground'
@@ -143,15 +204,19 @@ export function MobileSidebarTrigger() {
                                         {(link.badge ?? 0) > 0 && (
                                             <Badge
                                                 variant="destructive"
-                                                className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] font-bold leading-none"
+                                                className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] leading-none font-bold"
                                             >
-                                                {(link.badge ?? 0) > 9 ? '9+' : link.badge}
+                                                {(link.badge ?? 0) > 9
+                                                    ? '9+'
+                                                    : link.badge}
                                             </Badge>
                                         )}
                                     </div>
                                     <span
                                         className={`text-[11px] leading-none whitespace-nowrap ${
-                                            active ? 'font-semibold' : 'font-medium'
+                                            active
+                                                ? 'font-semibold'
+                                                : 'font-medium'
                                         }`}
                                     >
                                         {link.title}
@@ -163,7 +228,7 @@ export function MobileSidebarTrigger() {
                         {hasMore && (
                             <button
                                 onClick={() => setShowMore(true)}
-                                className="relative flex flex-1 flex-col items-center gap-1.5 px-1 py-2.5 rounded-xl transition-all duration-150 text-muted-foreground hover:text-foreground"
+                                className="relative flex flex-1 flex-col items-center gap-1.5 rounded-xl px-1 py-2.5 text-muted-foreground transition-all duration-150 hover:text-foreground"
                             >
                                 <div className="relative">
                                     <MoreHorizontal className="h-6 w-6" />
@@ -171,7 +236,9 @@ export function MobileSidebarTrigger() {
                                         <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive" />
                                     )}
                                 </div>
-                                <span className="text-[11px] font-medium leading-none whitespace-nowrap">Lainnya</span>
+                                <span className="text-[11px] leading-none font-medium whitespace-nowrap">
+                                    Lainnya
+                                </span>
                             </button>
                         )}
                     </nav>
@@ -185,19 +252,22 @@ export function MobileSidebarTrigger() {
                         side="bottom"
                         className="rounded-t-2xl px-4 pb-8 md:hidden"
                     >
-                        <SheetHeader className="mb-4 pb-2 border-b border-border/50">
-                            <SheetTitle className="text-sm text-left">Menu Lainnya</SheetTitle>
+                        <SheetHeader className="mb-4 border-b border-border/50 pb-2">
+                            <SheetTitle className="text-left text-sm">
+                                Menu Lainnya
+                            </SheetTitle>
                         </SheetHeader>
                         <div className="grid grid-cols-4 gap-2">
                             {moreNav.map((link) => {
                                 const Icon = link.icon;
                                 const active = isCurrentUrl(link.href);
+
                                 return (
                                     <Link
                                         key={link.title}
                                         href={link.href}
                                         onClick={() => setShowMore(false)}
-                                        className={`relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-150 ${
+                                        className={`relative flex flex-col items-center gap-2 rounded-xl p-3 transition-all duration-150 ${
                                             active
                                                 ? 'bg-primary/10 text-primary'
                                                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -208,13 +278,15 @@ export function MobileSidebarTrigger() {
                                             {(link.badge ?? 0) > 0 && (
                                                 <Badge
                                                     variant="destructive"
-                                                    className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] font-bold leading-none"
+                                                    className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[9px] leading-none font-bold"
                                                 >
-                                                    {(link.badge ?? 0) > 9 ? '9+' : link.badge}
+                                                    {(link.badge ?? 0) > 9
+                                                        ? '9+'
+                                                        : link.badge}
                                                 </Badge>
                                             )}
                                         </div>
-                                        <span className="text-[10px] font-medium text-center leading-tight">
+                                        <span className="text-center text-[10px] leading-tight font-medium">
                                             {link.title}
                                         </span>
                                     </Link>

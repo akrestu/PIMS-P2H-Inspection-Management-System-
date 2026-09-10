@@ -1,13 +1,3 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     Activity,
@@ -29,8 +19,10 @@ import {
     WrenchIcon,
     X,
 } from 'lucide-react';
-import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
-import { formatPaReport } from '@/lib/whatsapp-formatters';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,7 +31,26 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
+import { cn } from '@/lib/utils';
+import { formatPaReport } from '@/lib/whatsapp-formatters';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -108,16 +119,34 @@ interface Props {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function paColor(pa: number | null): string {
-    if (pa === null) return 'text-muted-foreground';
-    if (pa >= 90) return 'text-emerald-600 dark:text-emerald-400';
-    if (pa >= 75) return 'text-yellow-600 dark:text-yellow-400';
+    if (pa === null) {
+        return 'text-muted-foreground';
+    }
+
+    if (pa >= 90) {
+        return 'text-emerald-600 dark:text-emerald-400';
+    }
+
+    if (pa >= 75) {
+        return 'text-yellow-600 dark:text-yellow-400';
+    }
+
     return 'text-red-600 dark:text-red-400';
 }
 
 function progressColor(pa: number | null): string {
-    if (pa === null) return 'bg-muted';
-    if (pa >= 90) return '[&>div]:bg-emerald-500';
-    if (pa >= 75) return '[&>div]:bg-yellow-500';
+    if (pa === null) {
+        return 'bg-muted';
+    }
+
+    if (pa >= 90) {
+        return '[&>div]:bg-emerald-500';
+    }
+
+    if (pa >= 75) {
+        return '[&>div]:bg-yellow-500';
+    }
+
     return '[&>div]:bg-red-500';
 }
 
@@ -127,14 +156,16 @@ function statusConfig(status: UnitPA['current_status']) {
             return {
                 label: 'Operation',
                 icon: CheckCircle2,
-                badgeClass: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+                badgeClass:
+                    'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
                 dotClass: 'bg-emerald-500',
             };
         case 'bd':
             return {
                 label: 'Breakdown',
                 icon: WrenchIcon,
-                badgeClass: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+                badgeClass:
+                    'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
                 dotClass: 'bg-red-500',
             };
         default:
@@ -156,7 +187,10 @@ function formatDate(d: string) {
 }
 
 function formatDateShort(d: string) {
-    return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    return new Date(d).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+    });
 }
 
 // ── Timeline Sparkline ─────────────────────────────────────────────────────────
@@ -170,27 +204,30 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
             <div className="flex items-center gap-px">
                 {visible.map((day) => {
                     // Downtime tanpa P2H: warna khusus sesuai tipe
-                    const isDowntimeOnly = day.status === 'bd' && day.downtime_tipe != null;
-                    const colorClass = day.status === 'operation'
-                        ? 'bg-emerald-500'
-                        : day.status === 'bd'
-                            ? isDowntimeOnly
-                                ? day.downtime_tipe === 'PM'
-                                    ? 'bg-blue-400'
-                                    : day.downtime_tipe === 'Servis Berkala'
+                    const isDowntimeOnly =
+                        day.status === 'bd' && day.downtime_tipe != null;
+                    const colorClass =
+                        day.status === 'operation'
+                            ? 'bg-emerald-500'
+                            : day.status === 'bd'
+                              ? isDowntimeOnly
+                                  ? day.downtime_tipe === 'PM'
+                                      ? 'bg-blue-400'
+                                      : day.downtime_tipe === 'Servis Berkala'
                                         ? 'bg-purple-400'
-                                        : 'bg-orange-500'  // BD downtime
-                                : 'bg-red-500'             // BD dari P2H
-                            : 'bg-muted';
+                                        : 'bg-orange-500' // BD downtime
+                                  : 'bg-red-500' // BD dari P2H
+                              : 'bg-muted';
 
                     return (
                         <Tooltip key={day.date}>
                             <TooltipTrigger asChild>
                                 <div
                                     className={cn(
-                                        'h-5 w-2 rounded-sm cursor-default transition-opacity hover:opacity-80 relative',
+                                        'relative h-5 w-2 cursor-default rounded-sm transition-opacity hover:opacity-80',
                                         colorClass,
-                                        day.has_override && 'ring-1 ring-amber-400 ring-offset-0',
+                                        day.has_override &&
+                                            'ring-1 ring-amber-400 ring-offset-0',
                                     )}
                                 >
                                     {day.has_override && (
@@ -199,7 +236,9 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">
-                                <p className="font-semibold">{formatDateShort(day.date)}</p>
+                                <p className="font-semibold">
+                                    {formatDateShort(day.date)}
+                                </p>
                                 {day.downtime_tipe != null ? (
                                     <p className="text-orange-400">
                                         Downtime: {day.downtime_tipe}
@@ -208,22 +247,40 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                     <>
                                         <p>
                                             Kelayakan:{' '}
-                                            <span className={day.score >= 80 ? 'text-emerald-400' : 'text-red-400'}>
+                                            <span
+                                                className={
+                                                    day.score >= 80
+                                                        ? 'text-emerald-400'
+                                                        : 'text-red-400'
+                                                }
+                                            >
                                                 {day.score}%
                                             </span>
                                         </p>
                                         <p>
                                             Status:{' '}
-                                            <span className={day.status === 'operation' ? 'text-emerald-400' : 'text-red-400'}>
-                                                {day.status === 'operation' ? 'Operation' : 'Breakdown'}
+                                            <span
+                                                className={
+                                                    day.status === 'operation'
+                                                        ? 'text-emerald-400'
+                                                        : 'text-red-400'
+                                                }
+                                            >
+                                                {day.status === 'operation'
+                                                    ? 'Operation'
+                                                    : 'Breakdown'}
                                             </span>
                                             {day.has_override && (
-                                                <span className="ml-1 text-amber-400">(Override)</span>
+                                                <span className="ml-1 text-amber-400">
+                                                    (Override)
+                                                </span>
                                             )}
                                         </p>
                                     </>
                                 ) : (
-                                    <p className="text-muted-foreground">Tidak ada P2H</p>
+                                    <p className="text-muted-foreground">
+                                        Tidak ada P2H
+                                    </p>
                                 )}
                             </TooltipContent>
                         </Tooltip>
@@ -242,16 +299,25 @@ function SummaryCards({ summary }: { summary: Summary }) {
             {/* PA Aktual Fleet */}
             <Card className="border-2 border-primary/20">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-muted-foreground">PA Aktual Fleet</p>
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">
+                            PA Aktual Fleet
+                        </p>
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                             <BarChart3 className="h-4 w-4 text-primary" />
                         </div>
                     </div>
-                    <p className={cn('text-3xl font-bold tabular-nums', paColor(summary.fleet_actual_pa))}>
-                        {summary.fleet_actual_pa !== null ? `${summary.fleet_actual_pa}%` : '—'}
+                    <p
+                        className={cn(
+                            'text-3xl font-bold tabular-nums',
+                            paColor(summary.fleet_actual_pa),
+                        )}
+                    >
+                        {summary.fleet_actual_pa !== null
+                            ? `${summary.fleet_actual_pa}%`
+                            : '—'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         W÷(W+S) · {summary.units_with_time_data} unit
                     </p>
                     {summary.fleet_actual_pa !== null && (
@@ -263,8 +329,17 @@ function SummaryCards({ summary }: { summary: Summary }) {
                             ) : (
                                 <TrendingDown className="h-3.5 w-3.5 text-red-500" />
                             )}
-                            <span className={cn('text-xs font-medium', paColor(summary.fleet_actual_pa))}>
-                                {summary.fleet_actual_pa >= 90 ? 'Sangat Baik' : summary.fleet_actual_pa >= 75 ? 'Cukup' : 'Perlu Perhatian'}
+                            <span
+                                className={cn(
+                                    'text-xs font-medium',
+                                    paColor(summary.fleet_actual_pa),
+                                )}
+                            >
+                                {summary.fleet_actual_pa >= 90
+                                    ? 'Sangat Baik'
+                                    : summary.fleet_actual_pa >= 75
+                                      ? 'Cukup'
+                                      : 'Perlu Perhatian'}
                             </span>
                         </div>
                     )}
@@ -274,16 +349,25 @@ function SummaryCards({ summary }: { summary: Summary }) {
             {/* Kelayakan P2H Fleet */}
             <Card className="border-2">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-muted-foreground">Kelayakan P2H</p>
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Kelayakan P2H
+                        </p>
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40">
                             <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
-                    <p className={cn('text-3xl font-bold tabular-nums', paColor(summary.fleet_compliance_pa))}>
-                        {summary.fleet_compliance_pa !== null ? `${summary.fleet_compliance_pa}%` : '—'}
+                    <p
+                        className={cn(
+                            'text-3xl font-bold tabular-nums',
+                            paColor(summary.fleet_compliance_pa),
+                        )}
+                    >
+                        {summary.fleet_compliance_pa !== null
+                            ? `${summary.fleet_compliance_pa}%`
+                            : '—'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Rata-rata compliance P2H
                     </p>
                 </CardContent>
@@ -292,47 +376,61 @@ function SummaryCards({ summary }: { summary: Summary }) {
             {/* Operation */}
             <Card className="border-2 border-emerald-200 dark:border-emerald-900">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-muted-foreground">Operation</p>
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Operation
+                        </p>
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/40">
                             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    <p className="text-3xl font-bold text-emerald-600 tabular-nums dark:text-emerald-400">
                         {summary.operation_count}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">unit beroperasi normal</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        unit beroperasi normal
+                    </p>
                 </CardContent>
             </Card>
 
             {/* BD */}
             <Card className="border-2 border-red-200 dark:border-red-900">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-muted-foreground">Breakdown</p>
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Breakdown
+                        </p>
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 dark:bg-red-950/40">
                             <WrenchIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-red-600 dark:text-red-400 tabular-nums">
+                    <p className="text-3xl font-bold text-red-600 tabular-nums dark:text-red-400">
                         {summary.bd_count}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">unit terdeteksi masalah</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        unit terdeteksi masalah
+                    </p>
                 </CardContent>
             </Card>
 
             {/* Total */}
             <Card className="border-2">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-muted-foreground">Total Unit</p>
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Total Unit
+                        </p>
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40">
                             <Car className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold tabular-nums">{summary.total_units}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {summary.no_data_count > 0 ? `${summary.no_data_count} belum ada data` : 'semua unit aktif'}
+                    <p className="text-3xl font-bold tabular-nums">
+                        {summary.total_units}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {summary.no_data_count > 0
+                            ? `${summary.no_data_count} belum ada data`
+                            : 'semua unit aktif'}
                     </p>
                 </CardContent>
             </Card>
@@ -342,35 +440,52 @@ function SummaryCards({ summary }: { summary: Summary }) {
 
 // ── Unit PA Card ───────────────────────────────────────────────────────────────
 
-function UnitPACard({ unit, paThreshold }: { unit: UnitPA; paThreshold: number }) {
+function UnitPACard({
+    unit,
+    paThreshold,
+}: {
+    unit: UnitPA;
+    paThreshold: number;
+}) {
     const status = statusConfig(unit.current_status);
     const StatusIcon = status.icon;
     const isLV = unit.jenis_unit === 'Light Vehicle';
 
     return (
-        <Card className={cn(
-            'border-2 transition-all duration-150 hover:shadow-md',
-            unit.current_status === 'bd' && 'border-red-200 dark:border-red-900',
-            unit.current_status === 'operation' && 'border-emerald-100 dark:border-emerald-900/50',
-        )}>
-            <CardContent className="p-4 space-y-4">
-
+        <Card
+            className={cn(
+                'border-2 transition-all duration-150 hover:shadow-md',
+                unit.current_status === 'bd' &&
+                    'border-red-200 dark:border-red-900',
+                unit.current_status === 'operation' &&
+                    'border-emerald-100 dark:border-emerald-900/50',
+            )}
+        >
+            <CardContent className="space-y-4 p-4">
                 {/* ── Header Row ── */}
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-                            isLV ? 'bg-blue-100 dark:bg-blue-950/40' : 'bg-purple-100 dark:bg-purple-950/40',
-                        )}>
-                            {isLV
-                                ? <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                : <Bus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            }
+                        <div
+                            className={cn(
+                                'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                                isLV
+                                    ? 'bg-blue-100 dark:bg-blue-950/40'
+                                    : 'bg-purple-100 dark:bg-purple-950/40',
+                            )}
+                        >
+                            {isLV ? (
+                                <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            ) : (
+                                <Bus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            )}
                         </div>
                         <div>
-                            <p className="text-base font-bold leading-tight">{unit.no_unit}</p>
+                            <p className="text-base leading-tight font-bold">
+                                {unit.no_unit}
+                            </p>
                             <p className="text-xs text-muted-foreground">
-                                {unit.jenis_unit}{unit.no_lambung ? ` · ${unit.no_lambung}` : ''}
+                                {unit.jenis_unit}
+                                {unit.no_lambung ? ` · ${unit.no_lambung}` : ''}
                             </p>
                         </div>
                     </div>
@@ -378,7 +493,10 @@ function UnitPACard({ unit, paThreshold }: { unit: UnitPA; paThreshold: number }
                     {/* Status Badge */}
                     <Badge
                         variant="outline"
-                        className={cn('gap-1 text-xs font-semibold', status.badgeClass)}
+                        className={cn(
+                            'gap-1 text-xs font-semibold',
+                            status.badgeClass,
+                        )}
                     >
                         <StatusIcon className="h-3 w-3" />
                         {status.label}
@@ -388,13 +506,24 @@ function UnitPACard({ unit, paThreshold }: { unit: UnitPA; paThreshold: number }
                 {/* ── PA Aktual (primary) ── */}
                 <div>
                     <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-foreground">PA Aktual</span>
+                        <span className="text-xs font-semibold text-foreground">
+                            PA Aktual
+                        </span>
                         {unit.has_time_data ? (
-                            <span className={cn('text-lg font-bold tabular-nums', paColor(unit.actual_pa))}>
-                                {unit.actual_pa !== null ? `${unit.actual_pa}%` : '—'}
+                            <span
+                                className={cn(
+                                    'text-lg font-bold tabular-nums',
+                                    paColor(unit.actual_pa),
+                                )}
+                            >
+                                {unit.actual_pa !== null
+                                    ? `${unit.actual_pa}%`
+                                    : '—'}
                             </span>
                         ) : (
-                            <span className="text-lg font-bold tabular-nums text-muted-foreground">—</span>
+                            <span className="text-lg font-bold text-muted-foreground tabular-nums">
+                                —
+                            </span>
                         )}
                     </div>
                     {unit.has_time_data ? (
@@ -410,7 +539,8 @@ function UnitPACard({ unit, paThreshold }: { unit: UnitPA; paThreshold: number }
                             <>
                                 <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    W: {unit.working_hours}j · BD: {unit.downtime_hours}j
+                                    W: {unit.working_hours}j · BD:{' '}
+                                    {unit.downtime_hours}j
                                 </span>
                                 <span>W÷(W+S)×100</span>
                             </>
@@ -422,33 +552,48 @@ function UnitPACard({ unit, paThreshold }: { unit: UnitPA; paThreshold: number }
 
                 {/* ── Kelayakan P2H (secondary) ── */}
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                    <span className="text-xs text-muted-foreground">Kelayakan P2H</span>
+                    <span className="text-xs text-muted-foreground">
+                        Kelayakan P2H
+                    </span>
                     <div className="flex items-center gap-1.5">
                         {unit.compliance_pa !== null ? (
                             <>
-                                <div className={cn(
-                                    'h-2 w-2 rounded-full',
-                                    unit.compliance_pa >= paThreshold ? 'bg-emerald-500' : 'bg-red-500',
-                                )} />
-                                <span className={cn('text-sm font-bold tabular-nums', paColor(unit.compliance_pa))}>
+                                <div
+                                    className={cn(
+                                        'h-2 w-2 rounded-full',
+                                        unit.compliance_pa >= paThreshold
+                                            ? 'bg-emerald-500'
+                                            : 'bg-red-500',
+                                    )}
+                                />
+                                <span
+                                    className={cn(
+                                        'text-sm font-bold tabular-nums',
+                                        paColor(unit.compliance_pa),
+                                    )}
+                                >
                                     {unit.compliance_pa}%
                                 </span>
                             </>
                         ) : (
-                            <span className="text-sm text-muted-foreground">—</span>
+                            <span className="text-sm text-muted-foreground">
+                                —
+                            </span>
                         )}
                     </div>
                 </div>
 
                 {/* ── Timeline Sparkline ── */}
                 <div>
-                    <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    <p className="mb-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                         Riwayat Harian
                     </p>
                     {unit.timeline.length > 0 ? (
                         <TimelineSparkline timeline={unit.timeline} />
                     ) : (
-                        <p className="text-xs text-muted-foreground italic">Belum ada data</p>
+                        <p className="text-xs text-muted-foreground italic">
+                            Belum ada data
+                        </p>
                     )}
                 </div>
 
@@ -482,7 +627,9 @@ function UnitPACard({ unit, paThreshold }: { unit: UnitPA; paThreshold: number }
 function Legend({ threshold }: { threshold: number }) {
     return (
         <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground text-sm">Legenda:</span>
+            <span className="text-sm font-semibold text-foreground">
+                Legenda:
+            </span>
             <span className="flex items-center gap-1.5">
                 <div className="h-3 w-3 rounded-sm bg-emerald-500" />
                 Operation
@@ -504,7 +651,7 @@ function Legend({ threshold }: { threshold: number }) {
                 Servis Berkala
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-muted border" />
+                <div className="h-3 w-3 rounded-sm border bg-muted" />
                 Tidak ada P2H
             </span>
             <span className="flex items-center gap-1.5">
@@ -513,8 +660,9 @@ function Legend({ threshold }: { threshold: number }) {
             </span>
             <Separator orientation="vertical" className="h-4" />
             <span>
-                <strong className="text-foreground">PA Aktual</strong> = W ÷ (W + S) × 100% ·{' '}
-                Threshold kelayakan: <strong className="text-foreground">{threshold}%</strong>
+                <strong className="text-foreground">PA Aktual</strong> = W ÷ (W
+                + S) × 100% · Threshold kelayakan:{' '}
+                <strong className="text-foreground">{threshold}%</strong>
             </span>
         </div>
     );
@@ -522,26 +670,44 @@ function Legend({ threshold }: { threshold: number }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function MonitoringIndex({ unitData, summary, filters, allUnits }: Props) {
-    const { auth } = usePage<{ auth: { user: { roles: string[]; jabatan?: string } | null } }>().props;
-    const roles    = auth?.user?.roles ?? [];
-    const jabatan  = auth?.user?.jabatan ?? '';
-    const isAdminOrManager = roles.includes('admin') || roles.includes('manager');
-    const isStaffDriver    = !isAdminOrManager && (jabatan === 'Staff' || jabatan === 'Sr.Staff');
+export default function MonitoringIndex({
+    unitData,
+    summary,
+    filters,
+    allUnits,
+}: Props) {
+    const { auth } = usePage<{
+        auth: { user: { roles: string[]; jabatan?: string } | null };
+    }>().props;
+    const roles = auth?.user?.roles ?? [];
+    const jabatan = auth?.user?.jabatan ?? '';
+    const isAdminOrManager =
+        roles.includes('admin') || roles.includes('manager');
+    const isStaffDriver =
+        !isAdminOrManager && (jabatan === 'Staff' || jabatan === 'Sr.Staff');
 
     const [form, setForm] = useState(filters);
     const { share } = useWhatsAppShare();
-    const handleShareWhatsApp = () => share(formatPaReport(unitData, summary, filters));
-    const [sortBy, setSortBy] = useState<'actual_asc' | 'actual_desc' | 'name' | 'status'>('actual_asc');
+    const handleShareWhatsApp = () =>
+        share(formatPaReport(unitData, summary, filters));
+    const [sortBy, setSortBy] = useState<
+        'actual_asc' | 'actual_desc' | 'name' | 'status'
+    >('actual_asc');
     const [showFilter, setShowFilter] = useState(false);
 
     const handleApply = () => {
-        router.get('/monitoring', form, { preserveState: true });
+        router.get('/monitoring', { ...form }, { preserveState: true });
     };
 
     const handleReset = () => {
         const defaults = {
-            date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+            date_from: new Date(
+                new Date().getFullYear(),
+                new Date().getMonth(),
+                1,
+            )
+                .toISOString()
+                .split('T')[0],
             date_to: new Date().toISOString().split('T')[0],
         };
         setForm(defaults);
@@ -552,6 +718,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
     const applyPreset = (preset: 'today' | 'week' | 'month' | 'last_month') => {
         const today = new Date();
         let from: Date, to: Date;
+
         switch (preset) {
             case 'today':
                 from = to = today;
@@ -569,6 +736,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                 from = new Date(today.getFullYear(), today.getMonth(), 1);
                 to = today;
         }
+
         const newFilters = {
             ...form,
             date_from: from.toISOString().split('T')[0],
@@ -587,6 +755,7 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                 return (b.actual_pa ?? -1) - (a.actual_pa ?? -1);
             case 'status': {
                 const order = { bd: 0, no_data: 1, operation: 2 };
+
                 return order[a.current_status] - order[b.current_status];
             }
             default:
@@ -605,17 +774,17 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
         <>
             <Head title="Monitoring PA" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
-
                 {/* ── Page Header ── */}
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-xl font-bold md:text-2xl flex items-center gap-2">
+                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
                             <BarChart3 className="h-6 w-6 text-primary" />
                             Monitoring PA
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Physical Availability unit ·{' '}
-                            {formatDate(filters.date_from)} – {formatDate(filters.date_to)}
+                            {formatDate(filters.date_from)} –{' '}
+                            {formatDate(filters.date_to)}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -628,56 +797,71 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                             <Filter className="h-4 w-4" />
                             Filter
                         </Button>
-                        <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={handleReset}
+                        >
                             <RefreshCw className="h-4 w-4" />
                             Reset
                         </Button>
-                        {!isStaffDriver && <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="gap-2">
-                                    <Download className="h-4 w-4" />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel className="text-xs text-muted-foreground">Unduh Laporan</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={`/export/monitoring-pa/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 cursor-pointer"
+                        {!isStaffDriver && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
                                     >
-                                        <FileText className="h-4 w-4 text-red-500" />
-                                        Export PDF
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={`/export/monitoring-pa/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                        className="flex items-center gap-2 cursor-pointer"
+                                        <Download className="h-4 w-4" />
+                                        Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                        Unduh Laporan
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/export/monitoring-pa/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <FileText className="h-4 w-4 text-red-500" />
+                                            Export PDF
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/export/monitoring-pa/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
+                                            className="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                            Export Excel
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onSelect={handleShareWhatsApp}
+                                        className="flex cursor-pointer items-center gap-2"
                                     >
-                                        <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                        Export Excel
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onSelect={handleShareWhatsApp}
-                                    className="flex items-center gap-2 cursor-pointer"
-                                >
-                                    <MessageCircle className="h-4 w-4 text-green-500" />
-                                    Bagikan via WhatsApp
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>}
+                                        <MessageCircle className="h-4 w-4 text-green-500" />
+                                        Bagikan via WhatsApp
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
 
                 {/* ── Quick Presets ── */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-medium">Periode:</span>
+                    <span className="text-xs font-medium text-muted-foreground">
+                        Periode:
+                    </span>
                     {PRESETS.map((p) => (
                         <button
                             key={p.value}
@@ -693,8 +877,8 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                 {/* ── Filter Panel ── */}
                 {showFilter && (
                     <Card className="border-primary/20">
-                        <CardHeader className="pb-3 pt-4">
-                            <CardTitle className="text-sm flex items-center gap-2">
+                        <CardHeader className="pt-4 pb-3">
+                            <CardTitle className="flex items-center gap-2 text-sm">
                                 <Filter className="h-4 w-4" />
                                 Filter Data
                             </CardTitle>
@@ -702,34 +886,63 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                         <CardContent className="pt-0">
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Dari Tanggal</Label>
+                                    <Label className="text-xs text-muted-foreground">
+                                        Dari Tanggal
+                                    </Label>
                                     <Input
                                         type="date"
                                         value={form.date_from}
-                                        onChange={(e) => setForm({ ...form, date_from: e.target.value })}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                date_from: e.target.value,
+                                            })
+                                        }
                                         className="h-10"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Sampai Tanggal</Label>
+                                    <Label className="text-xs text-muted-foreground">
+                                        Sampai Tanggal
+                                    </Label>
                                     <Input
                                         type="date"
                                         value={form.date_to}
-                                        onChange={(e) => setForm({ ...form, date_to: e.target.value })}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                date_to: e.target.value,
+                                            })
+                                        }
                                         className="h-10"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Unit</Label>
+                                    <Label className="text-xs text-muted-foreground">
+                                        Unit
+                                    </Label>
                                     <Select
                                         value={form.unit_id ?? 'all'}
-                                        onValueChange={(v) => setForm({ ...form, unit_id: v === 'all' ? undefined : v })}
+                                        onValueChange={(v) =>
+                                            setForm({
+                                                ...form,
+                                                unit_id:
+                                                    v === 'all' ? undefined : v,
+                                            })
+                                        }
                                     >
-                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua unit" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full">
+                                            <SelectValue placeholder="Semua unit" />
+                                        </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all">Semua unit</SelectItem>
+                                            <SelectItem value="all">
+                                                Semua unit
+                                            </SelectItem>
                                             {allUnits.map((u) => (
-                                                <SelectItem key={u.id} value={String(u.id)}>
+                                                <SelectItem
+                                                    key={u.id}
+                                                    value={String(u.id)}
+                                                >
                                                     {u.no_unit} ({u.jenis_unit})
                                                 </SelectItem>
                                             ))}
@@ -738,26 +951,53 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                                 </div>
                                 {!isStaffDriver && (
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground">Jenis Unit</Label>
+                                        <Label className="text-xs text-muted-foreground">
+                                            Jenis Unit
+                                        </Label>
                                         <Select
                                             value={form.jenis_unit ?? 'all'}
-                                            onValueChange={(v) => setForm({ ...form, jenis_unit: v === 'all' ? undefined : v })}
+                                            onValueChange={(v) =>
+                                                setForm({
+                                                    ...form,
+                                                    jenis_unit:
+                                                        v === 'all'
+                                                            ? undefined
+                                                            : v,
+                                                })
+                                            }
                                         >
-                                            <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Semua jenis" /></SelectTrigger>
+                                            <SelectTrigger className="h-10 w-full">
+                                                <SelectValue placeholder="Semua jenis" />
+                                            </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">Semua jenis</SelectItem>
-                                                <SelectItem value="Bus">Bus</SelectItem>
-                                                <SelectItem value="Light Vehicle">Light Vehicle</SelectItem>
+                                                <SelectItem value="all">
+                                                    Semua jenis
+                                                </SelectItem>
+                                                <SelectItem value="Bus">
+                                                    Bus
+                                                </SelectItem>
+                                                <SelectItem value="Light Vehicle">
+                                                    Light Vehicle
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                 )}
                             </div>
                             <div className="mt-3 flex justify-end gap-2">
-                                <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                    onClick={handleReset}
+                                >
                                     <X className="h-4 w-4" /> Reset
                                 </Button>
-                                <Button size="sm" className="gap-2" onClick={handleApply}>
+                                <Button
+                                    size="sm"
+                                    className="gap-2"
+                                    onClick={handleApply}
+                                >
                                     Terapkan Filter
                                 </Button>
                             </div>
@@ -777,15 +1017,26 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                         {unitData.length} unit aktif
                     </p>
                     <div className="flex items-center gap-2">
-                        <Label className="text-xs text-muted-foreground">Urutkan:</Label>
-                        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                        <Label className="text-xs text-muted-foreground">
+                            Urutkan:
+                        </Label>
+                        <Select
+                            value={sortBy}
+                            onValueChange={(v) => setSortBy(v as typeof sortBy)}
+                        >
                             <SelectTrigger className="h-8 w-44 text-xs">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="actual_asc">PA Aktual Terendah</SelectItem>
-                                <SelectItem value="actual_desc">PA Aktual Tertinggi</SelectItem>
-                                <SelectItem value="status">Status (BD dahulu)</SelectItem>
+                                <SelectItem value="actual_asc">
+                                    PA Aktual Terendah
+                                </SelectItem>
+                                <SelectItem value="actual_desc">
+                                    PA Aktual Tertinggi
+                                </SelectItem>
+                                <SelectItem value="status">
+                                    Status (BD dahulu)
+                                </SelectItem>
                                 <SelectItem value="name">No. Unit</SelectItem>
                             </SelectContent>
                         </Select>
@@ -799,27 +1050,46 @@ export default function MonitoringIndex({ unitData, summary, filters, allUnits }
                             <BarChart3 className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <div>
-                            <p className="text-base font-semibold">Tidak ada unit ditemukan</p>
-                            <p className="text-sm text-muted-foreground">Coba ubah filter pencarian.</p>
+                            <p className="text-base font-semibold">
+                                Tidak ada unit ditemukan
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Coba ubah filter pencarian.
+                            </p>
                         </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {sorted.map((unit) => (
-                            <UnitPACard key={unit.id} unit={unit} paThreshold={summary.pa_threshold} />
+                            <UnitPACard
+                                key={unit.id}
+                                unit={unit}
+                                paThreshold={summary.pa_threshold}
+                            />
                         ))}
                     </div>
                 )}
 
                 {/* ── Info Footer ── */}
-                <div className="rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground space-y-1">
+                <div className="space-y-1 rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
                     <p>
-                        <strong className="text-foreground">PA Aktual</strong> = W ÷ (W + S) × 100% — di mana{' '}
-                        <strong className="text-foreground">W</strong> (Working Hours) dihitung otomatis dari jumlah shift P2H × {summary.shift_hours} jam, dan{' '}
-                        <strong className="text-foreground">S</strong> (Service Hours) dari log downtime yang dicatat di halaman Downtime Log.
+                        <strong className="text-foreground">PA Aktual</strong> =
+                        W ÷ (W + S) × 100% — di mana{' '}
+                        <strong className="text-foreground">W</strong> (Working
+                        Hours) dihitung otomatis dari jumlah shift P2H ×{' '}
+                        {summary.shift_hours} jam, dan{' '}
+                        <strong className="text-foreground">S</strong> (Service
+                        Hours) dari log downtime yang dicatat di halaman
+                        Downtime Log.
                     </p>
                     <p>
-                        <strong className="text-foreground">Kelayakan P2H</strong> adalah % hari unit beroperasi normal berdasarkan checklist P2H (score ≥ {summary.pa_threshold}%). Operator dapat override status unit via keputusan akhir P2H.
+                        <strong className="text-foreground">
+                            Kelayakan P2H
+                        </strong>{' '}
+                        adalah % hari unit beroperasi normal berdasarkan
+                        checklist P2H (score ≥ {summary.pa_threshold}%).
+                        Operator dapat override status unit via keputusan akhir
+                        P2H.
                     </p>
                 </div>
             </div>

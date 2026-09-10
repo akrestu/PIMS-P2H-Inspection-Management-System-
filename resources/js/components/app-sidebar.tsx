@@ -1,19 +1,3 @@
-import AppLogo from '@/components/app-logo';
-import { NavMain, type NavGroup } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
-import { Badge } from '@/components/ui/badge';
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
-} from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import { dashboard as driverDashboard } from '@/routes/driver';
 import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
@@ -30,6 +14,23 @@ import {
     ShieldCheck,
     Users,
 } from 'lucide-react';
+import AppLogo from '@/components/app-logo';
+import { NavMain } from '@/components/nav-main';
+import type { NavGroup } from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
+import { Badge } from '@/components/ui/badge';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
+} from '@/components/ui/sidebar';
+import { dashboard } from '@/routes';
+import { dashboard as driverDashboard } from '@/routes/driver';
 
 export function AppSidebar() {
     const { auth, notifications } = usePage<{
@@ -158,12 +159,14 @@ export function AppSidebar() {
                     icon: ClipboardList,
                 },
                 ...(canApprove
-                    ? [{
-                          title: 'Persetujuan P2H',
-                          href: '/p2h/approvals',
-                          icon: ClipboardCheck,
-                          badge: pendingApprovals,
-                      }]
+                    ? [
+                          {
+                              title: 'Persetujuan P2H',
+                              href: '/p2h/approvals',
+                              icon: ClipboardCheck,
+                              badge: pendingApprovals,
+                          },
+                      ]
                     : []),
                 {
                     title: 'Notifikasi',
@@ -184,16 +187,26 @@ export function AppSidebar() {
                         <SidebarMenuButton
                             size="lg"
                             asChild
-                            className="rounded-xl hover:bg-sidebar-accent/50 transition-colors"
-                            tooltip={{ children: 'PIMS — P2H & Inspection System' }}
+                            className="rounded-xl transition-colors hover:bg-sidebar-accent/50"
+                            tooltip={{
+                                children: 'PIMS — P2H & Inspection System',
+                            }}
                         >
-                            <Link href={isAdminOrManager ? dashboard() : isDriver ? driverDashboard() : '/p2h/form'} prefetch>
+                            <Link
+                                href={
+                                    isAdminOrManager
+                                        ? dashboard()
+                                        : isDriver
+                                          ? driverDashboard()
+                                          : '/p2h/form'
+                                }
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-
             </SidebarHeader>
 
             {/* ── Navigation ────────────────────────────────── */}
@@ -202,17 +215,20 @@ export function AppSidebar() {
             </SidebarContent>
 
             {/* ── Footer / User ─────────────────────────────── */}
-            <SidebarFooter className="border-t border-sidebar-border/50 px-2 pt-3 pb-3 gap-2">
+            <SidebarFooter className="gap-2 border-t border-sidebar-border/50 px-2 pt-3 pb-3">
                 {/* Notification count strip — visible only when expanded */}
                 {unreadCount > 0 && !isCollapsed && (
-                    <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 dark:bg-red-950/30 group-data-[collapsible=icon]:hidden">
+                    <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 group-data-[collapsible=icon]:hidden dark:bg-red-950/30">
                         <div className="flex items-center gap-2">
                             <Bell className="h-3.5 w-3.5 text-red-500" />
                             <span className="text-xs text-red-700 dark:text-red-400">
                                 {unreadCount} notifikasi belum dibaca
                             </span>
                         </div>
-                        <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
+                        <Badge
+                            variant="destructive"
+                            className="h-5 px-1.5 text-[10px]"
+                        >
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </Badge>
                     </div>

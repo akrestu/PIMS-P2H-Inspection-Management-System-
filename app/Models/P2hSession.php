@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class P2hSession extends Model
 {
     use SoftDeletes;
+
     protected $fillable = ['unit_id', 'tanggal', 'job_site', 'catatan_khusus', 'status', 'created_by', 'best_compliance_score'];
 
     protected $casts = [
@@ -35,5 +36,23 @@ class P2hSession extends Model
     public function serviceInfo(): HasOne
     {
         return $this->hasOne(P2hServiceInfo::class);
+    }
+
+    public function recomputeBestComplianceScore(): void
+    {
+        $entries = $this->userEntries()
+            ->operational()
+            ->with('answers:id,p2h_user_entry_id,kondisi')
+            ->get();
+
+        $scores = $entries->map(function (P2hUserEntry $entry): ?float {
+            $total = $entry->answers->count();
+
+            return $total > 0
+                ? round(($entry->answers->where('kondisi', 'Layak')->count() / $total) * 100, 1)
+                : null;
+        })->filter(fn (?float $score) => $score !== null);
+
+        $this->update(['best_compliance_score' => $scores->max()]);
     }
 }

@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { LoginForm } from '@/components/login-form';
+import { Card, CardContent } from '@/components/ui/card';
 
 type Props = {
     status?: string;
@@ -9,43 +10,23 @@ export default function Login({ status }: Props) {
     return (
         <>
             <Head title="PIMS — Masuk" />
-            <div className="flex min-h-svh">
-                {/* Panel kiri — hanya tampil di desktop */}
-                <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-col justify-between bg-zinc-900 text-white p-12">
-                    {/* Top: Logo + brand */}
-                    <div className="flex items-center gap-3">
-                        <img src="/logo.png" alt="PIMS Logo" className="size-8 object-contain" />
-                        <span className="text-lg font-semibold tracking-wide">PIMS</span>
-                    </div>
 
-                    {/* Center: Brand hero */}
-                    <div className="flex flex-col gap-4">
-                        <h1 className="text-4xl font-bold tracking-tight leading-snug">
-                            P2H &amp; Inspection<br />Management System
-                        </h1>
-                        <p className="text-sm text-zinc-400 leading-relaxed">
-                            Sistem manajemen inspeksi dan P2H terintegrasi untuk memastikan keselamatan operasional.
-                        </p>
-                    </div>
+            <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-muted/50 p-4 sm:p-6">
+                <div
+                    aria-hidden="true"
+                    className="absolute -top-32 -left-28 size-80 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-400/5"
+                />
+                <div
+                    aria-hidden="true"
+                    className="absolute -right-24 -bottom-36 size-96 rounded-full bg-amber-400/10 blur-3xl dark:bg-amber-300/5"
+                />
 
-                    {/* Bottom: copyright */}
-                    <p className="text-xs text-zinc-500">© 2025 PIMS. All rights reserved.</p>
-                </div>
-
-                {/* Panel kanan — form */}
-                <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-12">
-                    {/* Logo mobile (tersembunyi di desktop) */}
-                    <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-                        <img src="/logo.png" alt="PIMS Logo" className="size-14 object-contain" />
-                        <span className="text-xl font-bold tracking-wide">PIMS</span>
-                    </div>
-
-                    {/* Form */}
-                    <div className="w-full max-w-sm">
+                <Card className="relative w-full max-w-sm rounded-3xl border-border/60 px-2 py-8 shadow-sm sm:py-10">
+                    <CardContent>
                         <LoginForm status={status} />
-                    </div>
-                </div>
-            </div>
+                    </CardContent>
+                </Card>
+            </main>
         </>
     );
 }

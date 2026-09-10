@@ -34,7 +34,11 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
     return (
         <>
             {groups.map((group) => (
-                <NavGroup key={group.label} group={group} isActive={isCurrentUrl} />
+                <NavGroup
+                    key={group.label}
+                    group={group}
+                    isActive={isCurrentUrl}
+                />
             ))}
         </>
     );
@@ -58,12 +62,16 @@ function NavGroup({
     };
 
     return (
-        <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
+        <Collapsible
+            open={open}
+            onOpenChange={setOpen}
+            className="group/collapsible"
+        >
             <SidebarGroup className="py-0">
                 {/* Group label — hidden when sidebar is icon-collapsed */}
                 <SidebarGroupLabel
                     asChild
-                    className="group-data-[collapsible=icon]:hidden h-7 cursor-pointer select-none rounded-md text-xs font-semibold uppercase tracking-widest hover:bg-sidebar-accent/50 transition-colors"
+                    className="h-7 cursor-pointer rounded-md text-xs font-semibold tracking-widest uppercase transition-colors select-none group-data-[collapsible=icon]:hidden hover:bg-sidebar-accent/50"
                 >
                     <CollapsibleTrigger className="flex w-full items-center justify-between px-2">
                         <span>{group.label}</span>
@@ -79,29 +87,31 @@ function NavGroup({
                     <SidebarMenu className="gap-0.5">
                         {group.items.map((item) => {
                             const active = isActive(item.href);
+
                             return (
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton
                                         asChild
                                         isActive={active}
-                                        tooltip={{ children: item.title, hidden: false }}
-                                        className={`
-                                            relative h-9 gap-3 rounded-lg px-3 transition-all duration-150
-                                            ${active
-                                                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm'
+                                        tooltip={{
+                                            children: item.title,
+                                            hidden: false,
+                                        }}
+                                        className={`relative h-9 gap-3 rounded-lg px-3 transition-all duration-150 ${
+                                            active
+                                                ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm'
                                                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
-                                            }
-                                        `}
+                                        } `}
                                     >
                                         <Link
                                             href={item.href}
                                             prefetch
                                             onClick={handleLinkClick}
-                                            className="flex items-center gap-3 w-full"
+                                            className="flex w-full items-center gap-3"
                                         >
                                             {/* Active indicator bar */}
                                             {active && (
-                                                <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-sidebar-primary group-data-[collapsible=icon]:hidden" />
+                                                <span className="absolute top-1/2 left-0 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-sidebar-primary group-data-[collapsible=icon]:hidden" />
                                             )}
                                             {item.icon && (
                                                 <item.icon
@@ -112,25 +122,28 @@ function NavGroup({
                                                     }`}
                                                 />
                                             )}
-                                            <span className="truncate text-sm">{item.title}</span>
+                                            <span className="truncate text-sm">
+                                                {item.title}
+                                            </span>
                                         </Link>
                                     </SidebarMenuButton>
-                                    {item.badge !== undefined && item.badge !== 0 && (
-                                        <SidebarMenuBadge
-                                            className={`
-                                                text-[10px] font-bold tabular-nums min-w-[18px] h-[18px] px-1
-                                                flex items-center justify-center rounded-full
-                                                ${typeof item.badge === 'number' && item.badge > 0
-                                                    ? 'bg-red-500 text-white'
-                                                    : 'bg-sidebar-accent text-sidebar-foreground'
-                                                }
-                                            `}
-                                        >
-                                            {typeof item.badge === 'number' && item.badge > 99
-                                                ? '99+'
-                                                : item.badge}
-                                        </SidebarMenuBadge>
-                                    )}
+                                    {item.badge !== undefined &&
+                                        item.badge !== 0 && (
+                                            <SidebarMenuBadge
+                                                className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
+                                                    typeof item.badge ===
+                                                        'number' &&
+                                                    item.badge > 0
+                                                        ? 'bg-red-500 text-white'
+                                                        : 'bg-sidebar-accent text-sidebar-foreground'
+                                                } `}
+                                            >
+                                                {typeof item.badge ===
+                                                    'number' && item.badge > 99
+                                                    ? '99+'
+                                                    : item.badge}
+                                            </SidebarMenuBadge>
+                                        )}
                                 </SidebarMenuItem>
                             );
                         })}

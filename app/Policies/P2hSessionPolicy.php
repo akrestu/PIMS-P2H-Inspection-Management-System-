@@ -13,6 +13,10 @@ class P2hSessionPolicy
             return true;
         }
 
+        if (! $user->hasRole('driver')) {
+            return false;
+        }
+
         // Driver hanya bisa lihat jika pernah mengisi atau menjadi PIC approver salah satu entry
         return $session->userEntries()
             ->where('user_id', $user->id)

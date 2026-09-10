@@ -1,20 +1,3 @@
-import ChecklistGroup from '@/components/P2h/ChecklistGroup';
-import SignaturePad from '@/components/P2h/SignaturePad';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { cn } from '@/lib/utils';
-import type { AnswerState, P2hInspectionItem, Unit } from '@/types/pims';
 import { Head, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import {
@@ -46,8 +29,43 @@ import {
     Wrench,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactSignatureCanvas from 'react-signature-canvas';
+import type ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
+import ChecklistGroup from '@/components/P2h/ChecklistGroup';
+import SignaturePad from '@/components/P2h/SignaturePad';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { cn } from '@/lib/utils';
+import type { AnswerState, P2hInspectionItem, Unit } from '@/types/pims';
 
 interface StaffUser {
     id: number;
@@ -109,10 +127,17 @@ const LOKASI_OPTIONS = [
 ];
 
 function toProperCase(str: string): string {
-    return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+    return str.replace(
+        /\w\S*/g,
+        (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(),
+    );
 }
 
-async function compressImage(file: File, maxWidth = 1280, quality = 0.75): Promise<File> {
+async function compressImage(
+    file: File,
+    maxWidth = 1280,
+    quality = 0.75,
+): Promise<File> {
     return new Promise((resolve) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
@@ -126,14 +151,26 @@ async function compressImage(file: File, maxWidth = 1280, quality = 0.75): Promi
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             canvas.toBlob(
                 (blob) => {
-                    if (!blob) { resolve(file); return; }
-                    resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+                    if (!blob) {
+                        resolve(file);
+
+                        return;
+                    }
+
+                    resolve(
+                        new File([blob], file.name.replace(/\.\w+$/, '.jpg'), {
+                            type: 'image/jpeg',
+                        }),
+                    );
                 },
                 'image/jpeg',
                 quality,
             );
         };
-        img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+        };
         img.src = url;
     });
 }
@@ -152,23 +189,36 @@ function StepIndicator({ current }: { current: number }) {
             {STEPS.map((step, idx) => {
                 const done = current > step.id;
                 const active = current === step.id;
+
                 return (
                     <div key={step.id} className="flex flex-1 items-center">
                         <div className="flex flex-col items-center gap-1">
                             <div
                                 className={cn(
                                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300',
-                                    done && 'border-primary bg-primary text-primary-foreground',
-                                    active && 'scale-110 border-primary bg-primary text-primary-foreground shadow-md',
-                                    !done && !active && 'border-muted-foreground/30 bg-background text-muted-foreground/50',
+                                    done &&
+                                        'border-primary bg-primary text-primary-foreground',
+                                    active &&
+                                        'scale-110 border-primary bg-primary text-primary-foreground shadow-md',
+                                    !done &&
+                                        !active &&
+                                        'border-muted-foreground/30 bg-background text-muted-foreground/50',
                                 )}
                             >
-                                {done ? <CheckCircle2 className="h-4 w-4" /> : step.id}
+                                {done ? (
+                                    <CheckCircle2 className="h-4 w-4" />
+                                ) : (
+                                    step.id
+                                )}
                             </div>
                             <span
                                 className={cn(
-                                    'whitespace-nowrap text-center text-[10px] font-medium leading-tight',
-                                    active ? 'text-primary' : done ? 'text-primary/70' : 'text-muted-foreground/50',
+                                    'text-center text-[10px] leading-tight font-medium whitespace-nowrap',
+                                    active
+                                        ? 'text-primary'
+                                        : done
+                                          ? 'text-primary/70'
+                                          : 'text-muted-foreground/50',
                                 )}
                             >
                                 {step.label}
@@ -177,8 +227,10 @@ function StepIndicator({ current }: { current: number }) {
                         {idx < STEPS.length - 1 && (
                             <div
                                 className={cn(
-                                    'mb-5 mx-1 h-0.5 flex-1 rounded-full transition-all duration-300',
-                                    current > step.id ? 'bg-primary' : 'bg-muted',
+                                    'mx-1 mb-5 h-0.5 flex-1 rounded-full transition-all duration-300',
+                                    current > step.id
+                                        ? 'bg-primary'
+                                        : 'bg-muted',
                                 )}
                             />
                         )}
@@ -203,9 +255,20 @@ function SummaryRow({
 }) {
     return (
         <div className="flex items-center gap-3 py-2">
-            {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
-            <span className="min-w-0 flex-1 text-base text-muted-foreground">{label}</span>
-            <span className={cn('text-base font-semibold', highlight && 'text-destructive')}>{value}</span>
+            {Icon && (
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className="min-w-0 flex-1 text-base text-muted-foreground">
+                {label}
+            </span>
+            <span
+                className={cn(
+                    'text-base font-semibold',
+                    highlight && 'text-destructive',
+                )}
+            >
+                {value}
+            </span>
         </div>
     );
 }
@@ -246,8 +309,11 @@ function StepNavFooter({
             {/* Progress bar — step 2 only */}
             {checklistProgress !== undefined && (
                 <div className="flex items-center gap-3 border-b px-4 py-2">
-                    <Progress value={checklistProgress} className="h-1.5 flex-1" />
-                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    <Progress
+                        value={checklistProgress}
+                        className="h-1.5 flex-1"
+                    />
+                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                         {filledCount}/{totalItems} item
                     </span>
                 </div>
@@ -264,7 +330,10 @@ function StepNavFooter({
                     >
                         {submitting ? (
                             <>
-                                <Loader2 data-icon="inline-start" className="animate-spin" />
+                                <Loader2
+                                    data-icon="inline-start"
+                                    className="animate-spin"
+                                />
                                 Menyimpan…
                             </>
                         ) : (
@@ -295,7 +364,11 @@ function StepNavFooter({
                             className="h-11 flex-1 gap-1.5 font-semibold"
                         >
                             <span className="flex flex-col items-start leading-tight sm:flex-row sm:items-center sm:gap-1.5">
-                                <span>{step === totalSteps - 1 ? 'Lanjut ke Konfirmasi' : 'Lanjutkan'}</span>
+                                <span>
+                                    {step === totalSteps - 1
+                                        ? 'Lanjut ke Konfirmasi'
+                                        : 'Lanjutkan'}
+                                </span>
                                 {nextStep && (
                                     <span className="text-[11px] font-normal text-primary-foreground/60 sm:hidden">
                                         Berikutnya: {nextStep.label}
@@ -338,6 +411,7 @@ interface P2hDraft {
 function loadDraft(): Partial<P2hDraft> {
     try {
         const raw = localStorage.getItem(DRAFT_KEY);
+
         return raw ? (JSON.parse(raw) as Partial<P2hDraft>) : {};
     } catch {
         return {};
@@ -345,11 +419,19 @@ function loadDraft(): Partial<P2hDraft> {
 }
 
 function saveDraft(draft: P2hDraft) {
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* storage full */ }
+    try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+        /* storage full */
+    }
 }
 
 function clearDraft() {
-    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    try {
+        localStorage.removeItem(DRAFT_KEY);
+    } catch {
+        /* ignore */
+    }
 }
 
 // ─── PIC Combobox ─────────────────────────────────────────────────────────────
@@ -370,22 +452,31 @@ function PicCombobox({
     const selected = staffUsers.find((s) => String(s.id) === value) ?? null;
 
     const filtered = query.trim()
-        ? staffUsers.filter((s) =>
-              s.name.toLowerCase().includes(query.toLowerCase()) ||
-              (s.jabatan ?? '').toLowerCase().includes(query.toLowerCase()) ||
-              (s.department ?? '').toLowerCase().includes(query.toLowerCase()),
+        ? staffUsers.filter(
+              (s) =>
+                  s.name.toLowerCase().includes(query.toLowerCase()) ||
+                  (s.jabatan ?? '')
+                      .toLowerCase()
+                      .includes(query.toLowerCase()) ||
+                  (s.department ?? '')
+                      .toLowerCase()
+                      .includes(query.toLowerCase()),
           )
         : staffUsers;
 
     // Close on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(e.target as Node)
+            ) {
                 setOpen(false);
                 setQuery('');
             }
         };
         document.addEventListener('mousedown', handler);
+
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
@@ -406,12 +497,15 @@ function PicCombobox({
             {/* Trigger / input */}
             <div
                 className={cn(
-                    'flex h-11 w-full items-center gap-2 rounded-lg border px-3 text-sm transition-colors cursor-text',
+                    'flex h-11 w-full cursor-text items-center gap-2 rounded-lg border px-3 text-sm transition-colors',
                     open
                         ? 'border-primary ring-2 ring-primary/20'
                         : 'border-input hover:border-muted-foreground/50',
                 )}
-                onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0); }}
+                onClick={() => {
+                    setOpen(true);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                }}
             >
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <input
@@ -419,37 +513,49 @@ function PicCombobox({
                     value={open ? query : ''}
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => setOpen(true)}
-                    placeholder={selected ? selected.name : 'Ketik nama, jabatan, atau departemen…'}
+                    placeholder={
+                        selected
+                            ? selected.name
+                            : 'Ketik nama, jabatan, atau departemen…'
+                    }
                     className={cn(
                         'flex-1 bg-transparent outline-none placeholder:text-muted-foreground',
-                        !open && selected ? 'text-transparent placeholder:text-foreground' : '',
+                        !open && selected
+                            ? 'text-transparent placeholder:text-foreground'
+                            : '',
                     )}
                 />
                 {selected && (
                     <button
                         type="button"
                         onClick={clear}
-                        className="shrink-0 rounded text-muted-foreground hover:text-foreground transition-colors"
+                        className="shrink-0 rounded text-muted-foreground transition-colors hover:text-foreground"
                         aria-label="Hapus pilihan"
                     >
                         <X className="h-4 w-4" />
                     </button>
                 )}
                 {!selected && (
-                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
+                    <ChevronDown
+                        className={cn(
+                            'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                            open && 'rotate-180',
+                        )}
+                    />
                 )}
             </div>
 
             {/* Dropdown */}
             {open && (
-                <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
+                <div className="absolute right-0 left-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
                     {filtered.length === 0 ? (
-                        <p className="px-4 py-3 text-sm text-muted-foreground text-center">
+                        <p className="px-4 py-3 text-center text-sm text-muted-foreground">
                             Tidak ada PIC yang cocok.
                         </p>
                     ) : (
                         filtered.map((s) => {
                             const isSelected = String(s.id) === value;
+
                             return (
                                 <button
                                     key={s.id}
@@ -464,12 +570,19 @@ function PicCombobox({
                                         <User className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate font-medium">{s.name}</p>
+                                        <p className="truncate font-medium">
+                                            {s.name}
+                                        </p>
                                         <p className="truncate text-xs text-muted-foreground">
-                                            {s.jabatan}{s.department ? ` · ${s.department}` : ''}
+                                            {s.jabatan}
+                                            {s.department
+                                                ? ` · ${s.department}`
+                                                : ''}
                                         </p>
                                     </div>
-                                    {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                                    {isSelected && (
+                                        <Check className="h-4 w-4 shrink-0 text-primary" />
+                                    )}
                                 </button>
                             );
                         })
@@ -493,11 +606,15 @@ function LokasiCombobox({
     const inputRef = useRef<HTMLInputElement>(null);
 
     const filtered = query.trim()
-        ? LOKASI_OPTIONS.filter((l) => l.toLowerCase().includes(query.toLowerCase()))
+        ? LOKASI_OPTIONS.filter((l) =>
+              l.toLowerCase().includes(query.toLowerCase()),
+          )
         : LOKASI_OPTIONS;
 
     const queryProper = query.trim() ? toProperCase(query.trim()) : '';
-    const isExactMatch = LOKASI_OPTIONS.some((l) => l.toLowerCase() === query.trim().toLowerCase());
+    const isExactMatch = LOKASI_OPTIONS.some(
+        (l) => l.toLowerCase() === query.trim().toLowerCase(),
+    );
 
     const select = (v: string) => {
         onChange(v);
@@ -506,7 +623,11 @@ function LokasiCombobox({
     };
 
     const addManual = () => {
-        if (queryProper) { onChange(queryProper); setSheetOpen(false); setQuery(''); }
+        if (queryProper) {
+            onChange(queryProper);
+            setSheetOpen(false);
+            setQuery('');
+        }
     };
 
     return (
@@ -514,31 +635,56 @@ function LokasiCombobox({
             <div
                 role="button"
                 tabIndex={0}
-                onClick={() => { setSheetOpen(true); }}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSheetOpen(true); } }}
+                onClick={() => {
+                    setSheetOpen(true);
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSheetOpen(true);
+                    }
+                }}
                 className={cn(
                     'flex h-11 w-full cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm transition-colors',
-                    value ? 'border-input' : 'border-input text-muted-foreground',
+                    value
+                        ? 'border-input'
+                        : 'border-input text-muted-foreground',
                 )}
             >
                 <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{value || 'Pilih atau ketik lokasi kerja'}</span>
+                <span className="flex-1 truncate">
+                    {value || 'Pilih atau ketik lokasi kerja'}
+                </span>
                 {value && (
                     <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); onChange(''); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChange('');
+                        }}
                         className="shrink-0 text-muted-foreground hover:text-foreground"
                     >
                         <X className="h-4 w-4" />
                     </button>
                 )}
-                {!value && <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                {!value && (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
             </div>
 
-            <Sheet open={sheetOpen} onOpenChange={(o) => { setSheetOpen(o); if (!o) setQuery(''); }}>
+            <Sheet
+                open={sheetOpen}
+                onOpenChange={(o) => {
+                    setSheetOpen(o);
+
+                    if (!o) {
+                        setQuery('');
+                    }
+                }}
+            >
                 <SheetContent
                     side="bottom"
-                    className="h-dvh rounded-none flex flex-col p-0"
+                    className="flex h-dvh flex-col rounded-none p-0"
                 >
                     {/* Header */}
                     <SheetHeader className="shrink-0 px-4 pt-4 pb-0">
@@ -547,7 +693,7 @@ function LokasiCombobox({
 
                     {/* Search input — sticky, tidak ikut scroll */}
                     <div className="shrink-0 px-4 py-3">
-                        <div className="flex items-center gap-2 rounded-lg border px-3 h-11">
+                        <div className="flex h-11 items-center gap-2 rounded-lg border px-3">
                             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <input
                                 ref={inputRef}
@@ -557,7 +703,10 @@ function LokasiCombobox({
                                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                             />
                             {query && (
-                                <button type="button" onClick={() => setQuery('')}>
+                                <button
+                                    type="button"
+                                    onClick={() => setQuery('')}
+                                >
                                     <X className="h-4 w-4 text-muted-foreground" />
                                 </button>
                             )}
@@ -565,15 +714,18 @@ function LokasiCombobox({
                     </div>
 
                     {/* List — flex-1 min-h-0 agar bisa scroll dalam flex container */}
-                    <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6 space-y-1.5">
+                    <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-4 pb-6">
                         {queryProper && !isExactMatch && (
                             <button
                                 type="button"
                                 onClick={addManual}
-                                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-primary/40 px-4 py-3 text-left text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+                                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-primary/40 px-4 py-3 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/5"
                             >
                                 <Plus className="h-4 w-4 shrink-0" />
-                                Tambahkan: <span className="ml-1 font-semibold">{queryProper}</span>
+                                Tambahkan:{' '}
+                                <span className="ml-1 font-semibold">
+                                    {queryProper}
+                                </span>
                             </button>
                         )}
                         {filtered.map((lokasi) => (
@@ -583,16 +735,21 @@ function LokasiCombobox({
                                 onClick={() => select(lokasi)}
                                 className={cn(
                                     'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:bg-accent',
-                                    value === lokasi && 'border-primary bg-primary/5 font-medium',
+                                    value === lokasi &&
+                                        'border-primary bg-primary/5 font-medium',
                                 )}
                             >
                                 <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                                 <span className="flex-1">{lokasi}</span>
-                                {value === lokasi && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                                {value === lokasi && (
+                                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                                )}
                             </button>
                         ))}
                         {filtered.length === 0 && !queryProper && (
-                            <p className="py-4 text-center text-sm text-muted-foreground">Tidak ada lokasi yang cocok.</p>
+                            <p className="py-4 text-center text-sm text-muted-foreground">
+                                Tidak ada lokasi yang cocok.
+                            </p>
                         )}
                     </div>
                 </SheetContent>
@@ -602,8 +759,23 @@ function LokasiCombobox({
 }
 
 // ─── Main Form ────────────────────────────────────────────────────────────────
-export default function P2hForm({ units, inspectionItems, staffUsers, sites }: Props) {
-    const { auth, options } = usePage<{ auth: { user: { id: number; name: string; nik?: string | null; jabatan?: string } | null }; options: { shifts: string[] } }>().props;
+export default function P2hForm({
+    units,
+    inspectionItems,
+    staffUsers,
+    sites,
+}: Props) {
+    const { auth, options } = usePage<{
+        auth: {
+            user: {
+                id: number;
+                name: string;
+                nik?: string | null;
+                jabatan?: string;
+            } | null;
+        };
+        options: { shifts: string[] };
+    }>().props;
     const jobSiteOptions = sites.map((s) => s.name);
     const shiftOptions = options?.shifts ?? ['Shift I', 'Shift II'];
 
@@ -618,7 +790,9 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
     }, [step]);
 
     // Step 1
-    const [selectedUnitId, setSelectedUnitId] = useState<string>(draft.selectedUnitId ?? '');
+    const [selectedUnitId, setSelectedUnitId] = useState<string>(
+        draft.selectedUnitId ?? '',
+    );
     const [unitSheetOpen, setUnitSheetOpen] = useState(false);
     const [slotInfo, setSlotInfo] = useState<SlotInfo | null>(null);
     const [checkingSlot, setCheckingSlot] = useState(false);
@@ -626,29 +800,47 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
     const [lokasiKerja, setLokasiKerja] = useState(draft.lokasiKerja ?? '');
     const [kmAwal, setKmAwal] = useState(draft.kmAwal ?? '');
     const [shift, setShift] = useState(draft.shift ?? '');
-    const [picApproverId, setPicApproverId] = useState<string>(draft.picApproverId ?? '');
+    const [picApproverId, setPicApproverId] = useState<string>(
+        draft.picApproverId ?? '',
+    );
 
     // Step 2
-    const [answers, setAnswers] = useState<Record<number, AnswerState>>(draft.answers ?? {});
+    const [answers, setAnswers] = useState<Record<number, AnswerState>>(
+        draft.answers ?? {},
+    );
 
     // Step 3
-    const [servisMingguan, setServisMingguan] = useState(draft.servisMingguan ?? false);
-    const [servisBerkala, setServisBerkala] = useState(draft.servisBerkala ?? false);
-    const [unscheduleBreakdown, setUnscheduleBreakdown] = useState(draft.unscheduleBreakdown ?? false);
+    const [servisMingguan, setServisMingguan] = useState(
+        draft.servisMingguan ?? false,
+    );
+    const [servisBerkala, setServisBerkala] = useState(
+        draft.servisBerkala ?? false,
+    );
+    const [unscheduleBreakdown, setUnscheduleBreakdown] = useState(
+        draft.unscheduleBreakdown ?? false,
+    );
     const [lainnya, setLainnya] = useState(draft.lainnya ?? false);
     const [lainnyaText, setLainnyaText] = useState(draft.lainnyaText ?? '');
-    const [catatanServis, setCatatanServis] = useState(draft.catatanServis ?? '');
+    const [catatanServis, setCatatanServis] = useState(
+        draft.catatanServis ?? '',
+    );
     const [kmUnit, setKmUnit] = useState(draft.kmUnit ?? '');
     const [jumlahLiter, setJumlahLiter] = useState(draft.jumlahLiter ?? '');
 
     // Step 4
     const [hmKmAkhir, setHmKmAkhir] = useState(draft.hmKmAkhir ?? '');
-    const [kondisiAkhir, setKondisiAkhir] = useState<'Layak Pakai' | 'BD' | ''>(draft.kondisiAkhir ?? '');
-    const [justifikasiKondisi, setJustifikasiKondisi] = useState(draft.justifikasiKondisi ?? '');
+    const [kondisiAkhir, setKondisiAkhir] = useState<'Layak Pakai' | 'BD' | ''>(
+        draft.kondisiAkhir ?? '',
+    );
+    const [justifikasiKondisi, setJustifikasiKondisi] = useState(
+        draft.justifikasiKondisi ?? '',
+    );
     const [attachments, setAttachments] = useState<File[]>([]);
     const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
     const [compressing, setCompressing] = useState(false);
-    const [compressingItems, setCompressingItems] = useState<Record<number, boolean>>({});
+    const [compressingItems, setCompressingItems] = useState<
+        Record<number, boolean>
+    >({});
     const [submitting, setSubmitting] = useState(false);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
@@ -658,45 +850,70 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
 
     // Sr.Staff tidak memerlukan persetujuan PIC — Staff dan Non Staff tetap perlu
     const isSrStaff = auth?.user?.jabatan === 'Sr.Staff';
-    const needsApproval = selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
+    const needsApproval =
+        selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
 
     // Label jabatan PIC sesuai hierarki: Non-Staff → Staff, Staff → Sr.Staff
-    const picJabatanLabel = auth?.user?.jabatan === 'Non Staff' ? 'Staff'
-        : auth?.user?.jabatan === 'Staff' ? 'Sr.Staff'
-        : 'Staff/Sr.Staff';
+    const picJabatanLabel =
+        auth?.user?.jabatan === 'Non Staff'
+            ? 'Staff'
+            : auth?.user?.jabatan === 'Staff'
+              ? 'Sr.Staff'
+              : 'Staff/Sr.Staff';
 
     // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
-    // Staff tanpa department (null/kosong) dianggap universal — bisa approve semua unit
     const eligibleStaff = staffUsers.filter((s) => s.id !== auth?.user?.id);
-    const filteredStaffUsers = selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
-        ? eligibleStaff.filter((s) => !s.department || s.department === selectedUnit.department)
-        : eligibleStaff;
+    const filteredStaffUsers =
+        selectedUnit?.jenis_unit === 'Light Vehicle' && selectedUnit?.department
+            ? eligibleStaff.filter(
+                  (s) => s.department === selectedUnit.department,
+              )
+            : eligibleStaff;
 
     // Hapus picApproverId jika tidak lagi ada di filteredStaffUsers (misal: unit berubah atau draft lama)
     useEffect(() => {
-        if (needsApproval && picApproverId && !filteredStaffUsers.some((s) => String(s.id) === picApproverId)) {
+        if (
+            needsApproval &&
+            picApproverId &&
+            !filteredStaffUsers.some((s) => String(s.id) === picApproverId)
+        ) {
             setPicApproverId('');
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filteredStaffUsers]);
 
     const p2hScore = useMemo(() => {
         const total = inspectionItems.length;
-        if (total === 0) return null;
-        const layakCount = Object.values(answers).filter((a) => a.kondisi === 'Layak').length;
+
+        if (total === 0) {
+            return null;
+        }
+
+        const layakCount = Object.values(answers).filter(
+            (a) => a.kondisi === 'Layak',
+        ).length;
+
         return Math.round((layakCount / total) * 100);
     }, [answers, inspectionItems.length]);
 
     const hasAATidakLayak = useMemo(() => {
         return inspectionItems.some(
-            (item) => item.kode_bahaya === 'AA' && answers[item.id]?.kondisi === 'Tidak Layak',
+            (item) =>
+                item.kode_bahaya === 'AA' &&
+                answers[item.id]?.kondisi === 'Tidak Layak',
         );
     }, [answers, inspectionItems]);
 
-    const recommendedKondisi = p2hScore !== null
-        ? (hasAATidakLayak || p2hScore < 80 ? 'BD' : 'Layak Pakai')
-        : null;
-    const isOverride = kondisiAkhir !== '' && recommendedKondisi !== null && kondisiAkhir !== recommendedKondisi;
+    const recommendedKondisi =
+        p2hScore !== null
+            ? hasAATidakLayak || p2hScore < 80
+                ? 'BD'
+                : 'Layak Pakai'
+            : null;
+    const isOverride =
+        kondisiAkhir !== '' &&
+        recommendedKondisi !== null &&
+        kondisiAkhir !== recommendedKondisi;
 
     const filledCount = useMemo(
         () => Object.values(answers).filter((a) => a.kondisi !== null).length,
@@ -704,14 +921,21 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
     );
 
     const tlCount = useMemo(
-        () => Object.values(answers).filter((a) => a.kondisi === 'Tidak Layak').length,
+        () =>
+            Object.values(answers).filter((a) => a.kondisi === 'Tidak Layak')
+                .length,
         [answers],
     );
 
     const groupedItems = useMemo(() => {
-        return SECTION_ORDER.reduce<Record<P2hInspectionItem['section'], P2hInspectionItem[]>>(
+        return SECTION_ORDER.reduce<
+            Record<P2hInspectionItem['section'], P2hInspectionItem[]>
+        >(
             (acc, section) => {
-                acc[section] = inspectionItems.filter((item) => item.section === section);
+                acc[section] = inspectionItems.filter(
+                    (item) => item.section === section,
+                );
+
                 return acc;
             },
             { A: [], B: [], C: [] },
@@ -721,38 +945,86 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
     // Auto-save draft setiap kali ada perubahan state (kecuali tanda tangan)
     useEffect(() => {
         saveDraft({
-            step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+            step,
+            selectedUnitId,
+            jobSite,
+            lokasiKerja,
+            kmAwal,
+            shift,
             picApproverId,
-            answers, servisMingguan, servisBerkala, unscheduleBreakdown,
-            lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
-            hmKmAkhir, kondisiAkhir, justifikasiKondisi,
+            answers,
+            servisMingguan,
+            servisBerkala,
+            unscheduleBreakdown,
+            lainnya,
+            lainnyaText,
+            catatanServis,
+            kmUnit,
+            jumlahLiter,
+            hmKmAkhir,
+            kondisiAkhir,
+            justifikasiKondisi,
         });
     }, [
-        step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
+        step,
+        selectedUnitId,
+        jobSite,
+        lokasiKerja,
+        kmAwal,
+        shift,
         picApproverId,
-        answers, servisMingguan, servisBerkala, unscheduleBreakdown,
-        lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
-        hmKmAkhir, kondisiAkhir, justifikasiKondisi,
+        answers,
+        servisMingguan,
+        servisBerkala,
+        unscheduleBreakdown,
+        lainnya,
+        lainnyaText,
+        catatanServis,
+        kmUnit,
+        jumlahLiter,
+        hmKmAkhir,
+        kondisiAkhir,
+        justifikasiKondisi,
     ]);
 
     const checkSlot = useCallback((unitId: string, attempt = 1) => {
-        if (!unitId) { setSlotInfo(null); return; }
+        if (!unitId) {
+            setSlotInfo(null);
+
+            return;
+        }
+
         setCheckingSlot(true);
         fetch(`/api/p2h/check-slot?unit_id=${unitId}`)
             .then((r) => {
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}`);
+                }
+
                 return r.json();
             })
-            .then((data) => { setSlotInfo(data); setCheckingSlot(false); })
+            .then((data) => {
+                setSlotInfo(data);
+                setCheckingSlot(false);
+            })
             .catch(() => {
                 if (attempt < 3) {
-                    setTimeout(() => checkSlot(unitId, attempt + 1), attempt * 1000);
+                    setTimeout(
+                        () => checkSlot(unitId, attempt + 1),
+                        attempt * 1000,
+                    );
                 } else {
                     setSlotInfo(null);
                     setCheckingSlot(false);
-                    toast.error('Gagal mengecek ketersediaan slot setelah 3 percobaan. Periksa koneksi internet.', {
-                        action: { label: 'Coba Lagi', onClick: () => checkSlot(unitId) },
-                    });
+                    toast.error(
+                        'Gagal mengecek ketersediaan slot setelah 3 percobaan. Periksa koneksi internet.',
+                        {
+                            action: {
+                                label: 'Coba Lagi',
+                                onClick: () => checkSlot(unitId),
+                            },
+                        },
+                    );
                 }
             });
     }, []);
@@ -761,107 +1033,205 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
         checkSlot(selectedUnitId);
     }, [selectedUnitId, checkSlot]);
 
-    const handleKondisiChange = useCallback((itemId: number, kondisi: 'Layak' | 'Tidak Layak') => {
-        setAnswers((prev) => ({
-            ...prev,
-            [itemId]: { inspection_item_id: itemId, kondisi, keterangan: prev[itemId]?.keterangan ?? '' },
-        }));
-    }, []);
+    const handleKondisiChange = useCallback(
+        (itemId: number, kondisi: 'Layak' | 'Tidak Layak') => {
+            setAnswers((prev) => ({
+                ...prev,
+                [itemId]: {
+                    inspection_item_id: itemId,
+                    kondisi,
+                    keterangan: prev[itemId]?.keterangan ?? '',
+                },
+            }));
+        },
+        [],
+    );
 
-    const handleKeteranganChange = useCallback((itemId: number, keterangan: string) => {
-        setAnswers((prev) => ({
-            ...prev,
-            [itemId]: { ...prev[itemId], inspection_item_id: itemId, kondisi: prev[itemId]?.kondisi ?? null, keterangan },
-        }));
-    }, []);
+    const handleKeteranganChange = useCallback(
+        (itemId: number, keterangan: string) => {
+            setAnswers((prev) => ({
+                ...prev,
+                [itemId]: {
+                    ...prev[itemId],
+                    inspection_item_id: itemId,
+                    kondisi: prev[itemId]?.kondisi ?? null,
+                    keterangan,
+                },
+            }));
+        },
+        [],
+    );
 
-    const [itemAttachments, setItemAttachments] = useState<Record<number, File[]>>({});
-    const [itemAttachmentPreviews, setItemAttachmentPreviews] = useState<Record<number, string[]>>({});
+    const [itemAttachments, setItemAttachments] = useState<
+        Record<number, File[]>
+    >({});
+    const [itemAttachmentPreviews, setItemAttachmentPreviews] = useState<
+        Record<number, string[]>
+    >({});
 
-    const handleItemAttachmentChange = useCallback(async (itemId: number, files: FileList | null) => {
-        if (!files || files.length === 0) return;
-        setCompressingItems((prev) => ({ ...prev, [itemId]: true }));
-        try {
-            const compressed = await Promise.all(Array.from(files).map((f) => compressImage(f)));
-            setItemAttachments((prev) => ({ ...prev, [itemId]: [...(prev[itemId] ?? []), ...compressed] }));
-            const previews = compressed.map((f) => URL.createObjectURL(f));
-            setItemAttachmentPreviews((prev) => ({ ...prev, [itemId]: [...(prev[itemId] ?? []), ...previews] }));
-        } finally {
-            setCompressingItems((prev) => ({ ...prev, [itemId]: false }));
-        }
-    }, []);
+    const handleItemAttachmentChange = useCallback(
+        async (itemId: number, files: FileList | null) => {
+            if (!files || files.length === 0) {
+                return;
+            }
+
+            setCompressingItems((prev) => ({ ...prev, [itemId]: true }));
+
+            try {
+                const compressed = await Promise.all(
+                    Array.from(files).map((f) => compressImage(f)),
+                );
+                setItemAttachments((prev) => ({
+                    ...prev,
+                    [itemId]: [...(prev[itemId] ?? []), ...compressed],
+                }));
+                const previews = compressed.map((f) => URL.createObjectURL(f));
+                setItemAttachmentPreviews((prev) => ({
+                    ...prev,
+                    [itemId]: [...(prev[itemId] ?? []), ...previews],
+                }));
+            } finally {
+                setCompressingItems((prev) => ({ ...prev, [itemId]: false }));
+            }
+        },
+        [],
+    );
 
     const removeItemAttachment = useCallback((itemId: number, idx: number) => {
         setItemAttachments((prev) => {
             const arr = [...(prev[itemId] ?? [])];
             arr.splice(idx, 1);
+
             return { ...prev, [itemId]: arr };
         });
         setItemAttachmentPreviews((prev) => {
             const arr = [...(prev[itemId] ?? [])];
             URL.revokeObjectURL(arr[idx]);
             arr.splice(idx, 1);
+
             return { ...prev, [itemId]: arr };
         });
     }, []);
 
-    const handleAttachmentFiles = useCallback(async (files: FileList | null) => {
-        if (!files || files.length === 0) return;
-        setCompressing(true);
-        try {
-            const compressed = await Promise.all(Array.from(files).map((f) => compressImage(f)));
-            setAttachments((prev) => [...prev, ...compressed]);
-            const previews = compressed.map((f) => URL.createObjectURL(f));
-            setAttachmentPreviews((prev) => [...prev, ...previews]);
-        } finally {
-            setCompressing(false);
-        }
-    }, []);
+    const handleAttachmentFiles = useCallback(
+        async (files: FileList | null) => {
+            if (!files || files.length === 0) {
+                return;
+            }
+
+            setCompressing(true);
+
+            try {
+                const compressed = await Promise.all(
+                    Array.from(files).map((f) => compressImage(f)),
+                );
+                setAttachments((prev) => [...prev, ...compressed]);
+                const previews = compressed.map((f) => URL.createObjectURL(f));
+                setAttachmentPreviews((prev) => [...prev, ...previews]);
+            } finally {
+                setCompressing(false);
+            }
+        },
+        [],
+    );
 
     const removeAttachment = useCallback((idx: number) => {
-        setAttachments((prev) => { const a = [...prev]; a.splice(idx, 1); return a; });
+        setAttachments((prev) => {
+            const a = [...prev];
+            a.splice(idx, 1);
+
+            return a;
+        });
         setAttachmentPreviews((prev) => {
             const a = [...prev];
             URL.revokeObjectURL(a[idx]);
             a.splice(idx, 1);
+
             return a;
         });
     }, []);
 
     const validateStep = (s: number): string | null => {
         if (s === 1) {
-            if (!selectedUnitId) return 'Pilih unit terlebih dahulu.';
-            if (checkingSlot) return 'Menunggu pengecekan slot…';
-            if (!shift) return 'Shift wajib dipilih.';
-            if (kmAwal && slotInfo?.last_hm_km_akhir != null && Number(kmAwal) < slotInfo.last_hm_km_akhir) {
+            if (!selectedUnitId) {
+                return 'Pilih unit terlebih dahulu.';
+            }
+
+            if (checkingSlot) {
+                return 'Menunggu pengecekan slot…';
+            }
+
+            if (!shift) {
+                return 'Shift wajib dipilih.';
+            }
+
+            if (
+                kmAwal &&
+                slotInfo?.last_hm_km_akhir != null &&
+                Number(kmAwal) < slotInfo.last_hm_km_akhir
+            ) {
                 return `HM/KM Awal tidak boleh lebih rendah dari HM/KM Akhir sebelumnya (${slotInfo.last_hm_km_akhir.toLocaleString('id-ID')}).`;
             }
+
             if (needsApproval) {
-                if (filteredStaffUsers.length === 0) return `Tidak ada ${picJabatanLabel} yang tersedia sebagai PIC untuk unit ini. Hubungi admin.`;
-                if (!picApproverId) return 'PIC yang akan menyetujui P2H wajib dipilih.';
-                if (!filteredStaffUsers.some((s) => String(s.id) === picApproverId)) return 'PIC yang dipilih tidak valid. Silakan pilih kembali.';
+                if (filteredStaffUsers.length === 0) {
+                    return `Tidak ada ${picJabatanLabel} yang tersedia sebagai PIC untuk unit ini. Hubungi admin.`;
+                }
+
+                if (!picApproverId) {
+                    return 'PIC yang akan menyetujui P2H wajib dipilih.';
+                }
+
+                if (
+                    !filteredStaffUsers.some(
+                        (s) => String(s.id) === picApproverId,
+                    )
+                ) {
+                    return 'PIC yang dipilih tidak valid. Silakan pilih kembali.';
+                }
             }
         }
+
         if (s === 2) {
             for (const item of inspectionItems) {
                 const ans = answers[item.id];
-                if (!ans?.kondisi) return `Item "${item.nama_item}" belum dipilih.`;
+
+                if (!ans?.kondisi) {
+                    return `Item "${item.nama_item}" belum dipilih.`;
+                }
+
                 if (ans.kondisi === 'Tidak Layak' && !ans.keterangan.trim()) {
                     return `Keterangan wajib diisi untuk item "${item.nama_item}".`;
                 }
             }
         }
+
         if (s === 4) {
-            if (!kondisiAkhir) return 'Keputusan kondisi akhir unit wajib dipilih.';
-            if (isOverride && !justifikasiKondisi.trim()) return 'Alasan keputusan wajib diisi karena berbeda dari rekomendasi sistem.';
-            if (sigEmpty || sigPadRef.current?.isEmpty()) return 'Tanda tangan wajib dibuat.';
+            if (!kondisiAkhir) {
+                return 'Keputusan kondisi akhir unit wajib dipilih.';
+            }
+
+            if (isOverride && !justifikasiKondisi.trim()) {
+                return 'Alasan keputusan wajib diisi karena berbeda dari rekomendasi sistem.';
+            }
+
+            if (sigEmpty || sigPadRef.current?.isEmpty()) {
+                return 'Tanda tangan wajib dibuat.';
+            }
         }
+
         return null;
     };
 
     const goNext = () => {
         const err = validateStep(step);
-        if (err) { toast.error(err); return; }
+
+        if (err) {
+            toast.error(err);
+
+            return;
+        }
+
         setStep((s) => Math.min(s + 1, 4));
     };
 
@@ -871,16 +1241,25 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
 
     const handleSubmit = () => {
         const err = validateStep(4);
-        if (err) { toast.error(err); return; }
+
+        if (err) {
+            toast.error(err);
+
+            return;
+        }
 
         setSubmitting(true);
         const paraf = sigPadRef.current?.toDataURL('image/png') ?? '';
 
         // Tolak signature yang terlalu besar (> 2MB base64 ≈ ~1.5MB PNG)
         const MAX_SIG_BYTES = 2 * 1024 * 1024;
+
         if (paraf.length > MAX_SIG_BYTES) {
             setSubmitting(false);
-            toast.error('Ukuran tanda tangan terlalu besar. Coba ulangi tanda tangan.');
+            toast.error(
+                'Ukuran tanda tangan terlalu besar. Coba ulangi tanda tangan.',
+            );
+
             return;
         }
 
@@ -895,67 +1274,92 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
         // Build payload — attachments require forceFormData
         const itemAttachmentsFlat: Record<string, File[]> = {};
         Object.entries(itemAttachments).forEach(([itemId, files]) => {
-            if (files.length > 0) itemAttachmentsFlat[`item_attachments[${itemId}][]`] = files;
+            if (files.length > 0) {
+                itemAttachmentsFlat[`item_attachments[${itemId}][]`] = files;
+            }
         });
 
-        router.post('/p2h', {
-            unit_id: Number(selectedUnitId),
-            job_site: jobSite || null,
-            lokasi_kerja: lokasiKerja || null,
-            km_awal: kmAwal ? Number(kmAwal) : null,
-            hm_km_akhir: hmKmAkhir ? Number(hmKmAkhir) : null,
-            shift,
-            pic_approver_id: needsApproval && picApproverId ? Number(picApproverId) : null,
-            paraf,
-            answers: answersArray,
-            kondisi_akhir: kondisiAkhir,
-            justifikasi_kondisi: justifikasiKondisi || null,
-            service_info: {
-                servis_mingguan: servisMingguan,
-                servis_berkala: servisBerkala,
-                unschedule_breakdown: unscheduleBreakdown,
-                lainnya: lainnya ? lainnyaText : null,
-                catatan_servis: catatanServis || null,
+        router.post(
+            '/p2h',
+            {
+                unit_id: Number(selectedUnitId),
+                job_site: jobSite || null,
+                lokasi_kerja: lokasiKerja || null,
+                km_awal: kmAwal ? Number(kmAwal) : null,
+                hm_km_akhir: hmKmAkhir ? Number(hmKmAkhir) : null,
+                shift,
+                pic_approver_id:
+                    needsApproval && picApproverId
+                        ? Number(picApproverId)
+                        : null,
+                paraf,
+                answers: answersArray,
+                kondisi_akhir: kondisiAkhir,
+                justifikasi_kondisi: justifikasiKondisi || null,
+                service_info: {
+                    servis_mingguan: servisMingguan,
+                    servis_berkala: servisBerkala,
+                    unschedule_breakdown: unscheduleBreakdown,
+                    lainnya: lainnya ? lainnyaText : null,
+                    catatan_servis: catatanServis || null,
+                },
+                fuel_log: {
+                    km_unit: kmUnit ? Number(kmUnit) : null,
+                    jumlah_liter: jumlahLiter ? Number(jumlahLiter) : null,
+                },
+                attachments,
+                ...itemAttachmentsFlat,
             },
-            fuel_log: {
-                km_unit: kmUnit ? Number(kmUnit) : null,
-                jumlah_liter: jumlahLiter ? Number(jumlahLiter) : null,
+            {
+                forceFormData: true,
+                onSuccess: () => {
+                    router.visit('/p2h', { replace: true });
+                },
+                onError: (errors) => {
+                    setSubmitting(false);
+                    // Kembalikan draft jika submit gagal
+                    saveDraft({
+                        step,
+                        selectedUnitId,
+                        jobSite,
+                        lokasiKerja,
+                        kmAwal,
+                        shift,
+                        picApproverId,
+                        answers,
+                        servisMingguan,
+                        servisBerkala,
+                        unscheduleBreakdown,
+                        lainnya,
+                        lainnyaText,
+                        catatanServis,
+                        kmUnit,
+                        jumlahLiter,
+                        hmKmAkhir,
+                        kondisiAkhir,
+                        justifikasiKondisi,
+                    });
+                    const messages = Object.values(errors);
+
+                    if (messages.length > 0) {
+                        messages.forEach((msg) => toast.error(msg));
+                    } else {
+                        toast.error('Terjadi kesalahan. Periksa form kembali.');
+                    }
+                },
             },
-            attachments,
-            ...itemAttachmentsFlat,
-        }, {
-            forceFormData: true,
-            onSuccess: () => {
-                router.visit('/p2h', { replace: true });
-            },
-            onError: (errors) => {
-                setSubmitting(false);
-                // Kembalikan draft jika submit gagal
-                saveDraft({
-                    step, selectedUnitId, jobSite, lokasiKerja, kmAwal, shift,
-                    picApproverId,
-                    answers, servisMingguan, servisBerkala, unscheduleBreakdown,
-                    lainnya, lainnyaText, catatanServis, kmUnit, jumlahLiter,
-                    hmKmAkhir, kondisiAkhir, justifikasiKondisi,
-                });
-                const messages = Object.values(errors);
-                if (messages.length > 0) {
-                    messages.forEach((msg) => toast.error(msg));
-                } else {
-                    toast.error('Terjadi kesalahan. Periksa form kembali.');
-                }
-            },
-        });
+        );
     };
 
-    const checklistProgress = Math.round((filledCount / inspectionItems.length) * 100);
+    const checklistProgress = Math.round(
+        (filledCount / inspectionItems.length) * 100,
+    );
 
     return (
         <>
             <Head title="Form P2H" />
 
             <div ref={topRef} className="flex min-h-dvh flex-col">
-
                 {/* ── Sticky Top Header ── */}
                 <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                     {hasDraft && (
@@ -965,7 +1369,10 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             </p>
                             <button
                                 type="button"
-                                onClick={() => { clearDraft(); window.location.reload(); }}
+                                onClick={() => {
+                                    clearDraft();
+                                    window.location.reload();
+                                }}
                                 className="ml-2 text-xs font-medium text-amber-600 underline hover:text-amber-800 dark:text-amber-400"
                             >
                                 Mulai ulang
@@ -985,7 +1392,6 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
 
                 {/* ── Step Content ── */}
                 <div className="flex flex-1 flex-col gap-4 p-4 pb-6">
-
                     {/* ══════════════════════════════════════════
                         STEP 1 — Unit & Shift
                     ══════════════════════════════════════════ */}
@@ -994,18 +1400,28 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             {/* Pilih Unit */}
                             <Card>
                                 <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">Pilih Unit Kendaraan</CardTitle>
-                                    <CardDescription>Pilih unit yang akan diperiksa hari ini</CardDescription>
+                                    <CardTitle className="text-base">
+                                        Pilih Unit Kendaraan
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Pilih unit yang akan diperiksa hari ini
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-3">
+                                <CardContent className="space-y-3 px-4">
                                     {/* Unit picker — Sheet bottom drawer */}
                                     {(() => {
-                                        const pickedUnit = units.find((u) => String(u.id) === selectedUnitId);
+                                        const pickedUnit = units.find(
+                                            (u) =>
+                                                String(u.id) === selectedUnitId,
+                                        );
+
                                         return (
                                             <>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setUnitSheetOpen(true)}
+                                                    onClick={() =>
+                                                        setUnitSheetOpen(true)
+                                                    }
                                                     className={cn(
                                                         'flex w-full items-center justify-between rounded-xl border-2 px-4 py-3 text-left transition-colors',
                                                         pickedUnit
@@ -1019,53 +1435,115 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                                                 <Truck className="h-5 w-5 text-primary" />
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <div className="truncate text-base font-bold">{pickedUnit.no_unit}</div>
-                                                                <div className="text-xs text-muted-foreground">{pickedUnit.jenis_unit}</div>
+                                                                <div className="truncate text-base font-bold">
+                                                                    {
+                                                                        pickedUnit.no_unit
+                                                                    }
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {
+                                                                        pickedUnit.jenis_unit
+                                                                    }
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-sm text-muted-foreground">Ketuk untuk memilih unit kendaraan</span>
+                                                        <span className="text-sm text-muted-foreground">
+                                                            Ketuk untuk memilih
+                                                            unit kendaraan
+                                                        </span>
                                                     )}
                                                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
                                                 </button>
 
-                                                <Sheet open={unitSheetOpen} onOpenChange={setUnitSheetOpen}>
-                                                    <SheetContent side="bottom" className="max-h-[75vh] rounded-t-2xl pb-safe">
+                                                <Sheet
+                                                    open={unitSheetOpen}
+                                                    onOpenChange={
+                                                        setUnitSheetOpen
+                                                    }
+                                                >
+                                                    <SheetContent
+                                                        side="bottom"
+                                                        className="pb-safe max-h-[75vh] rounded-t-2xl"
+                                                    >
                                                         <SheetHeader className="pb-2">
-                                                            <SheetTitle>Pilih Unit Kendaraan</SheetTitle>
+                                                            <SheetTitle>
+                                                                Pilih Unit
+                                                                Kendaraan
+                                                            </SheetTitle>
                                                         </SheetHeader>
                                                         <div className="space-y-2 overflow-y-auto px-4 pb-4">
-                                                            {units.map((unit) => {
-                                                                const isSelected = String(unit.id) === selectedUnitId;
-                                                                return (
-                                                                    <SheetClose asChild key={unit.id}>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => { setSelectedUnitId(String(unit.id)); setPicApproverId(''); }}
-                                                                            className={cn(
-                                                                                'flex w-full items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors',
-                                                                                isSelected
-                                                                                    ? 'border-primary bg-primary/5'
-                                                                                    : 'border-border hover:border-primary/40 hover:bg-muted/40',
-                                                                            )}
+                                                            {units.map(
+                                                                (unit) => {
+                                                                    const isSelected =
+                                                                        String(
+                                                                            unit.id,
+                                                                        ) ===
+                                                                        selectedUnitId;
+
+                                                                    return (
+                                                                        <SheetClose
+                                                                            asChild
+                                                                            key={
+                                                                                unit.id
+                                                                            }
                                                                         >
-                                                                            <div className={cn(
-                                                                                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
-                                                                                isSelected ? 'bg-primary/15' : 'bg-muted',
-                                                                            )}>
-                                                                                <Truck className={cn('h-5 w-5', isSelected ? 'text-primary' : 'text-muted-foreground')} />
-                                                                            </div>
-                                                                            <div className="min-w-0 flex-1">
-                                                                                <div className="text-base font-bold">{unit.no_unit}</div>
-                                                                                <div className="text-xs text-muted-foreground">{unit.jenis_unit}</div>
-                                                                            </div>
-                                                                            {isSelected && (
-                                                                                <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
-                                                                            )}
-                                                                        </button>
-                                                                    </SheetClose>
-                                                                );
-                                                            })}
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setSelectedUnitId(
+                                                                                        String(
+                                                                                            unit.id,
+                                                                                        ),
+                                                                                    );
+                                                                                    setPicApproverId(
+                                                                                        '',
+                                                                                    );
+                                                                                }}
+                                                                                className={cn(
+                                                                                    'flex w-full items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors',
+                                                                                    isSelected
+                                                                                        ? 'border-primary bg-primary/5'
+                                                                                        : 'border-border hover:border-primary/40 hover:bg-muted/40',
+                                                                                )}
+                                                                            >
+                                                                                <div
+                                                                                    className={cn(
+                                                                                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+                                                                                        isSelected
+                                                                                            ? 'bg-primary/15'
+                                                                                            : 'bg-muted',
+                                                                                    )}
+                                                                                >
+                                                                                    <Truck
+                                                                                        className={cn(
+                                                                                            'h-5 w-5',
+                                                                                            isSelected
+                                                                                                ? 'text-primary'
+                                                                                                : 'text-muted-foreground',
+                                                                                        )}
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="min-w-0 flex-1">
+                                                                                    <div className="text-base font-bold">
+                                                                                        {
+                                                                                            unit.no_unit
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div className="text-xs text-muted-foreground">
+                                                                                        {
+                                                                                            unit.jenis_unit
+                                                                                        }
+                                                                                    </div>
+                                                                                </div>
+                                                                                {isSelected && (
+                                                                                    <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                                                                                )}
+                                                                            </button>
+                                                                        </SheetClose>
+                                                                    );
+                                                                },
+                                                            )}
                                                         </div>
                                                     </SheetContent>
                                                 </Sheet>
@@ -1081,15 +1559,23 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                     )}
 
                                     {slotInfo && !checkingSlot && (
-                                        (
-                                            <Alert className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/20">
-                                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                <AlertTitle className="text-green-800 dark:text-green-300">P2H Tersedia</AlertTitle>
-                                                <AlertDescription className="text-xs text-green-700 dark:text-green-400">
-                                                    Anda akan melakukan <strong>pengisian ke-{slotInfo.next_slot}</strong> hari ini{slotInfo.slot_terisi > 0 ? ` (${slotInfo.slot_terisi} pengisian sebelumnya)` : ''}
-                                                </AlertDescription>
-                                            </Alert>
-                                        )
+                                        <Alert className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/20">
+                                            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                            <AlertTitle className="text-green-800 dark:text-green-300">
+                                                P2H Tersedia
+                                            </AlertTitle>
+                                            <AlertDescription className="text-xs text-green-700 dark:text-green-400">
+                                                Anda akan melakukan{' '}
+                                                <strong>
+                                                    pengisian ke-
+                                                    {slotInfo.next_slot}
+                                                </strong>{' '}
+                                                hari ini
+                                                {slotInfo.slot_terisi > 0
+                                                    ? ` (${slotInfo.slot_terisi} pengisian sebelumnya)`
+                                                    : ''}
+                                            </AlertDescription>
+                                        </Alert>
                                     )}
                                 </CardContent>
                             </Card>
@@ -1097,17 +1583,25 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             {/* Identitas Pengemudi */}
                             <Card>
                                 <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">Identitas Pengemudi</CardTitle>
-                                    <CardDescription>Data diambil otomatis dari akun Anda</CardDescription>
+                                    <CardTitle className="text-base">
+                                        Identitas Pengemudi
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Data diambil otomatis dari akun Anda
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-0">
+                                <CardContent className="space-y-0 px-4">
                                     <div className="flex items-center gap-3 py-3">
                                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
                                             <User className="h-4 w-4 text-muted-foreground" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm text-muted-foreground">Nama</p>
-                                            <p className="truncate text-base font-semibold">{auth?.user?.name ?? '-'}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Nama
+                                            </p>
+                                            <p className="truncate text-base font-semibold">
+                                                {auth?.user?.name ?? '-'}
+                                            </p>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -1116,26 +1610,51 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             {/* Job Site & Lokasi Kerja */}
                             <Card>
                                 <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">Lokasi Pekerjaan</CardTitle>
-                                    <CardDescription>Isi job site dan lokasi kerja (opsional)</CardDescription>
+                                    <CardTitle className="text-base">
+                                        Lokasi Pekerjaan
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Isi job site dan lokasi kerja (opsional)
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-3">
+                                <CardContent className="space-y-3 px-4">
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="job-site" className="text-sm font-medium">Job Site</Label>
-                                        <Select value={jobSite} onValueChange={setJobSite}>
-                                            <SelectTrigger id="job-site" className="h-11 text-sm w-full">
+                                        <Label
+                                            htmlFor="job-site"
+                                            className="text-sm font-medium"
+                                        >
+                                            Job Site
+                                        </Label>
+                                        <Select
+                                            value={jobSite}
+                                            onValueChange={setJobSite}
+                                        >
+                                            <SelectTrigger
+                                                id="job-site"
+                                                className="h-11 w-full text-sm"
+                                            >
                                                 <SelectValue placeholder="Pilih Job Site" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {jobSiteOptions.map((site) => (
-                                                    <SelectItem key={site} value={site}>{site}</SelectItem>
+                                                    <SelectItem
+                                                        key={site}
+                                                        value={site}
+                                                    >
+                                                        {site}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-sm font-medium">Lokasi Kerja</Label>
-                                        <LokasiCombobox value={lokasiKerja} onChange={setLokasiKerja} />
+                                        <Label className="text-sm font-medium">
+                                            Lokasi Kerja
+                                        </Label>
+                                        <LokasiCombobox
+                                            value={lokasiKerja}
+                                            onChange={setLokasiKerja}
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -1145,18 +1664,28 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">HM/KM Awal</CardTitle>
+                                        <CardTitle className="text-base">
+                                            HM/KM Awal
+                                        </CardTitle>
                                     </div>
-                                    <CardDescription>Lihat odometer/hourmeter kendaraan (opsional)</CardDescription>
+                                    <CardDescription>
+                                        Lihat odometer/hourmeter kendaraan
+                                        (opsional)
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-2">
+                                <CardContent className="space-y-2 px-4">
                                     {slotInfo?.last_hm_km_akhir != null && (
                                         <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-900 dark:bg-blue-950/20">
                                             <Gauge className="h-4 w-4 shrink-0 text-blue-500" />
                                             <p className="text-xs text-blue-700 dark:text-blue-300">
                                                 HM/KM Akhir sesi sebelumnya:{' '}
-                                                <strong>{slotInfo.last_hm_km_akhir.toLocaleString('id-ID')}</strong>
-                                                {' '}— nilai awal tidak boleh lebih rendah
+                                                <strong>
+                                                    {slotInfo.last_hm_km_akhir.toLocaleString(
+                                                        'id-ID',
+                                                    )}
+                                                </strong>{' '}
+                                                — nilai awal tidak boleh lebih
+                                                rendah
                                             </p>
                                         </div>
                                     )}
@@ -1166,42 +1695,69 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                         inputMode="numeric"
                                         min={slotInfo?.last_hm_km_akhir ?? 0}
                                         value={kmAwal}
-                                        onChange={(e) => setKmAwal(e.target.value)}
+                                        onChange={(e) =>
+                                            setKmAwal(e.target.value)
+                                        }
                                         placeholder="Contoh: 12500"
                                         className="h-14 text-xl font-bold tracking-wide"
                                     />
                                     {kmAwal && (
                                         <p className="text-xs text-muted-foreground">
-                                            = {Number(kmAwal).toLocaleString('id-ID')}
+                                            ={' '}
+                                            {Number(kmAwal).toLocaleString(
+                                                'id-ID',
+                                            )}
                                         </p>
                                     )}
-                                    {kmAwal && slotInfo?.last_hm_km_akhir != null && Number(kmAwal) < slotInfo.last_hm_km_akhir && (
-                                        <p className="text-xs text-destructive font-medium">
-                                            Nilai tidak boleh kurang dari {slotInfo.last_hm_km_akhir.toLocaleString('id-ID')}
-                                        </p>
-                                    )}
+                                    {kmAwal &&
+                                        slotInfo?.last_hm_km_akhir != null &&
+                                        Number(kmAwal) <
+                                            slotInfo.last_hm_km_akhir && (
+                                            <p className="text-xs font-medium text-destructive">
+                                                Nilai tidak boleh kurang dari{' '}
+                                                {slotInfo.last_hm_km_akhir.toLocaleString(
+                                                    'id-ID',
+                                                )}
+                                            </p>
+                                        )}
                                 </CardContent>
 
                                 <Separator className="mx-4 w-auto" />
 
-                                <CardHeader className="px-4 pb-0 pt-0">
+                                <CardHeader className="px-4 pt-0 pb-0">
                                     <div className="flex items-center gap-2">
                                         <Sun className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">Pilih Shift</CardTitle>
-                                        <span className="text-destructive text-sm">*</span>
+                                        <CardTitle className="text-base">
+                                            Pilih Shift
+                                        </CardTitle>
+                                        <span className="text-sm text-destructive">
+                                            *
+                                        </span>
                                     </div>
-                                    <CardDescription>Pilih shift kerja Anda saat ini</CardDescription>
+                                    <CardDescription>
+                                        Pilih shift kerja Anda saat ini
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="px-4">
                                     <ToggleGroup
                                         type="single"
                                         value={shift}
-                                        onValueChange={(v) => { if (v) setShift(v); }}
-                                        className={cn('grid w-full gap-2', shiftOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3')}
+                                        onValueChange={(v) => {
+                                            if (v) {
+                                                setShift(v);
+                                            }
+                                        }}
+                                        className={cn(
+                                            'grid w-full gap-2',
+                                            shiftOptions.length === 2
+                                                ? 'grid-cols-2'
+                                                : 'grid-cols-1 sm:grid-cols-3',
+                                        )}
                                     >
                                         {shiftOptions.map((s, i) => {
                                             const isDay = i === 0;
                                             const Icon = isDay ? Sun : Moon;
+
                                             return (
                                                 <ToggleGroupItem
                                                     key={s}
@@ -1221,53 +1777,83 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                     </ToggleGroup>
                                 </CardContent>
                             </Card>
-                        {/* PIC Approver — muncul untuk semua driver yang mengisi unit LV */}
-                        {needsApproval && (
-                            <Card className="border-amber-200 dark:border-amber-800">
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                        <CardTitle className="text-base">PIC Persetujuan</CardTitle>
-                                        <span className="text-destructive text-sm">*</span>
-                                    </div>
-                                    <CardDescription>
-                                        P2H untuk unit Light Vehicle memerlukan persetujuan. Pilih {picJabatanLabel} yang akan memeriksa dan menandatangani form ini.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="px-4 space-y-2">
-                                    <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/30">
-                                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                                            PIC yang dipilih akan mendapat notifikasi dan wajib me-review serta menandatangani P2H Anda sebelum dinyatakan valid.
-                                        </p>
-                                    </div>
-                                    {filteredStaffUsers.length === 0 ? (
-                                        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-3 text-sm text-destructive">
-                                            Tidak ada {picJabatanLabel} dari departemen <strong>{selectedUnit?.department}</strong> yang terdaftar. Hubungi admin untuk menambahkan PIC.
+                            {/* PIC Approver — muncul untuk semua driver yang mengisi unit LV */}
+                            {needsApproval && (
+                                <Card className="border-amber-200 dark:border-amber-800">
+                                    <CardHeader className="px-4 pb-0">
+                                        <div className="flex items-center gap-2">
+                                            <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                            <CardTitle className="text-base">
+                                                PIC Persetujuan
+                                            </CardTitle>
+                                            <span className="text-sm text-destructive">
+                                                *
+                                            </span>
                                         </div>
-                                    ) : (
-                                        <PicCombobox
-                                            staffUsers={filteredStaffUsers}
-                                            value={picApproverId}
-                                            onChange={setPicApproverId}
-                                        />
-                                    )}
-                                    {picApproverId && (() => {
-                                        const pic = staffUsers.find((s) => String(s.id) === picApproverId);
-                                        return pic ? (
-                                            <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2">
-                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                                                    <User className="h-4 w-4 text-primary" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-semibold truncate">{pic.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{pic.jabatan}{pic.department ? ` · ${pic.department}` : ''}</p>
-                                                </div>
+                                        <CardDescription>
+                                            P2H untuk unit Light Vehicle
+                                            memerlukan persetujuan. Pilih{' '}
+                                            {picJabatanLabel} yang akan
+                                            memeriksa dan menandatangani form
+                                            ini.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 px-4">
+                                        <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/30">
+                                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                                                PIC yang dipilih akan mendapat
+                                                notifikasi dan wajib me-review
+                                                serta menandatangani P2H Anda
+                                                sebelum dinyatakan valid.
+                                            </p>
+                                        </div>
+                                        {filteredStaffUsers.length === 0 ? (
+                                            <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-3 text-sm text-destructive">
+                                                Tidak ada {picJabatanLabel} dari
+                                                departemen{' '}
+                                                <strong>
+                                                    {selectedUnit?.department}
+                                                </strong>{' '}
+                                                yang terdaftar. Hubungi admin
+                                                untuk menambahkan PIC.
                                             </div>
-                                        ) : null;
-                                    })()}
-                                </CardContent>
-                            </Card>
-                        )}
+                                        ) : (
+                                            <PicCombobox
+                                                staffUsers={filteredStaffUsers}
+                                                value={picApproverId}
+                                                onChange={setPicApproverId}
+                                            />
+                                        )}
+                                        {picApproverId &&
+                                            (() => {
+                                                const pic = staffUsers.find(
+                                                    (s) =>
+                                                        String(s.id) ===
+                                                        picApproverId,
+                                                );
+
+                                                return pic ? (
+                                                    <div className="flex items-center gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                                                            <User className="h-4 w-4 text-primary" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-sm font-semibold">
+                                                                {pic.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {pic.jabatan}
+                                                                {pic.department
+                                                                    ? ` · ${pic.department}`
+                                                                    : ''}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ) : null;
+                                            })()}
+                                    </CardContent>
+                                </Card>
+                            )}
                         </>
                     )}
 
@@ -1278,17 +1864,26 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                         <>
                             {/* Progress */}
                             <Card>
-                                <CardContent className="px-4 py-4 space-y-3">
+                                <CardContent className="space-y-3 px-4 py-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-base font-semibold">Progress Pemeriksaan</p>
+                                            <p className="text-base font-semibold">
+                                                Progress Pemeriksaan
+                                            </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {filledCount} dari {inspectionItems.length} item sudah diperiksa
+                                                {filledCount} dari{' '}
+                                                {inspectionItems.length} item
+                                                sudah diperiksa
                                             </p>
                                         </div>
-                                        <span className="text-2xl font-bold text-primary">{checklistProgress}%</span>
+                                        <span className="text-2xl font-bold text-primary">
+                                            {checklistProgress}%
+                                        </span>
                                     </div>
-                                    <Progress value={checklistProgress} className="h-3 rounded-full" />
+                                    <Progress
+                                        value={checklistProgress}
+                                        className="h-3 rounded-full"
+                                    />
                                     <div className="flex flex-wrap items-center gap-3 text-xs">
                                         <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
                                             <span className="h-2 w-2 rounded-full bg-green-500" />
@@ -1302,7 +1897,9 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                         )}
                                         <span className="flex items-center gap-1 text-muted-foreground">
                                             <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-                                            {inspectionItems.length - filledCount} Belum
+                                            {inspectionItems.length -
+                                                filledCount}{' '}
+                                            Belum
                                         </span>
                                     </div>
                                 </CardContent>
@@ -1312,8 +1909,10 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/20">
                                 <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
                                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    Periksa setiap komponen kendaraan, lalu pilih <strong>Layak</strong> atau{' '}
-                                    <strong>Tidak Layak</strong>. Jika Tidak Layak, wajib isi keterangan.
+                                    Periksa setiap komponen kendaraan, lalu
+                                    pilih <strong>Layak</strong> atau{' '}
+                                    <strong>Tidak Layak</strong>. Jika Tidak
+                                    Layak, wajib isi keterangan.
                                 </p>
                             </div>
 
@@ -1321,7 +1920,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             <div className="space-y-2">
                                 {SECTION_ORDER.map((section) => {
                                     const items = groupedItems[section];
-                                    if (items.length === 0) return null;
+
+                                    if (items.length === 0) {
+                                        return null;
+                                    }
+
                                     return (
                                         <ChecklistGroup
                                             key={section}
@@ -1329,12 +1932,20 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                             items={items}
                                             answers={answers}
                                             onChange={handleKondisiChange}
-                                            onKeteranganChange={handleKeteranganChange}
+                                            onKeteranganChange={
+                                                handleKeteranganChange
+                                            }
                                             itemAttachments={itemAttachments}
-                                            itemAttachmentPreviews={itemAttachmentPreviews}
+                                            itemAttachmentPreviews={
+                                                itemAttachmentPreviews
+                                            }
                                             compressingItems={compressingItems}
-                                            onItemAttachmentChange={handleItemAttachmentChange}
-                                            onRemoveItemAttachment={removeItemAttachment}
+                                            onItemAttachmentChange={
+                                                handleItemAttachmentChange
+                                            }
+                                            onRemoveItemAttachment={
+                                                removeItemAttachment
+                                            }
                                             defaultOpen={section === 'A'}
                                         />
                                     );
@@ -1344,9 +1955,13 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             {tlCount > 0 && (
                                 <Alert variant="destructive">
                                     <AlertTriangle className="h-4 w-4" />
-                                    <AlertTitle>{tlCount} Item Tidak Layak</AlertTitle>
+                                    <AlertTitle>
+                                        {tlCount} Item Tidak Layak
+                                    </AlertTitle>
                                     <AlertDescription className="text-xs">
-                                        Pastikan keterangan sudah diisi untuk semua item yang ditandai Tidak Layak sebelum melanjutkan.
+                                        Pastikan keterangan sudah diisi untuk
+                                        semua item yang ditandai Tidak Layak
+                                        sebelum melanjutkan.
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -1363,16 +1978,39 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <Wrench className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">Informasi Servis</CardTitle>
+                                        <CardTitle className="text-base">
+                                            Informasi Servis
+                                        </CardTitle>
                                     </div>
-                                    <CardDescription>Centang jika ada kegiatan servis hari ini (opsional)</CardDescription>
+                                    <CardDescription>
+                                        Centang jika ada kegiatan servis hari
+                                        ini (opsional)
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-3">
+                                <CardContent className="space-y-3 px-4">
                                     <div className="space-y-2">
                                         {[
-                                            { id: 'servis_mingguan', label: 'Servis Mingguan', desc: 'Servis rutin setiap minggu', value: servisMingguan, setter: setServisMingguan },
-                                            { id: 'servis_berkala', label: 'Servis Berkala', desc: 'Servis per jarak tempuh / jam kerja', value: servisBerkala, setter: setServisBerkala },
-                                            { id: 'unschedule', label: 'Unschedule / Break Down', desc: 'Servis darurat akibat kerusakan', value: unscheduleBreakdown, setter: setUnscheduleBreakdown },
+                                            {
+                                                id: 'servis_mingguan',
+                                                label: 'Servis Mingguan',
+                                                desc: 'Servis rutin setiap minggu',
+                                                value: servisMingguan,
+                                                setter: setServisMingguan,
+                                            },
+                                            {
+                                                id: 'servis_berkala',
+                                                label: 'Servis Berkala',
+                                                desc: 'Servis per jarak tempuh / jam kerja',
+                                                value: servisBerkala,
+                                                setter: setServisBerkala,
+                                            },
+                                            {
+                                                id: 'unschedule',
+                                                label: 'Unschedule / Break Down',
+                                                desc: 'Servis darurat akibat kerusakan',
+                                                value: unscheduleBreakdown,
+                                                setter: setUnscheduleBreakdown,
+                                            },
                                         ].map((srv) => (
                                             <label
                                                 key={srv.id}
@@ -1382,12 +2020,18 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                                 <Checkbox
                                                     id={srv.id}
                                                     checked={srv.value}
-                                                    onCheckedChange={(v) => srv.setter(Boolean(v))}
+                                                    onCheckedChange={(v) =>
+                                                        srv.setter(Boolean(v))
+                                                    }
                                                     className="mt-0.5 h-5 w-5"
                                                 />
                                                 <div>
-                                                    <p className="text-base font-medium">{srv.label}</p>
-                                                    <p className="text-sm text-muted-foreground">{srv.desc}</p>
+                                                    <p className="text-base font-medium">
+                                                        {srv.label}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {srv.desc}
+                                                    </p>
                                                 </div>
                                             </label>
                                         ))}
@@ -1400,19 +2044,32 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                             <Checkbox
                                                 id="lainnya"
                                                 checked={lainnya}
-                                                onCheckedChange={(v) => setLainnya(Boolean(v))}
+                                                onCheckedChange={(v) =>
+                                                    setLainnya(Boolean(v))
+                                                }
                                                 className="mt-0.5 h-5 w-5"
                                             />
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-base font-medium">Lainnya</p>
-                                                <p className="text-sm text-muted-foreground">Servis jenis lain — sebutkan di bawah</p>
+                                                <p className="text-base font-medium">
+                                                    Lainnya
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Servis jenis lain — sebutkan
+                                                    di bawah
+                                                </p>
                                                 {lainnya && (
                                                     <Input
                                                         value={lainnyaText}
-                                                        onChange={(e) => setLainnyaText(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setLainnyaText(
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         placeholder="Sebutkan jenis servis lainnya…"
                                                         className="mt-2 h-10 w-full text-sm"
-                                                        onClick={(e) => e.stopPropagation()}
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
                                                     />
                                                 )}
                                             </div>
@@ -1420,10 +2077,14 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <Label className="text-sm font-medium">Catatan Servis</Label>
+                                        <Label className="text-sm font-medium">
+                                            Catatan Servis
+                                        </Label>
                                         <Textarea
                                             value={catatanServis}
-                                            onChange={(e) => setCatatanServis(e.target.value)}
+                                            onChange={(e) =>
+                                                setCatatanServis(e.target.value)
+                                            }
                                             placeholder="Tulis catatan tambahan tentang kondisi atau pekerjaan servis (opsional)…"
                                             className="min-h-[88px] resize-none text-sm"
                                         />
@@ -1436,28 +2097,43 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <Fuel className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">Pengisian Bahan Bakar</CardTitle>
+                                        <CardTitle className="text-base">
+                                            Pengisian Bahan Bakar
+                                        </CardTitle>
                                     </div>
                                     <CardDescription>
-                                        Isi jika ada pengisian BBM hari ini. Biarkan kosong jika tidak ada.
+                                        Isi jika ada pengisian BBM hari ini.
+                                        Biarkan kosong jika tidak ada.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-3">
+                                <CardContent className="space-y-3 px-4">
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="km-unit" className="text-sm font-medium">KM Saat Isi BBM</Label>
+                                        <Label
+                                            htmlFor="km-unit"
+                                            className="text-sm font-medium"
+                                        >
+                                            KM Saat Isi BBM
+                                        </Label>
                                         <Input
                                             id="km-unit"
                                             type="number"
                                             inputMode="numeric"
                                             min={0}
                                             value={kmUnit}
-                                            onChange={(e) => setKmUnit(e.target.value)}
+                                            onChange={(e) =>
+                                                setKmUnit(e.target.value)
+                                            }
                                             placeholder="Contoh: 12550"
                                             className="h-12 text-base"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="jumlah-liter" className="text-sm font-medium">Jumlah Liter</Label>
+                                        <Label
+                                            htmlFor="jumlah-liter"
+                                            className="text-sm font-medium"
+                                        >
+                                            Jumlah Liter
+                                        </Label>
                                         <Input
                                             id="jumlah-liter"
                                             type="number"
@@ -1465,7 +2141,9 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                             min={0}
                                             step="0.01"
                                             value={jumlahLiter}
-                                            onChange={(e) => setJumlahLiter(e.target.value)}
+                                            onChange={(e) =>
+                                                setJumlahLiter(e.target.value)
+                                            }
                                             placeholder="Contoh: 50.5"
                                             className="h-12 text-base"
                                         />
@@ -1474,8 +2152,16 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5">
                                             <Fuel className="h-4 w-4 shrink-0 text-muted-foreground" />
                                             <p className="text-xs text-muted-foreground">
-                                                Pengisian <strong>{jumlahLiter} liter</strong> pada KM{' '}
-                                                <strong>{Number(kmUnit).toLocaleString('id-ID')}</strong>
+                                                Pengisian{' '}
+                                                <strong>
+                                                    {jumlahLiter} liter
+                                                </strong>{' '}
+                                                pada KM{' '}
+                                                <strong>
+                                                    {Number(
+                                                        kmUnit,
+                                                    ).toLocaleString('id-ID')}
+                                                </strong>
                                             </p>
                                         </div>
                                     )}
@@ -1492,40 +2178,110 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             {/* Ringkasan */}
                             <Card>
                                 <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">Ringkasan Pemeriksaan</CardTitle>
-                                    <CardDescription>Periksa kembali sebelum tanda tangan</CardDescription>
+                                    <CardTitle className="text-base">
+                                        Ringkasan Pemeriksaan
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Periksa kembali sebelum tanda tangan
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-0">
+                                <CardContent className="space-y-0 px-4">
                                     {/* Unit & Driver */}
-                                    <div className="rounded-xl bg-muted/40 px-3 py-1 mb-3">
-                                        <SummaryRow icon={Truck}  label="Unit"         value={selectedUnit?.no_unit ?? '-'} />
+                                    <div className="mb-3 rounded-xl bg-muted/40 px-3 py-1">
+                                        <SummaryRow
+                                            icon={Truck}
+                                            label="Unit"
+                                            value={selectedUnit?.no_unit ?? '-'}
+                                        />
                                         <Separator />
-                                        <SummaryRow icon={Truck}  label="Jenis"        value={selectedUnit?.jenis_unit ?? '-'} />
+                                        <SummaryRow
+                                            icon={Truck}
+                                            label="Jenis"
+                                            value={
+                                                selectedUnit?.jenis_unit ?? '-'
+                                            }
+                                        />
                                         <Separator />
-                                        <SummaryRow icon={User}   label="Pengemudi"    value={auth?.user?.name ?? '-'} />
+                                        <SummaryRow
+                                            icon={User}
+                                            label="Pengemudi"
+                                            value={auth?.user?.name ?? '-'}
+                                        />
                                         <Separator />
-                                        <SummaryRow icon={Sun}    label="Shift"        value={shift} />
-                                        {jobSite && <><Separator /><SummaryRow label="Job Site" value={jobSite} /></>}
-                                        {lokasiKerja && <><Separator /><SummaryRow label="Lokasi Kerja" value={lokasiKerja} /></>}
+                                        <SummaryRow
+                                            icon={Sun}
+                                            label="Shift"
+                                            value={shift}
+                                        />
+                                        {jobSite && (
+                                            <>
+                                                <Separator />
+                                                <SummaryRow
+                                                    label="Job Site"
+                                                    value={jobSite}
+                                                />
+                                            </>
+                                        )}
+                                        {lokasiKerja && (
+                                            <>
+                                                <Separator />
+                                                <SummaryRow
+                                                    label="Lokasi Kerja"
+                                                    value={lokasiKerja}
+                                                />
+                                            </>
+                                        )}
                                         <Separator />
-                                        <SummaryRow icon={Gauge}  label="HM/KM Awal"  value={kmAwal ? Number(kmAwal).toLocaleString('id-ID') : '-'} />
-                                        {needsApproval && picApproverId && (() => {
-                                            const pic = staffUsers.find((s) => String(s.id) === picApproverId);
-                                            return pic ? (
-                                                <><Separator /><SummaryRow icon={User} label="PIC Approval" value={`${pic.name} (${pic.jabatan})`} /></>
-                                            ) : null;
-                                        })()}
+                                        <SummaryRow
+                                            icon={Gauge}
+                                            label="HM/KM Awal"
+                                            value={
+                                                kmAwal
+                                                    ? Number(
+                                                          kmAwal,
+                                                      ).toLocaleString('id-ID')
+                                                    : '-'
+                                            }
+                                        />
+                                        {needsApproval &&
+                                            picApproverId &&
+                                            (() => {
+                                                const pic = staffUsers.find(
+                                                    (s) =>
+                                                        String(s.id) ===
+                                                        picApproverId,
+                                                );
+
+                                                return pic ? (
+                                                    <>
+                                                        <Separator />
+                                                        <SummaryRow
+                                                            icon={User}
+                                                            label="PIC Approval"
+                                                            value={`${pic.name} (${pic.jabatan})`}
+                                                        />
+                                                    </>
+                                                ) : null;
+                                            })()}
                                     </div>
 
                                     {/* Hasil Checklist */}
-                                    <div className="space-y-1 mb-3">
-                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 pb-1">Hasil Checklist</p>
+                                    <div className="mb-3 space-y-1">
+                                        <p className="px-1 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                            Hasil Checklist
+                                        </p>
                                         <div className="rounded-xl bg-muted/40 px-3 py-1">
                                             <div className="flex items-center gap-3 py-2">
                                                 <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
-                                                <span className="flex-1 text-sm text-muted-foreground">Item Layak</span>
-                                                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300">
-                                                    {filledCount - tlCount} / {inspectionItems.length}
+                                                <span className="flex-1 text-sm text-muted-foreground">
+                                                    Item Layak
+                                                </span>
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300"
+                                                >
+                                                    {filledCount - tlCount} /{' '}
+                                                    {inspectionItems.length}
                                                 </Badge>
                                             </div>
                                             {tlCount > 0 && (
@@ -1533,8 +2289,12 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                                     <Separator />
                                                     <div className="flex items-center gap-3 py-2">
                                                         <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
-                                                        <span className="flex-1 text-sm text-muted-foreground">Item Tidak Layak</span>
-                                                        <Badge variant="destructive">{tlCount} item</Badge>
+                                                        <span className="flex-1 text-sm text-muted-foreground">
+                                                            Item Tidak Layak
+                                                        </span>
+                                                        <Badge variant="destructive">
+                                                            {tlCount} item
+                                                        </Badge>
                                                     </div>
                                                 </>
                                             )}
@@ -1542,25 +2302,46 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                     </div>
 
                                     {/* Servis & BBM — hanya jika ada */}
-                                    {(servisMingguan || servisBerkala || unscheduleBreakdown || lainnya || kmUnit || jumlahLiter) && (
+                                    {(servisMingguan ||
+                                        servisBerkala ||
+                                        unscheduleBreakdown ||
+                                        lainnya ||
+                                        kmUnit ||
+                                        jumlahLiter) && (
                                         <div className="space-y-1">
-                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 pb-1">Servis & BBM</p>
+                                            <p className="px-1 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                Servis & BBM
+                                            </p>
                                             <div className="rounded-xl bg-muted/40 px-3 py-1">
-                                                {(servisMingguan || servisBerkala || unscheduleBreakdown || lainnya) && (
+                                                {(servisMingguan ||
+                                                    servisBerkala ||
+                                                    unscheduleBreakdown ||
+                                                    lainnya) && (
                                                     <SummaryRow
                                                         icon={Wrench}
                                                         label="Servis"
                                                         value={[
-                                                            servisMingguan && 'Mingguan',
-                                                            servisBerkala && 'Berkala',
-                                                            unscheduleBreakdown && 'Breakdown',
-                                                            lainnya && lainnyaText,
-                                                        ].filter(Boolean).join(', ')}
+                                                            servisMingguan &&
+                                                                'Mingguan',
+                                                            servisBerkala &&
+                                                                'Berkala',
+                                                            unscheduleBreakdown &&
+                                                                'Breakdown',
+                                                            lainnya &&
+                                                                lainnyaText,
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(', ')}
                                                     />
                                                 )}
                                                 {(kmUnit || jumlahLiter) && (
                                                     <>
-                                                        {(servisMingguan || servisBerkala || unscheduleBreakdown || lainnya) && <Separator />}
+                                                        {(servisMingguan ||
+                                                            servisBerkala ||
+                                                            unscheduleBreakdown ||
+                                                            lainnya) && (
+                                                            <Separator />
+                                                        )}
                                                         <SummaryRow
                                                             icon={Fuel}
                                                             label="Pengisian BBM"
@@ -1577,43 +2358,63 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                             {tlCount > 0 && (
                                 <Alert variant="destructive">
                                     <AlertTriangle className="h-4 w-4" />
-                                    <AlertTitle>{tlCount} Item Tidak Layak</AlertTitle>
+                                    <AlertTitle>
+                                        {tlCount} Item Tidak Layak
+                                    </AlertTitle>
                                     <AlertDescription className="text-xs">
-                                        Ada item yang tidak layak. Pastikan sudah dilaporkan ke atasan / mekanik sebelum kendaraan dioperasikan.
+                                        Ada item yang tidak layak. Pastikan
+                                        sudah dilaporkan ke atasan / mekanik
+                                        sebelum kendaraan dioperasikan.
                                     </AlertDescription>
                                 </Alert>
                             )}
 
                             {/* Keputusan Kondisi Akhir */}
-                            <Card className={cn(
-                                'border-2',
-                                kondisiAkhir === 'Layak Pakai' && 'border-emerald-400 dark:border-emerald-700',
-                                kondisiAkhir === 'BD' && 'border-red-400 dark:border-red-700',
-                                !kondisiAkhir && 'border-primary/30',
-                            )}>
+                            <Card
+                                className={cn(
+                                    'border-2',
+                                    kondisiAkhir === 'Layak Pakai' &&
+                                        'border-emerald-400 dark:border-emerald-700',
+                                    kondisiAkhir === 'BD' &&
+                                        'border-red-400 dark:border-red-700',
+                                    !kondisiAkhir && 'border-primary/30',
+                                )}
+                            >
                                 <CardHeader className="px-4 pb-0">
                                     <CardTitle className="text-base">
-                                        Keputusan Kondisi Akhir Unit <span className="text-destructive">*</span>
+                                        Keputusan Kondisi Akhir Unit{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </CardTitle>
                                     <CardDescription>
-                                        Nyatakan kondisi unit setelah Anda periksa. Anda memiliki wewenang penuh.
+                                        Nyatakan kondisi unit setelah Anda
+                                        periksa. Anda memiliki wewenang penuh.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-4">
+                                <CardContent className="space-y-4 px-4">
                                     {/* Rekomendasi sistem */}
                                     {recommendedKondisi && (
-                                        <div className={cn(
-                                            'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium',
-                                            recommendedKondisi === 'Layak Pakai'
-                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-                                                : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300',
-                                        )}>
-                                            {recommendedKondisi === 'Layak Pakai'
-                                                ? <ShieldCheck className="h-4 w-4 shrink-0" />
-                                                : <ShieldAlert className="h-4 w-4 shrink-0" />
-                                            }
+                                        <div
+                                            className={cn(
+                                                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium',
+                                                recommendedKondisi ===
+                                                    'Layak Pakai'
+                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+                                                    : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300',
+                                            )}
+                                        >
+                                            {recommendedKondisi ===
+                                            'Layak Pakai' ? (
+                                                <ShieldCheck className="h-4 w-4 shrink-0" />
+                                            ) : (
+                                                <ShieldAlert className="h-4 w-4 shrink-0" />
+                                            )}
                                             <span>
-                                                Rekomendasi P2H: <strong>{recommendedKondisi}</strong>
+                                                Rekomendasi P2H:{' '}
+                                                <strong>
+                                                    {recommendedKondisi}
+                                                </strong>
                                                 {hasAATidakLayak
                                                     ? ' — ada item AA (Stop) tidak layak'
                                                     : ` (score ${p2hScore}%)`}
@@ -1625,7 +2426,18 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             type="button"
-                                            onClick={() => { setKondisiAkhir('Layak Pakai'); if (kondisiAkhir === 'Layak Pakai') return; setJustifikasiKondisi(''); }}
+                                            onClick={() => {
+                                                setKondisiAkhir('Layak Pakai');
+
+                                                if (
+                                                    kondisiAkhir ===
+                                                    'Layak Pakai'
+                                                ) {
+                                                    return;
+                                                }
+
+                                                setJustifikasiKondisi('');
+                                            }}
                                             className={cn(
                                                 'flex h-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
                                                 kondisiAkhir === 'Layak Pakai'
@@ -1635,11 +2447,21 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                         >
                                             <ShieldCheck className="h-6 w-6" />
                                             Layak Pakai
-                                            <span className="text-[10px] font-normal opacity-70">Unit siap beroperasi</span>
+                                            <span className="text-[10px] font-normal opacity-70">
+                                                Unit siap beroperasi
+                                            </span>
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => { setKondisiAkhir('BD'); if (kondisiAkhir === 'BD') return; setJustifikasiKondisi(''); }}
+                                            onClick={() => {
+                                                setKondisiAkhir('BD');
+
+                                                if (kondisiAkhir === 'BD') {
+                                                    return;
+                                                }
+
+                                                setJustifikasiKondisi('');
+                                            }}
                                             className={cn(
                                                 'flex h-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
                                                 kondisiAkhir === 'BD'
@@ -1649,46 +2471,73 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                         >
                                             <ShieldAlert className="h-6 w-6" />
                                             BD / Tidak Layak
-                                            <span className="text-[10px] font-normal opacity-70">Tidak dapat dioperasikan</span>
+                                            <span className="text-[10px] font-normal opacity-70">
+                                                Tidak dapat dioperasikan
+                                            </span>
                                         </button>
                                     </div>
 
                                     {/* Justifikasi — wajib jika override */}
                                     {isOverride && (
-                                        <div className="animate-in fade-in slide-in-from-top-2 space-y-1.5 duration-200">
+                                        <div className="animate-in space-y-1.5 duration-200 fade-in slide-in-from-top-2">
                                             <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
                                                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                                                 <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                                                    Keputusan Anda berbeda dari rekomendasi sistem. Alasan wajib diisi.
+                                                    Keputusan Anda berbeda dari
+                                                    rekomendasi sistem. Alasan
+                                                    wajib diisi.
                                                 </p>
                                             </div>
                                             <Label className="text-sm font-medium">
-                                                Alasan Keputusan <span className="text-destructive">*</span>
+                                                Alasan Keputusan{' '}
+                                                <span className="text-destructive">
+                                                    *
+                                                </span>
                                             </Label>
                                             <Textarea
                                                 value={justifikasiKondisi}
-                                                onChange={(e) => setJustifikasiKondisi(e.target.value.slice(0, 500))}
+                                                onChange={(e) =>
+                                                    setJustifikasiKondisi(
+                                                        e.target.value.slice(
+                                                            0,
+                                                            500,
+                                                        ),
+                                                    )
+                                                }
                                                 placeholder="Jelaskan alasan keputusan Anda berbeda dari rekomendasi kalkulasi P2H…"
                                                 className="min-h-[88px] resize-none text-sm"
                                                 maxLength={500}
                                             />
-                                            <p className="text-right text-xs text-muted-foreground">{justifikasiKondisi.length}/500</p>
+                                            <p className="text-right text-xs text-muted-foreground">
+                                                {justifikasiKondisi.length}/500
+                                            </p>
                                         </div>
                                     )}
 
                                     {/* Catatan opsional — saat layak pakai atau sesuai rekomendasi */}
-                                    {kondisiAkhir && (kondisiAkhir === 'Layak Pakai' || !isOverride) && (
-                                        <div className="space-y-1.5">
-                                            <Label className="text-sm font-medium text-muted-foreground">Catatan Tambahan (opsional)</Label>
-                                            <Textarea
-                                                value={justifikasiKondisi}
-                                                onChange={(e) => setJustifikasiKondisi(e.target.value.slice(0, 500))}
-                                                placeholder="Tambahkan catatan jika diperlukan…"
-                                                className="min-h-[64px] resize-none text-sm"
-                                                maxLength={500}
-                                            />
-                                        </div>
-                                    )}
+                                    {kondisiAkhir &&
+                                        (kondisiAkhir === 'Layak Pakai' ||
+                                            !isOverride) && (
+                                            <div className="space-y-1.5">
+                                                <Label className="text-sm font-medium text-muted-foreground">
+                                                    Catatan Tambahan (opsional)
+                                                </Label>
+                                                <Textarea
+                                                    value={justifikasiKondisi}
+                                                    onChange={(e) =>
+                                                        setJustifikasiKondisi(
+                                                            e.target.value.slice(
+                                                                0,
+                                                                500,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="Tambahkan catatan jika diperlukan…"
+                                                    className="min-h-[64px] resize-none text-sm"
+                                                    maxLength={500}
+                                                />
+                                            </div>
+                                        )}
                                 </CardContent>
                             </Card>
 
@@ -1697,24 +2546,33 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">HM/KM Akhir</CardTitle>
+                                        <CardTitle className="text-base">
+                                            HM/KM Akhir
+                                        </CardTitle>
                                     </div>
-                                    <CardDescription>Isi HM/KM saat selesai shift (opsional)</CardDescription>
+                                    <CardDescription>
+                                        Isi HM/KM saat selesai shift (opsional)
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-2">
+                                <CardContent className="space-y-2 px-4">
                                     <Input
                                         id="hm-km-akhir"
                                         type="number"
                                         inputMode="numeric"
                                         min={0}
                                         value={hmKmAkhir}
-                                        onChange={(e) => setHmKmAkhir(e.target.value)}
+                                        onChange={(e) =>
+                                            setHmKmAkhir(e.target.value)
+                                        }
                                         placeholder="Contoh: 12700"
                                         className="h-14 text-xl font-bold tracking-wide"
                                     />
                                     {hmKmAkhir && (
                                         <p className="text-xs text-muted-foreground">
-                                            = {Number(hmKmAkhir).toLocaleString('id-ID')}
+                                            ={' '}
+                                            {Number(hmKmAkhir).toLocaleString(
+                                                'id-ID',
+                                            )}
                                         </p>
                                     )}
                                 </CardContent>
@@ -1729,17 +2587,23 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                             Lampiran Foto
                                         </CardTitle>
                                     </div>
-                                    <CardDescription>Lampirkan foto sebagai bukti pemeriksaan (opsional). Foto akan dikompresi otomatis.</CardDescription>
+                                    <CardDescription>
+                                        Lampirkan foto sebagai bukti pemeriksaan
+                                        (opsional). Foto akan dikompresi
+                                        otomatis.
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="px-4 space-y-3">
+                                <CardContent className="space-y-3 px-4">
                                     {/* Tombol ambil/pilih foto — pakai label agar capture berfungsi reliabel di mobile */}
                                     <div className="grid grid-cols-2 gap-2">
-                                        <label className={cn(
-                                            'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
-                                            compressing
-                                                ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                                : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
-                                        )}>
+                                        <label
+                                            className={cn(
+                                                'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
+                                                compressing
+                                                    ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
+                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
+                                            )}
+                                        >
                                             <Camera className="h-4 w-4" />
                                             Ambil Foto
                                             <input
@@ -1748,15 +2612,21 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                                 capture="environment"
                                                 disabled={compressing}
                                                 className="hidden"
-                                                onChange={(e) => handleAttachmentFiles(e.target.files)}
+                                                onChange={(e) =>
+                                                    handleAttachmentFiles(
+                                                        e.target.files,
+                                                    )
+                                                }
                                             />
                                         </label>
-                                        <label className={cn(
-                                            'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
-                                            compressing
-                                                ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                                : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
-                                        )}>
+                                        <label
+                                            className={cn(
+                                                'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
+                                                compressing
+                                                    ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
+                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
+                                            )}
+                                        >
                                             <ImagePlus className="h-4 w-4" />
                                             Dari Galeri
                                             <input
@@ -1765,7 +2635,11 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                                 multiple
                                                 disabled={compressing}
                                                 className="hidden"
-                                                onChange={(e) => handleAttachmentFiles(e.target.files)}
+                                                onChange={(e) =>
+                                                    handleAttachmentFiles(
+                                                        e.target.files,
+                                                    )
+                                                }
                                             />
                                         </label>
                                     </div>
@@ -1774,36 +2648,52 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                     {compressing && (
                                         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5">
                                             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">Memproses foto…</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Memproses foto…
+                                            </p>
                                         </div>
                                     )}
 
                                     {/* Grid preview */}
                                     {attachmentPreviews.length > 0 && (
                                         <div className="grid grid-cols-3 gap-2">
-                                            {attachmentPreviews.map((src, idx) => (
-                                                <div key={idx} className="relative aspect-square">
-                                                    <img
-                                                        src={src}
-                                                        alt={`Foto ${idx + 1}`}
-                                                        className="h-full w-full rounded-lg object-cover border"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeAttachment(idx)}
-                                                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white shadow"
+                                            {attachmentPreviews.map(
+                                                (src, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="relative aspect-square"
                                                     >
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                        <img
+                                                            src={src}
+                                                            alt={`Foto ${idx + 1}`}
+                                                            className="h-full w-full rounded-lg border object-cover"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeAttachment(
+                                                                    idx,
+                                                                )
+                                                            }
+                                                            className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white shadow"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </div>
+                                                ),
+                                            )}
                                         </div>
                                     )}
-                                    {!compressing && attachments.length === 0 && (
-                                        <p className="text-xs text-destructive">Wajib melampirkan minimal 1 foto</p>
-                                    )}
+                                    {!compressing &&
+                                        attachments.length === 0 && (
+                                            <p className="text-xs text-destructive">
+                                                Wajib melampirkan minimal 1 foto
+                                            </p>
+                                        )}
                                     {attachments.length > 0 && (
-                                        <p className="text-xs text-muted-foreground">{attachments.length} foto terlampir</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {attachments.length} foto terlampir
+                                        </p>
                                     )}
                                 </CardContent>
                             </Card>
@@ -1813,10 +2703,15 @@ export default function P2hForm({ units, inspectionItems, staffUsers, sites }: P
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center gap-2">
                                         <PenLine className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">Tanda Tangan Driver</CardTitle>
+                                        <CardTitle className="text-base">
+                                            Tanda Tangan Driver
+                                        </CardTitle>
                                     </div>
                                     <CardDescription>
-                                        Tanda tangani menggunakan jari atau mouse sebagai pernyataan bahwa pemeriksaan telah dilakukan dengan jujur dan benar.
+                                        Tanda tangani menggunakan jari atau
+                                        mouse sebagai pernyataan bahwa
+                                        pemeriksaan telah dilakukan dengan jujur
+                                        dan benar.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="px-4">

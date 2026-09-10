@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
     children: ReactNode;
@@ -35,12 +36,15 @@ export class ErrorBoundary extends Component<Props, State> {
     render() {
         if (this.state.hasError) {
             const label = this.props.label ?? 'komponen';
+
             return (
                 <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-destructive/40 bg-destructive/5 p-6 text-center text-sm text-destructive/80">
                     <AlertTriangle className="h-5 w-5 text-destructive/60" />
                     <p className="font-medium">Gagal memuat {label}</p>
                     {this.state.message && (
-                        <p className="text-xs text-muted-foreground">{this.state.message}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {this.state.message}
+                        </p>
                     )}
                     <button
                         onClick={this.handleRetry}

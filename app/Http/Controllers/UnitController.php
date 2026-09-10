@@ -7,11 +7,14 @@ use App\Exports\UnitsImportTemplateExport;
 use App\Http\Requests\StoreUnitRequest;
 use App\Imports\UnitsImport;
 use App\Models\P2hSession;
+use App\Models\P2hUserEntry;
 use App\Models\Site;
 use App\Models\Unit;
+use App\Support\P2hFileStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -24,8 +27,8 @@ class UnitController extends Controller
         $units = Unit::query()
             ->with(['site:id,name', 'downtimeLogs' => function ($q) {
                 $q->whereNull('jam_selesai')
-                  ->latest('jam_mulai')
-                  ->select(['id', 'unit_id', 'tipe', 'jam_mulai']);
+                    ->latest('jam_mulai')
+                    ->select(['id', 'unit_id', 'tipe', 'jam_mulai']);
             }])
             ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
             ->when($request->jenis_unit, fn ($q) => $q->where('jenis_unit', $request->jenis_unit))
@@ -35,18 +38,18 @@ class UnitController extends Controller
             ->withQueryString();
 
         $stats = [
-            'total'    => Unit::count(),
-            'active'   => Unit::where('status', 'active')->count(),
+            'total' => Unit::count(),
+            'active' => Unit::where('status', 'active')->count(),
             'inactive' => Unit::where('status', 'inactive')->count(),
-            'bus'      => Unit::where('jenis_unit', 'Bus')->count(),
-            'lv'       => Unit::where('jenis_unit', 'Light Vehicle')->count(),
+            'bus' => Unit::where('jenis_unit', 'Bus')->count(),
+            'lv' => Unit::where('jenis_unit', 'Light Vehicle')->count(),
         ];
 
         return Inertia::render('units/index', [
-            'units'   => $units,
+            'units' => $units,
             'filters' => $request->only(['search', 'jenis_unit', 'status']),
-            'stats'   => $stats,
-            'sites'   => Site::active()->orderBy('name')->get(['id', 'name']),
+            'stats' => $stats,
+            'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -65,8 +68,8 @@ class UnitController extends Controller
             ->log("Menambahkan unit: {$unit->no_unit} ({$unit->jenis_unit})");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Unit berhasil ditambahkan',
+            'type' => 'success',
+            'message' => 'Unit berhasil ditambahkan',
             'description' => "Unit {$unit->no_unit} ({$unit->jenis_unit}) telah terdaftar dalam sistem.",
         ]);
 
@@ -88,8 +91,8 @@ class UnitController extends Controller
             ->log("Memperbarui unit: {$unit->no_unit}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Unit berhasil diperbarui',
+            'type' => 'success',
+            'message' => 'Unit berhasil diperbarui',
             'description' => "Data unit {$unit->no_unit} telah disimpan.",
         ]);
 
@@ -108,8 +111,8 @@ class UnitController extends Controller
         $unit->delete();
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Unit berhasil dihapus',
+            'type' => 'success',
+            'message' => 'Unit berhasil dihapus',
             'description' => "Unit {$noUnit} telah dipindahkan ke sampah dan dapat dipulihkan kembali.",
         ]);
 
@@ -119,11 +122,11 @@ class UnitController extends Controller
     public function destroyBatch(Request $request): RedirectResponse
     {
         $request->validate([
-            'ids'   => 'required|array|min:1',
+            'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:units,id',
         ]);
 
-        $units   = Unit::whereIn('id', $request->ids)->get();
+        $units = Unit::whereIn('id', $request->ids)->get();
         $deleted = $units->count();
 
         foreach ($units as $unit) {
@@ -136,9 +139,9 @@ class UnitController extends Controller
         }
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => "{$deleted} unit berhasil dihapus",
-            'description' => "Unit yang dipilih telah dipindahkan ke sampah dan dapat dipulihkan kembali.",
+            'type' => 'success',
+            'message' => "{$deleted} unit berhasil dihapus",
+            'description' => 'Unit yang dipilih telah dipindahkan ke sampah dan dapat dipulihkan kembali.',
         ]);
 
         return redirect()->route('units.index');
@@ -154,7 +157,7 @@ class UnitController extends Controller
             ->withQueryString();
 
         return Inertia::render('units/trashed', [
-            'units'   => $units,
+            'units' => $units,
             'filters' => $request->only(['search']),
         ]);
     }
@@ -172,8 +175,8 @@ class UnitController extends Controller
             ->log("Memulihkan unit: {$noUnit}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Unit berhasil dipulihkan',
+            'type' => 'success',
+            'message' => 'Unit berhasil dipulihkan',
             'description' => "Unit {$noUnit} telah dikembalikan ke daftar unit aktif.",
         ]);
 
@@ -184,6 +187,21 @@ class UnitController extends Controller
     {
         $unit = Unit::withTrashed()->findOrFail($id);
         $noUnit = $unit->no_unit;
+
+        $sessionIds = P2hSession::withTrashed()->where('unit_id', $unit->id)->pluck('id');
+        $filesToDelete = P2hUserEntry::withTrashed()
+            ->with('attachments:id,p2h_user_entry_id,path')
+            ->whereIn('p2h_session_id', $sessionIds)
+            ->get()
+            ->flatMap(fn (P2hUserEntry $entry) => collect([
+                $entry->paraf_url,
+                $entry->approver_signature_url,
+                ...$entry->attachments->pluck('path'),
+            ]))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
         $sessionCount = DB::transaction(function () use ($unit) {
             $sessions = P2hSession::withTrashed()->where('unit_id', $unit->id)->get();
@@ -197,14 +215,24 @@ class UnitController extends Controller
             return $sessions->count();
         });
 
+        try {
+            P2hFileStorage::delete($filesToDelete);
+        } catch (\Throwable $exception) {
+            Log::warning('File P2H gagal dibersihkan setelah unit dihapus permanen.', [
+                'unit_id' => $unit->id,
+                'paths' => $filesToDelete,
+                'error' => $exception->getMessage(),
+            ]);
+        }
+
         activity('unit')
             ->causedBy(auth()->user())
             ->withProperties(['no_unit' => $noUnit, 'p2h_sessions_deleted' => $sessionCount])
             ->log("Menghapus permanen unit: {$noUnit} (beserta {$sessionCount} P2H terkait)");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Unit dihapus permanen',
+            'type' => 'success',
+            'message' => 'Unit dihapus permanen',
             'description' => "Unit {$noUnit} beserta {$sessionCount} P2H terkait telah dihapus permanen dari sistem.",
         ]);
 
@@ -214,12 +242,13 @@ class UnitController extends Controller
     public function export(): BinaryFileResponse
     {
         $units = Unit::with('site:id,name')->latest()->get();
-        return Excel::download(new UnitsExport($units), 'units_' . now()->format('Ymd_His') . '.xlsx');
+
+        return Excel::download(new UnitsExport($units), 'units_'.now()->format('Ymd_His').'.xlsx');
     }
 
     public function importTemplate(): BinaryFileResponse
     {
-        return Excel::download(new UnitsImportTemplateExport(), 'template_import_units.xlsx');
+        return Excel::download(new UnitsImportTemplateExport, 'template_import_units.xlsx');
     }
 
     public function import(Request $request): RedirectResponse
@@ -228,30 +257,34 @@ class UnitController extends Controller
             'file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
         ]);
 
-        $import = new UnitsImport();
+        $import = new UnitsImport;
         Excel::import($import, $request->file('file'));
 
         $success = $import->successCount();
         $updated = $import->updateCount();
-        $errors  = $import->rowErrors();
+        $errors = $import->rowErrors();
 
         $parts = [];
-        if ($success > 0) $parts[] = "{$success} unit baru ditambahkan";
-        if ($updated > 0) $parts[] = "{$updated} unit diperbarui";
+        if ($success > 0) {
+            $parts[] = "{$success} unit baru ditambahkan";
+        }
+        if ($updated > 0) {
+            $parts[] = "{$updated} unit diperbarui";
+        }
         $summary = implode(', ', $parts) ?: '0 perubahan';
 
         if (count($errors) > 0) {
             session()->flash('import_errors', $errors);
             Inertia::flash('toast', [
-                'type'        => 'warning',
-                'message'     => "Import selesai: {$summary}, " . count($errors) . ' baris gagal.',
-                'description' => implode(' | ', array_slice($errors, 0, 5)) . (count($errors) > 5 ? ' (+' . (count($errors) - 5) . ' lainnya)' : ''),
+                'type' => 'warning',
+                'message' => "Import selesai: {$summary}, ".count($errors).' baris gagal.',
+                'description' => implode(' | ', array_slice($errors, 0, 5)).(count($errors) > 5 ? ' (+'.(count($errors) - 5).' lainnya)' : ''),
             ]);
         } else {
             Inertia::flash('toast', [
-                'type'        => 'success',
-                'message'     => 'Import berhasil',
-                'description' => $summary . '.',
+                'type' => 'success',
+                'message' => 'Import berhasil',
+                'description' => $summary.'.',
             ]);
         }
 

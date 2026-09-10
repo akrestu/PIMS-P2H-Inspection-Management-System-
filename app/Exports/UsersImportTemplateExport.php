@@ -3,17 +3,17 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, WithStyles, WithColumnWidths, WithEvents
+class UsersImportTemplateExport implements FromArray, WithColumnWidths, WithEvents, WithHeadings, WithStyles, WithTitle
 {
     public function array(): array
     {
@@ -51,8 +51,8 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
     {
         return [
             1 => [
-                'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-                'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
         ];
@@ -81,8 +81,8 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                 $sheet->setCellValue('A1', 'TEMPLATE IMPORT USER — Hapus baris contoh (baris 3) sebelum upload. Jangan ubah baris heading (baris 2).');
                 $sheet->mergeCells('A1:I1');
                 $sheet->getStyle('A1')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],
-                    'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF3CD']],
+                    'font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF7C3A00']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF3CD']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'wrapText' => true],
                 ]);
                 $sheet->getRowDimension(1)->setRowHeight(30);
@@ -93,7 +93,7 @@ class UsersImportTemplateExport implements FromArray, WithHeadings, WithTitle, W
                 $sheet->getStyle("A{$noteRow}")->getFont()->setBold(true);
                 foreach ($notes as $col => $note) {
                     $r = $noteRow + 1 + (ord($col) - ord('A'));
-                    $sheet->setCellValue("A{$r}", $sheet->getCell("{$col}2")->getValue() . ' → ' . $note);
+                    $sheet->setCellValue("A{$r}", $sheet->getCell("{$col}2")->getValue().' → '.$note);
                 }
             },
         ];

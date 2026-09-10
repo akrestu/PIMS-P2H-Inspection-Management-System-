@@ -18,7 +18,11 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 </div>
             )}
 
-            <Form action={send.url()} method="post" className="space-y-6 text-center">
+            <Form
+                action={send.url()}
+                method="post"
+                className="space-y-6 text-center"
+            >
                 {({ processing }) => (
                     <>
                         <Button disabled={processing} variant="secondary">

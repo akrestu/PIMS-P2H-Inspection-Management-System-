@@ -1,17 +1,3 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { SiteSelect } from '@/components/site-select';
-import type { Site, Unit, UnitDowntimeLogSummary } from '@/types/pims';
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     Bus,
@@ -34,6 +20,51 @@ import {
     XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { SiteSelect } from '@/components/site-select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import type { Site, Unit, UnitDowntimeLogSummary } from '@/types/pims';
 
 /* ─────────────────────────── Types ─────────────────────────── */
 interface PaginatedData {
@@ -93,7 +124,7 @@ function UnitFormDialog({
             department: unit?.department ?? '',
             site_id: unit?.site_id ?? null,
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit?.id]);
 
     const handleClose = () => {
@@ -103,6 +134,7 @@ function UnitFormDialog({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (unit) {
             put(`/units/${unit.id}`, { onSuccess: handleClose });
         } else {
@@ -114,14 +146,27 @@ function UnitFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
                 <DialogHeader className="border-b px-6 py-4">
-                    <DialogTitle className="text-lg">{unit ? 'Edit Unit' : 'Tambah Unit Baru'}</DialogTitle>
-                    <DialogDescription>{unit ? `Perbarui data untuk unit ${unit.no_unit}` : 'Isi formulir berikut untuk mendaftarkan unit baru.'}</DialogDescription>
+                    <DialogTitle className="text-lg">
+                        {unit ? 'Edit Unit' : 'Tambah Unit Baru'}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {unit
+                            ? `Perbarui data untuk unit ${unit.no_unit}`
+                            : 'Isi formulir berikut untuk mendaftarkan unit baru.'}
+                    </DialogDescription>
                 </DialogHeader>
 
-                <form id="unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
+                <form
+                    id="unit-form"
+                    onSubmit={submit}
+                    className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4"
+                >
                     {/* No. Unit */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="no_unit" className="text-sm font-medium">
+                        <Label
+                            htmlFor="no_unit"
+                            className="text-sm font-medium"
+                        >
                             No. Unit <span className="text-destructive">*</span>
                         </Label>
                         <Input
@@ -132,42 +177,65 @@ function UnitFormDialog({
                             className="h-10"
                             required
                         />
-                        {errors.no_unit && <p className="text-destructive text-xs">{errors.no_unit}</p>}
+                        {errors.no_unit && (
+                            <p className="text-xs text-destructive">
+                                {errors.no_unit}
+                            </p>
+                        )}
                     </div>
 
                     {/* Jenis Unit */}
                     <div className="space-y-1.5">
                         <Label className="text-sm font-medium">
-                            Jenis Unit <span className="text-destructive">*</span>
+                            Jenis Unit{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <div className="grid grid-cols-2 gap-2">
-                            {(['Bus', 'Light Vehicle'] as const).map((jenis) => (
-                                <button
-                                    key={jenis}
-                                    type="button"
-                                    onClick={() => setData('jenis_unit', jenis)}
-                                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
-                                        data.jenis_unit === jenis
-                                            ? 'border-primary bg-primary/5 text-primary'
-                                            : 'border-border text-muted-foreground hover:border-primary/50'
-                                    }`}
-                                >
-                                    {jenis === 'Bus' ? <Bus className="h-6 w-6" /> : <Car className="h-6 w-6" />}
-                                    <span className="text-xs font-medium">{jenis}</span>
-                                </button>
-                            ))}
+                            {(['Bus', 'Light Vehicle'] as const).map(
+                                (jenis) => (
+                                    <button
+                                        key={jenis}
+                                        type="button"
+                                        onClick={() =>
+                                            setData('jenis_unit', jenis)
+                                        }
+                                        className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                                            data.jenis_unit === jenis
+                                                ? 'border-primary bg-primary/5 text-primary'
+                                                : 'border-border text-muted-foreground hover:border-primary/50'
+                                        }`}
+                                    >
+                                        {jenis === 'Bus' ? (
+                                            <Bus className="h-6 w-6" />
+                                        ) : (
+                                            <Car className="h-6 w-6" />
+                                        )}
+                                        <span className="text-xs font-medium">
+                                            {jenis}
+                                        </span>
+                                    </button>
+                                ),
+                            )}
                         </div>
                     </div>
 
                     {/* No. Polisi */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="no_lambung" className="text-sm font-medium">
-                            No. Polisi <span className="text-muted-foreground text-xs">(opsional)</span>
+                        <Label
+                            htmlFor="no_lambung"
+                            className="text-sm font-medium"
+                        >
+                            No. Polisi{' '}
+                            <span className="text-xs text-muted-foreground">
+                                (opsional)
+                            </span>
                         </Label>
                         <Input
                             id="no_lambung"
                             value={data.no_lambung}
-                            onChange={(e) => setData('no_lambung', e.target.value)}
+                            onChange={(e) =>
+                                setData('no_lambung', e.target.value)
+                            }
                             placeholder="Contoh: B-1234-XYZ"
                             className="h-10"
                         />
@@ -176,24 +244,58 @@ function UnitFormDialog({
                     {/* Departemen (LV only) */}
                     {data.jenis_unit === 'Light Vehicle' && (
                         <div className="space-y-1.5">
-                            <Label htmlFor="department" className="text-sm font-medium">
-                                Departemen <span className="text-muted-foreground text-xs">(opsional)</span>
+                            <Label
+                                htmlFor="department"
+                                className="text-sm font-medium"
+                            >
+                                Departemen{' '}
+                                <span className="text-xs text-muted-foreground">
+                                    (opsional)
+                                </span>
                             </Label>
-                            <Select value={data.department || ''} onValueChange={(v) => setData('department', v === '__none__' ? '' : v)}>
-                                <SelectTrigger id="department" className="h-10 w-full">
+                            <Select
+                                value={data.department || ''}
+                                onValueChange={(v) =>
+                                    setData(
+                                        'department',
+                                        v === '__none__' ? '' : v,
+                                    )
+                                }
+                            >
+                                <SelectTrigger
+                                    id="department"
+                                    className="h-10 w-full"
+                                >
                                     <SelectValue placeholder="Pilih departemen..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="__none__">— Tidak ada —</SelectItem>
-                                    {['Management', 'Production', 'Maintenance', 'Supply Chain', 'Engineering', 'HSE', 'HRGA'].map((d) => (
-                                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                                    <SelectItem value="__none__">
+                                        — Tidak ada —
+                                    </SelectItem>
+                                    {[
+                                        'Management',
+                                        'Production',
+                                        'Maintenance',
+                                        'Supply Chain',
+                                        'Engineering',
+                                        'HSE',
+                                        'HRGA',
+                                    ].map((d) => (
+                                        <SelectItem key={d} value={d}>
+                                            {d}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
-                                Staff/Sr.Staff departemen ini dapat melihat & menyetujui P2H unit LV ini.
+                                Staff/Sr.Staff departemen ini dapat melihat &
+                                menyetujui P2H unit LV ini.
                             </p>
-                            {errors.department && <p className="text-destructive text-xs">{errors.department}</p>}
+                            {errors.department && (
+                                <p className="text-xs text-destructive">
+                                    {errors.department}
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -210,7 +312,12 @@ function UnitFormDialog({
                         <Label className="text-sm font-medium">
                             Status <span className="text-destructive">*</span>
                         </Label>
-                        <Select value={data.status} onValueChange={(v) => setData('status', v as Unit['status'])}>
+                        <Select
+                            value={data.status}
+                            onValueChange={(v) =>
+                                setData('status', v as Unit['status'])
+                            }
+                        >
                             <SelectTrigger className="h-10 w-full">
                                 <SelectValue />
                             </SelectTrigger>
@@ -233,11 +340,25 @@ function UnitFormDialog({
                 </form>
 
                 <DialogFooter className="border-t px-6 py-4">
-                    <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleClose}
+                        className="flex-1"
+                    >
                         Batal
                     </Button>
-                    <Button type="submit" form="unit-form" disabled={processing} className="flex-1">
-                        {processing ? 'Menyimpan...' : unit ? 'Simpan Perubahan' : 'Tambah Unit'}
+                    <Button
+                        type="submit"
+                        form="unit-form"
+                        disabled={processing}
+                        className="flex-1"
+                    >
+                        {processing
+                            ? 'Menyimpan...'
+                            : unit
+                              ? 'Simpan Perubahan'
+                              : 'Tambah Unit'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -246,22 +367,38 @@ function UnitFormDialog({
 }
 
 /* ───────────────── ImportSheet ─────────────────────────────── */
-function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+function ImportSheet({
+    open,
+    onOpenChange,
+}: {
+    open: boolean;
+    onOpenChange: (o: boolean) => void;
+}) {
     const [file, setFile] = useState<File | null>(null);
     const [processing, setProcessing] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
-    const handleClose = () => { setFile(null); onOpenChange(false); };
+    const handleClose = () => {
+        setFile(null);
+        onOpenChange(false);
+    };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file) return;
+
+        if (!file) {
+            return;
+        }
+
         setProcessing(true);
         const formData = new FormData();
         formData.append('file', file);
         router.post('/units/import', formData, {
             forceFormData: true,
-            onFinish: () => { setProcessing(false); handleClose(); },
+            onFinish: () => {
+                setProcessing(false);
+                handleClose();
+            },
         });
     };
 
@@ -274,13 +411,18 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
                         Import Unit dari Excel
                     </DialogTitle>
                     <DialogDescription>
-                        Upload file Excel (.xlsx/.xls) sesuai format template. Baris yang error akan dilaporkan dan dilewati.
+                        Upload file Excel (.xlsx/.xls) sesuai format template.
+                        Baris yang error akan dilaporkan dan dilewati.
                     </DialogDescription>
                 </DialogHeader>
 
-                <form id="import-unit-form" onSubmit={submit} className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
-                    <div className="rounded-lg border border-dashed p-4 text-center space-y-2">
-                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground mx-auto" />
+                <form
+                    id="import-unit-form"
+                    onSubmit={submit}
+                    className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-4"
+                >
+                    <div className="space-y-2 rounded-lg border border-dashed p-4 text-center">
+                        <FileSpreadsheet className="mx-auto h-8 w-8 text-muted-foreground" />
                         <p className="text-sm font-medium">
                             {file ? file.name : 'Pilih file Excel'}
                         </p>
@@ -289,7 +431,12 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
                                 {(file.size / 1024).toFixed(1)} KB
                             </p>
                         )}
-                        <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileRef.current?.click()}
+                        >
                             {file ? 'Ganti File' : 'Pilih File'}
                         </Button>
                         <input
@@ -297,30 +444,70 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
                             type="file"
                             accept=".xlsx,.xls,.csv"
                             className="hidden"
-                            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                            onChange={(e) =>
+                                setFile(e.target.files?.[0] ?? null)
+                            }
                         />
                     </div>
 
-                    <div className="rounded-lg bg-muted/50 border p-3 space-y-1.5 text-xs text-muted-foreground">
-                        <p className="font-semibold text-foreground text-xs">Panduan Import:</p>
-                        <ul className="space-y-1 list-disc list-inside">
+                    <div className="space-y-1.5 rounded-lg border bg-muted/50 p-3 text-xs text-muted-foreground">
+                        <p className="text-xs font-semibold text-foreground">
+                            Panduan Import:
+                        </p>
+                        <ul className="list-inside list-disc space-y-1">
                             <li>Download template terlebih dahulu</li>
-                            <li>Isi data sesuai kolom — jangan ubah nama kolom heading</li>
-                            <li>Jenis unit valid: <code className="bg-muted px-1 rounded">Bus</code>, <code className="bg-muted px-1 rounded">Light Vehicle</code></li>
-                            <li>Status valid: <code className="bg-muted px-1 rounded">active</code>, <code className="bg-muted px-1 rounded">inactive</code></li>
+                            <li>
+                                Isi data sesuai kolom — jangan ubah nama kolom
+                                heading
+                            </li>
+                            <li>
+                                Jenis unit valid:{' '}
+                                <code className="rounded bg-muted px-1">
+                                    Bus
+                                </code>
+                                ,{' '}
+                                <code className="rounded bg-muted px-1">
+                                    Light Vehicle
+                                </code>
+                            </li>
+                            <li>
+                                Status valid:{' '}
+                                <code className="rounded bg-muted px-1">
+                                    active
+                                </code>
+                                ,{' '}
+                                <code className="rounded bg-muted px-1">
+                                    inactive
+                                </code>
+                            </li>
                             <li>No. unit harus unik di seluruh sistem</li>
                         </ul>
                     </div>
 
-                    <a href="/units/import-template" className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline">
+                    <a
+                        href="/units/import-template"
+                        className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline"
+                    >
                         <Download className="h-4 w-4" />
                         Download Template Excel
                     </a>
                 </form>
 
                 <DialogFooter className="border-t px-6 py-4">
-                    <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Batal</Button>
-                    <Button type="submit" form="import-unit-form" disabled={!file || processing} className="flex-1">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleClose}
+                        className="flex-1"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="import-unit-form"
+                        disabled={!file || processing}
+                        className="flex-1"
+                    >
                         {processing ? 'Mengimport...' : 'Import Sekarang'}
                     </Button>
                 </DialogFooter>
@@ -330,11 +517,22 @@ function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
 }
 
 /* ──────────────────── DeleteConfirmDialog ───────────────────── */
-function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; open: boolean; onOpenChange: (o: boolean) => void }) {
+function DeleteConfirmDialog({
+    unit,
+    open,
+    onOpenChange,
+}: {
+    unit: Unit | null;
+    open: boolean;
+    onOpenChange: (o: boolean) => void;
+}) {
     const [processing, setProcessing] = useState(false);
 
     const handleConfirm = () => {
-        if (!unit) return;
+        if (!unit) {
+            return;
+        }
+
         setProcessing(true);
         router.delete(`/units/${unit.id}`, {
             onFinish: () => {
@@ -348,19 +546,30 @@ function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; 
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <div className="bg-destructive/10 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full">
-                        <Trash2 className="text-destructive h-6 w-6" />
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                        <Trash2 className="h-6 w-6 text-destructive" />
                     </div>
-                    <DialogTitle className="text-center">Hapus Unit?</DialogTitle>
+                    <DialogTitle className="text-center">
+                        Hapus Unit?
+                    </DialogTitle>
                     <DialogDescription className="text-center">
-                        Unit <span className="text-foreground font-semibold">{unit?.no_unit}</span> akan dipindahkan ke sampah.
-                        Unit yang dihapus dapat <span className="font-semibold">dipulihkan kembali</span> dari halaman Sampah, atau dihapus permanen dari sana.
+                        Unit{' '}
+                        <span className="font-semibold text-foreground">
+                            {unit?.no_unit}
+                        </span>{' '}
+                        akan dipindahkan ke sampah. Unit yang dihapus dapat{' '}
+                        <span className="font-semibold">
+                            dipulihkan kembali
+                        </span>{' '}
+                        dari halaman Sampah, atau dihapus permanen dari sana.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="rounded-lg border p-3 text-sm space-y-1">
+                <div className="space-y-1 rounded-lg border p-3 text-sm">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">No. Unit</span>
-                        <span className="font-mono font-medium">{unit?.no_unit}</span>
+                        <span className="font-mono font-medium">
+                            {unit?.no_unit}
+                        </span>
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Jenis</span>
@@ -368,16 +577,29 @@ function DeleteConfirmDialog({ unit, open, onOpenChange }: { unit: Unit | null; 
                     </div>
                     {unit?.no_lambung && (
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">No. Polisi</span>
-                            <span className="font-mono font-medium">{unit.no_lambung}</span>
+                            <span className="text-muted-foreground">
+                                No. Polisi
+                            </span>
+                            <span className="font-mono font-medium">
+                                {unit.no_lambung}
+                            </span>
                         </div>
                     )}
                 </div>
                 <DialogFooter className="gap-2 sm:gap-2">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+                    <Button
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        className="flex-1"
+                    >
                         Batal
                     </Button>
-                    <Button variant="destructive" onClick={handleConfirm} disabled={processing} className="flex-1">
+                    <Button
+                        variant="destructive"
+                        onClick={handleConfirm}
+                        disabled={processing}
+                        className="flex-1"
+                    >
                         {processing ? 'Menghapus...' : 'Hapus Unit'}
                     </Button>
                 </DialogFooter>
@@ -405,7 +627,10 @@ function BatchDeleteDialog({
         setProcessing(true);
         router.delete('/units/batch', {
             data: { ids },
-            onSuccess: () => { onSuccess(); onOpenChange(false); },
+            onSuccess: () => {
+                onSuccess();
+                onOpenChange(false);
+            },
             onFinish: () => setProcessing(false),
         });
     };
@@ -414,18 +639,38 @@ function BatchDeleteDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <div className="bg-destructive/10 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full">
-                        <Trash2 className="text-destructive h-6 w-6" />
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                        <Trash2 className="h-6 w-6 text-destructive" />
                     </div>
-                    <DialogTitle className="text-center">Hapus {count} Unit?</DialogTitle>
+                    <DialogTitle className="text-center">
+                        Hapus {count} Unit?
+                    </DialogTitle>
                     <DialogDescription className="text-center">
-                        <span className="font-semibold text-foreground">{count} unit</span> yang dipilih akan dipindahkan ke sampah.
-                        Unit yang dihapus dapat <span className="font-semibold">dipulihkan kembali</span> dari halaman Sampah, atau dihapus permanen dari sana.
+                        <span className="font-semibold text-foreground">
+                            {count} unit
+                        </span>{' '}
+                        yang dipilih akan dipindahkan ke sampah. Unit yang
+                        dihapus dapat{' '}
+                        <span className="font-semibold">
+                            dipulihkan kembali
+                        </span>{' '}
+                        dari halaman Sampah, atau dihapus permanen dari sana.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-2">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">Batal</Button>
-                    <Button variant="destructive" onClick={confirm} disabled={processing} className="flex-1">
+                    <Button
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        className="flex-1"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        onClick={confirm}
+                        disabled={processing}
+                        className="flex-1"
+                    >
                         {processing ? 'Menghapus...' : `Hapus ${count} Unit`}
                     </Button>
                 </DialogFooter>
@@ -435,11 +680,23 @@ function BatchDeleteDialog({
 }
 
 /* ──────────────────────── Stat Card ────────────────────────── */
-function StatCard({ title, value, icon: Icon, colorClass }: { title: string; value: number; icon: React.ElementType; colorClass: string }) {
+function StatCard({
+    title,
+    value,
+    icon: Icon,
+    colorClass,
+}: {
+    title: string;
+    value: number;
+    icon: React.ElementType;
+    colorClass: string;
+}) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {title}
+                </CardTitle>
                 <div className={`rounded-md p-2 ${colorClass}`}>
                     <Icon className="h-4 w-4" />
                 </div>
@@ -454,28 +711,54 @@ function StatCard({ title, value, icon: Icon, colorClass }: { title: string; val
 /* ──────────────────── Operational Status Badge ─────────────── */
 type DowntimeTipe = 'BD' | 'PM' | 'Servis Berkala';
 
-const downtimeConfig: Record<DowntimeTipe, { label: string; cls: string; dot: string }> = {
-    'BD':             { label: 'BD',    cls: 'border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400',       dot: 'bg-red-500' },
-    'PM':             { label: 'PM',    cls: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400',   dot: 'bg-blue-500' },
-    'Servis Berkala': { label: 'Servis',cls: 'border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-400', dot: 'bg-purple-500' },
+const downtimeConfig: Record<
+    DowntimeTipe,
+    { label: string; cls: string; dot: string }
+> = {
+    BD: {
+        label: 'BD',
+        cls: 'border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400',
+        dot: 'bg-red-500',
+    },
+    PM: {
+        label: 'PM',
+        cls: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        dot: 'bg-blue-500',
+    },
+    'Servis Berkala': {
+        label: 'Servis',
+        cls: 'border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+        dot: 'bg-purple-500',
+    },
 };
 
-function OperationalStatusBadge({ downtimeLogs }: { downtimeLogs?: UnitDowntimeLogSummary[] }) {
+function OperationalStatusBadge({
+    downtimeLogs,
+}: {
+    downtimeLogs?: UnitDowntimeLogSummary[];
+}) {
     const ongoing = downtimeLogs?.[0] ?? null;
 
     if (!ongoing) {
         return (
-            <Badge variant="outline" className="border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400">
+            <Badge
+                variant="outline"
+                className="border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+            >
                 <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
                 Operation
             </Badge>
         );
     }
 
-    const { label, cls, dot } = downtimeConfig[ongoing.tipe as DowntimeTipe] ?? downtimeConfig['BD'];
+    const { label, cls, dot } =
+        downtimeConfig[ongoing.tipe as DowntimeTipe] ?? downtimeConfig['BD'];
+
     return (
         <Badge variant="outline" className={cls}>
-            <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
+            <span
+                className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${dot}`}
+            />
             {label}
         </Badge>
     );
@@ -499,25 +782,32 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
     const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
 
     const allIds = units.data.map((u) => u.id);
-    const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
+    const allSelected =
+        allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
     const someSelected = selectedIds.length > 0 && !allSelected;
 
     const toggleAll = () => setSelectedIds(allSelected ? [] : allIds);
     const toggleOne = (id: number) =>
-        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+        );
     const clearSelection = () => setSelectedIds([]);
 
     // Debounce search
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const applyFilters = useCallback(
-        (s: string, j: string, st: string) => {
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-            debounceRef.current = setTimeout(() => {
-                router.get('/units', { search: s, jenis_unit: j, status: st }, { preserveState: true, replace: true });
-            }, 350);
-        },
-        [],
-    );
+    const applyFilters = useCallback((s: string, j: string, st: string) => {
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        debounceRef.current = setTimeout(() => {
+            router.get(
+                '/units',
+                { search: s, jenis_unit: j, status: st },
+                { preserveState: true, replace: true },
+            );
+        }, 350);
+    }, []);
 
     const handleSearch = (val: string) => {
         setSearch(val);
@@ -567,37 +857,61 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Manajemen Unit</h1>
-                        <p className="text-muted-foreground mt-0.5 text-sm">Kelola data kendaraan Bus & Light Vehicle.</p>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Manajemen Unit
+                        </h1>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                            Kelola data kendaraan Bus & Light Vehicle.
+                        </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <a href="/units/trashed">
-                                    <Button variant="outline" size="sm" className="gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                    >
                                         <Trash2 className="h-4 w-4" /> Sampah
                                     </Button>
                                 </a>
                             </TooltipTrigger>
-                            <TooltipContent>Lihat unit yang telah dihapus</TooltipContent>
+                            <TooltipContent>
+                                Lihat unit yang telah dihapus
+                            </TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setImportOpen(true)}
+                                    className="gap-2"
+                                >
                                     <Upload className="h-4 w-4" /> Import
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Import unit dari file Excel</TooltipContent>
+                            <TooltipContent>
+                                Import unit dari file Excel
+                            </TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <a href="/units/export">
-                                    <Button variant="outline" size="sm" className="gap-2">
-                                        <Download className="h-4 w-4" /> Export Excel
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                    >
+                                        <Download className="h-4 w-4" /> Export
+                                        Excel
                                     </Button>
                                 </a>
                             </TooltipTrigger>
-                            <TooltipContent>Download daftar unit ke Excel</TooltipContent>
+                            <TooltipContent>
+                                Download daftar unit ke Excel
+                            </TooltipContent>
                         </Tooltip>
                         <Button onClick={openAdd} className="gap-2">
                             <Plus className="h-4 w-4" />
@@ -608,23 +922,37 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
 
                 {/* ── Batch Action Bar ── */}
                 {selectedIds.length > 0 && (
-                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex animate-in items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 duration-200 fade-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <Checkbox
                                 checked={allSelected}
                                 onCheckedChange={toggleAll}
-                                className="border-destructive/60 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                                className="border-destructive/60 data-[state=checked]:border-destructive data-[state=checked]:bg-destructive"
                             />
                             <span className="text-sm font-medium">
-                                <span className="text-destructive font-semibold">{selectedIds.length}</span> unit dipilih
+                                <span className="font-semibold text-destructive">
+                                    {selectedIds.length}
+                                </span>{' '}
+                                unit dipilih
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8 gap-1.5 text-muted-foreground">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearSelection}
+                                className="h-8 gap-1.5 text-muted-foreground"
+                            >
                                 <X className="h-3.5 w-3.5" /> Batalkan
                             </Button>
-                            <Button variant="destructive" size="sm" onClick={() => setBatchDeleteOpen(true)} className="h-8 gap-1.5">
-                                <Trash2 className="h-3.5 w-3.5" /> Hapus {selectedIds.length} Unit
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setBatchDeleteOpen(true)}
+                                className="h-8 gap-1.5"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" /> Hapus{' '}
+                                {selectedIds.length} Unit
                             </Button>
                         </div>
                     </div>
@@ -632,11 +960,36 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
 
                 {/* ── Stat Cards ── */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                    <StatCard title="Total Unit" value={stats.total} icon={Truck} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" />
-                    <StatCard title="Active" value={stats.active} icon={CheckCircle2} colorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" />
-                    <StatCard title="Inactive" value={stats.inactive} icon={XCircle} colorClass="bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400" />
-                    <StatCard title="Bus" value={stats.bus} icon={Bus} colorClass="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" />
-                    <StatCard title="Light Vehicle" value={stats.lv} icon={Car} colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" />
+                    <StatCard
+                        title="Total Unit"
+                        value={stats.total}
+                        icon={Truck}
+                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                    />
+                    <StatCard
+                        title="Active"
+                        value={stats.active}
+                        icon={CheckCircle2}
+                        colorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                    />
+                    <StatCard
+                        title="Inactive"
+                        value={stats.inactive}
+                        icon={XCircle}
+                        colorClass="bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
+                    />
+                    <StatCard
+                        title="Bus"
+                        value={stats.bus}
+                        icon={Bus}
+                        colorClass="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                    />
+                    <StatCard
+                        title="Light Vehicle"
+                        value={stats.lv}
+                        icon={Car}
+                        colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                    />
                 </div>
 
                 {/* ── Filter Bar ── */}
@@ -644,7 +997,7 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                     <CardContent className="flex flex-wrap items-center gap-3 py-3">
                         {/* Search */}
                         <div className="relative min-w-[200px] flex-1">
-                            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
@@ -653,11 +1006,16 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                             />
                         </div>
 
-                        <Separator orientation="vertical" className="hidden h-7 sm:block" />
+                        <Separator
+                            orientation="vertical"
+                            className="hidden h-7 sm:block"
+                        />
 
                         {/* Jenis Filter pills */}
                         <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs font-medium">Jenis:</span>
+                            <span className="text-xs font-medium text-muted-foreground">
+                                Jenis:
+                            </span>
                             {(['Bus', 'Light Vehicle'] as const).map((j) => (
                                 <button
                                     key={j}
@@ -668,17 +1026,26 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                             : 'border-border hover:border-primary/60 hover:text-primary'
                                     }`}
                                 >
-                                    {j === 'Bus' ? <Bus className="h-3 w-3" /> : <Car className="h-3 w-3" />}
+                                    {j === 'Bus' ? (
+                                        <Bus className="h-3 w-3" />
+                                    ) : (
+                                        <Car className="h-3 w-3" />
+                                    )}
                                     {j}
                                 </button>
                             ))}
                         </div>
 
-                        <Separator orientation="vertical" className="hidden h-7 sm:block" />
+                        <Separator
+                            orientation="vertical"
+                            className="hidden h-7 sm:block"
+                        />
 
                         {/* Status Filter pills */}
                         <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs font-medium">Status:</span>
+                            <span className="text-xs font-medium text-muted-foreground">
+                                Status:
+                            </span>
                             {(['active', 'inactive'] as const).map((s) => (
                                 <button
                                     key={s}
@@ -691,7 +1058,11 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                             : 'border-border hover:border-primary/60'
                                     }`}
                                 >
-                                    {s === 'active' ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                                    {s === 'active' ? (
+                                        <CheckCircle2 className="h-3 w-3" />
+                                    ) : (
+                                        <XCircle className="h-3 w-3" />
+                                    )}
                                     {s === 'active' ? 'Active' : 'Inactive'}
                                 </button>
                             ))}
@@ -701,12 +1072,19 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                         {hasActiveFilters && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 gap-1.5 px-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={resetFilters}
+                                        className="h-9 gap-1.5 px-2"
+                                    >
                                         <RotateCcw className="h-3.5 w-3.5" />
                                         Reset
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Hapus semua filter</TooltipContent>
+                                <TooltipContent>
+                                    Hapus semua filter
+                                </TooltipContent>
                             </Tooltip>
                         )}
                     </CardContent>
@@ -722,21 +1100,38 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                         <TableHead className="w-10 pl-4">
                                             <Checkbox
                                                 checked={allSelected}
-                                                ref={(el) => { if (el) (el as any).indeterminate = someSelected; }}
+                                                ref={(el) => {
+                                                    if (el) {
+                                                        (
+                                                            el as any
+                                                        ).indeterminate =
+                                                            someSelected;
+                                                    }
+                                                }}
                                                 onCheckedChange={toggleAll}
                                                 aria-label="Pilih semua"
                                                 disabled={allIds.length === 0}
                                             />
                                         </TableHead>
-                                        <TableHead className="w-12 text-center hidden sm:table-cell">#</TableHead>
+                                        <TableHead className="hidden w-12 text-center sm:table-cell">
+                                            #
+                                        </TableHead>
                                         <TableHead>No. Unit</TableHead>
                                         <TableHead>Jenis Unit</TableHead>
                                         <TableHead>No. Polisi</TableHead>
-                                        <TableHead className="hidden md:table-cell">Departemen</TableHead>
-                                        <TableHead className="hidden md:table-cell">Site</TableHead>
+                                        <TableHead className="hidden md:table-cell">
+                                            Departemen
+                                        </TableHead>
+                                        <TableHead className="hidden md:table-cell">
+                                            Site
+                                        </TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead>Status Operasional</TableHead>
-                                        <TableHead className="w-14 text-right">Aksi</TableHead>
+                                        <TableHead>
+                                            Status Operasional
+                                        </TableHead>
+                                        <TableHead className="w-14 text-right">
+                                            Aksi
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -744,22 +1139,40 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                         <TableRow>
                                             <TableCell colSpan={9}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
-                                                    <div className="bg-muted rounded-full p-4">
-                                                        <Package className="text-muted-foreground h-8 w-8" />
+                                                    <div className="rounded-full bg-muted p-4">
+                                                        <Package className="h-8 w-8 text-muted-foreground" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium">Tidak ada unit ditemukan</p>
-                                                        <p className="text-muted-foreground mt-1 text-sm">
-                                                            {hasActiveFilters ? 'Coba ubah atau reset filter pencarian.' : 'Mulai dengan menambahkan unit baru.'}
+                                                        <p className="font-medium">
+                                                            Tidak ada unit
+                                                            ditemukan
+                                                        </p>
+                                                        <p className="mt-1 text-sm text-muted-foreground">
+                                                            {hasActiveFilters
+                                                                ? 'Coba ubah atau reset filter pencarian.'
+                                                                : 'Mulai dengan menambahkan unit baru.'}
                                                         </p>
                                                     </div>
                                                     {hasActiveFilters ? (
-                                                        <Button variant="outline" size="sm" onClick={resetFilters} className="gap-2">
-                                                            <RotateCcw className="h-3.5 w-3.5" /> Reset Filter
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={
+                                                                resetFilters
+                                                            }
+                                                            className="gap-2"
+                                                        >
+                                                            <RotateCcw className="h-3.5 w-3.5" />{' '}
+                                                            Reset Filter
                                                         </Button>
                                                     ) : (
-                                                        <Button size="sm" onClick={openAdd} className="gap-2">
-                                                            <Plus className="h-4 w-4" /> Tambah Unit
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={openAdd}
+                                                            className="gap-2"
+                                                        >
+                                                            <Plus className="h-4 w-4" />{' '}
+                                                            Tambah Unit
                                                         </Button>
                                                     )}
                                                 </div>
@@ -767,24 +1180,34 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                         </TableRow>
                                     ) : (
                                         units.data.map((unit, idx) => (
-                                            <TableRow key={unit.id} className={`group ${selectedIds.includes(unit.id) ? 'bg-destructive/5' : ''}`}>
-                                                <TableCell className="pl-4 w-10">
+                                            <TableRow
+                                                key={unit.id}
+                                                className={`group ${selectedIds.includes(unit.id) ? 'bg-destructive/5' : ''}`}
+                                            >
+                                                <TableCell className="w-10 pl-4">
                                                     <Checkbox
-                                                        checked={selectedIds.includes(unit.id)}
-                                                        onCheckedChange={() => toggleOne(unit.id)}
+                                                        checked={selectedIds.includes(
+                                                            unit.id,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            toggleOne(unit.id)
+                                                        }
                                                         aria-label={`Pilih ${unit.no_unit}`}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground text-center text-sm hidden sm:table-cell">
+                                                <TableCell className="hidden text-center text-sm text-muted-foreground sm:table-cell">
                                                     {(units.from ?? 1) + idx}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className="font-mono font-semibold">{unit.no_unit}</span>
+                                                    <span className="font-mono font-semibold">
+                                                        {unit.no_unit}
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell>
                                                     <span className="inline-flex items-center gap-1.5 text-sm">
-                                                        {unit.jenis_unit === 'Bus' ? (
-                                                            <Bus className="text-orange-500 h-4 w-4 shrink-0" />
+                                                        {unit.jenis_unit ===
+                                                        'Bus' ? (
+                                                            <Bus className="h-4 w-4 shrink-0 text-orange-500" />
                                                         ) : (
                                                             <Car className="h-4 w-4 shrink-0 text-purple-500" />
                                                         )}
@@ -793,40 +1216,69 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                                 </TableCell>
                                                 <TableCell>
                                                     {unit.no_lambung ? (
-                                                        <span className="font-mono text-sm">{unit.no_lambung}</span>
+                                                        <span className="font-mono text-sm">
+                                                            {unit.no_lambung}
+                                                        </span>
                                                     ) : (
-                                                        <span className="text-muted-foreground text-sm">—</span>
+                                                        <span className="text-sm text-muted-foreground">
+                                                            —
+                                                        </span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="hidden md:table-cell text-sm">
-                                                    {unit.department
-                                                        ? unit.department
-                                                        : <span className="text-muted-foreground">—</span>}
+                                                <TableCell className="hidden text-sm md:table-cell">
+                                                    {unit.department ? (
+                                                        unit.department
+                                                    ) : (
+                                                        <span className="text-muted-foreground">
+                                                            —
+                                                        </span>
+                                                    )}
                                                 </TableCell>
-                                                <TableCell className="hidden md:table-cell text-sm">
-                                                    {unit.site
-                                                        ? unit.site.name
-                                                        : <span className="text-muted-foreground">—</span>}
+                                                <TableCell className="hidden text-sm md:table-cell">
+                                                    {unit.site ? (
+                                                        unit.site.name
+                                                    ) : (
+                                                        <span className="text-muted-foreground">
+                                                            —
+                                                        </span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge
-                                                        variant={unit.status === 'active' ? 'default' : 'secondary'}
+                                                        variant={
+                                                            unit.status ===
+                                                            'active'
+                                                                ? 'default'
+                                                                : 'secondary'
+                                                        }
                                                         className={
-                                                            unit.status === 'active'
+                                                            unit.status ===
+                                                            'active'
                                                                 ? 'border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
                                                                 : 'border-red-200 bg-red-100 text-red-600 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                         }
                                                     >
-                                                        <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`} />
-                                                        {unit.status === 'active' ? 'Active' : 'Inactive'}
+                                                        <span
+                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`}
+                                                        />
+                                                        {unit.status ===
+                                                        'active'
+                                                            ? 'Active'
+                                                            : 'Inactive'}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <OperationalStatusBadge downtimeLogs={unit.downtime_logs} />
+                                                    <OperationalStatusBadge
+                                                        downtimeLogs={
+                                                            unit.downtime_logs
+                                                        }
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
@@ -836,15 +1288,37 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-44">
-                                                            <DropdownMenuItem onClick={() => setTimeout(() => openEdit(unit), 0)} className="gap-2">
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            className="w-44"
+                                                        >
+                                                            <DropdownMenuItem
+                                                                onClick={() =>
+                                                                    setTimeout(
+                                                                        () =>
+                                                                            openEdit(
+                                                                                unit,
+                                                                            ),
+                                                                        0,
+                                                                    )
+                                                                }
+                                                                className="gap-2"
+                                                            >
                                                                 <Pencil className="h-4 w-4" />
                                                                 Edit Unit
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
-                                                                onClick={() => setTimeout(() => openDelete(unit), 0)}
-                                                                className="text-destructive focus:text-destructive gap-2"
+                                                                onClick={() =>
+                                                                    setTimeout(
+                                                                        () =>
+                                                                            openDelete(
+                                                                                unit,
+                                                                            ),
+                                                                        0,
+                                                                    )
+                                                                }
+                                                                className="gap-2 text-destructive focus:text-destructive"
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                                 Hapus Unit
@@ -862,40 +1336,95 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                         {/* Pagination */}
                         {units.last_page > 1 && (
                             <div className="flex items-center justify-between border-t px-4 py-3">
-                                <p className="text-muted-foreground text-sm">
-                                    Menampilkan <span className="font-medium">{units.from}</span>–<span className="font-medium">{units.to}</span> dari{' '}
-                                    <span className="font-medium">{units.total}</span> unit
+                                <p className="text-sm text-muted-foreground">
+                                    Menampilkan{' '}
+                                    <span className="font-medium">
+                                        {units.from}
+                                    </span>
+                                    –
+                                    <span className="font-medium">
+                                        {units.to}
+                                    </span>{' '}
+                                    dari{' '}
+                                    <span className="font-medium">
+                                        {units.total}
+                                    </span>{' '}
+                                    unit
                                 </p>
                                 <div className="flex items-center gap-1">
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         disabled={units.current_page === 1}
-                                        onClick={() => router.get('/units', { ...filters, page: units.current_page - 1 })}
+                                        onClick={() =>
+                                            router.get('/units', {
+                                                ...filters,
+                                                page: units.current_page - 1,
+                                            })
+                                        }
                                         className="h-8 gap-1"
                                     >
                                         <ChevronLeft className="h-4 w-4" />
                                         Prev
                                     </Button>
                                     <div className="flex gap-1">
-                                        {Array.from({ length: units.last_page }, (_, i) => i + 1)
-                                            .filter((p) => p === 1 || p === units.last_page || Math.abs(p - units.current_page) <= 1)
-                                            .reduce<(number | '...')[]>((acc, p, idx, arr) => {
-                                                if (idx > 0 && (arr[idx - 1] as number) !== p - 1) acc.push('...');
-                                                acc.push(p);
-                                                return acc;
-                                            }, [])
+                                        {Array.from(
+                                            { length: units.last_page },
+                                            (_, i) => i + 1,
+                                        )
+                                            .filter(
+                                                (p) =>
+                                                    p === 1 ||
+                                                    p === units.last_page ||
+                                                    Math.abs(
+                                                        p - units.current_page,
+                                                    ) <= 1,
+                                            )
+                                            .reduce<(number | '...')[]>(
+                                                (acc, p, idx, arr) => {
+                                                    if (
+                                                        idx > 0 &&
+                                                        (arr[
+                                                            idx - 1
+                                                        ] as number) !==
+                                                            p - 1
+                                                    ) {
+                                                        acc.push('...');
+                                                    }
+
+                                                    acc.push(p);
+
+                                                    return acc;
+                                                },
+                                                [],
+                                            )
                                             .map((p, i) =>
                                                 p === '...' ? (
-                                                    <span key={`ellipsis-${i}`} className="text-muted-foreground px-1 py-1 text-sm">
+                                                    <span
+                                                        key={`ellipsis-${i}`}
+                                                        className="px-1 py-1 text-sm text-muted-foreground"
+                                                    >
                                                         …
                                                     </span>
                                                 ) : (
                                                     <Button
                                                         key={p}
                                                         size="sm"
-                                                        variant={p === units.current_page ? 'default' : 'outline'}
-                                                        onClick={() => router.get('/units', { ...filters, page: p })}
+                                                        variant={
+                                                            p ===
+                                                            units.current_page
+                                                                ? 'default'
+                                                                : 'outline'
+                                                        }
+                                                        onClick={() =>
+                                                            router.get(
+                                                                '/units',
+                                                                {
+                                                                    ...filters,
+                                                                    page: p,
+                                                                },
+                                                            )
+                                                        }
                                                         className="h-8 w-8 p-0"
                                                     >
                                                         {p}
@@ -906,8 +1435,16 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        disabled={units.current_page === units.last_page}
-                                        onClick={() => router.get('/units', { ...filters, page: units.current_page + 1 })}
+                                        disabled={
+                                            units.current_page ===
+                                            units.last_page
+                                        }
+                                        onClick={() =>
+                                            router.get('/units', {
+                                                ...filters,
+                                                page: units.current_page + 1,
+                                            })
+                                        }
                                         className="h-8 gap-1"
                                     >
                                         Next
@@ -920,8 +1457,12 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                         {/* Simple total when no pagination */}
                         {units.last_page === 1 && units.total > 0 && (
                             <div className="border-t px-4 py-3">
-                                <p className="text-muted-foreground text-sm">
-                                    Total <span className="font-medium">{units.total}</span> unit
+                                <p className="text-sm text-muted-foreground">
+                                    Total{' '}
+                                    <span className="font-medium">
+                                        {units.total}
+                                    </span>{' '}
+                                    unit
                                 </p>
                             </div>
                         )}
@@ -940,7 +1481,10 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                 open={sheetOpen}
                 onOpenChange={(o) => {
                     setSheetOpen(o);
-                    if (!o) setEditUnit(undefined);
+
+                    if (!o) {
+                        setEditUnit(undefined);
+                    }
                 }}
             />
 
@@ -950,7 +1494,10 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                 open={deleteOpen}
                 onOpenChange={(o) => {
                     setDeleteOpen(o);
-                    if (!o) setDeleteUnit(null);
+
+                    if (!o) {
+                        setDeleteUnit(null);
+                    }
                 }}
             />
 

@@ -43,6 +43,15 @@ export interface UserProfile {
     units?: Pick<Unit, 'id' | 'no_unit' | 'jenis_unit'>[];
 }
 
+/** Legacy driver page payload retained while driver management is consolidated into users. */
+export interface Driver {
+    id: number;
+    nik: string;
+    nama: string;
+    department: string;
+    user?: Pick<UserProfile, 'id' | 'name' | 'email'> | null;
+}
+
 export interface P2hInspectionItem {
     id: number;
     nama_item: string;
@@ -139,7 +148,10 @@ export interface PimsNotification {
         no_unit?: string;
         driver_name?: string;
         submitted_at?: string;
-        critical_items?: Array<{ nama_item: string; keterangan: string | null }>;
+        critical_items?: Array<{
+            nama_item: string;
+            keterangan: string | null;
+        }>;
         // LvP2hApprovalRequest / LvP2hApprovalResult
         entry_id?: number;
         submitter?: string;

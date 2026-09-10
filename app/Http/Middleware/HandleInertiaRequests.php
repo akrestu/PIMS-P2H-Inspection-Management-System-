@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AppSetting;
+use App\Models\P2hUserEntry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -43,8 +44,8 @@ class HandleInertiaRequests extends Middleware
         foreach (['success', 'error', 'warning', 'info'] as $type) {
             if ($request->session()->has($type)) {
                 $flash = [
-                    'type'        => $type,
-                    'message'     => $request->session()->get($type),
+                    'type' => $type,
+                    'message' => $request->session()->get($type),
                     'description' => $request->session()->get("{$type}_description"),
                 ];
                 break;
@@ -58,7 +59,7 @@ class HandleInertiaRequests extends Middleware
                 'wa_number' => config('app.contact_wa', '085156650598'),
             ],
             'options' => [
-                'shifts'                  => AppSetting::get('shifts', ['Shift I', 'Shift II']),
+                'shifts' => AppSetting::shifts(),
                 'session_lifetime_minutes' => (int) config('session.lifetime', 120),
             ],
             'auth' => [
@@ -68,8 +69,8 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'notifications' => [
-                'unread_count'      => $user ? $user->unreadNotifications()->count() : 0,
-                'recent'            => $user
+                'unread_count' => $user ? $user->unreadNotifications()->count() : 0,
+                'recent' => $user
                     ? cache()->remember(
                         "recent_notifications_user_{$user->id}",
                         now()->addSeconds(30),
@@ -80,7 +81,7 @@ class HandleInertiaRequests extends Middleware
                     ? cache()->remember(
                         "pending_approvals_user_{$user->id}",
                         now()->addSeconds(30),
-                        fn () => \App\Models\P2hUserEntry::where('approval_status', 'pending')
+                        fn () => P2hUserEntry::where('approval_status', 'pending')
                             ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
                             ->when(
                                 $user->isStaffOnly(),

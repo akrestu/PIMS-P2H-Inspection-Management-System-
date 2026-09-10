@@ -10,6 +10,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\P2hApprovalController;
 use App\Http\Controllers\P2hComplianceController;
 use App\Http\Controllers\P2hExportController;
+use App\Http\Controllers\P2hFileController;
 use App\Http\Controllers\P2hSessionController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\UnitController;
@@ -25,12 +26,12 @@ Route::get('/', function () {
 
     $user = auth()->user();
 
-    if ($user->hasRole('driver')) {
-        return redirect()->route('driver.dashboard');
-    }
-
     if ($user->hasAnyRole(['admin', 'manager'])) {
         return redirect()->route('dashboard');
+    }
+
+    if ($user->hasRole('driver')) {
+        return redirect()->route('driver.dashboard');
     }
 
     return redirect()->route('login')->withErrors([
@@ -41,9 +42,10 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard — admin & manager only; driver diarahkan ke /driver/dashboard
     Route::get('/dashboard', function () {
-        if (auth()->user()->hasRole('driver')) {
+        if (auth()->user()->hasRole('driver') && ! auth()->user()->hasAnyRole(['admin', 'manager'])) {
             return redirect()->route('driver.dashboard');
         }
+
         return app(DashboardController::class)->index(request());
     })->middleware('role:admin|manager|driver')->name('dashboard');
 
@@ -53,21 +55,30 @@ Route::middleware(['auth'])->group(function () {
         ->name('driver.dashboard');
 
     // P2H
-    Route::get('/p2h', [P2hSessionController::class, 'index'])->name('p2h.index');
-    Route::get('/p2h/form', [P2hSessionController::class, 'create'])->name('p2h.create');
-    Route::post('/p2h', [P2hSessionController::class, 'store'])->name('p2h.store');
+    Route::middleware(['role:admin|manager|driver'])->group(function () {
+        Route::get('/p2h', [P2hSessionController::class, 'index'])->name('p2h.index');
+        Route::get('/p2h/form', [P2hSessionController::class, 'create'])->name('p2h.create');
+        Route::post('/p2h', [P2hSessionController::class, 'store'])->name('p2h.store');
 
-    // AJAX — cek slot unit hari ini
-    Route::get('/api/p2h/check-slot', [P2hSessionController::class, 'checkSlot'])->name('p2h.check-slot');
+        // AJAX — cek slot unit hari ini
+        Route::get('/api/p2h/check-slot', [P2hSessionController::class, 'checkSlot'])->name('p2h.check-slot');
+    });
 
-    // P2H Approval (Staff/Sr.Staff + Admin/Manager) — must be before /{session} to avoid conflict
-    Route::get('/p2h/approvals', [P2hApprovalController::class, 'index'])->name('p2h.approvals');
-    Route::get('/p2h/entries/{entry}/detail', [P2hApprovalController::class, 'detail'])->name('p2h.entry.detail');
-    Route::patch('/p2h/entries/{entry}/approve', [P2hApprovalController::class, 'approve'])->name('p2h.approve');
-    Route::patch('/p2h/entries/{entry}/reject', [P2hApprovalController::class, 'reject'])->name('p2h.reject');
+    Route::middleware(['role:admin|manager|driver'])->group(function () {
+        // P2H Approval (Staff/Sr.Staff + Admin/Manager) — must be before /{session} to avoid conflict
+        Route::get('/p2h/approvals', [P2hApprovalController::class, 'index'])->name('p2h.approvals');
+        Route::get('/p2h/entries/{entry}/detail', [P2hApprovalController::class, 'detail'])->name('p2h.entry.detail');
+        Route::patch('/p2h/entries/{entry}/approve', [P2hApprovalController::class, 'approve'])->name('p2h.approve');
+        Route::patch('/p2h/entries/{entry}/reject', [P2hApprovalController::class, 'reject'])->name('p2h.reject');
 
-    Route::get('/p2h/{session}', [P2hSessionController::class, 'show'])->name('p2h.show');
-    Route::get('/p2h/{session}/export-pdf', [P2hExportController::class, 'exportPdf'])->name('p2h.export-pdf');
+        Route::get('/p2h/entries/{entry}/signature/{type}', [P2hFileController::class, 'signature'])
+            ->whereIn('type', ['submitter', 'approver'])
+            ->name('p2h.signature');
+        Route::get('/p2h/attachments/{attachment}', [P2hFileController::class, 'attachment'])
+            ->name('p2h.attachment');
+        Route::get('/p2h/{session}', [P2hSessionController::class, 'show'])->name('p2h.show');
+        Route::get('/p2h/{session}/export-pdf', [P2hExportController::class, 'exportPdf'])->name('p2h.export-pdf');
+    });
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -127,15 +138,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/users/import', [UserController::class, 'import'])->middleware('throttle:5,1')->name('users.import');
 
         // Export PDF & Excel
-        Route::get('/export/monitoring-pa/pdf',   [DataExportController::class, 'monitoringPaPdf'])->name('export.monitoring-pa.pdf');
+        Route::get('/export/monitoring-pa/pdf', [DataExportController::class, 'monitoringPaPdf'])->name('export.monitoring-pa.pdf');
         Route::get('/export/monitoring-pa/excel', [DataExportController::class, 'monitoringPaExcel'])->name('export.monitoring-pa.excel');
-        Route::get('/export/monitoring-p2h/pdf',  [DataExportController::class, 'monitoringP2hPdf'])->name('export.monitoring-p2h.pdf');
-        Route::get('/export/monitoring-p2h/excel',[DataExportController::class, 'monitoringP2hExcel'])->name('export.monitoring-p2h.excel');
+        Route::get('/export/monitoring-p2h/pdf', [DataExportController::class, 'monitoringP2hPdf'])->name('export.monitoring-p2h.pdf');
+        Route::get('/export/monitoring-p2h/excel', [DataExportController::class, 'monitoringP2hExcel'])->name('export.monitoring-p2h.excel');
     });
 
     // Export History P2H (semua role bisa, sesuai scope masing-masing)
-    Route::get('/export/history-p2h/pdf',   [DataExportController::class, 'historyP2hPdf'])->name('export.history-p2h.pdf');
-    Route::get('/export/history-p2h/excel', [DataExportController::class, 'historyP2hExcel'])->name('export.history-p2h.excel');
+    Route::middleware(['role:admin|manager|driver'])->group(function () {
+        Route::get('/export/history-p2h/pdf', [DataExportController::class, 'historyP2hPdf'])->name('export.history-p2h.pdf');
+        Route::get('/export/history-p2h/excel', [DataExportController::class, 'historyP2hExcel'])->name('export.history-p2h.excel');
+    });
 });
 
 require __DIR__.'/settings.php';

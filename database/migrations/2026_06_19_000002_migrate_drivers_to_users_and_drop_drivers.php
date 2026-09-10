@@ -13,7 +13,7 @@ return new class extends Migration
         $drivers = DB::table('drivers')->get();
         foreach ($drivers as $driver) {
             DB::table('users')->where('id', $driver->user_id)->update([
-                'nik'        => $driver->nik,
+                'nik' => $driver->nik,
                 'department' => $driver->department,
                 'jenis_unit' => $driver->jenis_unit ?? null,
             ]);
@@ -36,8 +36,8 @@ return new class extends Migration
 
         foreach ($driverUnitRows as $row) {
             DB::table('user_unit')->insertOrIgnore([
-                'user_id'    => $row->user_id,
-                'unit_id'    => $row->unit_id,
+                'user_id' => $row->user_id,
+                'unit_id' => $row->unit_id,
                 'created_at' => $row->created_at,
                 'updated_at' => $row->updated_at,
             ]);

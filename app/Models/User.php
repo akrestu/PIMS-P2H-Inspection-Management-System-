@@ -18,11 +18,47 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles;
+    use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
 
     public function units(): BelongsToMany
     {
         return $this->belongsToMany(Unit::class, 'user_unit');
+    }
+
+    /** Determine whether this user may submit/read live P2H data for a unit. */
+    public function canAccessP2hUnit(Unit $unit): bool
+    {
+        if ($unit->trashed() || $unit->status !== 'active') {
+            return false;
+        }
+
+        if ($unit->site_id !== null && ! $unit->site()->active()->exists()) {
+            return false;
+        }
+
+        if (! $this->hasAnyRole(['admin', 'manager', 'driver'])) {
+            return false;
+        }
+
+        if ($this->isPrivileged()) {
+            return true;
+        }
+
+        $hasAssignments = $this->units()->active()->exists();
+
+        if ($hasAssignments) {
+            return $this->units()->whereKey($unit->id)->exists();
+        }
+
+        if ($this->site_id !== null && $unit->site_id !== $this->site_id) {
+            return false;
+        }
+
+        if ($this->site_id === null && $this->jenis_unit === null) {
+            return false;
+        }
+
+        return $this->jenis_unit === null || $unit->jenis_unit === $this->jenis_unit;
     }
 
     public function site(): BelongsTo
@@ -69,7 +105,7 @@ class User extends Authenticatable
      */
     public function canViewApprovals(): bool
     {
-        return $this->isStaff() || $this->isPrivileged();
+        return $this->isPrivileged() || ($this->hasRole('driver') && $this->isStaff());
     }
 
     /**
@@ -102,8 +138,8 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'       => 'datetime',
-            'password'                => 'hashed',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

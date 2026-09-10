@@ -14,18 +14,18 @@ class RoleSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $roleDriver  = Role::firstOrCreate(['name' => 'driver']);
-        $roleAdmin   = Role::firstOrCreate(['name' => 'admin']);
+        $roleDriver = Role::firstOrCreate(['name' => 'driver']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $roleManager = Role::firstOrCreate(['name' => 'manager']);
 
         // Driver - Non Staff (butuh approval untuk P2H LV)
         $driverUser = User::updateOrCreate(
             ['nik' => '1100000000000001'],
             [
-                'name'       => 'Driver Test',
-                'email'      => 'driver@pims.test',
-                'password'   => Hash::make('password'),
-                'jabatan'    => 'Non Staff',
+                'name' => 'Driver Test',
+                'email' => 'driver@pims.test',
+                'password' => Hash::make('password'),
+                'jabatan' => 'Non Staff',
                 'department' => 'Operasional',
             ]
         );
@@ -35,10 +35,10 @@ class RoleSeeder extends Seeder
         $staffDriverUser = User::updateOrCreate(
             ['nik' => '1100000000000004'],
             [
-                'name'       => 'Staff Driver Test',
-                'email'      => 'staff.driver@pims.test',
-                'password'   => Hash::make('password'),
-                'jabatan'    => 'Staff',
+                'name' => 'Staff Driver Test',
+                'email' => 'staff.driver@pims.test',
+                'password' => Hash::make('password'),
+                'jabatan' => 'Staff',
                 'department' => 'Operasional',
             ]
         );
@@ -48,10 +48,10 @@ class RoleSeeder extends Seeder
         $adminUser = User::updateOrCreate(
             ['nik' => '1100000000000002'],
             [
-                'name'     => 'Admin Test',
-                'email'    => 'admin@pims.test',
+                'name' => 'Admin Test',
+                'email' => 'admin@pims.test',
                 'password' => Hash::make('password'),
-                'jabatan'  => null,
+                'jabatan' => null,
             ]
         );
         $adminUser->syncRoles([$roleAdmin]);
@@ -60,10 +60,10 @@ class RoleSeeder extends Seeder
         $managerUser = User::updateOrCreate(
             ['nik' => '1100000000000003'],
             [
-                'name'       => 'Manager Test',
-                'email'      => 'manager@pims.test',
-                'password'   => Hash::make('password'),
-                'jabatan'    => 'Sr.Staff',
+                'name' => 'Manager Test',
+                'email' => 'manager@pims.test',
+                'password' => Hash::make('password'),
+                'jabatan' => 'Sr.Staff',
                 'department' => 'Operasional',
             ]
         );

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSiteRequest;
 use App\Models\Site;
+use App\Models\Unit;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,15 +24,15 @@ class SiteController extends Controller
             ->withQueryString();
 
         $stats = [
-            'total'    => Site::count(),
-            'active'   => Site::where('status', 'active')->count(),
+            'total' => Site::count(),
+            'active' => Site::where('status', 'active')->count(),
             'inactive' => Site::where('status', 'inactive')->count(),
         ];
 
         return Inertia::render('sites/index', [
-            'sites'   => $sites,
+            'sites' => $sites,
             'filters' => $request->only(['search', 'status']),
-            'stats'   => $stats,
+            'stats' => $stats,
         ]);
     }
 
@@ -49,8 +51,8 @@ class SiteController extends Controller
             ->log("Menambahkan site: {$site->name}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Site berhasil ditambahkan',
+            'type' => 'success',
+            'message' => 'Site berhasil ditambahkan',
             'description' => "Site {$site->name} telah terdaftar dalam sistem.",
         ]);
 
@@ -72,8 +74,8 @@ class SiteController extends Controller
             ->log("Memperbarui site: {$site->name}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Site berhasil diperbarui',
+            'type' => 'success',
+            'message' => 'Site berhasil diperbarui',
             'description' => "Data site {$site->name} telah disimpan.",
         ]);
 
@@ -83,6 +85,14 @@ class SiteController extends Controller
     public function destroy(Site $site): RedirectResponse
     {
         $name = $site->name;
+        $unitCount = $site->units()->count();
+        $userCount = $site->users()->count();
+
+        if ($unitCount > 0 || $userCount > 0) {
+            return back()->withErrors([
+                'site' => "Site masih digunakan oleh {$unitCount} unit dan {$userCount} user. Pindahkan relasinya sebelum menghapus site.",
+            ]);
+        }
 
         activity('site')
             ->causedBy(auth()->user())
@@ -92,8 +102,8 @@ class SiteController extends Controller
         $site->delete();
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Site berhasil dihapus',
+            'type' => 'success',
+            'message' => 'Site berhasil dihapus',
             'description' => "Site {$name} telah dipindahkan ke sampah dan dapat dipulihkan kembali.",
         ]);
 
@@ -103,26 +113,36 @@ class SiteController extends Controller
     public function destroyBatch(Request $request): RedirectResponse
     {
         $request->validate([
-            'ids'   => 'required|array|min:1',
+            'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:sites,id',
         ]);
 
-        $sites   = Site::whereIn('id', $request->ids)->get();
-        $deleted = $sites->count();
+        $sites = Site::whereIn('id', $request->ids)->get();
+        $deleted = 0;
+        $skipped = 0;
 
         foreach ($sites as $site) {
+            if ($site->units()->exists() || $site->users()->exists()) {
+                $skipped++;
+
+                continue;
+            }
+
             activity('site')
                 ->causedBy(auth()->user())
                 ->withProperties(['name' => $site->name])
                 ->log("Menghapus site (batch): {$site->name}");
 
             $site->delete();
+            $deleted++;
         }
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => "{$deleted} site berhasil dihapus",
-            'description' => 'Site yang dipilih telah dipindahkan ke sampah dan dapat dipulihkan kembali.',
+            'type' => $skipped > 0 ? 'warning' : 'success',
+            'message' => "{$deleted} site berhasil dihapus",
+            'description' => $skipped > 0
+                ? "{$skipped} site dilewati karena masih digunakan unit atau user."
+                : 'Site yang dipilih telah dipindahkan ke sampah dan dapat dipulihkan kembali.',
         ]);
 
         return redirect()->route('sites.index');
@@ -137,7 +157,7 @@ class SiteController extends Controller
             ->withQueryString();
 
         return Inertia::render('sites/trashed', [
-            'sites'   => $sites,
+            'sites' => $sites,
             'filters' => $request->only(['search']),
         ]);
     }
@@ -155,8 +175,8 @@ class SiteController extends Controller
             ->log("Memulihkan site: {$name}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Site berhasil dipulihkan',
+            'type' => 'success',
+            'message' => 'Site berhasil dipulihkan',
             'description' => "Site {$name} telah dikembalikan ke daftar site aktif.",
         ]);
 
@@ -168,6 +188,15 @@ class SiteController extends Controller
         $site = Site::withTrashed()->findOrFail($id);
         $name = $site->name;
 
+        $unitCount = Unit::withTrashed()->where('site_id', $site->id)->count();
+        $userCount = User::where('site_id', $site->id)->count();
+
+        if ($unitCount > 0 || $userCount > 0) {
+            return back()->withErrors([
+                'site' => "Site masih digunakan oleh {$unitCount} unit dan {$userCount} user. Pindahkan relasinya sebelum menghapus permanen.",
+            ]);
+        }
+
         $site->forceDelete();
 
         activity('site')
@@ -176,8 +205,8 @@ class SiteController extends Controller
             ->log("Menghapus permanen site: {$name}");
 
         Inertia::flash('toast', [
-            'type'        => 'success',
-            'message'     => 'Site dihapus permanen',
+            'type' => 'success',
+            'message' => 'Site dihapus permanen',
             'description' => "Site {$name} telah dihapus permanen dari sistem.",
         ]);
 

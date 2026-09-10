@@ -15,8 +15,8 @@ class P2hServiceInfo extends Model
     ];
 
     protected $casts = [
-        'servis_mingguan'      => 'boolean',
-        'servis_berkala'       => 'boolean',
+        'servis_mingguan' => 'boolean',
+        'servis_berkala' => 'boolean',
         'unschedule_breakdown' => 'boolean',
     ];
 

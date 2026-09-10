@@ -1,17 +1,24 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    ClipboardPlus,
+    ExternalLink,
+    ShieldAlert,
+    X,
+} from 'lucide-react';
+import { useState } from 'react';
 import { ChartAreaInteractive } from '@/components/dashboard/chart-area-interactive';
-import { DataTable, RecentP2h } from '@/components/dashboard/data-table';
+import type { RecentP2h } from '@/components/dashboard/data-table';
+import { DataTable } from '@/components/dashboard/data-table';
 import { FleetStatusChart } from '@/components/dashboard/fleet-status-chart';
 import { PAWeeklyTrend } from '@/components/dashboard/pa-weekly-trend';
 import { SectionCards } from '@/components/dashboard/section-cards';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { dashboard } from '@/routes';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { AlertTriangle, ClipboardPlus, ExternalLink, ShieldAlert, X } from 'lucide-react';
-import { useState } from 'react';
 
 interface Metrics {
     total_unit_aktif: number;
@@ -40,11 +47,44 @@ interface Props {
 
 function getGreeting(): { text: string; emoji: string; sub: string } {
     const hour = new Date().getHours();
-    if (hour < 5)  return { text: 'Selamat Malam',  emoji: '🌙', sub: 'Masih terjaga? Pastikan data P2H sudah lengkap.' };
-    if (hour < 12) return { text: 'Selamat Pagi',   emoji: '☀️', sub: 'Mulai hari dengan pengecekan P2H yang teliti.' };
-    if (hour < 15) return { text: 'Selamat Siang',  emoji: '🌤️', sub: 'Pantau status armada siang ini.' };
-    if (hour < 18) return { text: 'Selamat Sore',   emoji: '🌅', sub: 'Cek kembali laporan P2H sebelum shift berakhir.' };
-    return          { text: 'Selamat Malam',  emoji: '🌙', sub: 'Pastikan semua laporan P2H hari ini sudah masuk.' };
+
+    if (hour < 5) {
+        return {
+            text: 'Selamat Malam',
+            emoji: '🌙',
+            sub: 'Masih terjaga? Pastikan data P2H sudah lengkap.',
+        };
+    }
+
+    if (hour < 12) {
+        return {
+            text: 'Selamat Pagi',
+            emoji: '☀️',
+            sub: 'Mulai hari dengan pengecekan P2H yang teliti.',
+        };
+    }
+
+    if (hour < 15) {
+        return {
+            text: 'Selamat Siang',
+            emoji: '🌤️',
+            sub: 'Pantau status armada siang ini.',
+        };
+    }
+
+    if (hour < 18) {
+        return {
+            text: 'Selamat Sore',
+            emoji: '🌅',
+            sub: 'Cek kembali laporan P2H sebelum shift berakhir.',
+        };
+    }
+
+    return {
+        text: 'Selamat Malam',
+        emoji: '🌙',
+        sub: 'Pastikan semua laporan P2H hari ini sudah masuk.',
+    };
 }
 
 function getFirstName(fullName: string): string {
@@ -62,12 +102,20 @@ function formatDateId() {
 
 const CRITICAL_ALERT_KEY = `critical_alert_dismissed_${new Date().toISOString().slice(0, 10)}`;
 
-export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, recentP2h }: Props) {
-    const [alertDismissed, setAlertDismissed] = useState(() => localStorage.getItem(CRITICAL_ALERT_KEY) === '1');
+export default function DashboardIndex({
+    metrics,
+    chartData,
+    paWeeklyTrend,
+    recentP2h,
+}: Props) {
+    const [alertDismissed, setAlertDismissed] = useState(
+        () => localStorage.getItem(CRITICAL_ALERT_KEY) === '1',
+    );
     const hasCritical = metrics.critical_tidak_layak > 0;
     const hasTL = metrics.unit_tidak_layak_hari_ini > 0;
 
-    const { auth } = usePage<{ auth: { user: { name: string } | null } }>().props;
+    const { auth } = usePage<{ auth: { user: { name: string } | null } }>()
+        .props;
     const greeting = getGreeting();
     const firstName = auth?.user ? getFirstName(auth.user.name) : null;
 
@@ -75,30 +123,36 @@ export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, rece
         <>
             <Head title="Dashboard" />
             <div className="@container/main flex flex-1 flex-col gap-0">
-
                 {/* ── Header / Greeting ── */}
                 <div className="flex flex-col gap-4 border-b px-4 py-5 lg:px-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-1">
-                            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                                 {formatDateId()}
                             </p>
-                            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
                                 <span>{greeting.emoji}</span>
                                 <span>
                                     {greeting.text}
                                     {firstName && (
-                                        <span className="text-primary">, {firstName}</span>
-                                    )}!
+                                        <span className="text-primary">
+                                            , {firstName}
+                                        </span>
+                                    )}
+                                    !
                                 </span>
                             </h1>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-sm text-muted-foreground">
                                 {greeting.sub}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
                             <Link href="/p2h">
-                                <Button variant="outline" size="sm" className="gap-1.5">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-1.5"
+                                >
                                     <ExternalLink className="h-3.5 w-3.5" />
                                     Semua P2H
                                 </Button>
@@ -123,13 +177,19 @@ export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, rece
                             {metrics.total_p2h_hari_ini} P2H hari ini
                         </Badge>
                         {hasTL && (
-                            <Badge variant="secondary" className="gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+                            <Badge
+                                variant="secondary"
+                                className="gap-1.5 text-xs text-orange-600 dark:text-orange-400"
+                            >
                                 <AlertTriangle className="h-3 w-3" />
                                 {metrics.unit_tidak_layak_hari_ini} unit ada TL
                             </Badge>
                         )}
                         {hasCritical && (
-                            <Badge variant="destructive" className="gap-1.5 text-xs">
+                            <Badge
+                                variant="destructive"
+                                className="gap-1.5 text-xs"
+                            >
                                 <ShieldAlert className="h-3 w-3" />
                                 {metrics.critical_tidak_layak} item critical TL
                             </Badge>
@@ -141,21 +201,36 @@ export default function DashboardIndex({ metrics, chartData, paWeeklyTrend, rece
                     {/* ── Critical Alert Banner ── */}
                     {hasCritical && !alertDismissed && (
                         <div className="px-4 lg:px-6">
-                            <Alert variant="destructive" className="relative border-red-500/50 bg-red-50 dark:bg-red-950/30">
+                            <Alert
+                                variant="destructive"
+                                className="relative border-red-500/50 bg-red-50 dark:bg-red-950/30"
+                            >
                                 <ShieldAlert className="h-4 w-4" />
                                 <AlertTitle className="font-semibold">
-                                    Peringatan: {metrics.critical_tidak_layak} Item Critical Tidak Layak!
+                                    Peringatan: {metrics.critical_tidak_layak}{' '}
+                                    Item Critical Tidak Layak!
                                 </AlertTitle>
                                 <AlertDescription className="text-sm">
-                                    Terdapat item dengan kode bahaya <strong>AA (Stop)</strong> yang berstatus Tidak Layak hari ini.
-                                    Pastikan unit tidak dioperasikan sebelum diperbaiki.
-                                    <Link href="/p2h" className="ml-2 underline underline-offset-2 font-medium">
+                                    Terdapat item dengan kode bahaya{' '}
+                                    <strong>AA (Stop)</strong> yang berstatus
+                                    Tidak Layak hari ini. Pastikan unit tidak
+                                    dioperasikan sebelum diperbaiki.
+                                    <Link
+                                        href="/p2h"
+                                        className="ml-2 font-medium underline underline-offset-2"
+                                    >
                                         Lihat detail →
                                     </Link>
                                 </AlertDescription>
                                 <button
-                                    onClick={() => { localStorage.setItem(CRITICAL_ALERT_KEY, '1'); setAlertDismissed(true); }}
-                                    className="text-destructive/70 hover:text-destructive absolute top-3 right-3 transition-colors"
+                                    onClick={() => {
+                                        localStorage.setItem(
+                                            CRITICAL_ALERT_KEY,
+                                            '1',
+                                        );
+                                        setAlertDismissed(true);
+                                    }}
+                                    className="absolute top-3 right-3 text-destructive/70 transition-colors hover:text-destructive"
                                     aria-label="Tutup peringatan"
                                 >
                                     <X className="h-4 w-4" />

@@ -9,7 +9,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 
 // Fortify register route — tidak ada di web.php, hardcode URL
-const store = { form: () => ({ method: 'post' as const, action: '/register' }) };
+const store = {
+    form: () => ({ method: 'post' as const, action: '/register' }),
+};
 
 export default function Register() {
     return (

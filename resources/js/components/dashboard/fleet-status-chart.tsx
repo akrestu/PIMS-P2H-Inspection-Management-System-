@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 
 interface Metrics {
     total_unit_aktif: number;
@@ -11,14 +17,22 @@ interface Metrics {
 
 interface CustomTooltipProps {
     active?: boolean;
-    payload?: Array<{ name: string; value: number; payload: { color: string } }>;
+    payload?: Array<{
+        name: string;
+        value: number;
+        payload: { color: string };
+    }>;
 }
 
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
-    if (!active || !payload?.length) return null;
+    if (!active || !payload?.length) {
+        return null;
+    }
+
     const item = payload[0];
+
     return (
-        <div className="bg-card border-border rounded-lg border px-3 py-2 shadow-lg">
+        <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
             <div className="flex items-center gap-2">
                 <span
                     className="h-2.5 w-2.5 rounded-full"
@@ -26,8 +40,11 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
                 />
                 <span className="text-xs font-medium">{item.name}</span>
             </div>
-            <p className="text-muted-foreground text-xs">
-                <span className="text-foreground font-semibold">{item.value}</span> unit
+            <p className="text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                    {item.value}
+                </span>{' '}
+                unit
             </p>
         </div>
     );
@@ -45,18 +62,21 @@ export function FleetStatusChart({ metrics }: { metrics: Metrics }) {
         { name: 'Belum P2H', value: unitBelumP2h, color: '#94a3b8' },
     ].filter((d) => d.value > 0);
 
-    const coveragePercent = metrics.total_unit_aktif > 0
-        ? Math.round((unitP2h / metrics.total_unit_aktif) * 100)
-        : 0;
+    const coveragePercent =
+        metrics.total_unit_aktif > 0
+            ? Math.round((unitP2h / metrics.total_unit_aktif) * 100)
+            : 0;
 
     return (
         <Card className="border-border/60">
             <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                    <Activity className="text-emerald-500 h-4 w-4" />
+                    <Activity className="h-4 w-4 text-emerald-500" />
                     Status Armada Hari Ini
                 </CardTitle>
-                <CardDescription>Distribusi status P2H seluruh unit aktif</CardDescription>
+                <CardDescription>
+                    Distribusi status P2H seluruh unit aktif
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-4">
@@ -65,7 +85,17 @@ export function FleetStatusChart({ metrics }: { metrics: Metrics }) {
                         <ResponsiveContainer width={120} height={120}>
                             <PieChart>
                                 <Pie
-                                    data={chartData.length > 0 ? chartData : [{ name: 'Tidak ada data', value: 1, color: '#e2e8f0' }]}
+                                    data={
+                                        chartData.length > 0
+                                            ? chartData
+                                            : [
+                                                  {
+                                                      name: 'Tidak ada data',
+                                                      value: 1,
+                                                      color: '#e2e8f0',
+                                                  },
+                                              ]
+                                    }
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={36}
@@ -76,7 +106,10 @@ export function FleetStatusChart({ metrics }: { metrics: Metrics }) {
                                     endAngle={-270}
                                     strokeWidth={0}
                                 >
-                                    {(chartData.length > 0 ? chartData : [{ color: '#e2e8f0' }]).map((entry, index) => (
+                                    {(chartData.length > 0
+                                        ? chartData
+                                        : [{ color: '#e2e8f0' }]
+                                    ).map((entry, index) => (
                                         <Cell key={index} fill={entry.color} />
                                     ))}
                                 </Pie>
@@ -85,16 +118,35 @@ export function FleetStatusChart({ metrics }: { metrics: Metrics }) {
                         </ResponsiveContainer>
                         {/* Center label */}
                         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-lg font-bold leading-none">{coveragePercent}%</span>
-                            <span className="text-muted-foreground text-[10px]">Coverage</span>
+                            <span className="text-lg leading-none font-bold">
+                                {coveragePercent}%
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                                Coverage
+                            </span>
                         </div>
                     </div>
 
                     {/* Legend */}
                     <div className="flex flex-1 flex-col gap-2.5">
-                        <LegendItem color="#22c55e" label="Layak" count={unitLayak} total={metrics.total_unit_aktif} />
-                        <LegendItem color="#f97316" label="Ada TL" count={unitTl} total={metrics.total_unit_aktif} />
-                        <LegendItem color="#94a3b8" label="Belum P2H" count={unitBelumP2h} total={metrics.total_unit_aktif} />
+                        <LegendItem
+                            color="#22c55e"
+                            label="Layak"
+                            count={unitLayak}
+                            total={metrics.total_unit_aktif}
+                        />
+                        <LegendItem
+                            color="#f97316"
+                            label="Ada TL"
+                            count={unitTl}
+                            total={metrics.total_unit_aktif}
+                        />
+                        <LegendItem
+                            color="#94a3b8"
+                            label="Belum P2H"
+                            count={unitBelumP2h}
+                            total={metrics.total_unit_aktif}
+                        />
                     </div>
                 </div>
             </CardContent>
@@ -114,17 +166,25 @@ function LegendItem({
     total: number;
 }) {
     const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
     return (
         <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-muted-foreground min-w-[64px] text-xs">{label}</span>
-            <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
+            <span
+                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+            />
+            <span className="min-w-[64px] text-xs text-muted-foreground">
+                {label}
+            </span>
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${pct}%`, backgroundColor: color }}
                 />
             </div>
-            <span className="text-xs font-semibold tabular-nums w-6 text-right">{count}</span>
+            <span className="w-6 text-right text-xs font-semibold tabular-nums">
+                {count}
+            </span>
         </div>
     );
 }
