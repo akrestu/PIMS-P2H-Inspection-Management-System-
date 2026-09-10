@@ -138,6 +138,35 @@ test('historical checklist uses the submitted snapshot after master data changes
         ->and($snapshot->kode_bahaya)->toBe('AA');
 });
 
+test('snapshot migration is safe when columns already exist or data is partially filled', function () {
+    $user = User::factory()->create();
+    $unit = Unit::create(['no_unit' => 'PARTIAL-1', 'jenis_unit' => 'Bus', 'status' => 'active']);
+    $session = P2hSession::create([
+        'unit_id' => $unit->id, 'tanggal' => today(), 'status' => 'open', 'created_by' => $user->id,
+    ]);
+    $entry = P2hUserEntry::create([
+        'p2h_session_id' => $session->id, 'user_id' => $user->id, 'user_slot' => 1, 'shift' => 'Shift I',
+    ]);
+    $item = P2hInspectionItem::create([
+        'nama_item' => 'Master Saat Ini', 'section' => 'B', 'kode_bahaya' => 'A', 'urutan' => 9, 'is_active' => true,
+    ]);
+    $answer = P2hChecklistAnswer::create([
+        'p2h_user_entry_id' => $entry->id,
+        'inspection_item_id' => $item->id,
+        'kondisi' => 'Layak',
+        'item_nama' => 'Snapshot Yang Harus Dipertahankan',
+    ]);
+
+    $migration = require database_path('migrations/2026_09_10_000002_snapshot_p2h_inspection_items.php');
+    $migration->up();
+
+    $answer->refresh();
+    expect($answer->item_nama)->toBe('Snapshot Yang Harus Dipertahankan')
+        ->and($answer->item_section)->toBe('B')
+        ->and($answer->item_kode_bahaya)->toBe('A')
+        ->and($answer->item_urutan)->toBe(9);
+});
+
 test('next slot remains unique after an entry is soft deleted', function () {
     $user = User::factory()->create(['jenis_unit' => 'Bus']);
     $user->assignRole('driver');
