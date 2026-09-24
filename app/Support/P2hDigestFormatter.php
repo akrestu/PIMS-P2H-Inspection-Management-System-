@@ -33,50 +33,24 @@ class P2hDigestFormatter
         ];
 
         if ($digest['units'] === []) {
-            $lines[] = '_Belum ada unit yang melakukan P2H._';
+            $lines[] = '_Tidak ada unit yang melakukan P2H pada periode ini._';
         }
 
-        foreach ($digest['units'] as $i => $unit) {
-            $icon = match ($unit['kondisi']) {
-                'tidak_layak' => '❌',
-                'temuan' => '⚠️',
-                default => '✅',
-            };
-            $lambung = $unit['no_lambung'] ? " ({$unit['no_lambung']})" : '';
-            $drivers = collect($unit['entries'])
-                ->map(fn ($e) => trim(($e['driver'] ?? '-').($e['shift'] ? " - {$e['shift']}" : '')))
-                ->unique()
-                ->implode(', ');
-
-            $lines[] = '';
-            $lines[] = ($i + 1).". {$icon} *{$unit['no_unit']}*{$lambung}";
-            $lines[] = "   {$unit['jenis_unit']} | {$drivers}";
-            $lines = [...$lines, ...self::decisionLines($unit['keputusan'] ?? null)];
-
-            if ($unit['findings'] === []) {
-                $lines[] = '   Tidak ada temuan.';
-            }
-
-            foreach ($unit['findings'] as $finding) {
-                $lines = [...$lines, ...self::findingLines($finding)];
-            }
-        }
-
-        if ($digest['carry_over'] !== []) {
-            $lines[] = '';
-            $lines[] = '*B. PROGRESS TEMUAN SEBELUMNYA*';
-
-            foreach ($digest['carry_over'] as $finding) {
-                $tanggal = Carbon::parse($finding['tanggal_temuan'])->format('d/m/Y');
+        // Rentang lebih dari 1 hari → dikelompokkan per tanggal P2H
+        foreach (collect($digest['units'])->groupBy('tanggal') as $tanggal => $units) {
+            if ($digest['multi_hari'] ?? false) {
                 $lines[] = '';
-                $lines[] = "• *{$finding['no_unit']}* - sejak {$tanggal} ({$finding['umur_hari']} hari)";
-                $lines = [...$lines, ...self::findingLines($finding)];
+                $lines[] = '🗓️ _'.Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y').'_';
+            }
+
+            foreach ($units->values() as $i => $unit) {
+                $lines = [...$lines, '', ...self::unitLines($i + 1, $unit)];
             }
         }
 
         if (($digest['servis'] ?? []) !== []) {
             $lines[] = '';
-            $lines[] = '*C. JADWAL SERVIS BERKALA*';
+            $lines[] = '*B. JADWAL SERVIS BERKALA*';
             $lines[] = '';
 
             foreach ($digest['servis'] as $unit) {
@@ -89,6 +63,36 @@ class P2hDigestFormatter
         $lines[] = '_PIMS - P2H Management System_';
 
         return implode("\n", $lines);
+    }
+
+    private static function unitLines(int $no, array $unit): array
+    {
+        $icon = match ($unit['kondisi']) {
+            'tidak_layak' => '❌',
+            'temuan' => '⚠️',
+            default => '✅',
+        };
+        $lambung = $unit['no_lambung'] ? " ({$unit['no_lambung']})" : '';
+        $drivers = collect($unit['entries'])
+            ->map(fn ($e) => trim(($e['driver'] ?? '-').($e['shift'] ? " - {$e['shift']}" : '')))
+            ->unique()
+            ->implode(', ');
+
+        $lines = [
+            "{$no}. {$icon} *{$unit['no_unit']}*{$lambung}",
+            "   {$unit['jenis_unit']} | {$drivers}",
+            ...self::decisionLines($unit['keputusan'] ?? null),
+        ];
+
+        if ($unit['findings'] === []) {
+            $lines[] = '   Tidak ada temuan.';
+        }
+
+        foreach ($unit['findings'] as $finding) {
+            $lines = [...$lines, ...self::findingLines($finding)];
+        }
+
+        return $lines;
     }
 
     /** Keputusan final unit (BD / Layak Pakai), pembanding rekomendasi sistem, dan alasannya. */

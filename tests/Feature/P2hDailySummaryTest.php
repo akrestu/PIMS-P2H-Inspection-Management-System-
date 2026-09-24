@@ -78,39 +78,62 @@ test('submitting P2H with a Tidak Layak item records a finding with PIC approver
         ->status->toBe(FindingStatus::Open);
 });
 
-test('digest lists inspected units, findings and carry-over, scoped by site', function () {
+test('digest lists only P2H and findings within the selected date, scoped by site', function () {
     $siteA = Site::create(['name' => 'Site A', 'status' => 'active']);
     $siteB = Site::create(['name' => 'Site B', 'status' => 'active']);
     $pic = User::factory()->create(['name' => 'Andi PIC']);
     $inspected = Unit::create(['no_unit' => 'LV-01', 'jenis_unit' => 'Light Vehicle', 'status' => 'active', 'site_id' => $siteA->id]);
-    Unit::create(['no_unit' => 'LV-02', 'jenis_unit' => 'Light Vehicle', 'status' => 'active', 'site_id' => $siteA->id]);
+    $oldUnit = Unit::create(['no_unit' => 'LV-02', 'jenis_unit' => 'Light Vehicle', 'status' => 'active', 'site_id' => $siteA->id]);
     $otherSite = Unit::create(['no_unit' => 'LV-99', 'jenis_unit' => 'Light Vehicle', 'status' => 'active', 'site_id' => $siteB->id]);
 
     p2hWithFinding($inspected, $pic)->update(['tindakan_perbaikan' => 'Ganti kampas rem']);
-    p2hWithFinding($inspected, $pic, today()->subDays(3));
+    p2hWithFinding($oldUnit, $pic, today()->subDays(3)); // temuan lama yang masih open
     p2hWithFinding($otherSite, $pic);
 
-    $digest = DailyP2hDigest::build(today(), $siteA->id);
+    $digest = DailyP2hDigest::build(today(), today(), $siteA->id);
 
     expect($digest['stats']['sudah_p2h'])->toBe(1)
+        ->and($digest['stats']['temuan'])->toBe(1)
         ->and($digest['units'][0]['no_unit'])->toBe('LV-01')
         ->and($digest['units'][0]['findings'][0]['pic'])->toBe('Andi PIC')
-        ->and($digest['carry_over'])->toHaveCount(1)
-        ->and($digest['carry_over'][0]['umur_hari'])->toBe(3);
+        ->and($digest)->not->toHaveKey('carry_over');
 
     $text = P2hDigestFormatter::toWhatsApp($digest);
 
-    expect($text)->toContain('DAILY REPORT P2H', 'LV-01', 'Rem', 'Ganti kampas rem', 'Andi PIC', '🔴 Open', 'PROGRESS TEMUAN SEBELUMNYA')
+    expect($text)->toContain('DAILY REPORT P2H', 'LV-01', 'Rem', 'Ganti kampas rem', 'Andi PIC', '🔴 Open')
         ->not->toContain('LV-99')
         ->not->toContain('LV-02')
-        ->not->toContain('Ringkasan');
+        ->not->toContain('SEBELUMNYA');
+});
+
+test('digest over a date range includes every P2H in the range grouped by date', function () {
+    $pic = User::factory()->create(['name' => 'Andi PIC']);
+    $unit = Unit::create(['no_unit' => 'LV-01', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']);
+    p2hWithFinding($unit, $pic, today()->subDays(2));
+    p2hWithFinding($unit, $pic, today()->subDays(10)); // di luar rentang
+
+    $digest = DailyP2hDigest::build(today()->subDays(3), today());
+
+    expect($digest['multi_hari'])->toBeTrue()
+        ->and($digest['stats']['sudah_p2h'])->toBe(1)
+        ->and($digest['units'][0]['tanggal'])->toBe(today()->subDays(2)->toDateString());
+
+    expect(P2hDigestFormatter::toWhatsApp($digest))
+        ->toContain('🗓️ _'.today()->subDays(2)->locale('id')->translatedFormat('l, d F Y').'_')
+        ->not->toContain(today()->subDays(10)->locale('id')->translatedFormat('d F Y'));
+});
+
+test('daily report rejects ranges longer than 31 days', function () {
+    $this->actingAs(summaryAdmin())
+        ->get(route('p2h.daily-summary', ['start' => today()->subDays(40)->toDateString(), 'end' => today()->toDateString()]))
+        ->assertSessionHasErrors('end');
 });
 
 test('digest can be filtered by unit type', function () {
     p2hWithFinding(Unit::create(['no_unit' => 'LV-11', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']));
     p2hWithFinding(Unit::create(['no_unit' => 'BUS-11', 'jenis_unit' => 'Bus', 'status' => 'active']));
 
-    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today(), null, 'Bus'));
+    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today(), today(), null, 'Bus'));
 
     expect($text)->toContain('BUS-11', '🚙 Bus')->not->toContain('LV-11');
 });
@@ -122,7 +145,8 @@ test('admin can view the daily summary page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('p2h/daily-summary')
             ->has('template')
-            ->where('filters.date', today()->toDateString()));
+            ->where('filters.start', today()->toDateString())
+            ->where('filters.end', today()->toDateString()));
 });
 
 test('driver cannot access the daily summary or update findings', function () {
@@ -139,7 +163,7 @@ test('AI summary returns the agent text when configured', function () {
     P2hDailySummaryAgent::fake(['*LAPORAN AI*']);
 
     $this->actingAs(summaryAdmin())
-        ->postJson(route('p2h.daily-summary.ai'), ['date' => today()->toDateString()])
+        ->postJson(route('p2h.daily-summary.ai'), ['start' => today()->toDateString(), 'end' => today()->toDateString()])
         ->assertOk()
         ->assertJson(['text' => '*LAPORAN AI*', 'fallback' => false]);
 

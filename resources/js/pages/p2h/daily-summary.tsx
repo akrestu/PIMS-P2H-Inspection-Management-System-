@@ -1,4 +1,4 @@
-import { Head, Link, router, useHttp } from '@inertiajs/react';
+import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     CheckCircle2,
@@ -13,6 +13,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { generateAi } from '@/actions/App/Http/Controllers/P2hDailySummaryController';
+import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +47,7 @@ interface Finding {
 }
 
 interface UnitSummary {
+    tanggal: string;
     no_unit: string;
     jenis_unit: string;
     no_lambung: string | null;
@@ -56,21 +58,23 @@ interface UnitSummary {
 }
 
 interface Digest {
-    tanggal: string;
+    tanggal_label: string;
+    multi_hari: boolean;
     site: string | null;
     stats: {
         sudah_p2h: number;
         unit_temuan: number;
         unit_tidak_layak: number;
-        temuan_hari_ini: number;
-        temuan_carry_over: number;
+        temuan: number;
+        temuan_belum_selesai: number;
+        temuan_overdue: number;
     };
     units: UnitSummary[];
-    carry_over: (Finding & { no_unit: string; umur_hari: number })[];
 }
 
 interface Filters {
-    date: string;
+    start: string;
+    end: string;
     site_id: number | null;
     jenis_unit: string | null;
 }
@@ -112,6 +116,8 @@ export default function DailySummary({
     const [, copy] = useClipboard();
     const { share } = useWhatsAppShare();
     const http = useHttp<Filters, AiResponse>({ ...filters });
+    const { errors } = usePage<{ errors: Record<string, string> }>().props;
+    const today = new Date().toLocaleDateString('en-CA');
 
     // preserveState: false → halaman di-mount ulang, teks kembali ke template terbaru
     const applyFilter = (next: Partial<Filters>) => {
@@ -174,18 +180,41 @@ export default function DailySummary({
                     </div>
                     <div className="flex flex-wrap items-end gap-3">
                         <div className="space-y-1.5">
-                            <Label htmlFor="date">Tanggal</Label>
+                            <Label htmlFor="start">Dari tanggal</Label>
                             <Input
-                                id="date"
+                                id="start"
                                 type="date"
                                 className="h-9 w-40"
-                                value={filters.date}
-                                max={new Date().toLocaleDateString('en-CA')}
+                                value={filters.start}
+                                max={today}
                                 onChange={(e) =>
                                     e.target.value &&
-                                    applyFilter({ date: e.target.value })
+                                    applyFilter({
+                                        start: e.target.value,
+                                        // Tanggal akhir tidak boleh sebelum tanggal awal
+                                        end:
+                                            e.target.value > filters.end
+                                                ? e.target.value
+                                                : filters.end,
+                                    })
                                 }
                             />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="end">Sampai tanggal</Label>
+                            <Input
+                                id="end"
+                                type="date"
+                                className="h-9 w-40"
+                                value={filters.end}
+                                min={filters.start}
+                                max={today}
+                                onChange={(e) =>
+                                    e.target.value &&
+                                    applyFilter({ end: e.target.value })
+                                }
+                            />
+                            <InputError message={errors.end} />
                         </div>
                         <div className="space-y-1.5">
                             <Label>Jenis unit</Label>
@@ -257,8 +286,8 @@ export default function DailySummary({
                     />
                     <StatCard
                         icon={AlertTriangle}
-                        label="Temuan hari ini"
-                        value={stats.temuan_hari_ini}
+                        label="Temuan"
+                        value={stats.temuan}
                         hint={`${stats.unit_temuan + stats.unit_tidak_layak} unit`}
                         tone="text-amber-600"
                     />
@@ -270,8 +299,13 @@ export default function DailySummary({
                     />
                     <StatCard
                         icon={ClockAlert}
-                        label="Temuan lama belum selesai"
-                        value={stats.temuan_carry_over}
+                        label="Temuan belum selesai"
+                        value={stats.temuan_belum_selesai}
+                        hint={
+                            stats.temuan_overdue
+                                ? `${stats.temuan_overdue} lewat target`
+                                : undefined
+                        }
                         tone="text-red-600"
                     />
                 </div>
@@ -366,30 +400,25 @@ export default function DailySummary({
                         <CardContent className="space-y-3">
                             {digest.units.every(
                                 (u) => u.findings.length === 0,
-                            ) && digest.carry_over.length === 0 ? (
+                            ) ? (
                                 <p className="py-8 text-center text-sm text-muted-foreground">
-                                    Tidak ada temuan untuk tanggal ini.
+                                    Tidak ada temuan pada periode ini.
                                 </p>
                             ) : (
-                                <>
-                                    {digest.units.flatMap((u) =>
-                                        u.findings.map((f) => (
-                                            <FindingRow
-                                                key={f.id}
-                                                unit={u.no_unit}
-                                                finding={f}
-                                            />
-                                        )),
-                                    )}
-                                    {digest.carry_over.map((f) => (
+                                digest.units.flatMap((u) =>
+                                    u.findings.map((f) => (
                                         <FindingRow
                                             key={f.id}
-                                            unit={f.no_unit}
+                                            unit={u.no_unit}
+                                            tanggal={
+                                                digest.multi_hari
+                                                    ? u.tanggal
+                                                    : undefined
+                                            }
                                             finding={f}
-                                            age={f.umur_hari}
                                         />
-                                    ))}
-                                </>
+                                    )),
+                                )
                             )}
                         </CardContent>
                     </Card>
@@ -433,16 +462,25 @@ function StatCard({
 function FindingRow({
     unit,
     finding,
-    age,
+    tanggal,
 }: {
     unit: string;
     finding: Finding;
-    age?: number;
+    tanggal?: string;
 }) {
     return (
         <div className="rounded-lg border p-3 text-sm">
             <div className="flex items-start justify-between gap-2">
                 <p className="font-medium">
+                    {tanggal && (
+                        <span className="mr-1 text-xs font-normal text-muted-foreground">
+                            {new Date(tanggal).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                            })}{' '}
+                            ·
+                        </span>
+                    )}
                     {unit} · {finding.item}
                     {finding.kode_bahaya === 'AA' && (
                         <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
@@ -465,7 +503,6 @@ function FindingRow({
             <p className="mt-1 text-xs text-muted-foreground">
                 Tindakan: {finding.tindakan || 'Belum ditentukan'} · PIC:{' '}
                 {finding.pic || 'Belum ditunjuk'}
-                {age !== undefined && ` · ${age} hari`}
                 {finding.overdue && ` · ⏰ lewat target`}
                 {finding.berulang && ` · 🔁 berulang ${finding.berulang}x`}
             </p>

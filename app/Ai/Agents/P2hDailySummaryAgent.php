@@ -45,15 +45,11 @@ class P2hDailySummaryAgent implements Agent
            🛠️ Tindakan : {tindakan atau "Belum ditentukan"}
            📌 Progress : {status} (target DD/MM/YYYY jika ada)
         (ulangi 4 baris temuan untuk setiap temuan; jika unit tanpa temuan tulis "   Tidak ada temuan.")
+        (jika multi_hari = true: kelompokkan unit per tanggal P2H dengan baris sub-judul "🗓️ _{hari, DD Bulan YYYY}_" sebelum unit-unit tanggal itu, dan nomor urut unit dimulai dari 1 lagi di tiap tanggal)
+        (hanya tampilkan unit dan temuan yang ada di data — jangan menambah temuan dari luar rentang tanggal)
 
-        (bagian B hanya jika carry_over tidak kosong)
-        *B. PROGRESS TEMUAN SEBELUMNYA*
-
-        • *{no_unit}* - sejak DD/MM/YYYY ({umur_hari} hari)
-           (4 baris temuan seperti di atas)
-
-        (bagian C hanya jika servis tidak kosong)
-        *C. JADWAL SERVIS BERKALA*
+        (bagian B hanya jika servis tidak kosong)
+        *B. JADWAL SERVIS BERKALA*
 
         • 🔴 *{no_unit}* - TERLAMBAT servis {|sisa_km|} km (jadwal {km_servis_berikutnya}, saat ini {km_saat_ini})   ← status overdue
         • 🟡 *{no_unit}* - servis dalam {sisa_km} km (±{estimasi_hari} hari) (jadwal {km_servis_berikutnya})   ← status due_soon

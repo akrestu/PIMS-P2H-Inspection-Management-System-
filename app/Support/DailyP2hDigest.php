@@ -11,23 +11,27 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
- * Menyusun data P2H harian yang terstruktur dan deterministik.
+ * Menyusun data P2H pada rentang tanggal yang dipilih, terstruktur dan deterministik.
+ * Hanya P2H (dan temuannya) yang masuk dalam rentang tersebut yang ditampilkan.
  * Data ini sumber tunggal untuk template WhatsApp maupun narasi AI,
  * sehingga angka dan nama unit tidak pernah dikarang oleh AI.
  */
 class DailyP2hDigest
 {
-    public static function build(CarbonInterface $date, ?int $siteId = null, ?string $jenisUnit = null): array
+    public static function build(CarbonInterface $start, ?CarbonInterface $end = null, ?int $siteId = null, ?string $jenisUnit = null): array
     {
+        $end ??= $start;
+
         // Pastikan tidak ada item Tidak Layak yang terlewat menjadi temuan
-        P2hFinding::syncMissing();
+        P2hFinding::syncMissing($start);
 
         $unitScope = fn (Builder $q) => $q
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->when($jenisUnit, fn ($q) => $q->where('jenis_unit', $jenisUnit));
 
         $sessions = P2hSession::query()
-            ->whereDate('tanggal', $date)
+            ->whereDate('tanggal', '>=', $start)
+            ->whereDate('tanggal', '<=', $end)
             ->whereHas('unit', $unitScope)
             ->whereHas('userEntries')
             ->with([
@@ -38,12 +42,12 @@ class DailyP2hDigest
                 'userEntries.answers:id,p2h_user_entry_id,kondisi,item_kode_bahaya',
             ])
             ->get()
-            ->sortBy(fn (P2hSession $s) => $s->unit?->no_unit)
+            ->sortBy(fn (P2hSession $s) => [$s->tanggal->toDateString(), $s->unit?->no_unit])
             ->values();
 
-        $recurrence = P2hFinding::recurrenceCounts($date);
+        $recurrence = P2hFinding::recurrenceCounts($end);
 
-        $units = $sessions->map(function (P2hSession $session) use ($recurrence, $date) {
+        $units = $sessions->map(function (P2hSession $session) use ($recurrence, $end) {
             $entries = $session->userEntries;
             $findings = $entries->flatMap->findings;
             // Keputusan final unit = keputusan pada pengisian P2H terakhir hari itu
@@ -52,6 +56,7 @@ class DailyP2hDigest
             $recommended = $latest?->recommendedKondisi();
 
             return [
+                'tanggal' => $session->tanggal->toDateString(),
                 'no_unit' => $session->unit?->no_unit,
                 'jenis_unit' => $session->unit?->jenis_unit,
                 'no_lambung' => $session->unit?->no_lambung,
@@ -71,55 +76,43 @@ class DailyP2hDigest
                     'approval_status' => $e->approval_status,
                     'catatan' => $e->justifikasi_kondisi,
                 ])->all(),
-                'findings' => $findings->map(fn (P2hFinding $f) => self::mapFinding($f, $recurrence, $date))->values()->all(),
+                'findings' => $findings->map(fn (P2hFinding $f) => self::mapFinding($f, $recurrence, $end))->values()->all(),
             ];
         });
 
-        // Temuan hari-hari sebelumnya yang belum closed tetap dipantau progress-nya
-        $carryOver = P2hFinding::query()
-            ->unresolved()
-            ->whereDate('tanggal_temuan', '<', $date)
-            ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
-            ->when($jenisUnit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $jenisUnit)))
-            ->with(['unit:id,no_unit,jenis_unit', 'pic:id,name'])
-            ->orderBy('tanggal_temuan')
-            ->get()
-            ->map(fn (P2hFinding $f) => [
-                ...self::mapFinding($f, $recurrence, $date),
-                'no_unit' => $f->unit?->no_unit,
-                'jenis_unit' => $f->unit?->jenis_unit,
-                'tanggal_temuan' => $f->tanggal_temuan->toDateString(),
-                'umur_hari' => (int) $f->tanggal_temuan->diffInDays($date),
-            ])
-            ->all();
-
         // Hanya unit yang perlu segera servis (lewat / mendekati jadwal) yang masuk laporan
-        $service = collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit, $date))
+        $service = collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit, $end))
             ->whereIn('status', ['overdue', 'due_soon'])
             ->values()
             ->all();
 
+        $label = fn (CarbonInterface $d) => $d->copy()->locale('id')->translatedFormat('l, d F Y');
+        $allFindings = $units->flatMap(fn ($u) => $u['findings']);
+
         return [
-            'tanggal' => $date->toDateString(),
-            'tanggal_label' => $date->copy()->locale('id')->translatedFormat('l, d F Y'),
+            'tanggal_mulai' => $start->toDateString(),
+            'tanggal_selesai' => $end->toDateString(),
+            'tanggal_label' => $start->isSameDay($end)
+                ? $label($start)
+                : $start->copy()->locale('id')->translatedFormat('d M Y').' – '.$end->copy()->locale('id')->translatedFormat('d M Y'),
+            'multi_hari' => ! $start->isSameDay($end),
             'site' => $siteId ? Site::find($siteId)?->name : null,
             'jenis_unit' => $jenisUnit,
             'stats' => [
                 'sudah_p2h' => $units->count(),
                 'unit_temuan' => $units->where('kondisi', 'temuan')->count(),
                 'unit_tidak_layak' => $units->where('kondisi', 'tidak_layak')->count(),
-                'temuan_hari_ini' => $units->sum(fn ($u) => count($u['findings'])),
-                'temuan_carry_over' => count($carryOver),
-                'temuan_overdue' => collect($carryOver)->concat($units->flatMap(fn ($u) => $u['findings']))->where('overdue', true)->count(),
+                'temuan' => $allFindings->count(),
+                'temuan_belum_selesai' => $allFindings->where('status', '!=', 'closed')->count(),
+                'temuan_overdue' => $allFindings->where('overdue', true)->count(),
                 'servis_mendekat' => count($service),
             ],
             'units' => $units->all(),
-            'carry_over' => $carryOver,
             'servis' => $service,
         ];
     }
 
-    private static function mapFinding(P2hFinding $finding, Collection $recurrence, CarbonInterface $date): array
+    private static function mapFinding(P2hFinding $finding, Collection $recurrence, CarbonInterface $asOf): array
     {
         return [
             'id' => $finding->id,
@@ -130,7 +123,7 @@ class DailyP2hDigest
             'pic' => $finding->pic?->name,
             'target' => $finding->target_selesai?->toDateString(),
             'status' => $finding->status->value,
-            'overdue' => $finding->isOverdue($date),
+            'overdue' => $finding->isOverdue(),
             'berulang' => (fn (int $n) => P2hFinding::isRecurringCount($n) ? $n : null)(
                 $recurrence->get($finding->unit_id.'|'.$finding->item_nama, 0)
             ),
