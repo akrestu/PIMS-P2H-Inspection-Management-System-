@@ -90,8 +90,8 @@ test('daily report shows the final BD decision, system recommendation and reason
     ])->and($digest['units'][0]['kondisi'])->toBe('tidak_layak');
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('⚖️ Keputusan : ❌ *BD (Tidak Layak Operasi)* _(sesuai rekomendasi sistem)_')
-        ->toContain('📝 Alasan : Rem tidak pakem saat uji jalan');
+        ->toContain('⚖️ *BD — Tidak Layak Operasi* _(sesuai rekomendasi sistem)_')
+        ->toContain('📝 Rem tidak pakem saat uji jalan', '⛔ *AA*', '⛔ AA = bahaya kritis');
 });
 
 test('daily report flags a Layak decision that overrides a BD recommendation', function () {
@@ -100,5 +100,36 @@ test('daily report flags a Layak decision that overrides a BD recommendation', f
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
-    expect($text)->toContain('✅ *Layak Pakai* _(berbeda dari rekomendasi sistem: BD)_', 'Sudah diperbaiki di lokasi');
+    expect($text)->toContain('⚖️ *Layak Pakai* _(⚠️ berbeda dari rekomendasi sistem: BD)_', 'Sudah diperbaiki di lokasi');
+});
+
+test('findings sharing the same PIC, action and status are listed once without repeated lines', function () {
+    $pic = User::factory()->create(['name' => 'Zaki Muhammad']);
+    $entry = integrityEntry('BD', 'Perlu perbaikan 4x4');
+    foreach (['Wipper' => 'Wipper kiri rusak', 'APAR*' => 'Tidak ada', 'Traffic cone*' => 'Tidak ada'] as $item => $ket) {
+        P2hChecklistAnswer::create(integrityAnswer($entry, $item, 'Tidak Layak', 'A', $ket));
+    }
+    P2hFinding::query()->update(['pic_user_id' => $pic->id]);
+
+    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
+
+    expect($text)
+        ->toContain('🔧 *Temuan (3)*', '2. APAR — Tidak ada', '3. Traffic cone — Tidak ada')
+        ->not->toContain('APAR*')
+        ->not->toContain('[A]')
+        ->and(substr_count($text, 'PIC: Zaki Muhammad'))->toBe(1)
+        ->and(substr_count($text, '📌 Status: 🔴 Open'))->toBe(1);
+});
+
+test('findings with different PIC or status show those details per finding on one line', function () {
+    $entry = integrityEntry();
+    P2hChecklistAnswer::create(integrityAnswer($entry, 'Lampu', 'Tidak Layak', 'A', 'Mati'));
+    P2hChecklistAnswer::create(integrityAnswer($entry, 'Klakson', 'Tidak Layak', 'A', 'Lemah'));
+    P2hFinding::where('item_nama', 'Lampu')->update(['status' => 'progress', 'tindakan_perbaikan' => 'Ganti bohlam']);
+
+    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
+
+    expect($text)
+        ->toContain('↳ 🛠️ Tindakan: Ganti bohlam · 📌 Status: 🟡 On Progress')
+        ->toContain('👤 PIC: _Belum ditunjuk_');
 });

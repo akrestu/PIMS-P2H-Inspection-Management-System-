@@ -36,15 +36,21 @@ class P2hDailySummaryAgent implements Agent
 
         *A. UNIT TELAH P2H*
 
-        {no}. {ikon} *{no_unit}* ({no_lambung})
-           {jenis_unit} | {driver - shift}
-           ⚖️ Keputusan : {keputusan.final: BD → "❌ *BD (Tidak Layak Operasi)*", Layak Pakai → "✅ *Layak Pakai*"} _(sesuai rekomendasi sistem)_ atau _(berbeda dari rekomendasi sistem: {keputusan.rekomendasi_sistem})_
-           📝 Alasan : {keputusan.alasan}   ← hanya jika alasan tidak kosong; tulis apa adanya, boleh dirapikan ejaannya tanpa mengubah makna
-           🔧 Temuan : {item} [{kode_bahaya}] - {keterangan}
-           👤 PIC : {pic atau "Belum ditunjuk"}
-           🛠️ Tindakan : {tindakan atau "Belum ditentukan"}
-           📌 Progress : {status} (target DD/MM/YYYY jika ada)
-        (ulangi 4 baris temuan untuk setiap temuan; jika unit tanpa temuan tulis "   Tidak ada temuan.")
+        {no}. {ikon} *{no_unit}* · {no_lambung}
+           {jenis_unit} · {driver} ({shift})   ← driver yang sama cukup sekali
+           ⚖️ {keputusan.final: BD → "*BD — Tidak Layak Operasi*", Layak Pakai → "*Layak Pakai*"} _(sesuai rekomendasi sistem)_ atau _(⚠️ berbeda dari rekomendasi sistem: {keputusan.rekomendasi_sistem})_
+           📝 {keputusan.alasan}   ← hanya jika alasan tidak kosong; boleh dirapikan ejaannya tanpa mengubah makna
+
+           🔧 *Temuan ({jumlah})*
+           1. {item} — {keterangan} {tag}
+           2. ...
+           (tag: "⛔ *AA*" bila kode_bahaya AA, "🔁{berulang}x" bila berulang berisi angka, "⏰" bila overdue; jangan tulis kode bahaya A)
+
+           👤 PIC: {pic atau _Belum ditunjuk_}
+           🛠️ Tindakan: {tindakan atau _Belum ditentukan_}
+           📌 Status: {status} · target DD/MM/YYYY (jika ada)
+        (PIC/Tindakan/Status ditulis SEKALI di bawah daftar bila sama untuk semua temuan unit itu. Bila berbeda, tulis di bawah temuan masing-masing dalam satu baris: "       ↳ 👤 PIC: … · 🛠️ Tindakan: … · 📌 Status: …". JANGAN mengulang baris yang sama untuk setiap temuan.)
+        (jika unit tanpa temuan tulis "   ✔️ Tidak ada temuan")
         (jika multi_hari = true: kelompokkan unit per tanggal P2H dengan baris sub-judul "🗓️ _{hari, DD Bulan YYYY}_" sebelum unit-unit tanggal itu, dan nomor urut unit dimulai dari 1 lagi di tiap tanggal)
         (hanya tampilkan unit dan temuan yang ada di data — jangan menambah temuan dari luar rentang tanggal)
 
@@ -55,10 +61,11 @@ class P2hDailySummaryAgent implements Agent
         • 🟡 *{no_unit}* - servis dalam {sisa_km} km (±{estimasi_hari} hari) (jadwal {km_servis_berikutnya})   ← status due_soon
 
         ━━━━━━━━━━━━━━━
+        _{keterangan simbol yang dipakai saja, dipisah " · ": "⛔ AA = bahaya kritis", "🔁 = berulang dalam 30 hari", "⏰ = lewat target"}_
         _PIMS - P2H Management System_
 
         Ketentuan:
-        - Jika temuan overdue=true atau berulang berisi angka, tambahkan satu baris di bawah 4 baris temuan: "   ⏰ *Lewat target*" dan/atau "🔁 *Berulang {berulang}x / 30 hari*" (dipisah " | ").
+        - Hapus karakter "*", "_", "~" yang ada di dalam nama item atau teks bebas dari data (contoh "APAR*" ditulis "APAR") agar format WhatsApp tidak rusak.
         - Angka KM ditulis dengan pemisah ribuan titik (contoh 12.500).
         - Ikon unit: ✅ layak, ⚠️ ada temuan, ❌ BD/tidak layak. Urutkan unit ❌ dan ⚠️ lebih dulu, lalu ✅; temuan kode bahaya AA di posisi teratas.
         - Status: open → "🔴 Open", progress → "🟡 On Progress", closed → "🟢 Closed".

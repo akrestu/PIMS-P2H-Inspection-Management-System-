@@ -58,8 +58,19 @@ class P2hDigestFormatter
             }
         }
 
+        // Keterangan simbol hanya bila simbolnya dipakai di laporan
+        $findings = collect($digest['units'])->flatMap(fn ($u) => $u['findings']);
+        $legend = collect([
+            $findings->contains(fn ($f) => $f['kode_bahaya'] === 'AA') ? '⛔ AA = bahaya kritis' : null,
+            $findings->contains(fn ($f) => $f['berulang'] ?? null) ? '🔁 = berulang dalam '.config('p2h.findings.recurring_window_days').' hari' : null,
+            $findings->contains(fn ($f) => $f['overdue'] ?? false) ? '⏰ = lewat target' : null,
+        ])->filter();
+
         $lines[] = '';
         $lines[] = '━━━━━━━━━━━━━━━';
+        if ($legend->isNotEmpty()) {
+            $lines[] = '_'.$legend->implode(' · ').'_';
+        }
         $lines[] = '_PIMS - P2H Management System_';
 
         return implode("\n", $lines);
@@ -72,27 +83,25 @@ class P2hDigestFormatter
             'temuan' => '⚠️',
             default => '✅',
         };
-        $lambung = $unit['no_lambung'] ? " ({$unit['no_lambung']})" : '';
+        $lambung = $unit['no_lambung'] ? ' · '.self::clean($unit['no_lambung']) : '';
         $drivers = collect($unit['entries'])
-            ->map(fn ($e) => trim(($e['driver'] ?? '-').($e['shift'] ? " - {$e['shift']}" : '')))
+            ->map(fn ($e) => self::clean($e['driver'] ?? '-').($e['shift'] ? " ({$e['shift']})" : ''))
             ->unique()
             ->implode(', ');
 
         $lines = [
-            "{$no}. {$icon} *{$unit['no_unit']}*{$lambung}",
-            "   {$unit['jenis_unit']} | {$drivers}",
+            "{$no}. {$icon} *".self::clean($unit['no_unit'])."*{$lambung}",
+            "   {$unit['jenis_unit']} · {$drivers}",
             ...self::decisionLines($unit['keputusan'] ?? null),
         ];
 
         if ($unit['findings'] === []) {
-            $lines[] = '   Tidak ada temuan.';
+            $lines[] = '   ✔️ Tidak ada temuan';
+
+            return $lines;
         }
 
-        foreach ($unit['findings'] as $finding) {
-            $lines = [...$lines, ...self::findingLines($finding)];
-        }
-
-        return $lines;
+        return [...$lines, '', ...self::findingsBlock($unit['findings'])];
     }
 
     /** Keputusan final unit (BD / Layak Pakai), pembanding rekomendasi sistem, dan alasannya. */
@@ -102,37 +111,72 @@ class P2hDigestFormatter
             return [];
         }
 
-        $label = $keputusan['final'] === 'BD' ? '❌ *BD (Tidak Layak Operasi)*' : '✅ *Layak Pakai*';
+        $label = $keputusan['final'] === 'BD' ? '*BD — Tidak Layak Operasi*' : '*Layak Pakai*';
         $rekomendasi = match (true) {
             $keputusan['rekomendasi_sistem'] === null => '',
-            $keputusan['berbeda_dari_rekomendasi'] => " _(berbeda dari rekomendasi sistem: {$keputusan['rekomendasi_sistem']})_",
+            $keputusan['berbeda_dari_rekomendasi'] => " _(⚠️ berbeda dari rekomendasi sistem: {$keputusan['rekomendasi_sistem']})_",
             default => ' _(sesuai rekomendasi sistem)_',
         };
 
         return array_filter([
-            "   ⚖️ Keputusan : {$label}{$rekomendasi}",
-            $keputusan['alasan'] ? "   📝 Alasan : {$keputusan['alasan']}" : null,
+            "   ⚖️ {$label}{$rekomendasi}",
+            $keputusan['alasan'] ? '   📝 '.self::clean($keputusan['alasan']) : null,
         ]);
     }
 
-    private static function findingLines(array $finding): array
+    /**
+     * Daftar temuan satu unit. PIC, tindakan, dan status yang sama untuk semua
+     * temuan ditulis sekali di bawah daftar; yang berbeda ditulis per temuan.
+     */
+    private static function findingsBlock(array $findings): array
     {
-        $kode = $finding['kode_bahaya'] ? " [{$finding['kode_bahaya']}]" : '';
-        $status = self::STATUS_LABEL[$finding['status']] ?? $finding['status'];
-        $target = $finding['target'] ? ' (target '.Carbon::parse($finding['target'])->format('d/m/Y').')' : '';
+        // Kode bahaya AA (kritis) selalu di atas
+        $findings = collect($findings)->sortBy(fn ($f) => $f['kode_bahaya'] === 'AA' ? 0 : 1)->values();
 
-        $flags = collect([
-            ($finding['overdue'] ?? false) ? '⏰ *Lewat target*' : null,
-            ($finding['berulang'] ?? null) ? "🔁 *Berulang {$finding['berulang']}x / ".config('p2h.findings.recurring_window_days').' hari*' : null,
-        ])->filter();
-
-        return [
-            "   🔧 Temuan : {$finding['item']}{$kode}".($finding['keterangan'] ? " - {$finding['keterangan']}" : ''),
-            '   👤 PIC : '.($finding['pic'] ?: 'Belum ditunjuk'),
-            '   🛠️ Tindakan : '.($finding['tindakan'] ?: 'Belum ditentukan'),
-            "   📌 Progress : {$status}{$target}",
-            ...($flags->isNotEmpty() ? ['   '.$flags->implode(' | ')] : []),
+        $fields = [
+            'pic' => fn ($f) => '👤 PIC: '.($f['pic'] ? self::clean($f['pic']) : '_Belum ditunjuk_'),
+            'tindakan' => fn ($f) => '🛠️ Tindakan: '.($f['tindakan'] ? self::clean($f['tindakan']) : '_Belum ditentukan_'),
+            'status' => fn ($f) => '📌 Status: '.(self::STATUS_LABEL[$f['status']] ?? $f['status'])
+                .($f['target'] ? ' · target '.Carbon::parse($f['target'])->format('d/m/Y') : ''),
         ];
+        $shared = collect($fields)->filter(fn ($render) => $findings->map($render)->unique()->count() === 1);
+        $varying = collect($fields)->diffKeys($shared);
+
+        $lines = ['   🔧 *Temuan ('.$findings->count().')*'];
+
+        foreach ($findings as $i => $f) {
+            $tags = collect([
+                $f['kode_bahaya'] === 'AA' ? '⛔ *AA*' : null,
+                ($f['berulang'] ?? null) ? "🔁{$f['berulang']}x" : null,
+                ($f['overdue'] ?? false) ? '⏰' : null,
+            ])->filter()->implode(' ');
+
+            $lines[] = '   '.($i + 1).'. '.self::clean($f['item'])
+                .($f['keterangan'] ? ' — '.self::clean($f['keterangan']) : '')
+                .($tags ? " {$tags}" : '');
+
+            if ($varying->isNotEmpty()) {
+                $lines[] = '       ↳ '.$varying->map(fn ($render) => $render($f))->implode(' · ');
+            }
+        }
+
+        if ($shared->isNotEmpty()) {
+            $lines[] = '';
+            foreach ($shared as $render) {
+                $lines[] = '   '.$render($findings->first());
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Teks bebas dari form: buang karakter format WhatsApp (* _ ~ `) agar tidak
+     * merusak huruf tebal/miring, misalnya nama item "APAR*".
+     */
+    private static function clean(?string $text): string
+    {
+        return trim(preg_replace('/\s+/', ' ', str_replace(['*', '_', '~', '`'], '', (string) $text)));
     }
 
     public static function serviceLine(array $unit): string
