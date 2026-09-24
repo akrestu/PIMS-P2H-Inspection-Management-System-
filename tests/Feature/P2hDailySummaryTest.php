@@ -119,7 +119,7 @@ test('digest over a date range includes every P2H in the range grouped by date',
         ->and($digest['units'][0]['tanggal'])->toBe(today()->subDays(2)->toDateString());
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('🗓️ *'.today()->subDays(2)->locale('id')->translatedFormat('l, d M Y').'*')
+        ->toContain('🗓️ *'.strtoupper(today()->subDays(2)->locale('id')->translatedFormat('l, d M Y')).'*')
         ->not->toContain(today()->subDays(10)->locale('id')->translatedFormat('d F Y'));
 });
 
@@ -168,7 +168,7 @@ test('AI summary returns the agent text when configured', function () {
         ->postJson(route('p2h.daily-summary.ai'), ['start' => today()->toDateString(), 'end' => today()->toDateString()])
         ->assertOk()
         ->assertJson(['fallback' => false])
-        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem: Kampas rem menipis'));
+        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem — _Kampas rem menipis_'));
 
     P2hDailySummaryAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, '*DAILY REPORT P2H*'));
 });

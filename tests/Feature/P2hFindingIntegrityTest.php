@@ -90,8 +90,8 @@ test('daily report shows the final BD decision, system recommendation and reason
     ])->and($digest['units'][0]['kondisi'])->toBe('tidak_layak');
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('*1. LV-77* — ❌ *BD*')
-        ->toContain('Alasan: Rem tidak pakem saat uji jalan', '- Rem: Kampas tipis _(⛔ *AA*)_')
+        ->toContain('*1. LV-77*', '*Status:* ❌ *BREAKDOWN (BD)*')
+        ->toContain('*Alasan:* _Rem tidak pakem saat uji jalan_', '- Rem — _Kampas tipis_ ⛔ *AA*', '⛔ AA = bahaya kritis')
         ->not->toContain('rekomendasi sistem');
 });
 
@@ -101,7 +101,7 @@ test('daily report flags a Layak decision that overrides a BD recommendation', f
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
-    expect($text)->toContain('— ⚠️ *Layak Pakai*', '⚠️ _tidak sesuai rekomendasi sistem (BD)_', 'Alasan: Sudah diperbaiki di lokasi');
+    expect($text)->toContain('*Status:* ⚠️ *LAYAK PAKAI — ADA TEMUAN*', '⚠️ _Keputusan tidak sesuai rekomendasi sistem (BD)_', '*Alasan:* _Sudah diperbaiki di lokasi_');
 });
 
 test('findings sharing the same PIC, action and status are listed once without repeated lines', function () {
@@ -115,10 +115,10 @@ test('findings sharing the same PIC, action and status are listed once without r
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
     expect($text)
-        ->toContain('Temuan (3):', '- APAR: Tidak ada', '- Traffic cone: Tidak ada')
+        ->toContain('*Temuan (3):*', '- APAR — _Tidak ada_', '- Traffic cone — _Tidak ada_', '*PIC:* Zaki Muhammad · *Progress:* 🔴 Open', '*Tindakan:* _Belum ditentukan_')
         ->not->toContain('APAR*')
         ->not->toContain('[A]')
-        ->and(substr_count($text, 'PIC: Zaki Muhammad'))->toBe(1)
+        ->and(substr_count($text, 'Zaki Muhammad'))->toBe(1)
         ->and(substr_count($text, '🔴 Open'))->toBe(1);
 });
 
@@ -131,6 +131,6 @@ test('findings with different PIC or status show those details per finding on on
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
     expect($text)
-        ->toContain('- Lampu: Mati → Tindakan: Ganti bohlam · 🟡 On Progress')
-        ->toContain('PIC: _belum ditunjuk_');
+        ->toContain('- Lampu — _Mati_', '↳ *Progress:* 🟡 On Progress · *Tindakan:* _Ganti bohlam_')
+        ->toContain('*PIC:* _Belum ditunjuk_')->not->toContain('━');
 });
