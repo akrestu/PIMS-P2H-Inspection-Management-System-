@@ -13,6 +13,25 @@ class P2hChecklistAnswer extends Model
         'item_nama', 'item_section', 'item_kode_bahaya', 'item_urutan',
     ];
 
+    /**
+     * Setiap jawaban "Tidak Layak" otomatis tercatat sebagai temuan, dari
+     * jalur mana pun jawaban itu dibuat.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (self $answer) {
+            if ($answer->kondisi !== 'Tidak Layak') {
+                return;
+            }
+
+            $entry = $answer->userEntry()->with('session.unit')->first();
+
+            if ($entry?->session?->unit) {
+                P2hFinding::recordFromAnswer($answer, $entry, $entry->session->unit, $entry->session->tanggal);
+            }
+        });
+    }
+
     public function userEntry(): BelongsTo
     {
         return $this->belongsTo(P2hUserEntry::class, 'p2h_user_entry_id');

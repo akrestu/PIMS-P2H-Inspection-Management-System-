@@ -64,6 +64,8 @@ interface Finding {
     closed_by: string | null;
     catatan_penutupan: string | null;
     foto_url: string | null;
+    keputusan_unit: 'Layak Pakai' | 'BD' | null;
+    alasan_keputusan: string | null;
 }
 
 interface Props {
@@ -620,6 +622,32 @@ export default function P2hFindings({
                                                 <p className="text-xs text-muted-foreground">
                                                     {f.jenis_unit}
                                                 </p>
+                                                {f.keputusan_unit && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={cn(
+                                                            'mt-1',
+                                                            f.keputusan_unit ===
+                                                                'BD'
+                                                                ? 'border-red-300 text-red-700 dark:border-red-800 dark:text-red-400'
+                                                                : 'border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400',
+                                                        )}
+                                                        title={
+                                                            f.alasan_keputusan ??
+                                                            undefined
+                                                        }
+                                                    >
+                                                        {f.keputusan_unit ===
+                                                        'BD'
+                                                            ? 'Diputuskan BD'
+                                                            : 'Diputuskan Layak'}
+                                                    </Badge>
+                                                )}
+                                                {f.alasan_keputusan && (
+                                                    <p className="mt-1 max-w-48 text-xs text-muted-foreground italic">
+                                                        “{f.alasan_keputusan}”
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="max-w-64 px-4 py-3">
                                                 <p className="font-medium">

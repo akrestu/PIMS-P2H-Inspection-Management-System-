@@ -19,6 +19,9 @@ class DailyP2hDigest
 {
     public static function build(CarbonInterface $date, ?int $siteId = null, ?string $jenisUnit = null): array
     {
+        // Pastikan tidak ada item Tidak Layak yang terlewat menjadi temuan
+        P2hFinding::syncMissing();
+
         $unitScope = fn (Builder $q) => $q
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->when($jenisUnit, fn ($q) => $q->where('jenis_unit', $jenisUnit));
@@ -32,6 +35,7 @@ class DailyP2hDigest
                 'userEntries' => fn ($q) => $q->orderBy('user_slot'),
                 'userEntries.user:id,name',
                 'userEntries.findings.pic:id,name',
+                'userEntries.answers:id,p2h_user_entry_id,kondisi,item_kode_bahaya',
             ])
             ->get()
             ->sortBy(fn (P2hSession $s) => $s->unit?->no_unit)
@@ -42,8 +46,10 @@ class DailyP2hDigest
         $units = $sessions->map(function (P2hSession $session) use ($recurrence, $date) {
             $entries = $session->userEntries;
             $findings = $entries->flatMap->findings;
+            // Keputusan final unit = keputusan pada pengisian P2H terakhir hari itu
             $latest = $entries->last();
-            $isBd = $entries->contains(fn (P2hUserEntry $e) => $e->kondisi_akhir === 'BD');
+            $isBd = $latest?->kondisi_akhir === 'BD';
+            $recommended = $latest?->recommendedKondisi();
 
             return [
                 'no_unit' => $session->unit?->no_unit,
@@ -51,6 +57,13 @@ class DailyP2hDigest
                 'no_lambung' => $session->unit?->no_lambung,
                 'kondisi' => $isBd ? 'tidak_layak' : ($findings->isNotEmpty() ? 'temuan' : 'layak'),
                 'kondisi_akhir' => $latest?->kondisi_akhir,
+                'keputusan' => [
+                    'final' => $latest?->kondisi_akhir,
+                    'rekomendasi_sistem' => $recommended,
+                    'berbeda_dari_rekomendasi' => $recommended !== null && $latest?->kondisi_akhir !== $recommended,
+                    'alasan' => filled($latest?->justifikasi_kondisi) ? trim($latest->justifikasi_kondisi) : null,
+                    'oleh' => $latest?->user?->name,
+                ],
                 'entries' => $entries->map(fn (P2hUserEntry $e) => [
                     'driver' => $e->user?->name,
                     'shift' => $e->shift,

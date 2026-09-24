@@ -86,6 +86,26 @@ class P2hUserEntry extends Model
         return $this->answers()->where('kondisi', 'Tidak Layak')->count();
     }
 
+    /**
+     * Rekomendasi sistem dari hasil checklist (aturan sama dengan form P2H):
+     * BD bila ada item AA Tidak Layak atau skor Layak < 80%.
+     * Memakai snapshot kode bahaya di jawaban agar tidak perlu query tambahan.
+     */
+    public function recommendedKondisi(): ?string
+    {
+        $answers = $this->answers;
+        $total = $answers->count();
+
+        if ($total === 0) {
+            return null;
+        }
+
+        $hasAACritical = $answers->contains(fn ($a) => $a->kondisi === 'Tidak Layak' && $a->item_kode_bahaya === 'AA');
+        $score = ($answers->where('kondisi', 'Layak')->count() / $total) * 100;
+
+        return ($hasAACritical || $score < 80) ? 'BD' : 'Layak Pakai';
+    }
+
     public function getIsOverrideAttribute(): bool
     {
         if ($this->kondisi_akhir === null) {

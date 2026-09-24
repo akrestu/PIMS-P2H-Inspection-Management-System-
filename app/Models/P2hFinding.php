@@ -81,6 +81,34 @@ class P2hFinding extends Model
         );
     }
 
+    /**
+     * Buat temuan untuk setiap jawaban "Tidak Layak" (entry masih aktif) yang
+     * belum punya temuan — misalnya data P2H sebelum fitur temuan ada.
+     * Satu query ringan bila tidak ada yang terlewat.
+     */
+    public static function syncMissing(?CarbonInterface $since = null): int
+    {
+        $created = 0;
+
+        P2hChecklistAnswer::query()
+            ->where('kondisi', 'Tidak Layak')
+            ->whereDoesntHave('finding')
+            ->whereHas('userEntry.session', fn ($q) => $q->when($since, fn ($q) => $q->whereDate('tanggal', '>=', $since)))
+            ->with('userEntry.session.unit')
+            ->chunkById(200, function ($answers) use (&$created) {
+                foreach ($answers as $answer) {
+                    $entry = $answer->userEntry;
+
+                    if ($entry?->session?->unit) {
+                        static::recordFromAnswer($answer, $entry, $entry->session->unit, $entry->session->tanggal);
+                        $created++;
+                    }
+                }
+            });
+
+        return $created;
+    }
+
     public function answer(): BelongsTo
     {
         return $this->belongsTo(P2hChecklistAnswer::class, 'p2h_checklist_answer_id');

@@ -37,7 +37,9 @@ class P2hDailySummaryAgent implements Agent
         *A. UNIT TELAH P2H*
 
         {no}. {ikon} *{no_unit}* ({no_lambung})
-           {jenis_unit} | {kondisi_akhir} | {driver - shift}
+           {jenis_unit} | {driver - shift}
+           ⚖️ Keputusan : {keputusan.final: BD → "❌ *BD (Tidak Layak Operasi)*", Layak Pakai → "✅ *Layak Pakai*"} _(sesuai rekomendasi sistem)_ atau _(berbeda dari rekomendasi sistem: {keputusan.rekomendasi_sistem})_
+           📝 Alasan : {keputusan.alasan}   ← hanya jika alasan tidak kosong; tulis apa adanya, boleh dirapikan ejaannya tanpa mengubah makna
            🔧 Temuan : {item} [{kode_bahaya}] - {keterangan}
            👤 PIC : {pic atau "Belum ditunjuk"}
            🛠️ Tindakan : {tindakan atau "Belum ditentukan"}

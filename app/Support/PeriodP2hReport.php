@@ -37,6 +37,8 @@ class PeriodP2hReport
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->when($jenisUnit, fn ($q) => $q->where('jenis_unit', $jenisUnit));
 
+        P2hFinding::syncMissing($start);
+
         // ── Kepatuhan pengisian P2H ─────────────────────────────────────────
         $activeUnits = Unit::active()->where($unitScope)->count();
         $days = (int) $start->diffInDays(min($end, today())) + 1;

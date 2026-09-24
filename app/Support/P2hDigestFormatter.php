@@ -45,11 +45,13 @@ class P2hDigestFormatter
             $lambung = $unit['no_lambung'] ? " ({$unit['no_lambung']})" : '';
             $drivers = collect($unit['entries'])
                 ->map(fn ($e) => trim(($e['driver'] ?? '-').($e['shift'] ? " - {$e['shift']}" : '')))
+                ->unique()
                 ->implode(', ');
 
             $lines[] = '';
             $lines[] = ($i + 1).". {$icon} *{$unit['no_unit']}*{$lambung}";
-            $lines[] = "   {$unit['jenis_unit']} | {$unit['kondisi_akhir']} | {$drivers}";
+            $lines[] = "   {$unit['jenis_unit']} | {$drivers}";
+            $lines = [...$lines, ...self::decisionLines($unit['keputusan'] ?? null)];
 
             if ($unit['findings'] === []) {
                 $lines[] = '   Tidak ada temuan.';
@@ -87,6 +89,26 @@ class P2hDigestFormatter
         $lines[] = '_PIMS - P2H Management System_';
 
         return implode("\n", $lines);
+    }
+
+    /** Keputusan final unit (BD / Layak Pakai), pembanding rekomendasi sistem, dan alasannya. */
+    private static function decisionLines(?array $keputusan): array
+    {
+        if (! $keputusan || ! $keputusan['final']) {
+            return [];
+        }
+
+        $label = $keputusan['final'] === 'BD' ? '❌ *BD (Tidak Layak Operasi)*' : '✅ *Layak Pakai*';
+        $rekomendasi = match (true) {
+            $keputusan['rekomendasi_sistem'] === null => '',
+            $keputusan['berbeda_dari_rekomendasi'] => " _(berbeda dari rekomendasi sistem: {$keputusan['rekomendasi_sistem']})_",
+            default => ' _(sesuai rekomendasi sistem)_',
+        };
+
+        return array_filter([
+            "   ⚖️ Keputusan : {$label}{$rekomendasi}",
+            $keputusan['alasan'] ? "   📝 Alasan : {$keputusan['alasan']}" : null,
+        ]);
     }
 
     private static function findingLines(array $finding): array

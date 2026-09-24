@@ -29,9 +29,12 @@ class P2hFindingController extends Controller
         ]);
         $status = $filters['status'] ?? 'unresolved';
 
+        // Pastikan tidak ada item Tidak Layak yang terlewat menjadi temuan
+        P2hFinding::syncMissing();
+
         $findings = P2hFinding::query()
             ->whereHas('entry')
-            ->with(['unit:id,no_unit,jenis_unit,no_lambung', 'pic:id,name', 'closer:id,name'])
+            ->with(['unit:id,no_unit,jenis_unit,no_lambung', 'pic:id,name', 'closer:id,name', 'entry:id,kondisi_akhir,justifikasi_kondisi'])
             ->when($status === 'unresolved', fn ($q) => $q->where('status', '!=', FindingStatus::Closed->value))
             ->when($status === 'overdue', fn ($q) => $q->unresolved()->whereDate('target_selesai', '<', today()))
             ->when(in_array($status, ['open', 'progress', 'closed'], true), fn ($q) => $q->where('status', $status))
@@ -69,6 +72,8 @@ class P2hFindingController extends Controller
                 'closed_by' => $f->closer?->name,
                 'catatan_penutupan' => $f->catatan_penutupan,
                 'foto_url' => $f->foto_penutupan ? route('p2h.findings.photo', $f) : null,
+                'keputusan_unit' => $f->entry?->kondisi_akhir,
+                'alasan_keputusan' => filled($f->entry?->justifikasi_kondisi) ? trim($f->entry->justifikasi_kondisi) : null,
             ]),
             'counts' => [
                 'open' => P2hFinding::whereHas('entry')->where('status', FindingStatus::Open->value)->count(),
