@@ -49,6 +49,13 @@ class NotificationController extends Controller
             return redirect()->route('p2h.approvals');
         }
 
+        // Penugasan / pengingat temuan → halaman Temuan P2H (hanya admin & manager yang punya akses)
+        if (in_array($type, ['finding_assigned', 'finding_overdue'], true)) {
+            return $user->hasAnyRole(['admin', 'manager'])
+                ? redirect()->route('p2h.findings.index', ['status' => $type === 'finding_overdue' ? 'overdue' : 'unresolved', 'search' => $data['no_unit'] ?? null])
+                : back();
+        }
+
         // Approval result → arahkan ke entry spesifik di detail sesi
         $sessionId = $data['session_id'] ?? null;
         if ($type === 'lv_approval_result' && $sessionId) {

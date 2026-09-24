@@ -9,10 +9,14 @@ use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\P2hApprovalController;
 use App\Http\Controllers\P2hComplianceController;
+use App\Http\Controllers\P2hDailySummaryController;
 use App\Http\Controllers\P2hExportController;
 use App\Http\Controllers\P2hFileController;
+use App\Http\Controllers\P2hFindingController;
+use App\Http\Controllers\P2hPeriodReportController;
 use App\Http\Controllers\P2hSessionController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\UnitAnalyticsController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UnitDowntimeController;
 use App\Http\Controllers\UserController;
@@ -62,6 +66,26 @@ Route::middleware(['auth'])->group(function () {
 
         // AJAX — cek slot unit hari ini
         Route::get('/api/p2h/check-slot', [P2hSessionController::class, 'checkSlot'])->name('p2h.check-slot');
+    });
+
+    // Ringkasan harian WhatsApp & pelacakan temuan — must be before /p2h/{session}
+    Route::middleware(['role:admin|manager'])->group(function () {
+        Route::get('/p2h/daily-summary', [P2hDailySummaryController::class, 'index'])->name('p2h.daily-summary');
+        Route::post('/p2h/daily-summary/ai', [P2hDailySummaryController::class, 'generateAi'])
+            ->middleware('throttle:10,1')
+            ->name('p2h.daily-summary.ai');
+        Route::get('/p2h/period-report', [P2hPeriodReportController::class, 'index'])->name('p2h.period-report');
+        Route::post('/p2h/period-report/ai', [P2hPeriodReportController::class, 'generateAi'])
+            ->middleware('throttle:10,1')
+            ->name('p2h.period-report.ai');
+        Route::get('/p2h/period-report/pdf', [P2hPeriodReportController::class, 'pdf'])->name('p2h.period-report.pdf');
+        Route::get('/p2h/findings', [P2hFindingController::class, 'index'])->name('p2h.findings.index');
+        Route::patch('/p2h/findings/{finding}', [P2hFindingController::class, 'update'])->name('p2h.findings.update');
+        Route::get('/p2h/findings/{finding}/photo', [P2hFindingController::class, 'photo'])->name('p2h.findings.photo');
+        Route::post('/p2h/findings/{finding}/suggest', [P2hFindingController::class, 'suggest'])
+            ->middleware('throttle:20,1')
+            ->name('p2h.findings.suggest');
+        Route::get('/unit-analytics', [UnitAnalyticsController::class, 'index'])->name('unit-analytics.index');
     });
 
     Route::middleware(['role:admin|manager|driver'])->group(function () {

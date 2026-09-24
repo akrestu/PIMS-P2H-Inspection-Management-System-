@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreP2hRequest;
 use App\Models\P2hAttachment;
 use App\Models\P2hChecklistAnswer;
+use App\Models\P2hFinding;
 use App\Models\P2hFuelLog;
 use App\Models\P2hInspectionItem;
 use App\Models\P2hServiceInfo;
@@ -244,7 +245,7 @@ class P2hSessionController extends Controller
                 // Simpan jawaban checklist
                 foreach ($data['answers'] as $answer) {
                     $item = $inspectionItems->get($answer['inspection_item_id']);
-                    P2hChecklistAnswer::create([
+                    $createdAnswer = P2hChecklistAnswer::create([
                         'p2h_user_entry_id' => $entry->id,
                         'inspection_item_id' => $answer['inspection_item_id'],
                         'kondisi' => $answer['kondisi'],
@@ -254,6 +255,11 @@ class P2hSessionController extends Controller
                         'item_kode_bahaya' => $item?->kode_bahaya,
                         'item_urutan' => $item?->urutan,
                     ]);
+
+                    // Setiap item Tidak Layak dicatat sebagai temuan untuk dipantau tindak lanjutnya
+                    if ($answer['kondisi'] === 'Tidak Layak' && $unit) {
+                        P2hFinding::recordFromAnswer($createdAnswer, $entry, $unit, $session->tanggal);
+                    }
                 }
 
                 // Refresh service info saat sesi aktif dimulai kembali setelah seluruh entry dihapus.

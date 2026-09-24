@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class P2hChecklistAnswer extends Model
 {
@@ -15,6 +16,11 @@ class P2hChecklistAnswer extends Model
     public function userEntry(): BelongsTo
     {
         return $this->belongsTo(P2hUserEntry::class, 'p2h_user_entry_id');
+    }
+
+    public function finding(): HasOne
+    {
+        return $this->hasOne(P2hFinding::class);
     }
 
     public function inspectionItem(): BelongsTo

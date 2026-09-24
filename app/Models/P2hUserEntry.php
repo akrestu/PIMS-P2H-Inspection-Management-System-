@@ -41,6 +41,11 @@ class P2hUserEntry extends Model
         return $this->hasMany(P2hChecklistAnswer::class);
     }
 
+    public function findings(): HasMany
+    {
+        return $this->hasMany(P2hFinding::class);
+    }
+
     public function fuelLog(): HasOne
     {
         return $this->hasOne(P2hFuelLog::class);

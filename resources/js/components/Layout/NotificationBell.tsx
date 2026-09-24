@@ -1,9 +1,11 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    AlarmClock,
     AlertTriangle,
     Bell,
     CheckCircle,
     ClipboardCheck,
+    Wrench,
     XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,14 @@ function notifIcon(type?: string, status?: string) {
         );
     }
 
+    if (type === 'finding_assigned') {
+        return <Wrench className="h-4 w-4 text-blue-500" />;
+    }
+
+    if (type === 'finding_overdue') {
+        return <AlarmClock className="h-4 w-4 text-red-500" />;
+    }
+
     return <AlertTriangle className="h-4 w-4 text-red-500" />;
 }
 
@@ -60,6 +70,14 @@ function notifLabel(data: RecentNotification['data']): string {
         return data.status === 'approved'
             ? `Disetujui — ${unit}`
             : `Ditolak — ${unit}`;
+    }
+
+    if (data.type === 'finding_assigned') {
+        return `Tugas perbaikan — ${unit}`;
+    }
+
+    if (data.type === 'finding_overdue') {
+        return `Temuan lewat target — ${unit}`;
     }
 
     return `Critical Alert — ${unit}`;

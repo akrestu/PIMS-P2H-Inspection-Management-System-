@@ -160,6 +160,15 @@ export interface PimsNotification {
         status?: ApprovalStatus;
         approver?: string;
         catatan?: string | null;
+        // FindingAssigned / FindingOverdue
+        finding_id?: number;
+        item_nama?: string | null;
+        keterangan?: string | null;
+        tindakan_perbaikan?: string | null;
+        target_selesai?: string | null;
+        assigned_by?: string;
+        pic_name?: string | null;
+        hari_terlambat?: number;
     };
     read_at: string | null;
     created_at: string;

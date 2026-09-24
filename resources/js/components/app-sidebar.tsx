@@ -8,11 +8,15 @@ import {
     ClipboardList,
     ClipboardPlus,
     ClockAlert,
+    Gauge,
     LayoutGrid,
     MapPin,
+    MessageSquareText,
     Settings2,
     ShieldCheck,
+    TrendingUp,
     Users,
+    Wrench,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -72,6 +76,26 @@ export function AppSidebar() {
                               title: 'Monitoring P2H',
                               href: '/p2h-compliance',
                               icon: CalendarCheck,
+                          },
+                          {
+                              title: 'Daily Report P2H',
+                              href: '/p2h/daily-summary',
+                              icon: MessageSquareText,
+                          },
+                          {
+                              title: 'Periodic Report P2H',
+                              href: '/p2h/period-report',
+                              icon: TrendingUp,
+                          },
+                          {
+                              title: 'Temuan P2H',
+                              href: '/p2h/findings',
+                              icon: Wrench,
+                          },
+                          {
+                              title: 'Analitik Unit',
+                              href: '/unit-analytics',
+                              icon: Gauge,
                           },
                           {
                               title: 'Downtime Log',

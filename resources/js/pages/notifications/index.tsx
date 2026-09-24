@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    AlarmClock,
     AlertTriangle,
     Bell,
     BellOff,
@@ -13,6 +14,7 @@ import {
     Loader2,
     MailCheck,
     Trash2,
+    Wrench,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -123,10 +125,52 @@ function getDateGroupLabel(dateStr: string): string {
 type NotifType =
     | 'critical_alert'
     | 'lv_approval_request'
-    | 'lv_approval_result';
+    | 'lv_approval_result'
+    | 'finding_assigned'
+    | 'finding_overdue';
 
 function getTypeConfig(data: PimsNotification['data']) {
     const type = (data.type ?? 'critical_alert') as NotifType;
+
+    if (type === 'finding_assigned') {
+        return {
+            icon: Wrench,
+            iconClass:
+                'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+            borderColor: 'border-l-blue-400',
+            bgUnread: 'bg-blue-50/40 dark:bg-blue-950/15',
+            badge: (
+                <Badge
+                    variant="secondary"
+                    className="gap-1 border-blue-200 bg-blue-100 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                >
+                    <Wrench className="h-3 w-3" />
+                    Tugas Perbaikan
+                </Badge>
+            ),
+            actionHint: 'Lihat temuan',
+        };
+    }
+
+    if (type === 'finding_overdue') {
+        return {
+            icon: AlarmClock,
+            iconClass:
+                'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+            borderColor: 'border-l-red-500',
+            bgUnread: 'bg-red-50/40 dark:bg-red-950/15',
+            badge: (
+                <Badge
+                    variant="destructive"
+                    className="gap-1 text-xs font-medium"
+                >
+                    <AlarmClock className="h-3 w-3" />
+                    Lewat Target
+                </Badge>
+            ),
+            actionHint: 'Lihat temuan',
+        };
+    }
 
     if (type === 'lv_approval_request') {
         return {
@@ -318,6 +362,25 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                             )}
                         </div>
                     )}
+
+                {/* Finding assignment / overdue details */}
+                {(notif.data.type === 'finding_assigned' ||
+                    notif.data.type === 'finding_overdue') && (
+                    <div className="text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                            {notif.data.item_nama}
+                        </span>
+                        {notif.data.keterangan && ` — ${notif.data.keterangan}`}
+                        {notif.data.type === 'finding_assigned' &&
+                            notif.data.assigned_by &&
+                            ` · ditugaskan oleh ${notif.data.assigned_by}`}
+                        {notif.data.type === 'finding_overdue' &&
+                            ` · terlambat ${notif.data.hari_terlambat ?? 0} hari (PIC: ${notif.data.pic_name ?? 'belum ditunjuk'})`}
+                        {notif.data.target_selesai &&
+                            notif.data.type === 'finding_assigned' &&
+                            ` · target ${notif.data.target_selesai}`}
+                    </div>
+                )}
 
                 {/* Critical items */}
                 {(notif.data.critical_items?.length ?? 0) > 0 && (
