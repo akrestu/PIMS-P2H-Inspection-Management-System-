@@ -61,7 +61,7 @@ class P2hDigestFormatter
         $findings = collect($digest['units'])->flatMap(fn ($u) => $u['findings']);
         $legend = collect([
             $findings->contains(fn ($f) => $f['kode_bahaya'] === 'AA') ? '⛔ AA = bahaya kritis' : null,
-            $findings->contains(fn ($f) => $f['berulang'] ?? null) ? '🔁 = berulang dalam '.config('p2h.findings.recurring_window_days').' hari' : null,
+            $findings->contains(fn ($f) => $f['berulang'] ?? null) ? 'berulang = item yang sama bermasalah dalam '.config('p2h.findings.recurring_window_days').' hari terakhir' : null,
         ])->filter();
 
         $lines[] = '';
@@ -170,7 +170,7 @@ class P2hDigestFormatter
             // Penanda penting ditebalkan agar langsung tertangkap
             $notes = collect([
                 $f['kode_bahaya'] === 'AA' ? '⛔ *AA*' : null,
-                ($f['berulang'] ?? null) ? "🔁 *{$f['berulang']}x*" : null,
+                ($f['berulang'] ?? null) ? "_(berulang {$f['berulang']}x)_" : null,
                 ($f['overdue'] ?? false) ? '⏰ *Lewat target*' : null,
             ])->filter();
 

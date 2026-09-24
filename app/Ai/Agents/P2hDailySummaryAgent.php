@@ -34,7 +34,7 @@ class P2hDailySummaryAgent implements Agent
         Yang DILARANG:
         - Mengubah, menambah, menghapus, atau mengurutkan ulang baris, nomor unit, nama orang, angka, tanggal, status, simbol/emoji, dan penanda format (*, _, -, ↳, ·, —).
         - Menambah kalimat pembuka, penutup, ringkasan, atau komentar.
-        - Mengubah teks _..._ bawaan template: _Belum ditentukan_, _Belum ditunjuk_, _(Shift ...)_, _(target ...)_, baris _Ket: ..._, baris judul, dan baris penutup.
+        - Mengubah teks _..._ bawaan template: _Belum ditentukan_, _Belum ditunjuk_, _(Shift ...)_, _(target ...)_, _(berulang ...)_, baris _Ket: ..._, baris judul, dan baris penutup.
 
         Keluarkan hanya teks laporan hasil perbaikan, dengan jumlah baris yang sama persis seperti masukan.
         PROMPT;

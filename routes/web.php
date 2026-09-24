@@ -79,13 +79,17 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('throttle:10,1')
             ->name('p2h.period-report.ai');
         Route::get('/p2h/period-report/pdf', [P2hPeriodReportController::class, 'pdf'])->name('p2h.period-report.pdf');
+        Route::get('/unit-analytics', [UnitAnalyticsController::class, 'index'])->name('unit-analytics.index');
+    });
+
+    // Temuan P2H — driver hanya temuan yang ditugaskan kepadanya (P2hFindingPolicy)
+    Route::middleware(['role:admin|manager|driver'])->group(function () {
         Route::get('/p2h/findings', [P2hFindingController::class, 'index'])->name('p2h.findings.index');
         Route::patch('/p2h/findings/{finding}', [P2hFindingController::class, 'update'])->name('p2h.findings.update');
         Route::get('/p2h/findings/{finding}/photo', [P2hFindingController::class, 'photo'])->name('p2h.findings.photo');
         Route::post('/p2h/findings/{finding}/suggest', [P2hFindingController::class, 'suggest'])
             ->middleware('throttle:20,1')
             ->name('p2h.findings.suggest');
-        Route::get('/unit-analytics', [UnitAnalyticsController::class, 'index'])->name('unit-analytics.index');
     });
 
     Route::middleware(['role:admin|manager|driver'])->group(function () {

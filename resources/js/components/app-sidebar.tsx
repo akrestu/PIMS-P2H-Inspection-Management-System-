@@ -148,6 +148,16 @@ export function AppSidebar() {
                               href: driverDashboard(),
                               icon: LayoutGrid,
                           },
+                          // Admin/manager sudah punya menu "Temuan P2H" di grup Manajemen
+                          ...(!isAdminOrManager
+                              ? [
+                                    {
+                                        title: 'Temuan Saya',
+                                        href: '/p2h/findings',
+                                        icon: Wrench,
+                                    },
+                                ]
+                              : []),
                           ...(isStaff
                               ? [
                                     {

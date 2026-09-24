@@ -64,6 +64,8 @@ interface Finding {
     closed_by: string | null;
     catatan_penutupan: string | null;
     foto_url: string | null;
+    jumlah_laporan: number;
+    terakhir_dilaporkan: string | null;
     keputusan_unit: 'Layak Pakai' | 'BD' | null;
     alasan_keputusan: string | null;
 }
@@ -80,6 +82,7 @@ interface Props {
     sites: { id: number; name: string }[];
     filters: { status: string; site_id: number | null; search: string | null };
     aiEnabled: boolean;
+    canManage: boolean;
     recurringWindowDays: number;
 }
 
@@ -164,11 +167,13 @@ function FindingDialog({
     finding,
     picOptions,
     aiEnabled,
+    canManage,
     onClose,
 }: {
     finding: Finding | null;
     picOptions: Props['picOptions'];
     aiEnabled: boolean;
+    canManage: boolean;
     onClose: () => void;
 }) {
     const form = useForm<FindingForm>({
@@ -290,7 +295,20 @@ function FindingDialog({
                         />
                         <InputError message={form.errors.tindakan_perbaikan} />
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    {!canManage && finding && (
+                        <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                            PIC: <b>{finding.pic_name ?? '—'}</b> · Target:{' '}
+                            <b>{formatDate(finding.target_selesai)}</b>
+                            <br />
+                            PIC & target diatur oleh admin/manager.
+                        </p>
+                    )}
+                    <div
+                        className={cn(
+                            'grid gap-4 sm:grid-cols-2',
+                            !canManage && 'hidden',
+                        )}
+                    >
                         <div className="space-y-1.5">
                             <Label>PIC</Label>
                             <Select
@@ -459,9 +477,11 @@ export default function P2hFindings({
     sites,
     filters,
     aiEnabled,
+    canManage,
     recurringWindowDays,
 }: Props) {
     const [editing, setEditing] = useState<Finding | null>(null);
+    const title = canManage ? 'Temuan P2H' : 'Temuan Saya';
     const [search, setSearch] = useState(filters.search ?? '');
 
     const applyFilter = (
@@ -476,16 +496,19 @@ export default function P2hFindings({
 
     return (
         <>
-            <Head title="Temuan P2H" />
+            <Head title={title} />
             <div className="flex flex-col gap-5 p-4 md:p-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
                             <Wrench className="h-6 w-6 text-primary" />
-                            Temuan P2H
+                            {title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Pantau tindakan perbaikan dan PIC setiap temuan ·{' '}
+                            {canManage
+                                ? 'Pantau tindakan perbaikan dan PIC setiap temuan'
+                                : 'Temuan yang ditugaskan kepada Anda — perbarui progress perbaikannya'}{' '}
+                            ·{' '}
                             <span className="font-medium text-red-600">
                                 {counts.open} open
                             </span>{' '}
@@ -566,7 +589,9 @@ export default function P2hFindings({
                             })
                         }
                     >
-                        <SelectTrigger className="h-9 w-44">
+                        <SelectTrigger
+                            className={cn('h-9 w-44', !canManage && 'hidden')}
+                        >
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -580,8 +605,25 @@ export default function P2hFindings({
                     </Select>
                 </div>
 
-                {/* ── List ── */}
-                <Card>
+                {/* ── List: kartu di HP ── */}
+                <div className="flex flex-col gap-3 md:hidden">
+                    {findings.data.length === 0 && (
+                        <p className="rounded-lg border py-10 text-center text-sm text-muted-foreground">
+                            Tidak ada temuan.
+                        </p>
+                    )}
+                    {findings.data.map((f) => (
+                        <FindingCard
+                            key={f.id}
+                            finding={f}
+                            windowDays={recurringWindowDays}
+                            onEdit={() => setEditing(f)}
+                        />
+                    ))}
+                </div>
+
+                {/* ── List: tabel di layar lebar ── */}
+                <Card className="hidden md:block">
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
@@ -663,6 +705,7 @@ export default function P2hFindings({
                                                         {f.keterangan}
                                                     </p>
                                                 )}
+                                                <ReportCount finding={f} />
                                                 <FindingFlags
                                                     overdue={f.overdue}
                                                     berulang={f.berulang}
@@ -791,9 +834,142 @@ export default function P2hFindings({
                 finding={editing}
                 picOptions={picOptions}
                 aiEnabled={aiEnabled}
+                canManage={canManage}
                 onClose={() => setEditing(null)}
             />
         </>
+    );
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+
+/** "Dilaporkan 3x · terakhir 24 Sep" untuk temuan gabungan dari beberapa laporan. */
+function ReportCount({ finding }: { finding: Finding }) {
+    if (finding.jumlah_laporan <= 1) {
+        return null;
+    }
+
+    return (
+        <p className="mt-0.5 text-xs text-muted-foreground">
+            Dilaporkan {finding.jumlah_laporan}x
+            {finding.terakhir_dilaporkan &&
+                ` · terakhir ${formatDate(finding.terakhir_dilaporkan)}`}
+        </p>
+    );
+}
+
+/** Tampilan kartu untuk layar HP (menggantikan tabel 8 kolom). */
+function FindingCard({
+    finding: f,
+    windowDays,
+    onEdit,
+}: {
+    finding: Finding;
+    windowDays: number;
+    onEdit: () => void;
+}) {
+    return (
+        <Card className={cn(f.overdue && 'border-red-300 dark:border-red-900')}>
+            <CardContent className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                        <p className="font-semibold">
+                            {f.no_unit}
+                            {f.keputusan_unit === 'BD' && (
+                                <Badge
+                                    variant="outline"
+                                    className="ml-2 border-red-300 text-red-700 dark:border-red-800 dark:text-red-400"
+                                >
+                                    BD
+                                </Badge>
+                            )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            {f.jenis_unit} · {formatDate(f.tanggal_temuan)}
+                        </p>
+                    </div>
+                    <Badge
+                        variant="outline"
+                        className={cn(
+                            'shrink-0',
+                            STATUS_CONFIG[f.status].className,
+                        )}
+                    >
+                        {STATUS_CONFIG[f.status].label}
+                    </Badge>
+                </div>
+
+                <div>
+                    <p className="font-medium">
+                        {f.item_nama}
+                        {f.kode_bahaya === 'AA' && (
+                            <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
+                                AA
+                            </Badge>
+                        )}
+                    </p>
+                    {f.keterangan && (
+                        <p className="text-sm text-muted-foreground">
+                            {f.keterangan}
+                        </p>
+                    )}
+                    <ReportCount finding={f} />
+                    <FindingFlags
+                        overdue={f.overdue}
+                        berulang={f.berulang}
+                        windowDays={windowDays}
+                    />
+                </div>
+
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                    <dt className="text-muted-foreground">PIC</dt>
+                    <dd>
+                        {f.pic_name || (
+                            <span className="text-muted-foreground italic">
+                                Belum ditunjuk
+                            </span>
+                        )}
+                    </dd>
+                    <dt className="text-muted-foreground">Tindakan</dt>
+                    <dd>
+                        {f.tindakan_perbaikan || (
+                            <span className="text-muted-foreground italic">
+                                Belum ditentukan
+                            </span>
+                        )}
+                    </dd>
+                    <dt className="text-muted-foreground">Target</dt>
+                    <dd className={cn(f.overdue && 'font-medium text-red-600')}>
+                        {formatDate(f.target_selesai)}
+                    </dd>
+                </dl>
+
+                <div className="flex items-center justify-between gap-2">
+                    {f.foto_url ? (
+                        <a
+                            href={f.foto_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                            <ImageIcon className="h-3.5 w-3.5" />
+                            Foto bukti
+                        </a>
+                    ) : (
+                        <span />
+                    )}
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={onEdit}
+                    >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Update
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 

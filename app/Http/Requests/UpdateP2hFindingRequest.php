@@ -10,7 +10,7 @@ class UpdateP2hFindingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'manager']) ?? false;
+        return $this->user()?->can('update', $this->route('finding')) ?? false;
     }
 
     public function rules(): array

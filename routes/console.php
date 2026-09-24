@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\P2hChecklistAnswer;
 use App\Models\P2hFinding;
 use App\Models\User;
 use App\Notifications\FindingOverdue;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schedule;
 
@@ -19,8 +21,56 @@ Artisan::command('p2h:backfill-findings {--days= : Batasi ke N hari terakhir (de
     $this->info("{$created} temuan dibuat dari data P2H ".($since ? "sejak {$since->toDateString()}." : '(semua data).'));
 })->purpose('Buat data temuan P2H dari jawaban checklist Tidak Layak yang belum tercatat');
 
+Artisan::command('p2h:merge-duplicate-findings {--dry-run : Tampilkan saja tanpa mengubah data}', function () {
+    // Temuan terbuka ganda (unit & item sama) dari sebelum fitur penggabungan ada
+    $groups = P2hFinding::query()
+        ->unresolved()
+        ->orderBy('id')
+        ->get()
+        ->groupBy(fn (P2hFinding $f) => P2hFinding::recurrenceKey($f->unit_id, $f->item_nama))
+        ->filter(fn ($group) => $group->count() > 1);
+
+    $merged = 0;
+
+    foreach ($groups as $group) {
+        $target = $group->first(); // temuan tertua jadi induk
+        $others = $group->slice(1);
+        $this->line("• {$target->unit?->no_unit} — {$target->item_nama}: {$group->count()} temuan → 1");
+
+        if ($this->option('dry-run')) {
+            continue;
+        }
+
+        DB::transaction(function () use ($target, $others) {
+            $latest = $others->sortBy('terakhir_dilaporkan')->last();
+
+            P2hChecklistAnswer::whereIn('p2h_finding_id', $others->pluck('id'))->update(['p2h_finding_id' => $target->id]);
+
+            $target->forceFill([
+                'jumlah_laporan' => $target->jumlah_laporan + $others->sum('jumlah_laporan'),
+                'terakhir_dilaporkan' => collect([$target, ...$others])->max('terakhir_dilaporkan'),
+                'keterangan' => $latest->keterangan ?: $target->keterangan,
+                'kode_bahaya' => collect([$target, ...$others])->contains('kode_bahaya', 'AA') ? 'AA' : $target->kode_bahaya,
+                // Isian tindak lanjut induk dipertahankan; yang kosong diisi dari temuan lain
+                'pic_user_id' => $target->pic_user_id ?? $others->pluck('pic_user_id')->filter()->first(),
+                'tindakan_perbaikan' => $target->tindakan_perbaikan ?? $others->pluck('tindakan_perbaikan')->filter()->first(),
+                'target_selesai' => $target->target_selesai ?? $others->pluck('target_selesai')->filter()->first(),
+            ])->save();
+
+            P2hFinding::whereIn('id', $others->pluck('id'))->delete();
+        });
+
+        $merged += $others->count();
+    }
+
+    $this->info($this->option('dry-run')
+        ? "{$groups->count()} kelompok temuan ganda ditemukan (dry run, tidak ada perubahan)."
+        : "{$merged} temuan ganda digabung ke {$groups->count()} temuan.");
+})->purpose('Gabungkan temuan terbuka ganda (unit & item sama) menjadi satu temuan');
+
 Artisan::command('p2h:remind-overdue-findings', function () {
-    $admins = User::role('admin')->get();
+    // whereHas (bukan User::role) agar tidak error bila role admin belum dibuat
+    $admins = User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))->get();
     $sent = 0;
 
     // Satu pengingat per temuan per hari: PIC-nya, atau admin bila PIC belum ditunjuk

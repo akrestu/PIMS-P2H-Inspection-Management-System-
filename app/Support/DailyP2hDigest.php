@@ -9,6 +9,7 @@ use App\Models\Site;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Menyusun data P2H pada rentang tanggal yang dipilih, terstruktur dan deterministik.
@@ -29,17 +30,20 @@ class DailyP2hDigest
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->when($jenisUnit, fn ($q) => $q->where('jenis_unit', $jenisUnit));
 
+        // Entry yang ditolak approver tidak dianggap sebagai hasil P2H
+        $notRejected = fn ($q) => $q->where(fn ($q) => $q->whereNull('approval_status')->orWhere('approval_status', '!=', 'rejected'));
+
         $sessions = P2hSession::query()
             ->whereDate('tanggal', '>=', $start)
             ->whereDate('tanggal', '<=', $end)
             ->whereHas('unit', $unitScope)
-            ->whereHas('userEntries')
+            ->whereHas('userEntries', $notRejected)
             ->with([
                 'unit',
-                'userEntries' => fn ($q) => $q->orderBy('user_slot'),
+                'userEntries' => fn ($q) => $notRejected($q)->orderBy('user_slot'),
                 'userEntries.user:id,name',
-                'userEntries.findings.pic:id,name',
-                'userEntries.answers:id,p2h_user_entry_id,kondisi,item_kode_bahaya',
+                'userEntries.answers:id,p2h_user_entry_id,p2h_finding_id,kondisi,item_nama,item_kode_bahaya',
+                'userEntries.answers.finding.pic:id,name',
             ])
             ->get()
             ->sortBy(fn (P2hSession $s) => [$s->tanggal->toDateString(), $s->unit?->no_unit])
@@ -49,7 +53,18 @@ class DailyP2hDigest
 
         $units = $sessions->map(function (P2hSession $session) use ($recurrence, $end) {
             $entries = $session->userEntries;
-            $findings = $entries->flatMap->findings;
+            // Temuan diambil dari item "Tidak Layak" pada P2H hari itu — termasuk temuan
+            // gabungan yang pertama kali tercatat di hari sebelumnya dan masih dilaporkan.
+            // Item sama dari beberapa shift di hari yang sama cukup tampil sekali.
+            $findings = $entries
+                ->flatMap(fn (P2hUserEntry $e) => $e->answers->where('kondisi', 'Tidak Layak'))
+                ->map(fn ($answer) => $answer->finding)
+                ->filter()
+                ->unique('id')
+                ->reverse()
+                ->unique(fn (P2hFinding $f) => mb_strtolower(trim((string) $f->item_nama)))
+                ->reverse()
+                ->values();
             // Keputusan final unit = keputusan pada pengisian P2H terakhir hari itu
             $latest = $entries->last();
             $isBd = $latest?->kondisi_akhir === 'BD';
@@ -81,10 +96,15 @@ class DailyP2hDigest
         });
 
         // Hanya unit yang perlu segera servis (lewat / mendekati jadwal) yang masuk laporan
-        $service = collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit, $end))
-            ->whereIn('status', ['overdue', 'due_soon'])
-            ->values()
-            ->all();
+        // Prediksi servis membaca riwayat KM setahun → di-cache 10 menit
+        $service = Cache::remember(
+            "p2h_service_due:{$siteId}:{$jenisUnit}:{$end->toDateString()}",
+            now()->addMinutes(10),
+            fn () => collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit, $end))
+                ->whereIn('status', ['overdue', 'due_soon'])
+                ->values()
+                ->all(),
+        );
 
         $label = fn (CarbonInterface $d) => $d->copy()->locale('id')->translatedFormat('l, d F Y');
         $allFindings = $units->flatMap(fn ($u) => $u['findings']);
@@ -124,9 +144,7 @@ class DailyP2hDigest
             'target' => $finding->target_selesai?->toDateString(),
             'status' => $finding->status->value,
             'overdue' => $finding->isOverdue(),
-            'berulang' => (fn (int $n) => P2hFinding::isRecurringCount($n) ? $n : null)(
-                $recurrence->get($finding->unit_id.'|'.$finding->item_nama, 0)
-            ),
+            'berulang' => $finding->recurringCount($recurrence),
         ];
     }
 }

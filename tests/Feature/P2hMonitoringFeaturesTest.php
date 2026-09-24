@@ -140,7 +140,7 @@ test('the same item failing 3 times in 30 days is flagged as recurring', functio
 
     expect($findings['Rem']['berulang'])->toBe(3)
         ->and($findings['Lampu']['berulang'])->toBeNull()
-        ->and(P2hDigestFormatter::toWhatsApp($digest))->toContain('- Rem 🔁 *3x*', '🔁 = berulang dalam 30 hari');
+        ->and(P2hDigestFormatter::toWhatsApp($digest))->toContain('- Rem _(berulang 3x)_', 'berulang = item yang sama bermasalah dalam 30 hari terakhir');
 });
 
 // ── #5 Analitik BBM ──────────────────────────────────────────────────────────
@@ -279,4 +279,21 @@ test('unit analytics page renders for managers', function () {
     p2hEntry(lvUnit(), today(), km: 1000, liter: 30);
 
     $this->actingAs(monitoringManager())->get(route('unit-analytics.index'))->assertOk();
+});
+
+test('compliance only expects inspections for the days a unit was registered', function () {
+    $start = today()->subDays(9); // periode 10 hari
+    $lama = lvUnit('LV-OLD');
+    $lama->forceFill(['created_at' => today()->subMonth()])->save();
+    $baru = lvUnit('LV-NEW');
+    $baru->forceFill(['created_at' => today()->subDays(4)])->save(); // terdaftar 5 hari terakhir
+
+    p2hEntry($lama, today());
+    p2hEntry($baru, today());
+
+    $report = PeriodP2hReport::build($start, today());
+
+    expect($report['kepatuhan']['unit_aktif'])->toBe(2)
+        ->and($report['kepatuhan']['p2h_seharusnya'])->toBe(15)
+        ->and($report['kepatuhan']['p2h_masuk'])->toBe(2);
 });

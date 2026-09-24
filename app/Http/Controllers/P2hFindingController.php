@@ -28,12 +28,16 @@ class P2hFindingController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
         ]);
         $status = $filters['status'] ?? 'unresolved';
+        $user = $request->user();
+        $canManage = $user->can('manage', P2hFinding::class);
+        // Driver hanya melihat temuan yang ditugaskan kepadanya
+        $scope = fn ($q) => $q->active()->when(! $canManage, fn ($q) => $q->where('pic_user_id', $user->id));
 
         // Pastikan tidak ada item Tidak Layak yang terlewat menjadi temuan
-        P2hFinding::syncMissing();
+        P2hFinding::syncRecent();
 
         $findings = P2hFinding::query()
-            ->whereHas('entry')
+            ->where($scope)
             ->with(['unit:id,no_unit,jenis_unit,no_lambung', 'pic:id,name', 'closer:id,name', 'entry:id,kondisi_akhir,justifikasi_kondisi'])
             ->when($status === 'unresolved', fn ($q) => $q->where('status', '!=', FindingStatus::Closed->value))
             ->when($status === 'overdue', fn ($q) => $q->unresolved()->whereDate('target_selesai', '<', today()))
@@ -65,26 +69,27 @@ class P2hFindingController extends Controller
                 'target_selesai' => $f->target_selesai?->toDateString(),
                 'status' => $f->status->value,
                 'overdue' => $f->isOverdue(),
-                'berulang' => (fn (int $n) => P2hFinding::isRecurringCount($n) ? $n : null)(
-                    $recurrence->get($f->unit_id.'|'.$f->item_nama, 0)
-                ),
+                'berulang' => $f->recurringCount($recurrence),
                 'closed_at' => $f->closed_at?->format('Y-m-d H:i'),
                 'closed_by' => $f->closer?->name,
                 'catatan_penutupan' => $f->catatan_penutupan,
                 'foto_url' => $f->foto_penutupan ? route('p2h.findings.photo', $f) : null,
                 'keputusan_unit' => $f->entry?->kondisi_akhir,
                 'alasan_keputusan' => filled($f->entry?->justifikasi_kondisi) ? trim($f->entry->justifikasi_kondisi) : null,
+                'jumlah_laporan' => $f->jumlah_laporan,
+                'terakhir_dilaporkan' => $f->terakhir_dilaporkan?->toDateString(),
             ]),
             'counts' => [
-                'open' => P2hFinding::whereHas('entry')->where('status', FindingStatus::Open->value)->count(),
-                'progress' => P2hFinding::whereHas('entry')->where('status', FindingStatus::Progress->value)->count(),
-                'overdue' => P2hFinding::unresolved()->whereDate('target_selesai', '<', today())->count(),
+                'open' => P2hFinding::where($scope)->where('status', FindingStatus::Open->value)->count(),
+                'progress' => P2hFinding::where($scope)->where('status', FindingStatus::Progress->value)->count(),
+                'overdue' => P2hFinding::where($scope)->unresolved()->whereDate('target_selesai', '<', today())->count(),
             ],
-            'picOptions' => User::whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'manager', 'driver']))
-                ->orderBy('name')
-                ->get(['id', 'name']),
-            'sites' => Site::where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'picOptions' => $canManage
+                ? User::whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'manager', 'driver']))->orderBy('name')->get(['id', 'name'])
+                : [],
+            'sites' => $canManage ? Site::where('status', 'active')->orderBy('name')->get(['id', 'name']) : [],
             'filters' => ['status' => $status, 'site_id' => $filters['site_id'] ?? null, 'search' => $filters['search'] ?? null],
+            'canManage' => $canManage,
             'aiEnabled' => AiText::enabled(),
             'recurringWindowDays' => config('p2h.findings.recurring_window_days'),
         ]);
@@ -93,9 +98,16 @@ class P2hFindingController extends Controller
     public function update(UpdateP2hFindingRequest $request, P2hFinding $finding): RedirectResponse
     {
         $data = $request->safe()->except('foto_penutupan');
+
+        // PIC & target hanya diatur admin/manager; driver (PIC) mengisi progress saja
+        if (! $request->user()->can('manage', P2hFinding::class)) {
+            unset($data['pic_user_id'], $data['target_selesai']);
+        }
+
         $isClosing = $data['status'] === FindingStatus::Closed->value;
         $previousPic = $finding->pic_user_id;
-        $targetChanged = ($data['target_selesai'] ?? null) !== $finding->target_selesai?->toDateString();
+        $targetChanged = array_key_exists('target_selesai', $data)
+            && ($data['target_selesai'] ?? null) !== $finding->target_selesai?->toDateString();
         $oldPhoto = null;
 
         if ($request->hasFile('foto_penutupan')) {
@@ -134,6 +146,7 @@ class P2hFindingController extends Controller
 
     public function photo(P2hFinding $finding): StreamedResponse
     {
+        $this->authorize('view', $finding);
         abort_unless($finding->foto_penutupan, 404);
 
         return P2hFileStorage::response($finding->foto_penutupan);
@@ -141,6 +154,8 @@ class P2hFindingController extends Controller
 
     public function suggest(P2hFinding $finding): JsonResponse
     {
+        $this->authorize('update', $finding);
+
         if (! AiText::enabled()) {
             return response()->json(['message' => 'AI belum dikonfigurasi (GEMINI_API_KEY kosong).'], 422);
         }
@@ -149,6 +164,7 @@ class P2hFindingController extends Controller
 
         // Riwayat perbaikan serupa yang sudah closed sebagai referensi AI
         $history = P2hFinding::query()
+            ->active()
             ->where('item_nama', $finding->item_nama)
             ->where('status', FindingStatus::Closed->value)
             ->whereNotNull('tindakan_perbaikan')
@@ -163,7 +179,8 @@ class P2hFindingController extends Controller
                 'hasil' => $f->catatan_penutupan,
             ]);
 
-        $recurrence = P2hFinding::recurrenceCounts(today())->get($finding->unit_id.'|'.$finding->item_nama, 1);
+        $recurrence = P2hFinding::recurrenceCounts(today())
+            ->get(P2hFinding::recurrenceKey($finding->unit_id, $finding->item_nama), 1);
 
         $text = AiText::generate(new P2hRepairSuggestionAgent, json_encode([
             'jenis_unit' => $finding->unit?->jenis_unit,

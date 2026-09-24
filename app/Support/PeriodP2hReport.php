@@ -10,6 +10,7 @@ use App\Models\Unit;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Data laporan P2H periodik (mingguan/bulanan): kepatuhan, temuan, tren,
@@ -40,7 +41,6 @@ class PeriodP2hReport
         P2hFinding::syncMissing($start);
 
         // ── Kepatuhan pengisian P2H ─────────────────────────────────────────
-        $activeUnits = Unit::active()->where($unitScope)->count();
         $days = (int) $start->diffInDays(min($end, today())) + 1;
         $sessions = P2hSession::query()
             ->whereDate('tanggal', '>=', $start)
@@ -48,17 +48,39 @@ class PeriodP2hReport
             ->whereHas('unit', $unitScope)
             ->whereHas('userEntries')
             ->count();
-        $expected = $activeUnits * max($days, 0);
+        [$activeUnits, $expected] = self::expectedInspections($start, $end, $unitScope);
 
         // ── Temuan dalam periode ────────────────────────────────────────────
         $findings = P2hFinding::query()
-            ->whereHas('entry')
+            ->active()
             ->whereDate('tanggal_temuan', '>=', $start)
             ->whereDate('tanggal_temuan', '<=', $end)
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->when($jenisUnit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $jenisUnit)))
             ->with(['unit:id,no_unit,jenis_unit', 'pic:id,name'])
             ->get();
+
+        // Laporan "Tidak Layak" per unit & item (dalam hari) sepanjang periode
+        $unitIds = Unit::withTrashed()->where($unitScope)->pluck('no_unit', 'id');
+        // Kunci item dinormalkan (huruf kecil) → tampilkan kembali nama item aslinya
+        $itemNames = DB::table('p2h_checklist_answers')
+            ->where('kondisi', 'Tidak Layak')
+            ->selectRaw('LOWER(TRIM(item_nama)) as item_key, MAX(item_nama) as item_nama')
+            ->groupByRaw('LOWER(TRIM(item_nama))')
+            ->pluck('item_nama', 'item_key');
+        $occurrences = P2hFinding::occurrenceCounts($start, $end)
+            ->map(function (int $jumlah, string $key) use ($unitIds, $itemNames) {
+                [$unitId, $item] = explode('|', $key, 2);
+
+                return [
+                    'unit_id' => (int) $unitId,
+                    'no_unit' => $unitIds[$unitId] ?? null,
+                    'item' => trim($itemNames[$item] ?? $item),
+                    'jumlah' => $jumlah,
+                ];
+            })
+            ->filter(fn ($row) => $row['no_unit'] !== null)
+            ->values();
 
         $closed = $findings->where('status', FindingStatus::Closed);
         $avgClosureDays = $closed->filter(fn ($f) => $f->closed_at)
@@ -97,7 +119,7 @@ class PeriodP2hReport
                 'unit_aktif' => $activeUnits,
                 'p2h_masuk' => $sessions,
                 'p2h_seharusnya' => $expected,
-                'persen' => $expected > 0 ? round($sessions / $expected * 100, 1) : null,
+                'persen' => $expected > 0 ? min(100.0, round($sessions / $expected * 100, 1)) : null,
             ],
             'temuan' => [
                 'total' => $findings->count(),
@@ -108,8 +130,10 @@ class PeriodP2hReport
                 'rata_rata_hari_penyelesaian' => $avgClosureDays !== null ? round($avgClosureDays, 1) : null,
                 'tanpa_pic' => $findings->where('status', '!=', FindingStatus::Closed)->whereNull('pic_user_id')->count(),
             ],
-            'item_teratas' => $findings->groupBy('item_nama')
-                ->map(fn ($g, $item) => ['item' => $item, 'jumlah' => $g->count()])
+            // Frekuensi = jumlah hari item dilaporkan Tidak Layak (lintas unit) dalam periode
+            'item_teratas' => $occurrences
+                ->groupBy(fn ($row) => $row['item'])
+                ->map(fn ($g, $item) => ['item' => $item, 'jumlah' => $g->sum('jumlah')])
                 ->sortByDesc('jumlah')->take(5)->values()->all(),
             'unit_teratas' => $findings->groupBy('unit_id')
                 ->map(fn ($g) => [
@@ -119,13 +143,10 @@ class PeriodP2hReport
                     'belum_selesai' => $g->where('status', '!=', FindingStatus::Closed)->count(),
                 ])
                 ->sortByDesc('jumlah')->take(5)->values()->all(),
-            'berulang' => $findings->groupBy(fn ($f) => $f->unit_id.'|'.$f->item_nama)
-                ->filter(fn ($g) => $g->count() >= $threshold)
-                ->map(fn ($g) => [
-                    'no_unit' => $g->first()->unit?->no_unit,
-                    'item' => $g->first()->item_nama,
-                    'jumlah' => $g->count(),
-                ])
+            // Berulang dihitung per hari (beberapa shift di hari yang sama = 1 kali)
+            'berulang' => $occurrences
+                ->filter(fn ($row) => $row['jumlah'] >= $threshold)
+                ->map(fn ($row) => collect($row)->only(['no_unit', 'item', 'jumlah'])->all())
                 ->sortByDesc('jumlah')->values()->all(),
             'overdue' => $overdueNow,
             'bbm' => [
@@ -140,6 +161,53 @@ class PeriodP2hReport
             'servis' => collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit))
                 ->whereIn('status', ['overdue', 'due_soon'])->values()->all(),
         ];
+    }
+
+    /**
+     * Jumlah P2H yang seharusnya masuk = total hari-unit, dihitung per unit sesuai
+     * masa unit itu benar-benar terdaftar dalam periode (tanggal dibuat s/d dihapus),
+     * sehingga unit baru / unit yang dihapus di tengah periode tidak membuat
+     * persentase periode lampau meleset.
+     *
+     * - Unit yang saat ini aktif: dihitung sejak terdaftar sampai akhir periode.
+     * - Unit yang sekarang nonaktif/dihapus tetapi sempat P2H di periode ini:
+     *   dihitung sampai tanggal dihapus, atau sampai P2H terakhirnya bila tidak diketahui
+     *   kapan dinonaktifkan.
+     *
+     * @return array{0: int, 1: int} [jumlah unit, jumlah P2H seharusnya]
+     */
+    private static function expectedInspections(CarbonInterface $start, CarbonInterface $end, \Closure $unitScope): array
+    {
+        $periodEnd = min($end, today())->copy()->startOfDay();
+
+        $activeIds = Unit::active()->where($unitScope)->pluck('id');
+        $lastSessionByUnit = P2hSession::query()
+            ->whereDate('tanggal', '>=', $start)
+            ->whereDate('tanggal', '<=', $periodEnd)
+            ->whereHas('userEntries')
+            ->selectRaw('unit_id, MAX(tanggal) as terakhir')
+            ->groupBy('unit_id')
+            ->pluck('terakhir', 'unit_id');
+
+        $units = Unit::withTrashed()
+            ->where($unitScope)
+            ->where(fn ($q) => $q->whereIn('id', $activeIds)->orWhereIn('id', $lastSessionByUnit->keys()))
+            ->get(['id', 'created_at', 'deleted_at']);
+
+        $expected = $units->sum(function (Unit $unit) use ($start, $periodEnd, $activeIds, $lastSessionByUnit) {
+            $from = max($start->copy()->startOfDay(), $unit->created_at?->copy()->startOfDay() ?? $start->copy()->startOfDay());
+            $until = $periodEnd->copy();
+
+            if ($unit->deleted_at) {
+                $until = min($until, $unit->deleted_at->copy()->startOfDay()->subDay());
+            } elseif (! $activeIds->contains($unit->id)) {
+                $until = min($until, Carbon::parse($lastSessionByUnit[$unit->id])->startOfDay());
+            }
+
+            return $until->gte($from) ? (int) $from->diffInDays($until) + 1 : 0;
+        });
+
+        return [$units->count(), (int) $expected];
     }
 
     public static function toWhatsApp(array $r, ?string $analysis = null): string
