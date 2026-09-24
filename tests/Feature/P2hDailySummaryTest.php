@@ -119,7 +119,7 @@ test('digest over a date range includes every P2H in the range grouped by date',
         ->and($digest['units'][0]['tanggal'])->toBe(today()->subDays(2)->toDateString());
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('🗓️ _'.today()->subDays(2)->locale('id')->translatedFormat('l, d F Y').'_')
+        ->toContain('🗓️ *'.today()->subDays(2)->locale('id')->translatedFormat('l, d M Y').'*')
         ->not->toContain(today()->subDays(10)->locale('id')->translatedFormat('d F Y'));
 });
 
@@ -135,7 +135,7 @@ test('digest can be filtered by unit type', function () {
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today(), today(), null, 'Bus'));
 
-    expect($text)->toContain('BUS-11', '🚙 Bus')->not->toContain('LV-11');
+    expect($text)->toContain('BUS-11', 'Bus · ')->not->toContain('LV-11');
 });
 
 test('admin can view the daily summary page', function () {
@@ -160,14 +160,29 @@ test('driver cannot access the daily summary or update findings', function () {
 
 test('AI summary returns the agent text when configured', function () {
     config(['ai.providers.gemini.key' => 'test-key', 'p2h.ai_summary.enabled' => true]);
-    P2hDailySummaryAgent::fake(['*LAPORAN AI*']);
+    p2hWithFinding(Unit::create(['no_unit' => 'LV-21', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']));
+    // AI hanya merapikan bahasa: susunan baris sama, teks bebas diperbaiki
+    P2hDailySummaryAgent::fake(fn (string $prompt) => str_replace('Kampas tipis', 'Kampas rem menipis', $prompt));
 
     $this->actingAs(summaryAdmin())
         ->postJson(route('p2h.daily-summary.ai'), ['start' => today()->toDateString(), 'end' => today()->toDateString()])
         ->assertOk()
-        ->assertJson(['text' => '*LAPORAN AI*', 'fallback' => false]);
+        ->assertJson(['fallback' => false])
+        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem: Kampas rem menipis'));
 
-    P2hDailySummaryAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, today()->toDateString()));
+    P2hDailySummaryAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, '*DAILY REPORT P2H*'));
+});
+
+test('AI output that changes the report structure falls back to the template', function () {
+    config(['ai.providers.gemini.key' => 'test-key', 'p2h.ai_summary.enabled' => true]);
+    p2hWithFinding(Unit::create(['no_unit' => 'LV-22', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']));
+    P2hDailySummaryAgent::fake(['*LAPORAN VERSI AI YANG MENGUBAH SUSUNAN*']);
+
+    $this->actingAs(summaryAdmin())
+        ->postJson(route('p2h.daily-summary.ai'))
+        ->assertOk()
+        ->assertJson(['fallback' => true])
+        ->assertJsonPath('text', fn (string $text) => str_contains($text, 'LV-22'));
 });
 
 test('AI summary falls back to the template when the provider fails', function () {

@@ -37,11 +37,17 @@ class P2hDailySummaryController extends Controller
         [$start, $end, $siteId, $jenisUnit] = $this->filters($request);
         $digest = DailyP2hDigest::build($start, $end, $siteId, $jenisUnit);
 
-        // Laporan tidak memuat ringkasan statistik, jadi stats tidak dikirim ke AI
-        $payload = json_encode(collect($digest)->except('stats')->all(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        $text = AiText::generate(new P2hDailySummaryAgent, "Susun Daily Report P2H dari data berikut:\n".$payload);
+        $template = P2hDigestFormatter::toWhatsApp($digest);
 
-        return self::aiResponse($text, P2hDigestFormatter::toWhatsApp($digest));
+        // AI hanya merapikan bahasa template; susunan laporan tetap dari template
+        $text = AiText::generate(new P2hDailySummaryAgent, $template);
+
+        // Hasil yang mengubah susunan baris dianggap tidak valid → pakai template
+        if ($text !== null && substr_count(trim($text), "\n") !== substr_count($template, "\n")) {
+            $text = null;
+        }
+
+        return self::aiResponse($text, $template);
     }
 
     /** Respons standar tombol "Rapikan dengan AI": hasil AI, atau template bila AI tidak tersedia. */

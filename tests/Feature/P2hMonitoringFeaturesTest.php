@@ -140,7 +140,7 @@ test('the same item failing 3 times in 30 days is flagged as recurring', functio
 
     expect($findings['Rem']['berulang'])->toBe(3)
         ->and($findings['Lampu']['berulang'])->toBeNull()
-        ->and(P2hDigestFormatter::toWhatsApp($digest))->toContain('1. Rem 🔁3x', '🔁 = berulang dalam 30 hari');
+        ->and(P2hDigestFormatter::toWhatsApp($digest))->toContain('- Rem _(berulang 3x)_');
 });
 
 // ── #5 Analitik BBM ──────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ test('service forecast marks units due soon or overdue from the last periodic se
         ->and($forecast['LV-NEW']['status'])->toBe('unknown');
 
     expect(P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today())))
-        ->toContain('JADWAL SERVIS BERKALA', 'LV-SOON', 'LV-LATE')
+        ->toContain('SERVIS BERKALA', 'LV-SOON', 'LV-LATE')
         ->not->toContain('LV-NEW');
 });
 
