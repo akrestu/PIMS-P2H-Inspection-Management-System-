@@ -18,6 +18,7 @@ use App\Http\Controllers\P2hSessionController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\UnitAnalyticsController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UnitDailyMonitoringController;
 use App\Http\Controllers\UnitDowntimeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -80,6 +81,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('p2h.period-report.ai');
         Route::get('/p2h/period-report/pdf', [P2hPeriodReportController::class, 'pdf'])->name('p2h.period-report.pdf');
         Route::get('/unit-analytics', [UnitAnalyticsController::class, 'index'])->name('unit-analytics.index');
+        Route::get('/unit-monitoring', [UnitDailyMonitoringController::class, 'index'])->name('unit-monitoring.index');
+        Route::get('/unit-monitoring/excel', [UnitDailyMonitoringController::class, 'excel'])
+            ->middleware('throttle:10,1')
+            ->name('unit-monitoring.excel');
     });
 
     // Temuan P2H — driver hanya temuan yang ditugaskan kepadanya (P2hFindingPolicy)

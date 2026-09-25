@@ -3,6 +3,7 @@ import {
     Activity,
     Bell,
     CalendarCheck,
+    CalendarDays,
     Car,
     ClipboardCheck,
     ClipboardList,
@@ -82,6 +83,11 @@ export function AppSidebar() {
                               title: 'Monitoring P2H',
                               href: '/p2h-compliance',
                               icon: CalendarCheck,
+                          },
+                          {
+                              title: 'Monitoring Harian Unit',
+                              href: '/unit-monitoring',
+                              icon: CalendarDays,
                           },
                           {
                               title: 'Daily Report P2H',
