@@ -17,7 +17,12 @@ class P2hSessionPolicy
             return false;
         }
 
-        // Driver hanya bisa lihat jika pernah mengisi atau menjadi PIC approver salah satu entry
+        // Approval/User LV 2 boleh melihat P2H unit yang ada di matrix monitoring-nya
+        if ($user->canMonitorUnit($session->unit)) {
+            return true;
+        }
+
+        // Driver lain hanya bisa lihat jika pernah mengisi atau menjadi PIC approver salah satu entry
         // Kondisi OR wajib dikelompokkan agar tetap terikat ke sesi ini
         return $session->userEntries()
             ->where(fn ($q) => $q->where('user_id', $user->id)

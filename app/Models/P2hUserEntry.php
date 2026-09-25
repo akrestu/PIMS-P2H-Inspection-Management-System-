@@ -91,6 +91,21 @@ class P2hUserEntry extends Model
         return $this->approval_status === null || $this->approval_status === 'approved';
     }
 
+    /**
+     * Entry dalam satu sesi yang boleh dilihat user: admin/manager & pemantau unit
+     * (Approval/User LV 2 departemennya) melihat semua; lainnya hanya milik sendiri
+     * atau yang ia menjadi PIC-nya.
+     */
+    public function scopeVisibleTo(Builder $query, User $user, bool $monitorsUnit = false): Builder
+    {
+        if ($user->isPrivileged() || $monitorsUnit) {
+            return $query;
+        }
+
+        return $query->where(fn (Builder $q) => $q->where('user_id', $user->id)
+            ->orWhere('pic_approver_id', $user->id));
+    }
+
     /** Entry yang tidak ditolak approver (sah atau masih menunggu approval). */
     public function scopeNotRejected(Builder $query): Builder
     {

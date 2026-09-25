@@ -15,13 +15,8 @@ class P2hExportController extends Controller
         $this->authorize('view', $session);
 
         $user = request()->user();
-        $entryScope = function ($query) use ($user) {
-            if ($user->isStaffOnly()) {
-                $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('pic_approver_id', $user->id));
-            } elseif (! $user->isPrivileged()) {
-                $query->where('user_id', $user->id);
-            }
-        };
+        $monitorsUnit = $user->canMonitorUnit($session->unit);
+        $entryScope = fn ($query) => $query->visibleTo($user, $monitorsUnit);
 
         $session->load([
             'unit',

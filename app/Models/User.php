@@ -121,6 +121,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Driver Approval/User LV 2 boleh melihat seluruh P2H unit yang ia pantau
+     * (unit yang sama dengan matrix Monitoring P2H/PA — Unit::monitorableBy).
+     */
+    public function canMonitorUnit(?Unit $unit): bool
+    {
+        return $unit !== null
+            && $this->hasRole('driver')
+            && $this->isStaff()
+            && Unit::withTrashed()->whereKey($unit->id)->monitorableBy($this)->exists();
+    }
+
+    /**
      * User adalah Approval/User LV 2 murni (bukan admin/manager).
      * Dipakai untuk membatasi scope data yang bisa dilihat (hanya dept sendiri).
      */

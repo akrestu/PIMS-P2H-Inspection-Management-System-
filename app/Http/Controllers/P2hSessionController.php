@@ -475,14 +475,9 @@ class P2hSessionController extends Controller
     {
         $this->authorize('view', $session);
 
-        $entryScope = function ($query) use ($request) {
-            $user = $request->user();
-            if ($user->isStaffOnly()) {
-                $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('pic_approver_id', $user->id));
-            } elseif (! $user->isPrivileged()) {
-                $query->where('user_id', $user->id);
-            }
-        };
+        $user = $request->user();
+        $monitorsUnit = $user->canMonitorUnit($session->unit);
+        $entryScope = fn ($query) => $query->visibleTo($user, $monitorsUnit);
 
         $session->load([
             'unit',

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\LvP2hApprovalRequest;
 use App\Policies\P2hSessionPolicy;
 use App\Support\PendingApprovalCache;
+use App\Support\SignatureImage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
@@ -60,6 +61,8 @@ test('pic of one session cannot view an unrelated session', function () {
     $pic = approvalDriver(User::JABATAN_APPROVAL);
     $ownEntry = pendingLvEntry(approvalDriver(User::JABATAN_USER_LV1), $pic);
     $otherEntry = pendingLvEntry(approvalDriver(User::JABATAN_USER_LV1), approvalDriver(User::JABATAN_APPROVAL));
+    // Unit departemen lain: tidak terjangkau lewat hak pemantauan departemen
+    $otherEntry->session->unit->update(['department' => 'HR']);
 
     $policy = new P2hSessionPolicy;
 
@@ -254,4 +257,41 @@ test('only admins may bulk approve', function () {
         ->assertInertia(fn ($page) => $page->where('bulkApprovable', null));
 
     expect($entry->fresh()->approval_status)->toBe('pending');
+});
+
+test('monitoring staff can open p2h details of units in their department only', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+
+    $approver = approvalDriver(User::JABATAN_APPROVAL);
+    $lv2 = approvalDriver(User::JABATAN_USER_LV2);
+    $driver = approvalDriver(User::JABATAN_USER_LV1);
+
+    // P2H departemen sendiri, diisi & di-PIC-kan orang lain
+    $ownDept = pendingLvEntry($driver, approvalDriver(User::JABATAN_APPROVAL), [
+        'paraf_url' => SignatureImage::store(workflowSignature()),
+    ]);
+
+    $otherUnit = Unit::create(['no_unit' => 'LV-HR-1', 'jenis_unit' => 'Light Vehicle', 'department' => 'HR', 'status' => 'active']);
+    $otherSession = P2hSession::create(['unit_id' => $otherUnit->id, 'tanggal' => today(), 'status' => 'open', 'created_by' => $driver->id]);
+
+    foreach ([$approver, $lv2] as $viewer) {
+        $this->actingAs($viewer)
+            ->get(route('p2h.show', $ownDept->session))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('session.user_entries', 1));
+
+        $this->actingAs($viewer)
+            ->get(route('p2h.signature', [$ownDept, 'submitter']))
+            ->assertOk();
+
+        $this->actingAs($viewer)
+            ->get(route('p2h.show', $otherSession))
+            ->assertForbidden();
+    }
+
+    // Driver User LV 1 tetap tidak bisa melihat P2H orang lain
+    $this->actingAs(approvalDriver(User::JABATAN_USER_LV1))
+        ->get(route('p2h.show', $ownDept->session))
+        ->assertForbidden();
 });

@@ -37,6 +37,9 @@ class P2hFileController extends Controller
     {
         return $user->isPrivileged()
             || ($user->hasRole('driver')
-                && ($entry->user_id === $user->id || $entry->pic_approver_id === $user->id));
+                && ($entry->user_id === $user->id
+                    || $entry->pic_approver_id === $user->id
+                    // Pemantau unit (Approval/User LV 2) melihat tanda tangan & lampiran P2H unitnya
+                    || $user->canMonitorUnit($entry->session?->unit)));
     }
 }
