@@ -135,6 +135,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin only
     Route::middleware(['role:admin'])->group(function () {
+        // Approve massal P2H LV yang menumpuk karena PIC tidak merespons
+        Route::post('/p2h/approvals/bulk-approve', [P2hApprovalController::class, 'bulkApprove'])
+            ->middleware('throttle:5,1')
+            ->name('p2h.approvals.bulk-approve');
         Route::delete('/p2h/{session}', [P2hSessionController::class, 'destroy'])->name('p2h.destroy');
         Route::delete('/p2h/{session}/entries/{entry}', [P2hSessionController::class, 'destroyEntry'])->name('p2h.entries.destroy');
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');

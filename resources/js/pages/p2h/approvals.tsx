@@ -8,6 +8,7 @@ import {
     ClipboardCheck,
     ClipboardList,
     Clock,
+    ListChecks,
     Gauge,
     Loader2,
     MapPin,
@@ -115,6 +116,8 @@ interface Props {
     filters: { status?: string };
     canSeeAllDept: boolean;
     stats: { pending: number; approved_today: number; rejected_today: number };
+    /** Jumlah pending yang bisa di-approve massal; null bila bukan admin. */
+    bulkApprovable: number | null;
 }
 
 /* ─────────────────── Constants ─────────────────────────────── */
@@ -778,6 +781,171 @@ function ReviewApproveSheet({
     );
 }
 
+/* ─────────────── Bulk Approve Dialog (admin) ───────────────── */
+function BulkApproveDialog({
+    open,
+    onClose,
+    approvable,
+    pending,
+}: {
+    open: boolean;
+    onClose: () => void;
+    approvable: number;
+    pending: number;
+}) {
+    const [catatan, setCatatan] = useState('');
+    const [sigEmpty, setSigEmpty] = useState(true);
+    const [processing, setProcessing] = useState(false);
+    const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
+    const skipped = Math.max(0, pending - approvable);
+
+    const reset = () => {
+        setCatatan('');
+        setSigEmpty(true);
+        sigPadRef.current?.clear();
+    };
+
+    const submit = () => {
+        if (sigEmpty || sigPadRef.current?.isEmpty()) {
+            toast.error('Tanda tangan wajib dibuat sebelum menyetujui.');
+
+            return;
+        }
+
+        const signature = sigPadRef.current?.toDataURL('image/png') ?? '';
+
+        if (signature.length > 2 * 1024 * 1024) {
+            toast.error(
+                'Ukuran tanda tangan terlalu besar. Coba ulangi tanda tangan.',
+            );
+
+            return;
+        }
+
+        setProcessing(true);
+        router.post(
+            '/p2h/approvals/bulk-approve',
+            { signature, catatan: catatan.trim() || null },
+            {
+                onFinish: () => {
+                    setProcessing(false);
+                    reset();
+                    onClose();
+                },
+            },
+        );
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(o) => {
+                if (!o && !processing) {
+                    onClose();
+                }
+            }}
+        >
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                        <ListChecks className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <DialogTitle className="text-center">
+                        Setujui {approvable} P2H sekaligus?
+                    </DialogTitle>
+                    <DialogDescription className="text-center">
+                        Semua P2H LV yang menunggu akan disetujui atas nama Anda
+                        dengan satu tanda tangan. Driver akan menerima
+                        notifikasi persetujuan.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {skipped > 0 && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span>
+                            {skipped} P2H tidak ikut disetujui karena memiliki
+                            item Critical (AA) Tidak Layak atau milik Anda
+                            sendiri. Review satu per satu.
+                        </span>
+                    </div>
+                )}
+
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                        Catatan (opsional)
+                    </Label>
+                    <Textarea
+                        value={catatan}
+                        onChange={(e) => setCatatan(e.target.value)}
+                        placeholder="Default: Disetujui massal oleh admin (PIC tidak merespons)."
+                        className="min-h-[64px] resize-none"
+                        maxLength={500}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                        Tanda Tangan Persetujuan{' '}
+                        <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="overflow-hidden rounded-xl border-2 border-dashed border-primary/40 bg-white dark:bg-zinc-900">
+                        <ReactSignatureCanvas
+                            ref={sigPadRef}
+                            penColor="#1d4ed8"
+                            canvasProps={{
+                                className: 'w-full',
+                                style: { height: 140, touchAction: 'none' },
+                            }}
+                            onEnd={() => setSigEmpty(false)}
+                        />
+                    </div>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        onClick={() => {
+                            sigPadRef.current?.clear();
+                            setSigEmpty(true);
+                        }}
+                    >
+                        Hapus Tanda Tangan
+                    </Button>
+                </div>
+
+                <DialogFooter className="gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        className="flex-1"
+                        disabled={processing}
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        onClick={submit}
+                        disabled={sigEmpty || processing}
+                        className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
+                        {processing ? (
+                            <>
+                                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                                Menyetujui…
+                            </>
+                        ) : (
+                            <>
+                                <ShieldCheck className="mr-1.5 h-4 w-4" />
+                                Setujui {approvable} P2H
+                            </>
+                        )}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 /* ──────────────── Entry Card ────────────────────────────────── */
 function EntryCard({
     entry,
@@ -970,8 +1138,10 @@ export default function P2hApprovals({
     filters,
     canSeeAllDept,
     stats,
+    bulkApprovable,
 }: Props) {
     const [rejectEntry, setRejectEntry] = useState<ApprovalEntry | null>(null);
+    const [bulkOpen, setBulkOpen] = useState(false);
     const [reviewEntry, setReviewEntry] = useState<ApprovalEntry | null>(null);
     const [reviewOpen, setReviewOpen] = useState(false);
 
@@ -1035,6 +1205,18 @@ export default function P2hApprovals({
                             </p>
                         </div>
                     </div>
+                    {/* Approve massal — khusus admin */}
+                    {bulkApprovable !== null &&
+                        activeStatus === 'pending' &&
+                        bulkApprovable > 0 && (
+                            <Button
+                                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                                onClick={() => setBulkOpen(true)}
+                            >
+                                <ListChecks className="mr-1.5 h-4 w-4" />
+                                Setujui Semua ({bulkApprovable})
+                            </Button>
+                        )}
                 </div>
 
                 {/* ── Stats summary ── */}
@@ -1175,6 +1357,15 @@ export default function P2hApprovals({
                 open={!!rejectEntry}
                 onClose={() => setRejectEntry(null)}
             />
+
+            {bulkApprovable !== null && (
+                <BulkApproveDialog
+                    open={bulkOpen}
+                    onClose={() => setBulkOpen(false)}
+                    approvable={bulkApprovable}
+                    pending={stats.pending}
+                />
+            )}
         </>
     );
 }

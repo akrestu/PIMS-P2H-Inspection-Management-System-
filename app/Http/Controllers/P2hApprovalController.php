@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\P2hUserEntry;
+use App\Models\User;
 use App\Notifications\LvP2hApprovalResult;
 use App\Rules\ValidSignatureDataUrl;
 use App\Support\HistoricalInspectionItems;
 use App\Support\P2hFileStorage;
 use App\Support\PendingApprovalCache;
 use App\Support\SignatureImage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,6 +101,8 @@ class P2hApprovalController extends Controller
             'filters' => $request->only(['status']),
             'canSeeAllDept' => $user->isPrivileged(),
             'stats' => $stats,
+            // Approve massal khusus admin: jumlah pending yang bisa ikut disetujui sekaligus
+            'bulkApprovable' => $user->hasRole('admin') ? $this->bulkApprovableQuery($user)->count() : null,
         ]);
     }
 
@@ -190,68 +194,64 @@ class P2hApprovalController extends Controller
             'catatan' => 'nullable|string|max:500',
         ]);
 
-        $approverSignatureUrl = SignatureImage::store($request->string('signature')->toString(), 'approver_');
-
-        $catatan = $request->catatan ?: null;
-
-        try {
-            $updated = DB::transaction(function () use ($entry, $user, $approverSignatureUrl, $catatan) {
-                // lockForUpdate mencegah race condition double-approval
-                $fresh = P2hUserEntry::lockForUpdate()->find($entry->id);
-
-                if (! $fresh || $fresh->approval_status !== 'pending') {
-                    return false;
-                }
-
-                $fresh->update([
-                    'approval_status' => 'approved',
-                    'approver_id' => $user->id,
-                    'approved_at' => now(),
-                    'approver_signature_url' => $approverSignatureUrl,
-                    'catatan_approval' => $catatan,
-                ]);
-
-                $fresh->session->recomputeBestComplianceScore();
-
-                return true;
-            });
-        } catch (\Throwable $exception) {
-            P2hFileStorage::delete($approverSignatureUrl);
-
-            throw $exception;
-        }
+        $updated = $this->approveEntry($entry, $user, $request->string('signature')->toString(), $request->catatan ?: null);
 
         if (! $updated) {
-            P2hFileStorage::delete($approverSignatureUrl);
-
             return redirect()->route('p2h.approvals')
                 ->with('error', 'Entry ini sudah diproses oleh user lain.');
         }
-
-        $entry->refresh();
-        $entry->load(['session.unit', 'user']);
-        try {
-            $entry->user?->notify(new LvP2hApprovalResult(
-                session: $entry->session,
-                entry: $entry,
-                approver: $user,
-                status: 'approved',
-            ));
-        } catch (\Throwable $exception) {
-            Log::warning('Notifikasi hasil approval P2H gagal dikirim.', [
-                'entry_id' => $entry->id,
-                'error' => $exception->getMessage(),
-            ]);
-        }
-        cache()->forget("recent_notifications_user_{$entry->user_id}");
-
-        $this->markEntryNotificationsRead($entry);
-        PendingApprovalCache::forgetFor($entry);
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'P2H disetujui',
             'description' => "P2H unit {$entry->session->unit?->no_unit} oleh {$entry->user?->name} telah diverifikasi dan ditandatangani.",
+        ]);
+
+        return redirect()->route('p2h.approvals');
+    }
+
+    /**
+     * Approve massal oleh admin untuk P2H LV yang menumpuk karena PIC tidak merespons.
+     * Entry dengan item Critical (AA) Tidak Layak dan P2H milik admin sendiri dilewati:
+     * keduanya tetap wajib direview satu per satu.
+     */
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasRole('admin'), 403);
+
+        $request->validate([
+            'signature' => ['required', new ValidSignatureDataUrl],
+            'catatan' => 'nullable|string|max:500',
+        ]);
+
+        $signature = $request->string('signature')->toString();
+        $catatan = $request->catatan ?: 'Disetujui massal oleh admin (PIC tidak merespons).';
+        $pendingBefore = $this->lvPendingQuery()->count();
+        $approved = 0;
+
+        // chunkById aman walau approval_status berubah: paginasi berdasarkan id
+        $this->bulkApprovableQuery($user)->chunkById(100, function ($entries) use ($user, $signature, $catatan, &$approved) {
+            foreach ($entries as $entry) {
+                if ($this->approveEntry($entry, $user, $signature, $catatan)) {
+                    $approved++;
+                }
+            }
+        });
+
+        $skipped = max(0, $pendingBefore - $approved);
+
+        activity('p2h')
+            ->causedBy($user)
+            ->withProperties(['approved' => $approved, 'skipped' => $skipped, 'catatan' => $catatan])
+            ->log("Approve massal {$approved} P2H LV");
+
+        Inertia::flash('toast', [
+            'type' => $approved > 0 ? 'success' : 'warning',
+            'message' => $approved > 0 ? "{$approved} P2H disetujui" : 'Tidak ada P2H yang disetujui',
+            'description' => $skipped > 0
+                ? "{$skipped} P2H dilewati (item Critical AA / milik sendiri) dan perlu direview satu per satu."
+                : 'Semua P2H LV yang menunggu telah disetujui.',
         ]);
 
         return redirect()->route('p2h.approvals');
@@ -326,6 +326,89 @@ class P2hApprovalController extends Controller
         ]);
 
         return redirect()->route('p2h.approvals');
+    }
+
+    /** P2H LV yang masih menunggu approval. */
+    private function lvPendingQuery(): Builder
+    {
+        return P2hUserEntry::query()
+            ->where('approval_status', 'pending')
+            ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'));
+    }
+
+    /** Entry pending yang boleh ikut approve massal: tanpa Critical (AA) TL & bukan milik sendiri. */
+    private function bulkApprovableQuery(User $user): Builder
+    {
+        return $this->lvPendingQuery()
+            ->where('user_id', '!=', $user->id)
+            ->whereDoesntHave('answers', fn ($q) => $q
+                ->where('kondisi', 'Tidak Layak')
+                ->where('item_kode_bahaya', 'AA'));
+    }
+
+    /**
+     * Setujui satu entry (dipakai approve satuan & massal). Mengembalikan false bila
+     * entry sudah diproses user lain. Tanda tangan disimpan per entry agar file
+     * setiap entry berdiri sendiri (aman saat entry/unit lain dihapus permanen).
+     */
+    private function approveEntry(P2hUserEntry $entry, User $user, string $signature, ?string $catatan): bool
+    {
+        $approverSignatureUrl = SignatureImage::store($signature, 'approver_');
+
+        try {
+            $updated = DB::transaction(function () use ($entry, $user, $approverSignatureUrl, $catatan) {
+                // lockForUpdate mencegah race condition double-approval
+                $fresh = P2hUserEntry::lockForUpdate()->find($entry->id);
+
+                if (! $fresh || $fresh->approval_status !== 'pending') {
+                    return false;
+                }
+
+                $fresh->update([
+                    'approval_status' => 'approved',
+                    'approver_id' => $user->id,
+                    'approved_at' => now(),
+                    'approver_signature_url' => $approverSignatureUrl,
+                    'catatan_approval' => $catatan,
+                ]);
+
+                $fresh->session->recomputeBestComplianceScore();
+
+                return true;
+            });
+        } catch (\Throwable $exception) {
+            P2hFileStorage::delete($approverSignatureUrl);
+
+            throw $exception;
+        }
+
+        if (! $updated) {
+            P2hFileStorage::delete($approverSignatureUrl);
+
+            return false;
+        }
+
+        $entry->refresh();
+        $entry->load(['session.unit', 'user']);
+        try {
+            $entry->user?->notify(new LvP2hApprovalResult(
+                session: $entry->session,
+                entry: $entry,
+                approver: $user,
+                status: 'approved',
+            ));
+        } catch (\Throwable $exception) {
+            Log::warning('Notifikasi hasil approval P2H gagal dikirim.', [
+                'entry_id' => $entry->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
+        cache()->forget("recent_notifications_user_{$entry->user_id}");
+
+        $this->markEntryNotificationsRead($entry);
+        PendingApprovalCache::forgetFor($entry);
+
+        return true;
     }
 
     /**

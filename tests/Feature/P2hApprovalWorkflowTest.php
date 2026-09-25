@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\P2hChecklistAnswer;
+use App\Models\P2hInspectionItem;
 use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Unit;
@@ -8,6 +10,7 @@ use App\Notifications\LvP2hApprovalRequest;
 use App\Policies\P2hSessionPolicy;
 use App\Support\PendingApprovalCache;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -194,4 +197,61 @@ test('jabatan is required for every user including admins', function () {
             'department' => 'Operasional',
         ])
         ->assertSessionHasErrors('jabatan');
+});
+
+test('admin can bulk approve pending lv entries except critical ones and their own', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $pic = approvalDriver(User::JABATAN_APPROVAL);
+
+    $normalA = pendingLvEntry(approvalDriver(User::JABATAN_USER_LV1), $pic);
+    $normalB = pendingLvEntry(approvalDriver(User::JABATAN_USER_LV2), $pic);
+    $critical = pendingLvEntry(approvalDriver(User::JABATAN_USER_LV1), $pic);
+    $own = pendingLvEntry($admin, $pic);
+
+    $item = P2hInspectionItem::create(['nama_item' => 'APAR', 'section' => 'A', 'kode_bahaya' => 'AA', 'urutan' => 1, 'is_active' => true]);
+    P2hChecklistAnswer::create([
+        'p2h_user_entry_id' => $critical->id, 'inspection_item_id' => $item->id, 'kondisi' => 'Tidak Layak',
+        'keterangan' => 'Kosong', 'item_nama' => 'APAR', 'item_section' => 'A', 'item_kode_bahaya' => 'AA', 'item_urutan' => 1,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('p2h.approvals'))
+        ->assertInertia(fn ($page) => $page->where('bulkApprovable', 2));
+
+    $this->actingAs($admin)
+        ->post(route('p2h.approvals.bulk-approve'), ['signature' => workflowSignature()])
+        ->assertRedirect(route('p2h.approvals'));
+
+    expect($normalA->fresh()->approval_status)->toBe('approved')
+        ->and($normalB->fresh()->approval_status)->toBe('approved')
+        ->and($normalA->fresh()->approver_id)->toBe($admin->id)
+        ->and($normalA->fresh()->catatan_approval)->toContain('massal')
+        // Setiap entry punya file tanda tangan sendiri
+        ->and($normalA->fresh()->approver_signature_url)->not->toBe($normalB->fresh()->approver_signature_url)
+        ->and($critical->fresh()->approval_status)->toBe('pending')
+        ->and($own->fresh()->approval_status)->toBe('pending')
+        ->and($normalA->user->notifications()->where('data->type', 'lv_approval_result')->count())->toBe(1);
+});
+
+test('only admins may bulk approve', function () {
+    $manager = User::factory()->create();
+    $manager->assignRole('manager');
+    $approver = approvalDriver(User::JABATAN_APPROVAL);
+    $entry = pendingLvEntry(approvalDriver(User::JABATAN_USER_LV1), $approver);
+
+    foreach ([$manager, $approver] as $user) {
+        $this->actingAs($user)
+            ->post(route('p2h.approvals.bulk-approve'), ['signature' => workflowSignature()])
+            ->assertForbidden();
+    }
+
+    $this->actingAs($approver)
+        ->get(route('p2h.approvals'))
+        ->assertInertia(fn ($page) => $page->where('bulkApprovable', null));
+
+    expect($entry->fresh()->approval_status)->toBe('pending');
 });
