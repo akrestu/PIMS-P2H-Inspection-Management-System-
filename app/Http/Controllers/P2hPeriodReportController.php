@@ -10,6 +10,7 @@ use App\Support\PeriodP2hReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -66,6 +67,10 @@ class P2hPeriodReportController extends Controller
 
         $period = $validated['period'] ?? 'this_week';
         [$start, $end] = PeriodP2hReport::resolvePeriod($period, $validated['start'] ?? null, $validated['end'] ?? null);
+
+        if ($start->diffInDays($end) > 365) {
+            throw ValidationException::withMessages(['end' => 'Rentang Periodic Report maksimal 1 tahun.']);
+        }
         $siteId = isset($validated['site_id']) ? (int) $validated['site_id'] : null;
         $jenisUnit = $validated['jenis_unit'] ?? null;
 

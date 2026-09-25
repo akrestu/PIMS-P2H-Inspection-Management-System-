@@ -63,6 +63,7 @@ interface ApprovalEntry {
     score: number;
     tl_count: number;
     has_critical: boolean;
+    escalated: boolean;
 }
 
 interface ChecklistAnswerDetail {
@@ -798,6 +799,14 @@ function EntryCard({
                 <div className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     Ada item Critical (AA) Tidak Layak — perlu perhatian khusus
+                </div>
+            )}
+
+            {/* Escalation banner */}
+            {entry.escalated && entry.approval_status === 'pending' && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400">
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    Dieskalasi ke admin — PIC belum merespons sampai akhir shift
                 </div>
             )}
 

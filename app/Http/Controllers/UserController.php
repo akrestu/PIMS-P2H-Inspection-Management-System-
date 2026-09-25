@@ -66,7 +66,7 @@ class UserController extends Controller
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->whereNotNull('email')],
             'password' => ['required', Password::defaults()],
             'role' => 'required|in:admin,manager,driver',
-            'jabatan' => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
+            'jabatan' => ['required', Rule::in(User::JABATANS)],
             'department' => 'required_unless:role,admin|nullable|string|max:255',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
             'site_id' => ['nullable', 'integer', Rule::exists('sites', 'id')->where('status', 'active')->whereNull('deleted_at')],
@@ -94,7 +94,7 @@ class UserController extends Controller
                 'nik' => $validated['nik'],
                 'email' => $validated['email'] ?? null,
                 'password' => Hash::make($validated['password']),
-                'jabatan' => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
+                'jabatan' => $validated['jabatan'],
                 'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
                 'jenis_unit' => $validated['jenis_unit'] ?? null,
                 'site_id' => $validated['site_id'] ?? null,
@@ -134,7 +134,7 @@ class UserController extends Controller
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)->whereNotNull('email')],
             'role' => 'required|in:admin,manager,driver',
             'password' => ['nullable', Password::defaults()],
-            'jabatan' => 'required_unless:role,admin|nullable|in:Sr.Staff,Staff,Non Staff',
+            'jabatan' => ['required', Rule::in(User::JABATANS)],
             'department' => 'required_unless:role,admin|nullable|string|max:255',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
             'site_id' => ['nullable', 'integer', Rule::exists('sites', 'id')->where('status', 'active')->whereNull('deleted_at')],
@@ -166,7 +166,7 @@ class UserController extends Controller
                 'name' => $validated['name'],
                 'nik' => $validated['nik'],
                 'email' => $validated['email'] ?? null,
-                'jabatan' => $validated['role'] !== 'admin' ? ($validated['jabatan'] ?? null) : null,
+                'jabatan' => $validated['jabatan'],
                 'department' => $validated['role'] !== 'admin' ? ($validated['department'] ?? null) : null,
                 'jenis_unit' => $validated['jenis_unit'] ?? null,
                 'site_id' => $validated['site_id'] ?? null,
@@ -234,11 +234,14 @@ class UserController extends Controller
                     continue;
                 }
                 try {
+                    // Role diambil sebelum delete (Spatie melepas role saat user dihapus);
+                    // log baru dicatat setelah delete berhasil agar tidak ada jejak palsu
+                    $role = $user->getRoleNames()->first();
+                    $user->delete();
                     activity('user')
                         ->causedBy($currentUser)
-                        ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
-                        ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
-                    $user->delete();
+                        ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $role])
+                        ->log("Menghapus user: {$user->name} ({$role})");
                     $deleted++;
                 } catch (QueryException $e) {
                     if ($e->getCode() === '23000') {
@@ -281,12 +284,14 @@ class UserController extends Controller
         }
 
         try {
+            // Role diambil sebelum delete; log dicatat hanya bila delete berhasil
+            $role = $user->getRoleNames()->first();
+            $user->delete();
+
             activity('user')
                 ->causedBy(auth()->user())
-                ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $user->getRoleNames()->first()])
-                ->log("Menghapus user: {$user->name} ({$user->getRoleNames()->first()})");
-
-            $user->delete();
+                ->withProperties(['name' => $user->name, 'nik' => $user->nik, 'role' => $role])
+                ->log("Menghapus user: {$user->name} ({$role})");
         } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 Inertia::flash('toast', [

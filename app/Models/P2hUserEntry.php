@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,13 +19,31 @@ class P2hUserEntry extends Model
         'paraf_url', 'shift', 'submitted_at',
         'kondisi_akhir', 'justifikasi_kondisi',
         'approval_status', 'pic_approver_id', 'approver_id', 'approved_at', 'catatan_approval',
-        'approver_signature_url',
+        'approver_signature_url', 'escalated_at',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
+        'escalated_at' => 'datetime',
     ];
+
+    /**
+     * Waktu berakhirnya shift entry ini: jam akhir shift pertama setelah submit.
+     * Dipakai sebagai batas respons PIC sebelum approval dieskalasi ke admin.
+     */
+    public function shiftEndsAt(): ?CarbonInterface
+    {
+        $endTime = config("p2h.approval.shift_end_times.{$this->shift}");
+
+        if (! $endTime || ! $this->submitted_at) {
+            return null;
+        }
+
+        $end = $this->submitted_at->copy()->setTimeFromTimeString($endTime);
+
+        return $end->lessThanOrEqualTo($this->submitted_at) ? $end->addDay() : $end;
+    }
 
     public function session(): BelongsTo
     {
@@ -70,6 +89,15 @@ class P2hUserEntry extends Model
     public function isValid(): bool
     {
         return $this->approval_status === null || $this->approval_status === 'approved';
+    }
+
+    /** Entry yang tidak ditolak approver (sah atau masih menunggu approval). */
+    public function scopeNotRejected(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('approval_status')
+                ->orWhere('approval_status', '!=', 'rejected');
+        });
     }
 
     /** Entry yang sudah sah untuk perhitungan operasional dan laporan. */

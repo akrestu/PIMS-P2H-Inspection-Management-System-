@@ -37,6 +37,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Approval P2H LV
+    |--------------------------------------------------------------------------
+    |
+    | Entry yang masih pending saat shift-nya berakhir dieskalasi ke admin
+    | (satu kali per entry). Jam akhir shift dalam zona waktu aplikasi.
+    |
+    */
+
+    'approval' => [
+        'shift_end_times' => [
+            'Shift I' => '18:00',
+            'Shift II' => '06:00',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Servis Berkala
     |--------------------------------------------------------------------------
     |

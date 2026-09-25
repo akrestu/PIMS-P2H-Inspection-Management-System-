@@ -45,7 +45,13 @@ export function MobileSidebarTrigger() {
     const scrollDir = useScrollDirection();
     const { isCurrentUrl } = useCurrentUrl();
     const { auth, notifications } = usePage<{
-        auth: { user: { roles: string[]; jabatan?: string | null } | null };
+        auth: {
+            user: {
+                roles: string[];
+                can_approve?: boolean;
+                can_monitor?: boolean;
+            } | null;
+        };
         notifications: { unread_count: number; pending_approvals?: number };
     }>().props;
 
@@ -53,9 +59,9 @@ export function MobileSidebarTrigger() {
     const isAdmin = roles.includes('admin');
     const isAdminOrManager = isAdmin || roles.includes('manager');
     const isDriver = roles.includes('driver');
-    const jabatan = auth?.user?.jabatan ?? null;
-    const isStaff = jabatan === 'Staff' || jabatan === 'Sr.Staff';
-    const canApprove = isStaff || isAdminOrManager;
+    // Dihitung di backend (User::canViewMonitoring / canApproveLv)
+    const isStaff = !!auth?.user?.can_monitor;
+    const canApprove = !!auth?.user?.can_approve;
     const unreadCount = notifications?.unread_count ?? 0;
     const pendingApprovals = notifications?.pending_approvals ?? 0;
 
@@ -106,24 +112,34 @@ export function MobileSidebarTrigger() {
                   ]
                 : []),
         ];
-    } else if (isDriver && canApprove) {
+    } else if (isDriver && (canApprove || isStaff)) {
         primaryNav = [
             { title: 'Dashboard', href: '/driver/dashboard', icon: LayoutGrid },
             { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
             { title: 'Riwayat', href: '/p2h', icon: ClipboardList },
-            {
-                title: 'Persetujuan',
-                href: '/p2h/approvals',
-                icon: ClipboardCheck,
-                badge: pendingApprovals,
-            },
+            canApprove
+                ? {
+                      title: 'Persetujuan',
+                      href: '/p2h/approvals',
+                      icon: ClipboardCheck,
+                      badge: pendingApprovals,
+                  }
+                : {
+                      title: 'Monitoring P2H',
+                      href: '/p2h-compliance',
+                      icon: CalendarCheck,
+                  },
         ];
         moreNav = [
-            {
-                title: 'Monitoring P2H',
-                href: '/p2h-compliance',
-                icon: CalendarCheck,
-            },
+            ...(canApprove
+                ? [
+                      {
+                          title: 'Monitoring P2H',
+                          href: '/p2h-compliance',
+                          icon: CalendarCheck,
+                      },
+                  ]
+                : []),
             {
                 title: 'Notifikasi',
                 href: '/notifications',

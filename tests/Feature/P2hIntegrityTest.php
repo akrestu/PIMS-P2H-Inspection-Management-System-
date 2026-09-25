@@ -59,7 +59,7 @@ test('all active checklist items must be submitted exactly once', function () {
 
 test('invalid approver signature cannot approve an entry', function () {
     $submitter = User::factory()->create();
-    $approver = User::factory()->create(['jabatan' => 'Staff']);
+    $approver = User::factory()->create(['jabatan' => User::JABATAN_APPROVAL]);
     $approver->assignRole('driver');
     $unit = Unit::create(['no_unit' => 'LV-01', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']);
     $session = P2hSession::create([

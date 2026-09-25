@@ -116,6 +116,10 @@ class P2hFinding extends Model
         $tanggal = Carbon::parse($tanggal)->startOfDay();
 
         return DB::transaction(function () use ($answer, $entry, $unit, $tanggal) {
+            // Kunci baris unit agar dua submit bersamaan untuk unit & item yang sama
+            // tidak sama-sama membuat temuan baru (lockForUpdate pada hasil kosong tidak mengunci)
+            Unit::withTrashed()->whereKey($unit->id)->lockForUpdate()->first();
+
             $open = static::query()
                 ->unresolved()
                 ->where('unit_id', $unit->id)
@@ -235,13 +239,13 @@ class P2hFinding extends Model
     }
 
     /**
-     * Temuan yang masih sah: entry & sesi P2H-nya tidak dihapus dan entry-nya
-     * tidak ditolak approver. Temuan dari P2H yang dihapus/ditolak tidak dilaporkan
-     * dan tidak memicu pengingat.
+     * Temuan yang masih sah: minimal SATU laporan yang tergabung di dalamnya berasal
+     * dari entry & sesi P2H yang tidak dihapus dan tidak ditolak approver. Temuan
+     * gabungan tetap terlacak meski laporan pertamanya ditolak/dihapus.
      */
     public function scopeActive(Builder $query): Builder
     {
-        return $query->whereHas('entry', fn (Builder $entry) => $entry
+        return $query->whereHas('answers.userEntry', fn (Builder $entry) => $entry
             ->whereHas('session')
             ->where(fn (Builder $q) => $q->whereNull('approval_status')->orWhere('approval_status', '!=', 'rejected')));
     }

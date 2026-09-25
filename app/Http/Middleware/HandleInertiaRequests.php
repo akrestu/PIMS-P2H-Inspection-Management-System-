@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AppSetting;
-use App\Models\P2hUserEntry;
+use App\Support\PendingApprovalCache;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -65,6 +65,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ? array_merge($user->only(['id', 'name', 'email', 'jabatan', 'department', 'jenis_unit']), [
                     'roles' => $user->getRoleNames()->toArray(),
+                    'can_approve' => $user->canApproveLv(),
+                    'can_monitor' => $user->canViewMonitoring(),
                 ]) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
@@ -77,19 +79,7 @@ class HandleInertiaRequests extends Middleware
                         fn () => $user->notifications()->latest()->limit(5)->get(['id', 'type', 'data', 'read_at', 'created_at'])
                     )
                     : [],
-                'pending_approvals' => ($user && $user->canViewApprovals())
-                    ? cache()->remember(
-                        "pending_approvals_user_{$user->id}",
-                        now()->addSeconds(30),
-                        fn () => P2hUserEntry::where('approval_status', 'pending')
-                            ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
-                            ->when(
-                                $user->isStaffOnly(),
-                                fn ($q) => $q->where('pic_approver_id', $user->id)
-                            )
-                            ->count()
-                    )
-                    : 0,
+                'pending_approvals' => $user ? PendingApprovalCache::count($user) : 0,
             ],
             'flash' => $flash,
         ];

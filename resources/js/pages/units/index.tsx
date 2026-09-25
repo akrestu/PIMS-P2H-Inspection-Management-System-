@@ -288,8 +288,9 @@ function UnitFormDialog({
                                 </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
-                                Staff/Sr.Staff departemen ini dapat melihat &
-                                menyetujui P2H unit LV ini.
+                                User LV 2/Approval departemen ini dapat melihat
+                                P2H unit LV ini; jabatan Approval dapat
+                                menyetujuinya.
                             </p>
                             {errors.department && (
                                 <p className="text-xs text-destructive">

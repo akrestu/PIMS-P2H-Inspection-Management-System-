@@ -17,6 +17,7 @@ use App\Notifications\CriticalItemAlert;
 use App\Notifications\LvP2hApprovalRequest;
 use App\Support\HistoricalInspectionItems;
 use App\Support\P2hFileStorage;
+use App\Support\PendingApprovalCache;
 use App\Support\SignatureImage;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -105,12 +106,11 @@ class P2hSessionController extends Controller
         }
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
-        $picJabatanMap = ['Non Staff' => 'Staff', 'Staff' => 'Sr.Staff'];
-        $picJabatan = $picJabatanMap[$user->jabatan] ?? null;
-
-        $staffUsers = $picJabatan
+        // PIC approval LV hanya jabatan Approval; user jabatan Approval tidak perlu PIC
+        $staffUsers = $user->needsLvApproval()
             ? User::role('driver')
-                ->where('jabatan', $picJabatan)
+                ->where('jabatan', User::JABATAN_APPROVAL)
+                ->whereKeyNot($user->id)
                 ->when(! $user->isPrivileged() && $user->site_id, fn ($q) => $q->where('site_id', $user->site_id))
                 ->orderBy('name')
                 ->get(['id', 'name', 'jabatan', 'department'])
@@ -219,7 +219,7 @@ class P2hSessionController extends Controller
                     $storedPaths[] = $parafUrl;
                 }
 
-                // Tentukan apakah entry ini perlu approval: LV + user adalah Non Staff
+                // Tentukan apakah entry ini perlu approval: LV + user bukan jabatan Approval
                 $unit = Unit::withTrashed()->find($data['unit_id']);
                 $needsApproval = $unit?->jenis_unit === 'Light Vehicle' && $user->needsLvApproval();
 
@@ -273,7 +273,7 @@ class P2hSessionController extends Controller
                     ));
                 }
 
-                // Simpan attachment utama form (wajib)
+                // Simpan attachment utama form (opsional)
                 foreach ($request->file('attachments', []) as $file) {
                     $path = $file->store("p2h-attachments/{$entry->id}", 'local');
 
@@ -339,8 +339,8 @@ class P2hSessionController extends Controller
                 $pic?->notify(new LvP2hApprovalRequest($session, $createdEntry, $user));
                 if ($pic) {
                     cache()->forget("recent_notifications_user_{$pic->id}");
-                    cache()->forget("pending_approvals_user_{$pic->id}");
                 }
+                PendingApprovalCache::forgetFor($createdEntry);
             }
         } catch (\Throwable $exception) {
             Log::warning('Notifikasi P2H gagal dikirim setelah data tersimpan.', [
@@ -404,7 +404,11 @@ class P2hSessionController extends Controller
             ])
             ->log("Menghapus sesi P2H unit {$session->unit?->no_unit} tanggal {$session->tanggal?->toDateString()}");
 
-        $session->delete();
+        // Entry ikut dihapus agar tidak muncul kembali saat sesi di-restore oleh submit berikutnya
+        DB::transaction(function () use ($session) {
+            $session->userEntries()->get()->each->delete();
+            $session->delete();
+        });
 
         Inertia::flash('toast', [
             'type' => 'success',

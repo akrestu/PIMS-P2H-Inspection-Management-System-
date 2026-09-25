@@ -18,7 +18,7 @@ class UsersImportTemplateExport implements FromArray, WithColumnWidths, WithEven
     public function array(): array
     {
         return [
-            ['John Doe', '1234567890', 'john@email.com', 'Password123!', 'driver', 'Non Staff', 'Operasional', 'Bus', 'PT. WBK Site MAS'],
+            ['John Doe', '1234567890', 'john@email.com', 'Password123!', 'driver', 'User LV 1', 'Operasional', 'Bus', 'PT. WBK Site MAS'],
         ];
     }
 
@@ -71,7 +71,7 @@ class UsersImportTemplateExport implements FromArray, WithColumnWidths, WithEven
                     'C' => 'Email (opsional)',
                     'D' => 'Password min. 8 karakter (wajib)',
                     'E' => 'admin / manager / driver (wajib)',
-                    'F' => 'Sr.Staff / Staff / Non Staff (wajib kecuali role admin)',
+                    'F' => 'Approval / User LV 2 / User LV 1 (wajib)',
                     'G' => 'Nama departemen (wajib kecuali role admin)',
                     'H' => 'Bus atau Light Vehicle (opsional)',
                     'I' => 'Nama site (opsional) — harus sama persis dengan data Site yang ada di menu Site',

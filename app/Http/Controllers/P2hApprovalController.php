@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\P2hUserEntry;
-use App\Models\User;
 use App\Notifications\LvP2hApprovalResult;
 use App\Rules\ValidSignatureDataUrl;
 use App\Support\HistoricalInspectionItems;
 use App\Support\P2hFileStorage;
+use App\Support\PendingApprovalCache;
 use App\Support\SignatureImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ class P2hApprovalController extends Controller
         $request->validate(['status' => 'nullable|in:pending,approved,rejected']);
         $user = $request->user();
 
-        abort_unless($user->canViewApprovals(), 403);
+        abort_unless($user->canApproveLv(), 403);
 
         $query = P2hUserEntry::with([
             'user:id,name,nik,jabatan,department',
@@ -35,8 +36,8 @@ class P2hApprovalController extends Controller
         ])
             ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
             ->when(
-                // Staff/Sr.Staff murni hanya lihat yang mereka ditunjuk sebagai PIC
-                $user->isStaffOnly(),
+                // Approver non-admin hanya lihat yang mereka ditunjuk sebagai PIC
+                ! $user->isPrivileged(),
                 fn ($q) => $q->where('pic_approver_id', $user->id)
             )
             ->when($request->status ?? 'pending', fn ($q, $s) => $q->where('approval_status', $s))
@@ -49,7 +50,9 @@ class P2hApprovalController extends Controller
             $layakCount = $entry->answers->where('kondisi', 'Layak')->count();
             $tlCount = $entry->answers->where('kondisi', 'Tidak Layak')->count();
             $score = $totalItems > 0 ? round(($layakCount / $totalItems) * 100) : 0;
-            $hasCritical = $entry->answers->contains(fn ($a) => $a->kondisi === 'Tidak Layak' && $a->inspectionItem?->kode_bahaya === 'AA'
+            // Snapshot kode bahaya saat P2H diisi, bukan master item yang bisa berubah
+            $hasCritical = $entry->answers->contains(
+                fn ($a) => $a->kondisi === 'Tidak Layak' && ($a->item_kode_bahaya ?? $a->inspectionItem?->kode_bahaya) === 'AA'
             );
 
             return [
@@ -65,6 +68,7 @@ class P2hApprovalController extends Controller
                 'driver_jabatan' => $entry->user->jabatan ?? '-',
                 'kondisi_akhir' => $entry->kondisi_akhir,
                 'approval_status' => $entry->approval_status,
+                'escalated' => $entry->escalated_at !== null,
                 'catatan_approval' => $entry->catatan_approval,
                 'pic_approver_id' => $entry->pic_approver_id,
                 'pic_name' => $entry->pic?->name,
@@ -82,7 +86,7 @@ class P2hApprovalController extends Controller
 
         // Hitung stats untuk header summary
         $baseQuery = P2hUserEntry::whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
-            ->when($user->isStaffOnly(), fn ($q) => $q->where('pic_approver_id', $user->id));
+            ->when(! $user->isPrivileged(), fn ($q) => $q->where('pic_approver_id', $user->id));
 
         $stats = [
             'pending' => (clone $baseQuery)->where('approval_status', 'pending')->count(),
@@ -103,7 +107,7 @@ class P2hApprovalController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $user->canViewApprovals()
+            $user->canApproveLv()
                 && ($user->id === $entry->pic_approver_id || $user->isPrivileged()),
             403
         );
@@ -173,7 +177,7 @@ class P2hApprovalController extends Controller
     public function approve(Request $request, P2hUserEntry $entry): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canViewApprovals(), 403);
+        abort_unless($user->canApproveLv(), 403);
         abort_if($user->id === $entry->user_id, 403, 'Tidak dapat menyetujui P2H milik sendiri.');
         abort_unless(
             $user->id === $entry->pic_approver_id || $user->isPrivileged(),
@@ -241,14 +245,8 @@ class P2hApprovalController extends Controller
         }
         cache()->forget("recent_notifications_user_{$entry->user_id}");
 
-        // Tandai notifikasi approval request terkait sebagai sudah dibaca
-        $user->notifications()
-            ->whereNull('read_at')
-            ->where('data->type', 'lv_approval_request')
-            ->where('data->entry_id', (string) $entry->id)
-            ->update(['read_at' => now()]);
-        cache()->forget("recent_notifications_user_{$user->id}");
-        $this->clearPendingApprovalCaches();
+        $this->markEntryNotificationsRead($entry);
+        PendingApprovalCache::forgetFor($entry);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -262,7 +260,7 @@ class P2hApprovalController extends Controller
     public function reject(Request $request, P2hUserEntry $entry): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canViewApprovals(), 403);
+        abort_unless($user->canApproveLv(), 403);
         abort_if($user->id === $entry->user_id, 403, 'Tidak dapat menolak P2H milik sendiri.');
         abort_unless(
             $user->id === $entry->pic_approver_id || $user->isPrivileged(),
@@ -318,14 +316,8 @@ class P2hApprovalController extends Controller
         }
         cache()->forget("recent_notifications_user_{$entry->user_id}");
 
-        // Tandai notifikasi approval request terkait sebagai sudah dibaca
-        $user->notifications()
-            ->whereNull('read_at')
-            ->where('data->type', 'lv_approval_request')
-            ->where('data->entry_id', (string) $entry->id)
-            ->update(['read_at' => now()]);
-        cache()->forget("recent_notifications_user_{$user->id}");
-        $this->clearPendingApprovalCaches();
+        $this->markEntryNotificationsRead($entry);
+        PendingApprovalCache::forgetFor($entry);
 
         Inertia::flash('toast', [
             'type' => 'warning',
@@ -336,10 +328,21 @@ class P2hApprovalController extends Controller
         return redirect()->route('p2h.approvals');
     }
 
-    private function clearPendingApprovalCaches(): void
+    /**
+     * Permintaan approval (PIC) & eskalasi (admin) untuk entry ini sudah tidak
+     * perlu ditindaklanjuti — tandai dibaca untuk semua penerimanya.
+     */
+    private function markEntryNotificationsRead(P2hUserEntry $entry): void
     {
-        User::query()->pluck('id')->each(
-            fn (int $userId) => cache()->forget("pending_approvals_user_{$userId}")
-        );
+        $notifications = DatabaseNotification::query()
+            ->whereNull('read_at')
+            ->whereIn('data->type', ['lv_approval_request', 'lv_approval_escalation'])
+            // entry_id tersimpan sebagai angka di JSON; cocokkan dua bentuk agar lintas driver DB
+            ->whereIn('data->entry_id', [$entry->id, (string) $entry->id]);
+
+        $recipientIds = (clone $notifications)->distinct()->pluck('notifiable_id');
+        $notifications->update(['read_at' => now()]);
+
+        $recipientIds->each(fn ($id) => cache()->forget("recent_notifications_user_{$id}"));
     }
 }

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     CalendarCheck,
@@ -192,12 +192,14 @@ function FilterBar({
     onToggleHighlight,
     onShareWhatsApp,
     onShareWhatsAppHistory,
+    canExport,
 }: {
     filters: Filters;
     highlightMissing: boolean;
     onToggleHighlight: () => void;
     onShareWhatsApp: () => void;
     onShareWhatsAppHistory: () => void;
+    canExport: boolean;
 }) {
     const [form, setForm] = useState<Filters>(filters);
     const [showPanel, setShowPanel] = useState(false);
@@ -307,27 +309,32 @@ function FilterBar({
                                 Unduh Laporan
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <a
-                                    href={`/export/monitoring-p2h/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex cursor-pointer items-center gap-2"
-                                >
-                                    <FileText className="h-4 w-4 text-red-500" />
-                                    Export PDF
-                                </a>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <a
-                                    href={`/export/monitoring-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                    className="flex cursor-pointer items-center gap-2"
-                                >
-                                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                    Export Excel
-                                </a>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            {/* Export file hanya untuk admin/manager (route dibatasi) */}
+                            {canExport && (
+                                <>
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/export/monitoring-p2h/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <FileText className="h-4 w-4 text-red-500" />
+                                            Export PDF
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/export/monitoring-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
+                                            className="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                            Export Excel
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger className="flex cursor-pointer items-center gap-2">
                                     <MessageCircle className="h-4 w-4 text-green-500" />
@@ -604,6 +611,11 @@ export default function P2hCompliancePage({
 }: Props) {
     const [highlightMissing, setHighlightMissing] = useState(false);
     const { share } = useWhatsAppShare();
+    const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
+        .props;
+    const canExport = (auth?.user?.roles ?? []).some((r) =>
+        ['admin', 'manager'].includes(r),
+    );
     const handleShareWhatsApp = () =>
         share(formatP2hReport(matrix, dates, summary, filters));
     const handleShareWhatsAppHistory = () =>
@@ -634,6 +646,7 @@ export default function P2hCompliancePage({
                     onToggleHighlight={() => setHighlightMissing((v) => !v)}
                     onShareWhatsApp={handleShareWhatsApp}
                     onShareWhatsAppHistory={handleShareWhatsAppHistory}
+                    canExport={canExport}
                 />
 
                 {/* ── Legend ── */}

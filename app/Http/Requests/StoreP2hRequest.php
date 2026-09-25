@@ -122,12 +122,12 @@ class StoreP2hRequest extends FormRequest
                 $validPic = $pic
                     && $pic->id !== $this->user()?->id
                     && $pic->hasRole('driver')
-                    && $pic->jabatan === $this->getRequiredPicJabatan()
+                    && $pic->isApprover()
                     && $pic->department === $unit?->department
                     && ($unit?->site_id === null || $pic->site_id === $unit->site_id);
 
                 if (! $validPic) {
-                    $v->errors()->add('pic_approver_id', 'PIC harus memiliki role driver, jenjang yang sesuai, serta site dan departemen yang sama dengan unit.');
+                    $v->errors()->add('pic_approver_id', 'PIC harus driver dengan jabatan Approval, serta site dan departemen yang sama dengan unit.');
                 }
             }
         });
@@ -140,16 +140,8 @@ class StoreP2hRequest extends FormRequest
             return false;
         }
 
-        // Staff/Sr.Staff tidak perlu PIC — mereka sendiri bertindak sebagai approver
+        // Jabatan Approval tidak perlu PIC — mereka sendiri bertindak sebagai approver
         return $this->user()?->needsLvApproval() ?? true;
-    }
-
-    /** Jabatan PIC yang diizinkan berdasarkan jabatan submitter (hierarki approval). */
-    public function getRequiredPicJabatan(): string
-    {
-        $map = ['Non Staff' => 'Staff', 'Staff' => 'Sr.Staff'];
-
-        return $map[$this->user()?->jabatan] ?? 'Staff';
     }
 
     /** Department dari unit yang dipilih — dipakai untuk validasi PIC harus sedepartemen. */

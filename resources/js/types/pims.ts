@@ -1,4 +1,4 @@
-export type Jabatan = 'Sr.Staff' | 'Staff' | 'Non Staff';
+export type Jabatan = 'Approval' | 'User LV 2' | 'User LV 1';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface UnitDowntimeLogSummary {

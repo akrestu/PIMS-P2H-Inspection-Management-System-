@@ -420,7 +420,7 @@ class DataExportController extends Controller
             ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
         if ($user->isStaffOnly()) {
-            // Staff/Sr.Staff bisa jadi submitter maupun PIC approver — tampilkan keduanya
+            // Approval/User LV 2 bisa jadi submitter; Approval juga PIC approver — tampilkan keduanya
             $query->whereHas('userEntries', fn ($q) => $q->where('user_id', $user->id)
                 ->orWhere('pic_approver_id', $user->id));
         } elseif ($user->hasRole('driver')) {

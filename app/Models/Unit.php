@@ -35,6 +35,18 @@ class Unit extends Model
         return $this->belongsToMany(User::class, 'user_unit');
     }
 
+    /**
+     * Unit yang boleh dipantau user Approval/User LV 2 (non admin/manager):
+     * LV departemen user, dan site user bila user terikat ke satu site.
+     */
+    public function scopeMonitorableBy(Builder $query, User $user): Builder
+    {
+        return $query
+            ->where($query->qualifyColumn('jenis_unit'), 'Light Vehicle')
+            ->where($query->qualifyColumn('department'), $user->department)
+            ->when($user->site_id, fn (Builder $q, int $siteId) => $q->where($q->qualifyColumn('site_id'), $siteId));
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query

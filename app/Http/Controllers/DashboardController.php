@@ -27,7 +27,8 @@ class DashboardController extends Controller
             ->count();
 
         $criticalTidakLayakHariIni = P2hChecklistAnswer::where('kondisi', 'Tidak Layak')
-            ->whereHas('inspectionItem', fn ($q) => $q->where('kode_bahaya', 'AA'))
+            // Snapshot kode bahaya saat P2H diisi, bukan master item yang bisa berubah
+            ->where('item_kode_bahaya', 'AA')
             ->whereHas('userEntry', fn ($query) => $query->operational()
                 ->whereHas('session', fn ($session) => $session->whereDate('tanggal', $today)))
             ->count();
@@ -90,7 +91,9 @@ class DashboardController extends Controller
             $totalSlots = $totalUnits * $daysInWeek;
 
             // Satu sesi mewakili satu unit-hari (unit_id + tanggal unik).
+            // Hanya unit aktif agar pembilang sejalan dengan penyebut (total unit aktif)
             $operationSessions = P2hSession::whereBetween('tanggal', [$weekStart->toDateString(), $weekEnd->toDateString()])
+                ->whereHas('unit', fn ($q) => $q->active())
                 ->whereHas('userEntries', fn ($q) => $q->operational()->where('kondisi_akhir', 'Layak Pakai'))
                 ->whereDoesntHave('userEntries', fn ($q) => $q->operational()->where('kondisi_akhir', 'BD'))
                 ->count();

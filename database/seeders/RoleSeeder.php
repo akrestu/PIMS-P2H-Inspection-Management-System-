@@ -18,52 +18,52 @@ class RoleSeeder extends Seeder
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $roleManager = Role::firstOrCreate(['name' => 'manager']);
 
-        // Driver - Non Staff (butuh approval untuk P2H LV)
+        // Driver - User LV 1 (butuh approval untuk P2H LV)
         $driverUser = User::updateOrCreate(
             ['nik' => '1100000000000001'],
             [
                 'name' => 'Driver Test',
                 'email' => 'driver@pims.test',
                 'password' => Hash::make('password'),
-                'jabatan' => 'Non Staff',
+                'jabatan' => User::JABATAN_USER_LV1,
                 'department' => 'Operasional',
             ]
         );
         $driverUser->syncRoles([$roleDriver]);
 
-        // Driver - Staff (dapat approve P2H LV dept Operasional)
+        // Driver - User LV 2 (butuh approval, dapat melihat monitoring dept Operasional)
         $staffDriverUser = User::updateOrCreate(
             ['nik' => '1100000000000004'],
             [
                 'name' => 'Staff Driver Test',
                 'email' => 'staff.driver@pims.test',
                 'password' => Hash::make('password'),
-                'jabatan' => 'Staff',
+                'jabatan' => User::JABATAN_USER_LV2,
                 'department' => 'Operasional',
             ]
         );
         $staffDriverUser->syncRoles([$roleDriver]);
 
-        // Admin (tanpa jabatan - akses penuh)
+        // Admin (akses penuh)
         $adminUser = User::updateOrCreate(
             ['nik' => '1100000000000002'],
             [
                 'name' => 'Admin Test',
                 'email' => 'admin@pims.test',
                 'password' => Hash::make('password'),
-                'jabatan' => null,
+                'jabatan' => User::JABATAN_USER_LV1,
             ]
         );
         $adminUser->syncRoles([$roleAdmin]);
 
-        // Manager dengan jabatan Sr.Staff
+        // Manager dengan jabatan Approval
         $managerUser = User::updateOrCreate(
             ['nik' => '1100000000000003'],
             [
                 'name' => 'Manager Test',
                 'email' => 'manager@pims.test',
                 'password' => Hash::make('password'),
-                'jabatan' => 'Sr.Staff',
+                'jabatan' => User::JABATAN_APPROVAL,
                 'department' => 'Operasional',
             ]
         );

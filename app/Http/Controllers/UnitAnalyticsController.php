@@ -7,6 +7,7 @@ use App\Models\Unit;
 use App\Support\UnitUsageAnalytics;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,6 +24,10 @@ class UnitAnalyticsController extends Controller
 
         $end = isset($validated['end']) ? Carbon::parse($validated['end']) : today();
         $start = isset($validated['start']) ? Carbon::parse($validated['start']) : $end->copy()->subDays(29);
+
+        if ($start->diffInDays($end) > 365) {
+            throw ValidationException::withMessages(['end' => 'Rentang analitik maksimal 1 tahun.']);
+        }
         $siteId = isset($validated['site_id']) ? (int) $validated['site_id'] : null;
         $jenisUnit = $validated['jenis_unit'] ?? null;
 

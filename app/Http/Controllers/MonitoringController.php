@@ -48,8 +48,8 @@ class MonitoringController extends Controller
 
         $authUser = $request->user();
 
-        // Driver Non Staff tidak diizinkan
-        abort_unless($authUser->canViewApprovals(), 403);
+        // Driver User LV 1 tidak diizinkan
+        abort_unless($authUser->canViewMonitoring(), 403);
 
         // ── Semua unit aktif ──────────────────────────────────────────────────
         $unitQuery = Unit::active()->orderBy('no_unit');
@@ -59,11 +59,9 @@ class MonitoringController extends Controller
         if ($jenis) {
             $unitQuery->where('jenis_unit', $jenis);
         }
-        // Staff/Sr.Staff murni hanya lihat LV dept mereka
+        // Approval/User LV 2 murni hanya lihat LV dept mereka
         if ($authUser->isStaffOnly()) {
-            $unitQuery->where('jenis_unit', 'Light Vehicle')
-                ->where('department', $authUser->department)
-                ->where('site_id', $authUser->site_id);
+            $unitQuery->monitorableBy($authUser);
         }
         $units = $unitQuery->get();
 
@@ -79,11 +77,7 @@ class MonitoringController extends Controller
             ->when($jenis, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $jenis)))
             ->when(
                 $authUser->isStaffOnly(),
-                fn ($q) => $q->whereHas('unit', fn ($u) => $u
-                    ->where('jenis_unit', 'Light Vehicle')
-                    ->where('department', $authUser->department)
-                    ->where('site_id', $authUser->site_id)
-                )
+                fn ($q) => $q->whereHas('unit', fn ($u) => $u->monitorableBy($authUser))
             )
             ->get()
             ->groupBy('unit_id');
@@ -331,9 +325,7 @@ class MonitoringController extends Controller
 
         $allUnitsQuery = Unit::active()->orderBy('no_unit');
         if ($authUser->isStaffOnly()) {
-            $allUnitsQuery->where('jenis_unit', 'Light Vehicle')
-                ->where('department', $authUser->department)
-                ->where('site_id', $authUser->site_id);
+            $allUnitsQuery->monitorableBy($authUser);
         }
         $allUnits = $allUnitsQuery->get(['id', 'no_unit', 'jenis_unit']);
 

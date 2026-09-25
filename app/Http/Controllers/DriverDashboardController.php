@@ -13,16 +13,23 @@ class DriverDashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $today = now()->toDateString();
 
         // Tentukan shift aktif berdasarkan jam (Shift I: 06-18, Shift II: 18-06)
         $hour = (int) now()->format('H');
         $shiftAktif = ($hour >= 6 && $hour < 18) ? 'Shift I' : 'Shift II';
 
-        // Cek apakah driver sudah melakukan P2H shift ini hari ini
+        // Awal shift aktif; Shift II setelah tengah malam dimulai pukul 18:00 kemarin
+        $shiftMulai = match (true) {
+            $shiftAktif === 'Shift I' => today()->setTime(6, 0),
+            $hour >= 18 => today()->setTime(18, 0),
+            default => today()->subDay()->setTime(18, 0),
+        };
+
+        // Cek apakah driver sudah melakukan P2H sejak shift aktif dimulai
         $sudahP2hShiftIni = P2hUserEntry::where('user_id', $user->id)
             ->where('shift', $shiftAktif)
-            ->whereHas('session', fn ($q) => $q->whereDate('tanggal', $today))
+            ->where('submitted_at', '>=', $shiftMulai)
+            ->whereHas('session')
             ->exists();
 
         // Statistik ringkas driver

@@ -38,7 +38,13 @@ import { dashboard as driverDashboard } from '@/routes/driver';
 
 export function AppSidebar() {
     const { auth, notifications } = usePage<{
-        auth: { user: { roles: string[]; jabatan?: string | null } | null };
+        auth: {
+            user: {
+                roles: string[];
+                can_approve?: boolean;
+                can_monitor?: boolean;
+            } | null;
+        };
         notifications: { unread_count: number; pending_approvals?: number };
     }>().props;
 
@@ -46,9 +52,9 @@ export function AppSidebar() {
     const isAdmin = roles.includes('admin');
     const isDriver = roles.includes('driver');
     const isAdminOrManager = isAdmin || roles.includes('manager');
-    const jabatan = auth?.user?.jabatan ?? null;
-    const isStaff = jabatan === 'Staff' || jabatan === 'Sr.Staff';
-    const canApprove = isStaff || isAdminOrManager;
+    // Dihitung di backend (User::canViewMonitoring / canApproveLv)
+    const isStaff = !!auth?.user?.can_monitor;
+    const canApprove = !!auth?.user?.can_approve;
     const pendingApprovals = notifications?.pending_approvals ?? 0;
     const unreadCount = notifications?.unread_count ?? 0;
     const { state } = useSidebar();

@@ -67,8 +67,8 @@ class UsersImport implements ToCollection, WithHeadingRow
 
                 continue;
             }
-            if ($role !== 'admin' && ! in_array($jabatan, ['Sr.Staff', 'Staff', 'Non Staff'])) {
-                $this->rowErrors[] = "Baris {$rowNum}: Jabatan '{$jabatan}' tidak valid (Sr.Staff/Staff/Non Staff).";
+            if (! in_array($jabatan, User::JABATANS, true)) {
+                $this->rowErrors[] = "Baris {$rowNum}: Jabatan '{$jabatan}' tidak valid (".implode('/', User::JABATANS).').';
 
                 continue;
             }
@@ -128,7 +128,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                         $existingUser->update([
                             'name' => $name,
                             'email' => $email,
-                            'jabatan' => $role !== 'admin' ? $jabatan : null,
+                            'jabatan' => $jabatan,
                             'department' => $role !== 'admin' ? $dept : null,
                             'jenis_unit' => $jenisUnit,
                             'site_id' => $siteId,
@@ -170,7 +170,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                         'nik' => $nik,
                         'email' => $email,
                         'password' => Hash::make($password),
-                        'jabatan' => $role !== 'admin' ? $jabatan : null,
+                        'jabatan' => $jabatan,
                         'department' => $role !== 'admin' ? $dept : null,
                         'jenis_unit' => $jenisUnit,
                         'site_id' => $siteId,

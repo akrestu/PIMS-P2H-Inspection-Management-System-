@@ -18,9 +18,10 @@ class P2hSessionPolicy
         }
 
         // Driver hanya bisa lihat jika pernah mengisi atau menjadi PIC approver salah satu entry
+        // Kondisi OR wajib dikelompokkan agar tetap terikat ke sesi ini
         return $session->userEntries()
-            ->where('user_id', $user->id)
-            ->orWhere('pic_approver_id', $user->id)
+            ->where(fn ($q) => $q->where('user_id', $user->id)
+                ->orWhere('pic_approver_id', $user->id))
             ->exists();
     }
 

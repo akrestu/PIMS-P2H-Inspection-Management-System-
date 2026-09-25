@@ -66,28 +66,31 @@ class User extends Authenticatable
         return $this->belongsTo(Site::class);
     }
 
-    /** User memiliki jabatan Staff atau Sr.Staff */
+    /** Jabatan yang berlaku, urut dari tertinggi. */
+    public const JABATAN_APPROVAL = 'Approval';
+
+    public const JABATAN_USER_LV2 = 'User LV 2';
+
+    public const JABATAN_USER_LV1 = 'User LV 1';
+
+    public const JABATANS = [self::JABATAN_APPROVAL, self::JABATAN_USER_LV2, self::JABATAN_USER_LV1];
+
+    /** User memiliki jabatan Approval atau User LV 2 (akses monitoring departemen) */
     public function isStaff(): bool
     {
-        return in_array($this->jabatan, ['Staff', 'Sr.Staff'], true);
+        return in_array($this->jabatan, [self::JABATAN_APPROVAL, self::JABATAN_USER_LV2], true);
     }
 
-    /** User memiliki jabatan Non Staff */
-    public function isNonStaff(): bool
+    /** User memiliki jabatan Approval — satu-satunya jabatan yang boleh menjadi PIC approval LV */
+    public function isApprover(): bool
     {
-        return $this->jabatan === 'Non Staff';
+        return $this->jabatan === self::JABATAN_APPROVAL;
     }
 
-    /** Driver jabatan Sr.Staff tidak perlu memilih PIC saat mengisi P2H LV */
-    public function isSrStaff(): bool
-    {
-        return $this->jabatan === 'Sr.Staff';
-    }
-
-    /** Driver yang submit P2H LV harus melalui approval (semua kecuali Sr.Staff) */
+    /** Driver yang submit P2H LV harus melalui approval (semua kecuali jabatan Approval) */
     public function needsLvApproval(): bool
     {
-        return ! $this->isSrStaff();
+        return ! $this->isApprover();
     }
 
     /**
@@ -100,16 +103,25 @@ class User extends Authenticatable
     }
 
     /**
-     * User boleh mengakses fitur approval P2H LV:
-     * Staff/Sr.Staff sebagai PIC, atau admin/manager untuk override.
+     * User boleh memproses approval P2H LV:
+     * driver jabatan Approval sebagai PIC, atau admin/manager untuk override.
      */
-    public function canViewApprovals(): bool
+    public function canApproveLv(): bool
+    {
+        return $this->isPrivileged() || ($this->hasRole('driver') && $this->isApprover());
+    }
+
+    /**
+     * User boleh membuka Monitoring PA & Monitoring P2H:
+     * driver jabatan Approval/User LV 2 (dept sendiri), atau admin/manager.
+     */
+    public function canViewMonitoring(): bool
     {
         return $this->isPrivileged() || ($this->hasRole('driver') && $this->isStaff());
     }
 
     /**
-     * User adalah Staff/Sr.Staff murni (bukan admin/manager).
+     * User adalah Approval/User LV 2 murni (bukan admin/manager).
      * Dipakai untuk membatasi scope data yang bisa dilihat (hanya dept sendiri).
      */
     public function isStaffOnly(): bool

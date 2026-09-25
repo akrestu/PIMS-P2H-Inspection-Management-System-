@@ -15,9 +15,10 @@ class UpdateP2hFindingRequest extends FormRequest
 
     public function rules(): array
     {
-        // Menutup temuan wajib disertai foto bukti perbaikan (kecuali sudah pernah diunggah)
+        // Setiap kali temuan ditutup (termasuk ditutup ulang setelah dibuka kembali) wajib
+        // foto bukti perbaikan baru; edit temuan yang sudah closed tidak perlu foto ulang
         $needsPhoto = $this->input('status') === FindingStatus::Closed->value
-            && blank($this->route('finding')?->foto_penutupan);
+            && $this->route('finding')?->status !== FindingStatus::Closed;
 
         return [
             'tindakan_perbaikan' => ['nullable', 'string', 'max:1000'],

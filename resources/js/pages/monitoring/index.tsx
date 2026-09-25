@@ -677,14 +677,12 @@ export default function MonitoringIndex({
     allUnits,
 }: Props) {
     const { auth } = usePage<{
-        auth: { user: { roles: string[]; jabatan?: string } | null };
+        auth: { user: { roles: string[]; can_monitor?: boolean } | null };
     }>().props;
     const roles = auth?.user?.roles ?? [];
-    const jabatan = auth?.user?.jabatan ?? '';
     const isAdminOrManager =
         roles.includes('admin') || roles.includes('manager');
-    const isStaffDriver =
-        !isAdminOrManager && (jabatan === 'Staff' || jabatan === 'Sr.Staff');
+    const isStaffDriver = !isAdminOrManager && !!auth?.user?.can_monitor;
 
     const [form, setForm] = useState(filters);
     const { share } = useWhatsAppShare();

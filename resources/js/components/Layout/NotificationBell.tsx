@@ -5,6 +5,7 @@ import {
     Bell,
     CheckCircle,
     ClipboardCheck,
+    Timer,
     Wrench,
     XCircle,
 } from 'lucide-react';
@@ -40,6 +41,10 @@ function notifIcon(type?: string, status?: string) {
         return <ClipboardCheck className="h-4 w-4 text-amber-500" />;
     }
 
+    if (type === 'lv_approval_escalation') {
+        return <Timer className="h-4 w-4 text-orange-500" />;
+    }
+
     if (type === 'lv_approval_result') {
         return status === 'approved' ? (
             <CheckCircle className="h-4 w-4 text-green-500" />
@@ -64,6 +69,10 @@ function notifLabel(data: RecentNotification['data']): string {
 
     if (data.type === 'lv_approval_request') {
         return `Persetujuan LV — ${unit}`;
+    }
+
+    if (data.type === 'lv_approval_escalation') {
+        return `Eskalasi persetujuan — ${unit}`;
     }
 
     if (data.type === 'lv_approval_result') {

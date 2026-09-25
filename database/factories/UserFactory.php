@@ -29,6 +29,7 @@ class UserFactory extends Factory
             'nik' => fake()->unique()->numerify('########'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            'jabatan' => User::JABATAN_USER_LV1,
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,

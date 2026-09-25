@@ -6,6 +6,7 @@ use App\Exports\UnitsExport;
 use App\Exports\UnitsImportTemplateExport;
 use App\Http\Requests\StoreUnitRequest;
 use App\Imports\UnitsImport;
+use App\Models\P2hFinding;
 use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Site;
@@ -198,6 +199,7 @@ class UnitController extends Controller
                 $entry->approver_signature_url,
                 ...$entry->attachments->pluck('path'),
             ]))
+            ->concat(P2hFinding::where('unit_id', $unit->id)->whereNotNull('foto_penutupan')->pluck('foto_penutupan'))
             ->filter()
             ->unique()
             ->values()

@@ -2,8 +2,10 @@
 
 use App\Models\P2hChecklistAnswer;
 use App\Models\P2hFinding;
+use App\Models\P2hUserEntry;
 use App\Models\User;
 use App\Notifications\FindingOverdue;
+use App\Notifications\LvP2hApprovalEscalation;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -91,4 +93,33 @@ Artisan::command('p2h:remind-overdue-findings', function () {
     $this->info("{$sent} pengingat temuan lewat target dikirim.");
 })->purpose('Kirim notifikasi pengingat untuk temuan P2H yang melewati target selesai');
 
+Artisan::command('p2h:escalate-pending-approvals', function () {
+    // whereHas (bukan User::role) agar tidak error bila role admin belum dibuat
+    $admins = User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))->get();
+    $sent = 0;
+
+    // Approval LV yang masih pending saat shift-nya berakhir → admin diberi tahu, satu kali per entry
+    P2hUserEntry::query()
+        ->where('approval_status', 'pending')
+        ->whereNull('escalated_at')
+        ->whereHas('session.unit', fn ($q) => $q->where('jenis_unit', 'Light Vehicle'))
+        ->with(['session.unit:id,no_unit', 'user:id,name', 'pic:id,name'])
+        ->chunkById(100, function ($entries) use ($admins, &$sent) {
+            foreach ($entries as $entry) {
+                if (! $entry->shiftEndsAt()?->isPast()) {
+                    continue;
+                }
+
+                Notification::send($admins, new LvP2hApprovalEscalation($entry));
+                $entry->forceFill(['escalated_at' => now()])->saveQuietly();
+                $sent++;
+            }
+        });
+
+    $admins->each(fn (User $admin) => cache()->forget("recent_notifications_user_{$admin->id}"));
+
+    $this->info("{$sent} approval P2H LV dieskalasi ke admin.");
+})->purpose('Eskalasi approval P2H LV yang belum direspons PIC sampai akhir shift ke admin');
+
 Schedule::command('p2h:remind-overdue-findings')->dailyAt(config('p2h.findings.overdue_reminder_time'));
+Schedule::command('p2h:escalate-pending-approvals')->everyFifteenMinutes()->withoutOverlapping();

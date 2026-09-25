@@ -93,7 +93,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware(['role:admin|manager|driver'])->group(function () {
-        // P2H Approval (Staff/Sr.Staff + Admin/Manager) — must be before /{session} to avoid conflict
+        // P2H Approval (jabatan Approval + Admin/Manager) — must be before /{session} to avoid conflict
         Route::get('/p2h/approvals', [P2hApprovalController::class, 'index'])->name('p2h.approvals');
         Route::get('/p2h/entries/{entry}/detail', [P2hApprovalController::class, 'detail'])->name('p2h.entry.detail');
         Route::patch('/p2h/entries/{entry}/approve', [P2hApprovalController::class, 'approve'])->name('p2h.approve');
@@ -120,7 +120,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['role:admin|manager|driver'])
         ->name('monitoring.index');
 
-    // Monitoring P2H — admin, manager, dan driver dengan jabatan Staff/Sr.Staff
+    // Monitoring P2H — admin, manager, dan driver dengan jabatan Approval/User LV 2
     Route::get('/p2h-compliance', [P2hComplianceController::class, 'index'])
         ->middleware(['role:admin|manager|driver'])
         ->name('p2h.compliance');

@@ -77,6 +77,11 @@ class UnitsImport implements ToCollection, WithHeadingRow
                     // Restore dulu kalau soft-deleted, lalu update datanya
                     if ($existing->trashed()) {
                         $existing->restore();
+
+                        activity('unit')
+                            ->causedBy(auth()->user())
+                            ->performedOn($existing)
+                            ->log("Memulihkan unit lewat import: {$existing->no_unit}");
                     }
                     $existing->update([
                         'jenis_unit' => $jenisUnit,

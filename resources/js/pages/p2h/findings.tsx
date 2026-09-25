@@ -201,7 +201,9 @@ function FindingDialog({
         }
     }, [finding, setData, clearErrors]);
 
-    const needsPhoto = form.data.status === 'closed' && !finding?.foto_url;
+    // Foto baru wajib setiap kali temuan ditutup (sama dengan UpdateP2hFindingRequest)
+    const needsPhoto =
+        form.data.status === 'closed' && finding?.status !== 'closed';
 
     const askAi = async () => {
         if (!finding) {
@@ -440,9 +442,11 @@ function FindingDialog({
                                     }
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    {finding?.foto_url
-                                        ? 'Unggah foto baru untuk mengganti.'
-                                        : 'Wajib untuk menutup temuan. Maks 5 MB.'}
+                                    {needsPhoto
+                                        ? 'Wajib foto baru untuk menutup temuan. Maks 5 MB.'
+                                        : finding?.foto_url
+                                          ? 'Unggah foto baru untuk mengganti.'
+                                          : 'Maks 5 MB.'}
                                 </p>
                                 <InputError
                                     message={form.errors.foto_penutupan}

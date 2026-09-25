@@ -848,18 +848,13 @@ export default function P2hForm({
 
     const selectedUnit = units.find((u) => u.id === Number(selectedUnitId));
 
-    // Sr.Staff tidak memerlukan persetujuan PIC — Staff dan Non Staff tetap perlu
-    const isSrStaff = auth?.user?.jabatan === 'Sr.Staff';
+    // Jabatan Approval tidak memerlukan persetujuan PIC — User LV 1 & LV 2 tetap perlu
+    const isApprover = auth?.user?.jabatan === 'Approval';
     const needsApproval =
-        selectedUnit?.jenis_unit === 'Light Vehicle' && !isSrStaff;
+        selectedUnit?.jenis_unit === 'Light Vehicle' && !isApprover;
 
-    // Label jabatan PIC sesuai hierarki: Non-Staff → Staff, Staff → Sr.Staff
-    const picJabatanLabel =
-        auth?.user?.jabatan === 'Non Staff'
-            ? 'Staff'
-            : auth?.user?.jabatan === 'Staff'
-              ? 'Sr.Staff'
-              : 'Staff/Sr.Staff';
+    // PIC approval LV selalu berjabatan Approval
+    const picJabatanLabel = 'Approval';
 
     // Filter staffUsers sesuai department unit LV yang dipilih, kecualikan diri sendiri
     const eligibleStaff = staffUsers.filter((s) => s.id !== auth?.user?.id);

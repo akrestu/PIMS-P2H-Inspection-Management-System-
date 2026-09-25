@@ -20,7 +20,7 @@ class P2hComplianceController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        abort_unless($user->canViewApprovals(), 403);
+        abort_unless($user->canViewMonitoring(), 403);
 
         $request->validate([
             'date_from' => 'nullable|date_format:Y-m-d',
@@ -58,16 +58,8 @@ class P2hComplianceController extends Controller
         $unitQuery = Unit::active()->orderBy('no_unit');
 
         if ($user->isStaffOnly()) {
-            // Staff/Sr.Staff: tampilkan sesuai jenis_unit user, filter dept untuk LV
-            $userJenis = $user->jenis_unit;
-            $unitQuery->when($jenis, fn ($q) => $q->where('jenis_unit', $jenis),
-                fn ($q) => $q->when($userJenis, fn ($q2) => $q2->where('jenis_unit', $userJenis)));
-            if ($user->jenis_unit === 'Light Vehicle' && $user->department) {
-                $unitQuery->where('department', $user->department);
-            }
-            if ($user->site_id) {
-                $unitQuery->where('site_id', $user->site_id);
-            }
+            // Approval/User LV 2: sama dengan Monitoring PA — hanya LV departemen & site user
+            $unitQuery->monitorableBy($user);
         } else {
             // Admin/Manager: filter opsional dari request saja
             if ($jenis) {

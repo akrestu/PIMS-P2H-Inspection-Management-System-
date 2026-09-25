@@ -44,8 +44,8 @@ class NotificationController extends Controller
         $data = $notification->data;
         $type = $data['type'] ?? 'critical_alert';
 
-        // Approval request → arahkan ke halaman persetujuan P2H
-        if ($type === 'lv_approval_request') {
+        // Approval request / eskalasi → arahkan ke halaman persetujuan P2H
+        if (in_array($type, ['lv_approval_request', 'lv_approval_escalation'], true)) {
             return redirect()->route('p2h.approvals');
         }
 

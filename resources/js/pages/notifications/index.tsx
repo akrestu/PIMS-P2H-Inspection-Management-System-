@@ -13,6 +13,7 @@ import {
     Inbox,
     Loader2,
     MailCheck,
+    Timer,
     Trash2,
     Wrench,
     XCircle,
@@ -125,6 +126,7 @@ function getDateGroupLabel(dateStr: string): string {
 type NotifType =
     | 'critical_alert'
     | 'lv_approval_request'
+    | 'lv_approval_escalation'
     | 'lv_approval_result'
     | 'finding_assigned'
     | 'finding_overdue';
@@ -169,6 +171,26 @@ function getTypeConfig(data: PimsNotification['data']) {
                 </Badge>
             ),
             actionHint: 'Lihat temuan',
+        };
+    }
+
+    if (type === 'lv_approval_escalation') {
+        return {
+            icon: Timer,
+            iconClass:
+                'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400',
+            borderColor: 'border-l-orange-500',
+            bgUnread: 'bg-orange-50/40 dark:bg-orange-950/15',
+            badge: (
+                <Badge
+                    variant="secondary"
+                    className="gap-1 border-orange-200 bg-orange-100 text-xs font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+                >
+                    <Timer className="h-3 w-3" />
+                    Eskalasi Persetujuan
+                </Badge>
+            ),
+            actionHint: 'Tinjau & putuskan',
         };
     }
 
@@ -362,6 +384,17 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                             )}
                         </div>
                     )}
+
+                {/* Approval escalation details */}
+                {notif.data.type === 'lv_approval_escalation' && (
+                    <div className="text-sm text-muted-foreground">
+                        PIC{' '}
+                        <span className="font-medium text-foreground">
+                            {notif.data.pic_name ?? '-'}
+                        </span>{' '}
+                        belum merespons sampai akhir shift.
+                    </div>
+                )}
 
                 {/* Finding assignment / overdue details */}
                 {(notif.data.type === 'finding_assigned' ||

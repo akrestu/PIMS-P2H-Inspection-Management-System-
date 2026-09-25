@@ -81,7 +81,7 @@ interface UnitOption {
     site_id: number | null;
 }
 
-type Jabatan = 'Sr.Staff' | 'Staff' | 'Non Staff';
+type Jabatan = 'Approval' | 'User LV 2' | 'User LV 1';
 
 interface UserRow {
     id: number;
@@ -231,12 +231,13 @@ function RoleSelect({
 }
 
 /* ─────────────────── JabatanSelect ─────────────────────────── */
-const JABATAN_LIST: Jabatan[] = ['Sr.Staff', 'Staff', 'Non Staff'];
+const JABATAN_LIST: Jabatan[] = ['Approval', 'User LV 2', 'User LV 1'];
 const JABATAN_META: Record<Jabatan, string> = {
-    'Sr.Staff':
+    Approval:
         'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400',
-    Staff: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400',
-    'Non Staff':
+    'User LV 2':
+        'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400',
+    'User LV 1':
         'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400',
 };
 
@@ -602,14 +603,14 @@ function UserFormFields<
                 error={errors.site_id as string | undefined}
             />
 
+            <JabatanSelect
+                value={data.jabatan}
+                onChange={(v) => setData('jabatan' as keyof T, v)}
+                error={errors.jabatan as string | undefined}
+            />
+
             {needsProfile && (
                 <>
-                    <JabatanSelect
-                        value={data.jabatan}
-                        onChange={(v) => setData('jabatan' as keyof T, v)}
-                        error={errors.jabatan as string | undefined}
-                    />
-
                     <div className="space-y-1.5">
                         <Label className="text-sm font-medium">
                             Departemen{' '}

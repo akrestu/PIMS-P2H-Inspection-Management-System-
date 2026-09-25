@@ -38,7 +38,8 @@ class PeriodP2hReport
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->when($jenisUnit, fn ($q) => $q->where('jenis_unit', $jenisUnit));
 
-        P2hFinding::syncMissing($start);
+        // Jaring pengaman ringan (maks. 1x per 10 menit); temuan baru dibuat oleh event model
+        P2hFinding::syncRecent();
 
         // ── Kepatuhan pengisian P2H ─────────────────────────────────────────
         $days = (int) $start->diffInDays(min($end, today())) + 1;
@@ -46,7 +47,7 @@ class PeriodP2hReport
             ->whereDate('tanggal', '>=', $start)
             ->whereDate('tanggal', '<=', $end)
             ->whereHas('unit', $unitScope)
-            ->whereHas('userEntries')
+            ->whereHas('userEntries', fn ($q) => $q->notRejected())
             ->count();
         [$activeUnits, $expected] = self::expectedInspections($start, $end, $unitScope);
 
@@ -184,7 +185,7 @@ class PeriodP2hReport
         $lastSessionByUnit = P2hSession::query()
             ->whereDate('tanggal', '>=', $start)
             ->whereDate('tanggal', '<=', $periodEnd)
-            ->whereHas('userEntries')
+            ->whereHas('userEntries', fn ($q) => $q->notRejected())
             ->selectRaw('unit_id, MAX(tanggal) as terakhir')
             ->groupBy('unit_id')
             ->pluck('terakhir', 'unit_id');
