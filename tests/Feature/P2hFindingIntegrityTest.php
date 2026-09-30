@@ -141,6 +141,29 @@ test('findings with different PIC or status show those details per finding on on
         ->toContain('*PIC:* _Belum ditunjuk_')->not->toContain('━');
 });
 
+test('findings with mixed PIC are grouped per PIC so a name is written once', function () {
+    $zaki = User::factory()->create(['name' => 'Zaki Muhammad']);
+    $entry = integrityEntry('BD');
+    foreach (['Wipper' => 'Rusak', 'APAR' => 'Tidak ada', 'Kebersihan Ruang Kabin' => 'Kotor', 'Traffic cone' => 'Tidak ada'] as $item => $ket) {
+        P2hChecklistAnswer::create(integrityAnswer($entry, $item, 'Tidak Layak', 'A', $ket));
+    }
+    P2hFinding::where('item_nama', '!=', 'Kebersihan Ruang Kabin')->update(['pic_user_id' => $zaki->id]);
+
+    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
+
+    expect(substr_count($text, 'Zaki Muhammad'))->toBe(1)
+        ->and(substr_count($text, 'Belum ditunjuk'))->toBe(1)
+        // Kelompok PIC yang sudah ditunjuk di atas, belum ditunjuk di akhir
+        ->and($text)->toContain('*PIC:* Zaki Muhammad
+- Wipper — _Rusak_
+- APAR — _Tidak ada_
+- Traffic cone — _Tidak ada_
+*PIC:* _Belum ditunjuk_
+- Kebersihan Ruang Kabin — _Kotor_')
+        ->and($text)->toContain('*Progress:* 🔴 Open')
+        ->not->toContain('↳ *PIC:*');
+});
+
 test('findings from rejected entries or deleted sessions are excluded from reports and reminders', function () {
     Notification::fake();
     $pic = User::factory()->create();

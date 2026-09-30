@@ -110,3 +110,31 @@ test('date range is limited to 31 days', function () {
         ->get(route('unit-monitoring.index', ['start' => '2026-08-01', 'end' => '2026-09-25']))
         ->assertSessionHasErrors('end');
 });
+
+test('excel action column writes each pic once', function () {
+    $row = fn (array $temuan) => [[
+        'tanggal' => '2026-09-25', 'no_unit' => 'LV-9', 'no_lambung' => null, 'jenis_unit' => 'Light Vehicle', 'site' => null,
+        'terisi' => true, 'pending_approval' => false, 'shifts' => ['Shift I'], 'drivers' => ['Budi'], 'kondisi' => 'BD',
+        'temuan' => $temuan, 'km' => 100, 'bbm_liter' => null,
+    ]];
+    $finding = fn (string $item, ?string $pic) => [
+        'item' => $item, 'kode_bahaya' => 'A', 'keterangan' => null, 'status' => 'open', 'status_label' => 'Open',
+        'tindakan' => null, 'pic' => $pic, 'target_selesai' => null,
+    ];
+    $summary = ['total' => 1, 'terisi' => 1, 'kosong' => 0, 'bd' => 1, 'temuan' => 3, 'bbm_liter' => 0];
+    $actionCell = fn (array $rows) => (new DailyUnitMonitoringExport($rows, $summary, '2026-09-25', '2026-09-25'))->array()[1][10];
+
+    $same = $actionCell($row([$finding('Rem', 'Zaki'), $finding('APAR', 'Zaki')]));
+    expect(substr_count($same, 'Zaki'))->toBe(1)
+        ->and($same)->toBe('1. Belum ada tindakan [Open]
+2. Belum ada tindakan [Open]
+PIC: Zaki');
+
+    $mixed = $actionCell($row([$finding('Rem', null), $finding('APAR', 'Zaki'), $finding('Cone', 'Zaki')]));
+    expect(substr_count($mixed, 'Zaki'))->toBe(1)
+        ->and($mixed)->toBe('PIC: Zaki
+2. Belum ada tindakan [Open]
+3. Belum ada tindakan [Open]
+PIC: Belum ditunjuk
+1. Belum ada tindakan [Open]');
+});

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -50,10 +51,7 @@ class DailyUnitMonitoringExport implements FromArray, WithEvents, WithTitle
                 $temuan->isEmpty() ? '-' : $temuan->values()->map(fn ($t, $i) => ($i + 1).'. '.$t['item']
                     .($t['kode_bahaya'] === 'AA' ? ' (AA)' : '')
                     .($t['keterangan'] ? ' — '.$t['keterangan'] : ''))->implode("\n"),
-                $temuan->isEmpty() ? '-' : $temuan->values()->map(fn ($t, $i) => ($i + 1).'. '
-                    .($t['tindakan'] ?: 'Belum ada tindakan')
-                    .' ['.($t['status_label'] ?? '-').']'
-                    .($t['pic'] ? ' PIC: '.$t['pic'] : ''))->implode("\n"),
+                $temuan->isEmpty() ? '-' : self::actionCell($temuan),
                 $row['km'] ?? '-',
                 $row['bbm_liter'] ?? '-',
             ];
@@ -69,6 +67,28 @@ class DailyUnitMonitoringExport implements FromArray, WithEvents, WithTitle
         $data[] = ['Total BBM (liter)', $this->summary['bbm_liter']];
 
         return $data;
+    }
+
+    /**
+     * Kolom Action: nomor tindakan mengikuti nomor di kolom Temuan. PIC yang sama
+     * ditulis sekali; bila berbeda, tindakan dikelompokkan per PIC (tidak berulang per baris).
+     */
+    private static function actionCell(Collection $temuan): string
+    {
+        $pic = fn ($t) => $t['pic'] ?: 'Belum ditunjuk';
+        $action = fn ($t, $i) => ($i + 1).'. '.($t['tindakan'] ?: 'Belum ada tindakan').' ['.($t['status_label'] ?? '-').']';
+        $numbered = $temuan->values()->map(fn ($t, $i) => ['t' => $t, 'i' => $i]);
+
+        if ($numbered->map(fn ($x) => $pic($x['t']))->unique()->count() === 1) {
+            return $numbered->map(fn ($x) => $action($x['t'], $x['i']))
+                ->push('PIC: '.$pic($temuan->first()))
+                ->implode("\n");
+        }
+
+        return $numbered->groupBy(fn ($x) => $pic($x['t']))
+            ->sortBy(fn ($group) => $group->first()['t']['pic'] ? 0 : 1)
+            ->map(fn ($group, $name) => "PIC: {$name}\n".$group->map(fn ($x) => $action($x['t'], $x['i']))->implode("\n"))
+            ->implode("\n");
     }
 
     public function title(): string

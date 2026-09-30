@@ -144,7 +144,10 @@ class P2hDigestFormatter
 
     /**
      * Daftar temuan satu unit. PIC, tindakan, dan status yang sama untuk semua
-     * temuan ditulis sekali; yang berbeda ditulis di akhir baris temuan.
+     * temuan ditulis sekali. Bila PIC berbeda-beda, temuan dikelompokkan per PIC
+     * (nama PIC ditulis sekali per kelompok, "belum ditunjuk" paling akhir) agar
+     * nama yang sama tidak berulang di setiap baris. Tindakan/status yang berbeda
+     * ditulis di bawah baris temuannya.
      */
     private static function findingsBlock(array $findings): array
     {
@@ -155,32 +158,40 @@ class P2hDigestFormatter
         // Kode bahaya AA (kritis) selalu di atas
         $findings = collect($findings)->sortBy(fn ($f) => $f['kode_bahaya'] === 'AA' ? 0 : 1)->values();
 
+        $pic = fn ($f) => '*PIC:* '.($f['pic'] ? self::clean($f['pic']) : '_Belum ditunjuk_');
         $fields = [
-            'pic' => fn ($f) => '*PIC:* '.($f['pic'] ? self::clean($f['pic']) : '_Belum ditunjuk_'),
             'status' => fn ($f) => '*Progress:* '.(self::STATUS_LABEL[$f['status']] ?? $f['status'])
                 .($f['target'] ? ' _(target '.Carbon::parse($f['target'])->format('d/m/Y').')_' : ''),
             'tindakan' => fn ($f) => '*Tindakan:* _'.($f['tindakan'] ? self::clean($f['tindakan']) : 'Belum ditentukan').'_',
         ];
         $shared = collect($fields)->filter(fn ($render) => $findings->map($render)->unique()->count() === 1);
         $varying = collect($fields)->diffKeys($shared);
+        $picShared = $findings->map($pic)->unique()->count() === 1;
 
         $lines = ['', '*Temuan ('.$findings->count().'):*'];
 
-        foreach ($findings as $f) {
-            // Penanda penting ditebalkan agar langsung tertangkap
-            $notes = collect([
-                $f['kode_bahaya'] === 'AA' ? '⛔ *AA*' : null,
-                ($f['berulang'] ?? null) ? "_(berulang {$f['berulang']}x)_" : null,
-                ($f['overdue'] ?? false) ? '⏰ *Lewat target*' : null,
-            ])->filter();
+        // Urutan kelompok mengikuti temuan pertamanya (AA tetap di atas); belum ditunjuk di akhir
+        $groups = $picShared
+            ? collect([$findings])
+            : $findings->groupBy(fn ($f) => $pic($f))
+                ->sortBy(fn ($group) => $group->first()['pic'] ? 0 : 1);
 
-            $lines[] = '- '.self::clean($f['item'])
-                .($f['keterangan'] ? ' — _'.self::clean($f['keterangan']).'_' : '')
-                .($notes->isNotEmpty() ? ' '.$notes->implode(' ') : '');
-
-            if ($varying->isNotEmpty()) {
-                $lines[] = '↳ '.$varying->map(fn ($render) => $render($f))->implode(' · ');
+        foreach ($groups as $groupPic => $group) {
+            if (! $picShared) {
+                $lines[] = $groupPic;
             }
+
+            foreach ($group as $f) {
+                $lines[] = self::findingLine($f);
+
+                if ($varying->isNotEmpty()) {
+                    $lines[] = '↳ '.$varying->map(fn ($render) => $render($f))->implode(' · ');
+                }
+            }
+        }
+
+        if ($picShared) {
+            $shared = collect(['pic' => $pic])->merge($shared);
         }
 
         if ($shared->isNotEmpty()) {
@@ -196,6 +207,20 @@ class P2hDigestFormatter
         }
 
         return $lines;
+    }
+
+    private static function findingLine(array $f): string
+    {
+        // Penanda penting ditebalkan agar langsung tertangkap
+        $notes = collect([
+            $f['kode_bahaya'] === 'AA' ? '⛔ *AA*' : null,
+            ($f['berulang'] ?? null) ? "_(berulang {$f['berulang']}x)_" : null,
+            ($f['overdue'] ?? false) ? '⏰ *Lewat target*' : null,
+        ])->filter();
+
+        return '- '.self::clean($f['item'])
+            .($f['keterangan'] ? ' — _'.self::clean($f['keterangan']).'_' : '')
+            .($notes->isNotEmpty() ? ' '.$notes->implode(' ') : '');
     }
 
     /**

@@ -457,6 +457,15 @@ function SummaryCard({
 }
 
 function MonitoringRow({ row }: { row: Row }) {
+    // PIC paling banyak di baris ini ditulis sekali, bukan diulang di setiap temuan
+    const picCounts = new Map<string | null, number>();
+    row.temuan.forEach((t) =>
+        picCounts.set(t.pic ?? null, (picCounts.get(t.pic ?? null) ?? 0) + 1),
+    );
+    const mainPic =
+        [...picCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const allSamePic = picCounts.size <= 1;
+
     return (
         <tr
             className={cn(
@@ -566,16 +575,27 @@ function MonitoringRow({ row }: { row: Row }) {
                                         {t.tindakan ?? 'Belum ada tindakan'}
                                     </span>
                                 </div>
-                                {(t.pic || t.target_selesai) && (
+                                {/* PIC ditulis per temuan hanya bila berbeda dari PIC utama */}
+                                {((t.pic ?? null) !== mainPic ||
+                                    t.target_selesai) && (
                                     <p className="mt-0.5 text-muted-foreground">
-                                        {t.pic && `PIC: ${t.pic}`}
-                                        {t.pic && t.target_selesai && ' · '}
+                                        {(t.pic ?? null) !== mainPic &&
+                                            `PIC: ${t.pic ?? 'Belum ditunjuk'}`}
+                                        {(t.pic ?? null) !== mainPic &&
+                                            t.target_selesai &&
+                                            ' · '}
                                         {t.target_selesai &&
                                             `Target: ${t.target_selesai}`}
                                     </p>
                                 )}
                             </li>
                         ))}
+                        <li className="border-t pt-1 text-xs text-muted-foreground">
+                            {allSamePic ? 'PIC' : 'PIC temuan lain'}:{' '}
+                            <span className="font-medium text-foreground">
+                                {mainPic ?? 'Belum ditunjuk'}
+                            </span>
+                        </li>
                     </ul>
                 )}
             </td>
