@@ -1,7 +1,5 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
-    ChevronLeft,
-    ChevronRight,
     Download,
     Eye,
     EyeOff,
@@ -23,6 +21,7 @@ import {
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { SiteSelect } from '@/components/site-select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -416,6 +415,7 @@ function AssignedUnitsSelect({
                         >
                             {u.no_unit}
                             <button
+                                aria-label="Hapus unit dari pilihan"
                                 type="button"
                                 onClick={() => toggle(u.id)}
                                 className="transition-colors hover:text-destructive"
@@ -719,7 +719,7 @@ function AddUserDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+            <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0 sm:max-w-lg">
                 <DialogHeader className="border-b px-6 py-4">
                     <DialogTitle>Tambah User Baru</DialogTitle>
                     <DialogDescription>
@@ -827,7 +827,7 @@ function EditUserDialog({
 
     return (
         <Dialog key={user.id} open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+            <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0 sm:max-w-lg">
                 <DialogHeader className="border-b px-6 py-4">
                     <div className="flex items-center gap-3 pb-1">
                         <Avatar
@@ -1073,7 +1073,7 @@ function ImportSheet({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+            <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0 sm:max-w-lg">
                 <DialogHeader className="border-b px-6 py-4">
                     <DialogTitle className="flex items-center gap-2">
                         <Upload className="h-5 w-5 text-muted-foreground" />
@@ -1435,6 +1435,7 @@ export default function UsersIndex({
                             />
                             {search && (
                                 <button
+                                    aria-label="Hapus pencarian"
                                     onClick={() => handleSearch('')}
                                     className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
@@ -1660,7 +1661,7 @@ export default function UsersIndex({
                                                             </p>
                                                             {u.id ===
                                                                 currentUserId && (
-                                                                <span className="text-[10px] text-muted-foreground">
+                                                                <span className="text-xs text-muted-foreground">
                                                                     (Anda)
                                                                 </span>
                                                             )}
@@ -1727,7 +1728,7 @@ export default function UsersIndex({
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 aria-label="Aksi"
-                                                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                                                                className="h-10 w-10 p-0 focus-visible:opacity-100 data-[state=open]:opacity-100 md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
                                                             >
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
@@ -1841,110 +1842,17 @@ export default function UsersIndex({
 
                                 {/* Right: page buttons (hidden when show-all) */}
                                 {users.last_page > 1 && perPage !== 'all' && (
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={users.current_page === 1}
-                                            onClick={() =>
-                                                router.get('/users', {
-                                                    ...filters,
-                                                    per_page: perPage,
-                                                    page:
-                                                        users.current_page - 1,
-                                                })
-                                            }
-                                            className="h-8 gap-1"
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />{' '}
-                                            Prev
-                                        </Button>
-                                        {Array.from(
-                                            { length: users.last_page },
-                                            (_, i) => i + 1,
-                                        )
-                                            .filter(
-                                                (p) =>
-                                                    p === 1 ||
-                                                    p === users.last_page ||
-                                                    Math.abs(
-                                                        p - users.current_page,
-                                                    ) <= 1,
-                                            )
-                                            .reduce<(number | '...')[]>(
-                                                (acc, p, i, arr) => {
-                                                    if (
-                                                        i > 0 &&
-                                                        (arr[
-                                                            i - 1
-                                                        ] as number) !==
-                                                            p - 1
-                                                    ) {
-                                                        acc.push('...');
-                                                    }
-
-                                                    acc.push(p);
-
-                                                    return acc;
-                                                },
-                                                [],
-                                            )
-                                            .map((p, i) =>
-                                                p === '...' ? (
-                                                    <span
-                                                        key={`e-${i}`}
-                                                        className="px-1 text-sm text-muted-foreground"
-                                                    >
-                                                        …
-                                                    </span>
-                                                ) : (
-                                                    <Button
-                                                        key={p}
-                                                        size="sm"
-                                                        variant={
-                                                            p ===
-                                                            users.current_page
-                                                                ? 'default'
-                                                                : 'outline'
-                                                        }
-                                                        onClick={() =>
-                                                            router.get(
-                                                                '/users',
-                                                                {
-                                                                    ...filters,
-                                                                    per_page:
-                                                                        perPage,
-                                                                    page: p,
-                                                                },
-                                                            )
-                                                        }
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        {p}
-                                                    </Button>
-                                                ),
-                                            )}
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={
-                                                users.current_page ===
-                                                users.last_page
-                                            }
-                                            onClick={() =>
-                                                router.get('/users', {
-                                                    ...filters,
-                                                    per_page: perPage,
-                                                    page:
-                                                        users.current_page + 1,
-                                                })
-                                            }
-                                            className="h-8 gap-1"
-                                        >
-                                            Next{' '}
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <PageButtons
+                                        currentPage={users.current_page}
+                                        lastPage={users.last_page}
+                                        onPageChange={(page) =>
+                                            router.get('/users', {
+                                                ...filters,
+                                                per_page: perPage,
+                                                page,
+                                            })
+                                        }
+                                    />
                                 )}
                             </div>
                         )}

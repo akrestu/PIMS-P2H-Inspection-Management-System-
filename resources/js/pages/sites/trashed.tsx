@@ -2,8 +2,6 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
-    ChevronLeft,
-    ChevronRight,
     MapPin,
     RotateCcw,
     Search,
@@ -11,6 +9,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -358,6 +357,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
                                                                     asChild
                                                                 >
                                                                     <Button
+                                                                        aria-label="Hapus permanen"
                                                                         variant="destructive"
                                                                         size="sm"
                                                                         className="h-8 w-8 p-0"
@@ -405,40 +405,16 @@ export default function SitesTrashed({ sites, filters }: Props) {
                                     </span>{' '}
                                     site
                                 </p>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={sites.current_page === 1}
-                                        onClick={() =>
-                                            router.get('/sites/trashed', {
-                                                ...filters,
-                                                page: sites.current_page - 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" /> Prev
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={
-                                            sites.current_page ===
-                                            sites.last_page
-                                        }
-                                        onClick={() =>
-                                            router.get('/sites/trashed', {
-                                                ...filters,
-                                                page: sites.current_page + 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        Next{' '}
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <PageButtons
+                                    currentPage={sites.current_page}
+                                    lastPage={sites.last_page}
+                                    onPageChange={(page) =>
+                                        router.get('/sites/trashed', {
+                                            ...filters,
+                                            page,
+                                        })
+                                    }
+                                />
                             </div>
                         )}
                     </CardContent>

@@ -1,16 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import {
-    ChevronLeft,
-    ChevronRight,
-    ClipboardList,
-    Search,
-    Shield,
-    Trash2,
-    User,
-} from 'lucide-react';
+import { ClipboardList, Search, Shield, Trash2, User } from 'lucide-react';
 import { useRef } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -267,35 +259,11 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                                 <p className="text-xs text-muted-foreground">
                                     {logs.from}–{logs.to} dari {logs.total} log
                                 </p>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        disabled={logs.current_page === 1}
-                                        onClick={() =>
-                                            goToPage(logs.current_page - 1)
-                                        }
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <span className="px-2 text-xs tabular-nums">
-                                        {logs.current_page} / {logs.last_page}
-                                    </span>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        disabled={
-                                            logs.current_page === logs.last_page
-                                        }
-                                        onClick={() =>
-                                            goToPage(logs.current_page + 1)
-                                        }
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <PageButtons
+                                    currentPage={logs.current_page}
+                                    lastPage={logs.last_page}
+                                    onPageChange={goToPage}
+                                />
                             </div>
                         )}
                     </CardContent>

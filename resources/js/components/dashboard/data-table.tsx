@@ -230,26 +230,26 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                     <TabsList className="h-8">
                         <TabsTrigger value="semua" className="px-3 text-xs">
                             Semua
-                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium">
+                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
                                 {counts.semua}
                             </span>
                         </TabsTrigger>
                         <TabsTrigger value="selesai" className="px-3 text-xs">
                             Selesai
-                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium">
+                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
                                 {counts.selesai}
                             </span>
                         </TabsTrigger>
                         <TabsTrigger value="open" className="px-3 text-xs">
                             Open
-                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium">
+                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
                                 {counts.open}
                             </span>
                         </TabsTrigger>
                         <TabsTrigger value="ada_tl" className="px-3 text-xs">
                             Ada TL
                             {counts.ada_tl > 0 && (
-                                <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-900/40 dark:text-red-400">
+                                <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-600 dark:bg-red-900/40 dark:text-red-400">
                                     {counts.ada_tl}
                                 </span>
                             )}
@@ -336,6 +336,7 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                                 /{table.getPageCount()}
                             </span>
                             <Button
+                                aria-label="Halaman sebelumnya"
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7"
@@ -345,6 +346,7 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                                 <ChevronLeft className="h-3.5 w-3.5" />
                             </Button>
                             <Button
+                                aria-label="Halaman berikutnya"
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7"

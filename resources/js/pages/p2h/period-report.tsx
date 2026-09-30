@@ -4,6 +4,7 @@ import {
     ClipboardCopy,
     FileDown,
     Gauge,
+    Repeat,
     RotateCcw,
     Send,
     ShieldCheck,
@@ -469,11 +470,13 @@ export default function PeriodReport({
                             title="Perlu perhatian"
                             rows={[
                                 ...report.berulang.map((r) => ({
-                                    label: `🔁 ${r.no_unit} · ${r.item}`,
+                                    icon: 'berulang' as const,
+                                    label: `${r.no_unit} · ${r.item}`,
                                     value: `${r.jumlah}x`,
                                 })),
                                 ...report.overdue.map((r) => ({
-                                    label: `⏰ ${r.no_unit} · ${r.item}`,
+                                    icon: 'overdue' as const,
+                                    label: `${r.no_unit} · ${r.item}`,
                                     sub: `PIC: ${r.pic ?? 'Belum ditunjuk'}`,
                                     value: `+${r.hari_terlambat} hari`,
                                 })),
@@ -522,7 +525,12 @@ function RankCard({
     rows,
 }: {
     title: string;
-    rows: { label: string; sub?: string; value: string }[];
+    rows: {
+        label: string;
+        sub?: string;
+        value: string;
+        icon?: 'berulang' | 'overdue';
+    }[];
 }) {
     return (
         <Card>
@@ -542,7 +550,23 @@ function RankCard({
                                 className="flex items-center justify-between gap-3 py-1.5"
                             >
                                 <div className="min-w-0">
-                                    <p className="truncate">{r.label}</p>
+                                    <p className="flex items-center gap-1.5 truncate">
+                                        {r.icon === 'berulang' && (
+                                            <Repeat
+                                                className="h-3.5 w-3.5 shrink-0 text-amber-600"
+                                                aria-label="Berulang"
+                                            />
+                                        )}
+                                        {r.icon === 'overdue' && (
+                                            <AlarmClock
+                                                className="h-3.5 w-3.5 shrink-0 text-red-600"
+                                                aria-label="Lewat target"
+                                            />
+                                        )}
+                                        <span className="truncate">
+                                            {r.label}
+                                        </span>
+                                    </p>
                                     {r.sub && (
                                         <p className="truncate text-xs text-muted-foreground">
                                             {r.sub}

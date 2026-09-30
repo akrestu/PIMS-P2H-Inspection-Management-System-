@@ -2,16 +2,17 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     CalendarDays,
-    ChevronLeft,
-    ChevronRight,
+    CheckCircle2,
     ClipboardCheck,
     ClipboardX,
     FileSpreadsheet,
     Fuel,
     Search,
     Wrench,
+    XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -345,8 +346,24 @@ export default function UnitMonitoring({
                     ))}
                 </div>
 
-                {/* ── Table ── */}
-                <div className="overflow-x-auto rounded-xl border">
+                {/* ── Mobile: kartu ── */}
+                <div className="divide-y rounded-xl border md:hidden">
+                    {rows.data.length === 0 ? (
+                        <p className="px-3 py-12 text-center text-sm text-muted-foreground">
+                            Tidak ada data untuk filter ini.
+                        </p>
+                    ) : (
+                        rows.data.map((row) => (
+                            <MonitoringCard
+                                key={`${row.unit_id}-${row.tanggal}`}
+                                row={row}
+                            />
+                        ))
+                    )}
+                </div>
+
+                {/* ── Table (tablet & desktop) ── */}
+                <div className="hidden overflow-x-auto rounded-xl border md:block">
                     <table className="w-full min-w-[1100px] text-sm">
                         <thead className="bg-muted/60 text-xs text-muted-foreground">
                             <tr className="text-left">
@@ -400,29 +417,11 @@ export default function UnitMonitoring({
                             <span className="font-medium">{rows.total}</span>{' '}
                             baris
                         </p>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                disabled={rows.current_page === 1}
-                                onClick={() => goToPage(rows.current_page - 1)}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <span className="px-2 text-sm tabular-nums">
-                                {rows.current_page} / {rows.last_page}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                disabled={rows.current_page === rows.last_page}
-                                onClick={() => goToPage(rows.current_page + 1)}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <PageButtons
+                            currentPage={rows.current_page}
+                            lastPage={rows.last_page}
+                            onPageChange={goToPage}
+                        />
                     </div>
                 )}
             </div>
@@ -456,15 +455,148 @@ function SummaryCard({
     );
 }
 
-function MonitoringRow({ row }: { row: Row }) {
-    // PIC paling banyak di baris ini ditulis sekali, bukan diulang di setiap temuan
+/** PIC paling banyak di satu unit-hari: ditulis sekali, bukan diulang di setiap temuan. */
+function mainPicOf(row: Row): { mainPic: string | null; allSamePic: boolean } {
     const picCounts = new Map<string | null, number>();
     row.temuan.forEach((t) =>
         picCounts.set(t.pic ?? null, (picCounts.get(t.pic ?? null) ?? 0) + 1),
     );
-    const mainPic =
-        [...picCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-    const allSamePic = picCounts.size <= 1;
+
+    return {
+        mainPic:
+            [...picCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ??
+            null,
+        allSamePic: picCounts.size <= 1,
+    };
+}
+
+/** Kartu unit-hari untuk layar HP (tabel 7 kolom tidak muat). */
+function MonitoringCard({ row }: { row: Row }) {
+    const { mainPic, allSamePic } = mainPicOf(row);
+
+    return (
+        <div
+            className={cn(
+                'space-y-2 p-4',
+                !row.terisi && 'bg-red-50/40 dark:bg-red-950/10',
+            )}
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <p className="font-semibold">{row.no_unit}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {fmtDate(row.tanggal)} ·{' '}
+                        {row.jenis_unit === 'Light Vehicle'
+                            ? 'LV'
+                            : row.jenis_unit}
+                        {row.site && ` · ${row.site}`}
+                    </p>
+                </div>
+                {row.terisi ? (
+                    <Link
+                        href={`/p2h/${row.session_id}`}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-400"
+                    >
+                        <CheckCircle2 className="h-4 w-4" />
+                        {row.shifts.join(', ') || 'Terisi'}
+                    </Link>
+                ) : (
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-red-600 dark:text-red-400">
+                        <XCircle className="h-4 w-4" />
+                        Tidak mengisi
+                    </span>
+                )}
+            </div>
+
+            {row.terisi && (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    {row.kondisi === 'BD' && (
+                        <Badge variant="destructive" className="h-5">
+                            BD
+                        </Badge>
+                    )}
+                    {row.pending_approval && (
+                        <Badge
+                            variant="outline"
+                            className="h-5 border-amber-300 text-amber-700 dark:text-amber-400"
+                        >
+                            Menunggu approval
+                        </Badge>
+                    )}
+                    <span className="text-muted-foreground">
+                        {row.drivers.join(', ')}
+                    </span>
+                </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <p className="text-muted-foreground">KM</p>
+                    <p className="font-medium tabular-nums">{num(row.km)}</p>
+                </div>
+                <div>
+                    <p className="text-muted-foreground">BBM</p>
+                    <p className="font-medium tabular-nums">
+                        {row.bbm_liter ? `${num(row.bbm_liter, 2)} L` : '—'}
+                    </p>
+                </div>
+            </div>
+
+            {row.temuan.length > 0 && (
+                <div className="space-y-1.5 rounded-lg border bg-muted/30 p-2.5">
+                    <p className="text-xs font-semibold">
+                        Temuan ({row.temuan.length})
+                    </p>
+                    {row.temuan.map((t, i) => (
+                        <div key={i} className="text-xs">
+                            <p>
+                                <span className="font-medium">{t.item}</span>
+                                {t.kode_bahaya === 'AA' && (
+                                    <Badge
+                                        variant="destructive"
+                                        className="ml-1 h-4 px-1 text-xs"
+                                    >
+                                        AA
+                                    </Badge>
+                                )}
+                                {t.keterangan && (
+                                    <span className="text-muted-foreground">
+                                        {' '}
+                                        — {t.keterangan}
+                                    </span>
+                                )}
+                            </p>
+                            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-muted-foreground">
+                                {t.status && (
+                                    <span
+                                        className={cn(
+                                            'rounded border px-1.5 py-0.5 text-xs font-medium',
+                                            FINDING_STATUS_CLASS[t.status],
+                                        )}
+                                    >
+                                        {t.status_label}
+                                    </span>
+                                )}
+                                {t.tindakan ?? 'Belum ada tindakan'}
+                                {(t.pic ?? null) !== mainPic &&
+                                    ` · PIC: ${t.pic ?? 'Belum ditunjuk'}`}
+                            </p>
+                        </div>
+                    ))}
+                    <p className="border-t pt-1 text-xs text-muted-foreground">
+                        {allSamePic ? 'PIC' : 'PIC temuan lain'}:{' '}
+                        <span className="font-medium text-foreground">
+                            {mainPic ?? 'Belum ditunjuk'}
+                        </span>
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function MonitoringRow({ row }: { row: Row }) {
+    const { mainPic, allSamePic } = mainPicOf(row);
 
     return (
         <tr
@@ -493,7 +625,8 @@ function MonitoringRow({ row }: { row: Row }) {
                                     href={`/p2h/${row.session_id}`}
                                     className="font-medium text-emerald-700 hover:underline dark:text-emerald-400"
                                 >
-                                    ✓ {row.shifts.join(', ') || 'Terisi'}
+                                    <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
+                                    {row.shifts.join(', ') || 'Terisi'}
                                 </Link>
                             ) : null}
                             {row.kondisi === 'BD' && (
@@ -517,8 +650,9 @@ function MonitoringRow({ row }: { row: Row }) {
                         )}
                     </div>
                 ) : (
-                    <span className="font-medium text-red-600 dark:text-red-400">
-                        ✗ Tidak mengisi
+                    <span className="inline-flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+                        <XCircle className="h-3.5 w-3.5" />
+                        Tidak mengisi
                     </span>
                 )}
             </td>
@@ -533,7 +667,7 @@ function MonitoringRow({ row }: { row: Row }) {
                                 {t.kode_bahaya === 'AA' && (
                                     <Badge
                                         variant="destructive"
-                                        className="ml-1 h-4 px-1 text-[10px]"
+                                        className="ml-1 h-4 px-1 text-xs"
                                     >
                                         AA
                                     </Badge>
@@ -559,7 +693,7 @@ function MonitoringRow({ row }: { row: Row }) {
                                     {t.status && (
                                         <span
                                             className={cn(
-                                                'rounded border px-1.5 py-0.5 text-[10px] font-medium',
+                                                'rounded border px-1.5 py-0.5 text-xs font-medium',
                                                 FINDING_STATUS_CLASS[t.status],
                                             )}
                                         >

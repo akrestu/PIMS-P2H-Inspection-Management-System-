@@ -694,7 +694,7 @@ export default function P2hCompliancePage({
                                             {dates.map((d) => (
                                                 <TableHead
                                                     key={d}
-                                                    className="px-1 py-2 text-center text-[10px] font-medium whitespace-nowrap text-muted-foreground"
+                                                    className="px-1 py-2 text-center text-xs font-medium whitespace-nowrap text-muted-foreground"
                                                 >
                                                     {fmtShort(d)}
                                                 </TableHead>
@@ -733,7 +733,7 @@ export default function P2hCompliancePage({
                                                                 : 'LV'}
                                                         </Badge>
                                                         {row.no_lambung && (
-                                                            <span className="text-[10px] text-muted-foreground">
+                                                            <span className="text-xs text-muted-foreground">
                                                                 {row.no_lambung}
                                                             </span>
                                                         )}
@@ -771,7 +771,7 @@ export default function P2hCompliancePage({
                                                     >
                                                         {row.compliance_pct}%
                                                     </p>
-                                                    <p className="text-[10px] text-muted-foreground">
+                                                    <p className="text-xs text-muted-foreground">
                                                         {row.filled_days}/
                                                         {row.total_days}
                                                     </p>
@@ -803,7 +803,7 @@ export default function P2hCompliancePage({
                                                     >
                                                         <p
                                                             className={cn(
-                                                                'text-[10px] font-bold tabular-nums',
+                                                                'text-xs font-bold tabular-nums',
                                                                 complianceColor(
                                                                     pct,
                                                                 ),

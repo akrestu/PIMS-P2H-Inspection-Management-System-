@@ -534,7 +534,7 @@ function UnitPACard({
                     ) : (
                         <div className="h-2 rounded-full bg-muted" />
                     )}
-                    <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                    <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                         {unit.has_time_data ? (
                             <>
                                 <span className="flex items-center gap-1">
@@ -585,7 +585,7 @@ function UnitPACard({
 
                 {/* ── Timeline Sparkline ── */}
                 <div>
-                    <p className="mb-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                    <p className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                         Riwayat Harian
                     </p>
                     {unit.timeline.length > 0 ? (
@@ -613,7 +613,7 @@ function UnitPACard({
                             </span>
                         )}
                     </div>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                         {unit.operation_days}O/{unit.bd_days}BD
                     </span>
                 </div>

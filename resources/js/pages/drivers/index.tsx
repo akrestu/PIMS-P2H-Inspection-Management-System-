@@ -1,8 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     Building2,
-    ChevronLeft,
-    ChevronRight,
     Eye,
     EyeOff,
     IdCard,
@@ -17,6 +15,7 @@ import {
     X,
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -755,6 +754,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                             />
                             {search && (
                                 <button
+                                    aria-label="Hapus pencarian"
                                     onClick={() => handleSearch('')}
                                     className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
@@ -949,9 +949,10 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                                                     asChild
                                                                 >
                                                                     <Button
+                                                                        aria-label="Aksi lainnya"
                                                                         variant="ghost"
                                                                         size="sm"
-                                                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                                                                        className="h-10 w-10 p-0 focus-visible:opacity-100 data-[state=open]:opacity-100 md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
                                                                     >
                                                                         <MoreHorizontal className="h-4 w-4" />
                                                                     </Button>
@@ -1016,107 +1017,16 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                     </span>{' '}
                                     driver
                                 </p>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={drivers.current_page === 1}
-                                        onClick={() =>
-                                            router.get('/drivers', {
-                                                ...filters,
-                                                page: drivers.current_page - 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                        Prev
-                                    </Button>
-                                    <div className="flex gap-1">
-                                        {Array.from(
-                                            { length: drivers.last_page },
-                                            (_, i) => i + 1,
-                                        )
-                                            .filter(
-                                                (p) =>
-                                                    p === 1 ||
-                                                    p === drivers.last_page ||
-                                                    Math.abs(
-                                                        p -
-                                                            drivers.current_page,
-                                                    ) <= 1,
-                                            )
-                                            .reduce<(number | '...')[]>(
-                                                (acc, p, i, arr) => {
-                                                    if (
-                                                        i > 0 &&
-                                                        (arr[
-                                                            i - 1
-                                                        ] as number) !==
-                                                            p - 1
-                                                    ) {
-                                                        acc.push('...');
-                                                    }
-
-                                                    acc.push(p);
-
-                                                    return acc;
-                                                },
-                                                [],
-                                            )
-                                            .map((p, i) =>
-                                                p === '...' ? (
-                                                    <span
-                                                        key={`ellipsis-${i}`}
-                                                        className="px-1 py-1 text-sm text-muted-foreground"
-                                                    >
-                                                        …
-                                                    </span>
-                                                ) : (
-                                                    <Button
-                                                        key={p}
-                                                        size="sm"
-                                                        variant={
-                                                            p ===
-                                                            drivers.current_page
-                                                                ? 'default'
-                                                                : 'outline'
-                                                        }
-                                                        onClick={() =>
-                                                            router.get(
-                                                                '/drivers',
-                                                                {
-                                                                    ...filters,
-                                                                    page: p,
-                                                                },
-                                                            )
-                                                        }
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        {p}
-                                                    </Button>
-                                                ),
-                                            )}
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={
-                                            drivers.current_page ===
-                                            drivers.last_page
-                                        }
-                                        onClick={() =>
-                                            router.get('/drivers', {
-                                                ...filters,
-                                                page: drivers.current_page + 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        Next
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <PageButtons
+                                    currentPage={drivers.current_page}
+                                    lastPage={drivers.last_page}
+                                    onPageChange={(page) =>
+                                        router.get('/drivers', {
+                                            ...filters,
+                                            page,
+                                        })
+                                    }
+                                />
                             </div>
                         )}
 

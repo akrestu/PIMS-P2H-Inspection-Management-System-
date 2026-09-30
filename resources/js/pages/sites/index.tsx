@@ -2,8 +2,6 @@ import { Head, router, useForm } from '@inertiajs/react';
 import {
     Building2,
     CheckCircle2,
-    ChevronLeft,
-    ChevronRight,
     MapPin,
     MoreHorizontal,
     Pencil,
@@ -15,6 +13,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -128,7 +127,7 @@ function SiteFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
+            <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0 sm:max-w-lg">
                 <DialogHeader className="border-b px-6 py-4">
                     <DialogTitle className="text-lg">
                         {site ? 'Edit Site' : 'Tambah Site Baru'}
@@ -776,7 +775,7 @@ export default function SitesIndex({ sites, filters, stats }: Props) {
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 aria-label="Aksi"
-                                                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                                                                className="h-10 w-10 p-0 focus-visible:opacity-100 data-[state=open]:opacity-100 md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
                                                             >
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
@@ -843,106 +842,16 @@ export default function SitesIndex({ sites, filters, stats }: Props) {
                                     </span>{' '}
                                     site
                                 </p>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={sites.current_page === 1}
-                                        onClick={() =>
-                                            router.get('/sites', {
-                                                ...filters,
-                                                page: sites.current_page - 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                        Prev
-                                    </Button>
-                                    <div className="flex gap-1">
-                                        {Array.from(
-                                            { length: sites.last_page },
-                                            (_, i) => i + 1,
-                                        )
-                                            .filter(
-                                                (p) =>
-                                                    p === 1 ||
-                                                    p === sites.last_page ||
-                                                    Math.abs(
-                                                        p - sites.current_page,
-                                                    ) <= 1,
-                                            )
-                                            .reduce<(number | '...')[]>(
-                                                (acc, p, idx, arr) => {
-                                                    if (
-                                                        idx > 0 &&
-                                                        (arr[
-                                                            idx - 1
-                                                        ] as number) !==
-                                                            p - 1
-                                                    ) {
-                                                        acc.push('...');
-                                                    }
-
-                                                    acc.push(p);
-
-                                                    return acc;
-                                                },
-                                                [],
-                                            )
-                                            .map((p, i) =>
-                                                p === '...' ? (
-                                                    <span
-                                                        key={`ellipsis-${i}`}
-                                                        className="px-1 py-1 text-sm text-muted-foreground"
-                                                    >
-                                                        …
-                                                    </span>
-                                                ) : (
-                                                    <Button
-                                                        key={p}
-                                                        size="sm"
-                                                        variant={
-                                                            p ===
-                                                            sites.current_page
-                                                                ? 'default'
-                                                                : 'outline'
-                                                        }
-                                                        onClick={() =>
-                                                            router.get(
-                                                                '/sites',
-                                                                {
-                                                                    ...filters,
-                                                                    page: p,
-                                                                },
-                                                            )
-                                                        }
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        {p}
-                                                    </Button>
-                                                ),
-                                            )}
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={
-                                            sites.current_page ===
-                                            sites.last_page
-                                        }
-                                        onClick={() =>
-                                            router.get('/sites', {
-                                                ...filters,
-                                                page: sites.current_page + 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        Next
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <PageButtons
+                                    currentPage={sites.current_page}
+                                    lastPage={sites.last_page}
+                                    onPageChange={(page) =>
+                                        router.get('/sites', {
+                                            ...filters,
+                                            page,
+                                        })
+                                    }
+                                />
                             </div>
                         )}
 

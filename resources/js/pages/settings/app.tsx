@@ -84,6 +84,7 @@ export default function AppSettingsPage({ settings }: Props) {
                                         className="flex-1"
                                     />
                                     <Button
+                                        aria-label="Hapus shift"
                                         type="button"
                                         variant="ghost"
                                         size="icon"

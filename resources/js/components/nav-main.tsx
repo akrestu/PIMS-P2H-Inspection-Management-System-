@@ -130,7 +130,7 @@ function NavGroup({
                                     {item.badge !== undefined &&
                                         item.badge !== 0 && (
                                             <SidebarMenuBadge
-                                                className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
+                                                className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-xs font-bold tabular-nums ${
                                                     typeof item.badge ===
                                                         'number' &&
                                                     item.badge > 0

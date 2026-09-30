@@ -4,14 +4,13 @@ import {
     ArrowLeft,
     Bus,
     Car,
-    ChevronLeft,
-    ChevronRight,
     RotateCcw,
     Search,
     Trash,
     Trash2,
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -398,6 +397,7 @@ export default function UnitsTrashed({ units, filters }: Props) {
                                                                     asChild
                                                                 >
                                                                     <Button
+                                                                        aria-label="Hapus permanen"
                                                                         variant="destructive"
                                                                         size="sm"
                                                                         className="h-8 w-8 p-0"
@@ -447,40 +447,16 @@ export default function UnitsTrashed({ units, filters }: Props) {
                                     </span>{' '}
                                     unit
                                 </p>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={units.current_page === 1}
-                                        onClick={() =>
-                                            router.get('/units/trashed', {
-                                                ...filters,
-                                                page: units.current_page - 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" /> Prev
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={
-                                            units.current_page ===
-                                            units.last_page
-                                        }
-                                        onClick={() =>
-                                            router.get('/units/trashed', {
-                                                ...filters,
-                                                page: units.current_page + 1,
-                                            })
-                                        }
-                                        className="h-8 gap-1"
-                                    >
-                                        Next{' '}
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <PageButtons
+                                    currentPage={units.current_page}
+                                    lastPage={units.last_page}
+                                    onPageChange={(page) =>
+                                        router.get('/units/trashed', {
+                                            ...filters,
+                                            page,
+                                        })
+                                    }
+                                />
                             </div>
                         )}
                     </CardContent>

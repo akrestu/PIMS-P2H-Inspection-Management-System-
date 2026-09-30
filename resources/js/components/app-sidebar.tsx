@@ -273,7 +273,7 @@ export function AppSidebar() {
                         </div>
                         <Badge
                             variant="destructive"
-                            className="h-5 px-1.5 text-[10px]"
+                            className="h-5 px-1.5 text-xs"
                         >
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </Badge>

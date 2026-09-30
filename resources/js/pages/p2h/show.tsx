@@ -136,7 +136,7 @@ function StatCard({
                 {label}
             </span>
             {sub && (
-                <span className="mt-0.5 text-[10px] text-muted-foreground/70">
+                <span className="mt-0.5 text-xs text-muted-foreground/70">
                     {sub}
                 </span>
             )}
@@ -211,8 +211,9 @@ function EntryDetail({
             )}
             {entry.approval_status === 'rejected' && (
                 <div className="space-y-1 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/20">
-                    <p className="text-sm font-semibold text-red-800 dark:text-red-300">
-                        ✕ P2H Ditolak
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-red-800 dark:text-red-300">
+                        <XCircle className="h-4 w-4" />
+                        P2H Ditolak
                     </p>
                     {entry.catatan_approval && (
                         <p className="text-xs text-red-700 dark:text-red-400">
@@ -242,9 +243,7 @@ function EntryDetail({
             {entry.approval_status === 'approved' && (
                 <div className="space-y-1 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/20">
                     <div className="flex items-center gap-2">
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                            ✓
-                        </span>
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                             Disetujui
                             {entry.approver
@@ -371,7 +370,7 @@ function EntryDetail({
                                     </span>
                                 )}
                                 {entry.is_override && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
                                         Override
                                     </span>
                                 )}
@@ -972,11 +971,11 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                                         P2H #{slot}
                                     </span>
                                     {slotTL > 0 ? (
-                                        <span className="text-[10px] font-medium text-red-500">
+                                        <span className="text-xs font-medium text-red-500">
                                             {slotTL} TL
                                         </span>
                                     ) : (
-                                        <span className="text-[10px] font-medium text-green-500">
+                                        <span className="text-xs font-medium text-green-500">
                                             Layak
                                         </span>
                                     )}

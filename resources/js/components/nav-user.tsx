@@ -70,7 +70,7 @@ export function NavUser() {
                             {/* Role chip — visible only when expanded */}
                             {roleConfig && (
                                 <span
-                                    className={`hidden items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold group-data-[collapsible=icon]:!hidden sm:flex ${roleConfig.color} `}
+                                    className={`hidden items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold group-data-[collapsible=icon]:!hidden sm:flex ${roleConfig.color} `}
                                 >
                                     <roleConfig.icon className="h-2.5 w-2.5" />
                                     {roleConfig.label}

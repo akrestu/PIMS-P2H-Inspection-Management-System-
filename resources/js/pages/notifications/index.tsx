@@ -6,8 +6,6 @@ import {
     BellOff,
     CheckCheck,
     CheckCircle,
-    ChevronLeft,
-    ChevronRight,
     ClipboardCheck,
     ExternalLink,
     Inbox,
@@ -18,7 +16,8 @@ import {
     Wrench,
     XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -282,8 +281,27 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
         );
     };
 
+    // Hapus dua langkah: klik pertama meminta konfirmasi, klik kedua menghapus
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    useEffect(() => {
+        if (!confirmDelete) {
+            return;
+        }
+
+        const timer = setTimeout(() => setConfirmDelete(false), 3000);
+
+        return () => clearTimeout(timer);
+    }, [confirmDelete]);
+
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (!confirmDelete) {
+            setConfirmDelete(true);
+
+            return;
+        }
+
         router.delete(`/notifications/${notif.id}`, { preserveScroll: true });
     };
 
@@ -467,7 +485,8 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                 <div
                     className={cn(
                         'flex flex-col gap-1 transition-opacity',
-                        'opacity-0 group-hover:opacity-100',
+                        confirmDelete && 'md:opacity-100',
+                        'md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100',
                     )}
                 >
                     {isUnread && (
@@ -475,7 +494,7 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                             <TooltipTrigger asChild>
                                 <button
                                     onClick={handleMarkRead}
-                                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                    className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary md:h-7 md:w-7"
                                     aria-label="Tandai sudah dibaca"
                                 >
                                     <MailCheck className="h-3.5 w-3.5" />
@@ -490,14 +509,26 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                         <TooltipTrigger asChild>
                             <button
                                 onClick={handleDelete}
-                                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                aria-label="Hapus notifikasi"
+                                className={cn(
+                                    'flex h-9 min-w-9 items-center justify-center gap-1 rounded-md px-2 transition-colors md:h-7 md:min-w-7',
+                                    confirmDelete
+                                        ? 'bg-destructive text-xs font-medium text-white'
+                                        : 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
+                                )}
+                                aria-label={
+                                    confirmDelete
+                                        ? 'Konfirmasi hapus notifikasi'
+                                        : 'Hapus notifikasi'
+                                }
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
+                                {confirmDelete && 'Hapus?'}
                             </button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
-                            Hapus notifikasi
+                            {confirmDelete
+                                ? 'Klik sekali lagi untuk menghapus'
+                                : 'Hapus notifikasi'}
                         </TooltipContent>
                     </Tooltip>
                 </div>
@@ -626,21 +657,6 @@ function Pagination({
     total: number;
     onPage: (p: number) => void;
 }) {
-    const pages = Array.from({ length: last_page }, (_, i) => i + 1)
-        .filter(
-            (p) =>
-                p === 1 || p === last_page || Math.abs(p - current_page) <= 1,
-        )
-        .reduce<(number | '...')[]>((acc, p, i, arr) => {
-            if (i > 0 && (arr[i - 1] as number) !== p - 1) {
-                acc.push('...');
-            }
-
-            acc.push(p);
-
-            return acc;
-        }, []);
-
     return (
         <div className="flex items-center justify-between border-t pt-4">
             <p className="text-xs text-muted-foreground">
@@ -651,46 +667,11 @@ function Pagination({
                 <span className="font-medium text-foreground">{total}</span>{' '}
                 notifikasi
             </p>
-            <div className="flex items-center gap-1">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={current_page === 1}
-                    onClick={() => onPage(current_page - 1)}
-                    className="h-8 w-8 p-0"
-                >
-                    <ChevronLeft className="h-4 w-4" />
-                </Button>
-                {pages.map((p, i) =>
-                    p === '...' ? (
-                        <span
-                            key={`e-${i}`}
-                            className="px-1 text-sm text-muted-foreground"
-                        >
-                            …
-                        </span>
-                    ) : (
-                        <Button
-                            key={p}
-                            size="sm"
-                            variant={p === current_page ? 'default' : 'outline'}
-                            onClick={() => onPage(p as number)}
-                            className="h-8 w-8 p-0"
-                        >
-                            {p}
-                        </Button>
-                    ),
-                )}
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={current_page === last_page}
-                    onClick={() => onPage(current_page + 1)}
-                    className="h-8 w-8 p-0"
-                >
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-            </div>
+            <PageButtons
+                currentPage={current_page}
+                lastPage={last_page}
+                onPageChange={onPage}
+            />
         </div>
     );
 }

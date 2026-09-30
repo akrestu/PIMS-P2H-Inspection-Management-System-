@@ -198,7 +198,7 @@ export function MobileSidebarTrigger() {
             <div
                 className={`fixed right-0 bottom-0 left-0 z-50 transition-transform duration-300 ease-in-out md:hidden ${scrollDir === 'down' ? 'translate-y-full' : 'translate-y-0'}`}
             >
-                <div className="pb-safe border-t border-border/60 bg-background/90 px-2 pt-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-md">
+                <div className="border-t border-border/60 bg-background/90 px-2 pt-2.5 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-md">
                     <nav className="flex items-center">
                         {primaryNav.map((link) => {
                             const Icon = link.icon;
@@ -235,7 +235,7 @@ export function MobileSidebarTrigger() {
                                         )}
                                     </div>
                                     <span
-                                        className={`text-[11px] leading-none whitespace-nowrap ${
+                                        className={`text-xs leading-none whitespace-nowrap ${
                                             active
                                                 ? 'font-semibold'
                                                 : 'font-medium'
@@ -258,7 +258,7 @@ export function MobileSidebarTrigger() {
                                         <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive" />
                                     )}
                                 </div>
-                                <span className="text-[11px] leading-none font-medium whitespace-nowrap">
+                                <span className="text-xs leading-none font-medium whitespace-nowrap">
                                     Lainnya
                                 </span>
                             </button>
@@ -308,7 +308,7 @@ export function MobileSidebarTrigger() {
                                                 </Badge>
                                             )}
                                         </div>
-                                        <span className="text-center text-[10px] leading-tight font-medium">
+                                        <span className="text-center text-xs leading-tight font-medium">
                                             {link.title}
                                         </span>
                                     </Link>

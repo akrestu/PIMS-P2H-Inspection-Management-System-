@@ -5,7 +5,6 @@ import {
     CalendarDays,
     Car,
     CheckCircle2,
-    ChevronLeft,
     ChevronRight,
     ClipboardList,
     Download,
@@ -18,6 +17,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -332,6 +332,7 @@ function SessionCard({
                 <div className="flex items-center gap-1">
                     {isAdmin && (
                         <Button
+                            aria-label="Hapus sesi P2H"
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -436,7 +437,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                             <SlidersHorizontal className="h-4 w-4" />
                             Filter
                             {hasActiveFilters && (
-                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white">
                                     {Object.values(form).filter(Boolean).length}
                                 </span>
                             )}
@@ -736,114 +737,11 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                         Menampilkan {sessions.from}–
                                         {sessions.to} dari {sessions.total} sesi
                                     </p>
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            disabled={
-                                                sessions.current_page === 1
-                                            }
-                                            onClick={() =>
-                                                goToPage(
-                                                    sessions.current_page - 1,
-                                                )
-                                            }
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-
-                                        {/* Page numbers — show max 5 around current */}
-                                        {(() => {
-                                            const total = sessions.last_page;
-                                            const cur = sessions.current_page;
-                                            const pages: (
-                                                | number
-                                                | 'ellipsis'
-                                            )[] = [];
-
-                                            if (total <= 7) {
-                                                for (
-                                                    let i = 1;
-                                                    i <= total;
-                                                    i++
-                                                ) {
-                                                    pages.push(i);
-                                                }
-                                            } else {
-                                                pages.push(1);
-
-                                                if (cur > 3) {
-                                                    pages.push('ellipsis');
-                                                }
-
-                                                for (
-                                                    let i = Math.max(
-                                                        2,
-                                                        cur - 1,
-                                                    );
-                                                    i <=
-                                                    Math.min(
-                                                        total - 1,
-                                                        cur + 1,
-                                                    );
-                                                    i++
-                                                ) {
-                                                    pages.push(i);
-                                                }
-
-                                                if (cur < total - 2) {
-                                                    pages.push('ellipsis');
-                                                }
-
-                                                pages.push(total);
-                                            }
-
-                                            return pages.map((p, idx) =>
-                                                p === 'ellipsis' ? (
-                                                    <span
-                                                        key={`e${idx}`}
-                                                        className="px-1 text-sm text-muted-foreground"
-                                                    >
-                                                        …
-                                                    </span>
-                                                ) : (
-                                                    <Button
-                                                        key={p}
-                                                        size="sm"
-                                                        variant={
-                                                            p === cur
-                                                                ? 'default'
-                                                                : 'outline'
-                                                        }
-                                                        onClick={() =>
-                                                            goToPage(p)
-                                                        }
-                                                        className="h-8 w-8 p-0 text-xs"
-                                                    >
-                                                        {p}
-                                                    </Button>
-                                                ),
-                                            );
-                                        })()}
-
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            disabled={
-                                                sessions.current_page ===
-                                                sessions.last_page
-                                            }
-                                            onClick={() =>
-                                                goToPage(
-                                                    sessions.current_page + 1,
-                                                )
-                                            }
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <PageButtons
+                                        currentPage={sessions.current_page}
+                                        lastPage={sessions.last_page}
+                                        onPageChange={goToPage}
+                                    />
                                 </div>
                             </>
                         )}

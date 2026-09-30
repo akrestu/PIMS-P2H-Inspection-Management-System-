@@ -42,7 +42,7 @@ export function AppSidebarHeader({
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="text-xs">
                             Toggle sidebar{' '}
-                            <kbd className="ml-1 rounded border border-border/50 bg-muted px-1 py-0.5 font-mono text-[10px]">
+                            <kbd className="ml-1 rounded border border-border/50 bg-muted px-1 py-0.5 font-mono text-xs">
                                 ⌘B
                             </kbd>
                         </TooltipContent>

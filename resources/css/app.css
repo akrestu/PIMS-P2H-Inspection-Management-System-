@@ -196,3 +196,20 @@
             50% 50%;
     }
 }
+
+/* Jarak aman bawah untuk layar berponi / home indicator (bottom nav mobile) */
+@utility pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Hormati preferensi "kurangi gerakan" dari sistem operasi */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

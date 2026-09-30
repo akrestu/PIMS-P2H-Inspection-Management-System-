@@ -1,10 +1,12 @@
 import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import {
+    AlarmClock,
     AlertTriangle,
     CheckCircle2,
     ClipboardCopy,
     ClockAlert,
     MessageSquareText,
+    Repeat,
     RotateCcw,
     Send,
     Sparkles,
@@ -503,8 +505,20 @@ function FindingRow({
             <p className="mt-1 text-xs text-muted-foreground">
                 Tindakan: {finding.tindakan || 'Belum ditentukan'} · PIC:{' '}
                 {finding.pic || 'Belum ditunjuk'}
-                {finding.overdue && ` · ⏰ lewat target`}
-                {finding.berulang && ` · 🔁 berulang ${finding.berulang}x`}
+                {finding.overdue && (
+                    <span className="font-medium text-red-600 dark:text-red-400">
+                        {' · '}
+                        <AlarmClock className="mr-0.5 inline h-3 w-3 align-[-1px]" />
+                        lewat target
+                    </span>
+                )}
+                {finding.berulang && (
+                    <span className="font-medium text-amber-600 dark:text-amber-400">
+                        {' · '}
+                        <Repeat className="mr-0.5 inline h-3 w-3 align-[-1px]" />
+                        berulang {finding.berulang}x
+                    </span>
+                )}
             </p>
         </div>
     );

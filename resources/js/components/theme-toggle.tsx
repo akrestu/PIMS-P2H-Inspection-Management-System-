@@ -86,7 +86,7 @@ export function ThemeToggle({
                 ))}
                 <DropdownMenuSeparator />
                 <div className="px-2 py-1.5">
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                         Saat ini:{' '}
                         <span className="font-medium capitalize">
                             {appearance === 'system'

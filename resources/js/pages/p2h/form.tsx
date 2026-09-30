@@ -182,6 +182,32 @@ const STEPS = [
     { id: 4, label: 'Konfirmasi', icon: PenLine },
 ] as const;
 
+/** Langkah form tempat field dari error validasi server berada. */
+function stepForErrorKey(key: string): number {
+    if (key.startsWith('answers') || key.startsWith('item_attachments')) {
+        return 2;
+    }
+
+    if (key.startsWith('service_info') || key.startsWith('fuel_log')) {
+        return 3;
+    }
+
+    if (
+        [
+            'kondisi_akhir',
+            'justifikasi_kondisi',
+            'hm_km_akhir',
+            'paraf',
+            'attachments',
+        ].some((k) => key.startsWith(k))
+    ) {
+        return 4;
+    }
+
+    // unit_id, pic_approver_id, job_site, lokasi_kerja, km_awal, shift
+    return 1;
+}
+
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 function StepIndicator({ current }: { current: number }) {
     return (
@@ -213,7 +239,7 @@ function StepIndicator({ current }: { current: number }) {
                             </div>
                             <span
                                 className={cn(
-                                    'text-center text-[10px] leading-tight font-medium whitespace-nowrap',
+                                    'text-center text-xs leading-tight font-medium whitespace-nowrap',
                                     active
                                         ? 'text-primary'
                                         : done
@@ -370,7 +396,7 @@ function StepNavFooter({
                                         : 'Lanjutkan'}
                                 </span>
                                 {nextStep && (
-                                    <span className="text-[11px] font-normal text-primary-foreground/60 sm:hidden">
+                                    <span className="text-xs font-normal text-primary-foreground/60 sm:hidden">
                                         Berikutnya: {nextStep.label}
                                     </span>
                                 )}
@@ -497,7 +523,7 @@ function PicCombobox({
             {/* Trigger / input */}
             <div
                 className={cn(
-                    'flex h-11 w-full cursor-text items-center gap-2 rounded-lg border px-3 text-sm transition-colors',
+                    'flex h-11 w-full cursor-text items-center gap-2 rounded-lg border px-3 text-sm transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20',
                     open
                         ? 'border-primary ring-2 ring-primary/20'
                         : 'border-input hover:border-muted-foreground/50',
@@ -519,7 +545,7 @@ function PicCombobox({
                             : 'Ketik nama, jabatan, atau departemen…'
                     }
                     className={cn(
-                        'flex-1 bg-transparent outline-none placeholder:text-muted-foreground',
+                        'flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm',
                         !open && selected
                             ? 'text-transparent placeholder:text-foreground'
                             : '',
@@ -657,6 +683,7 @@ function LokasiCombobox({
                 </span>
                 {value && (
                     <button
+                        aria-label="Hapus lokasi kerja"
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -693,17 +720,18 @@ function LokasiCombobox({
 
                     {/* Search input — sticky, tidak ikut scroll */}
                     <div className="shrink-0 px-4 py-3">
-                        <div className="flex h-11 items-center gap-2 rounded-lg border px-3">
+                        <div className="flex h-11 items-center gap-2 rounded-lg border px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <input
                                 ref={inputRef}
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Cari atau ketik lokasi baru…"
-                                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                                className="flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
                             />
                             {query && (
                                 <button
+                                    aria-label="Hapus teks pencarian"
                                     type="button"
                                     onClick={() => setQuery('')}
                                 >
@@ -786,7 +814,13 @@ export default function P2hForm({
     const topRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const reduceMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        ).matches;
+        topRef.current?.scrollIntoView({
+            behavior: reduceMotion ? 'auto' : 'smooth',
+            block: 'start',
+        });
     }, [step]);
 
     // Step 1
@@ -1334,13 +1368,28 @@ export default function P2hForm({
                         kondisiAkhir,
                         justifikasiKondisi,
                     });
-                    const messages = Object.values(errors);
+                    const keys = Object.keys(errors);
+                    const messages = [...new Set(Object.values(errors))];
 
-                    if (messages.length > 0) {
-                        messages.forEach((msg) => toast.error(msg));
-                    } else {
+                    if (keys.length === 0) {
                         toast.error('Terjadi kesalahan. Periksa form kembali.');
+
+                        return;
                     }
+
+                    // Satu ringkasan (bukan satu toast per error) + pindah ke langkah pertama yang bermasalah
+                    const errorStep = Math.min(...keys.map(stepForErrorKey));
+                    setStep(errorStep);
+                    toast.error(
+                        `Periksa langkah ${errorStep} — ${STEPS[errorStep - 1].label}`,
+                        {
+                            description:
+                                messages.slice(0, 3).join(' ') +
+                                (messages.length > 3
+                                    ? ` (+${messages.length - 3} lainnya)`
+                                    : ''),
+                        },
+                    );
                 },
             },
         );
@@ -1360,7 +1409,11 @@ export default function P2hForm({
                     {hasDraft && (
                         <div className="mb-2 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 dark:border-amber-900 dark:bg-amber-950/30">
                             <p className="text-xs text-amber-700 dark:text-amber-300">
-                                ✦ Draft tersimpan dilanjutkan secara otomatis
+                                Draft dilanjutkan otomatis.{' '}
+                                <span className="font-semibold">
+                                    Foto & tanda tangan tidak ikut tersimpan
+                                </span>{' '}
+                                — unggah ulang sebelum kirim.
                             </p>
                             <button
                                 type="button"
@@ -1459,7 +1512,7 @@ export default function P2hForm({
                                                 >
                                                     <SheetContent
                                                         side="bottom"
-                                                        className="pb-safe max-h-[75vh] rounded-t-2xl"
+                                                        className="max-h-[75dvh] rounded-t-2xl pb-safe"
                                                     >
                                                         <SheetHeader className="pb-2">
                                                             <SheetTitle>
@@ -2442,7 +2495,7 @@ export default function P2hForm({
                                         >
                                             <ShieldCheck className="h-6 w-6" />
                                             Layak Pakai
-                                            <span className="text-[10px] font-normal opacity-70">
+                                            <span className="text-xs font-normal opacity-70">
                                                 Unit siap beroperasi
                                             </span>
                                         </button>
@@ -2466,7 +2519,7 @@ export default function P2hForm({
                                         >
                                             <ShieldAlert className="h-6 w-6" />
                                             BD / Tidak Layak
-                                            <span className="text-[10px] font-normal opacity-70">
+                                            <span className="text-xs font-normal opacity-70">
                                                 Tidak dapat dioperasikan
                                             </span>
                                         </button>
@@ -2664,6 +2717,7 @@ export default function P2hForm({
                                                             className="h-full w-full rounded-lg border object-cover"
                                                         />
                                                         <button
+                                                            aria-label="Hapus foto"
                                                             type="button"
                                                             onClick={() =>
                                                                 removeAttachment(

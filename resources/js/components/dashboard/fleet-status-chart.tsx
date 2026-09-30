@@ -121,7 +121,7 @@ export function FleetStatusChart({ metrics }: { metrics: Metrics }) {
                             <span className="text-lg leading-none font-bold">
                                 {coveragePercent}%
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-xs text-muted-foreground">
                                 Coverage
                             </span>
                         </div>

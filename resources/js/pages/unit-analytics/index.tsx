@@ -312,7 +312,93 @@ export default function UnitAnalytics({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="overflow-x-auto">
+                                {/* Mobile: kartu per unit */}
+                                <div className="divide-y border-t md:hidden">
+                                    {fuel.units.length === 0 && (
+                                        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                                            Belum ada data P2H pada periode ini.
+                                        </p>
+                                    )}
+                                    {fuel.units.map((u) => (
+                                        <div
+                                            key={u.unit_id}
+                                            className="space-y-2 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {u.no_unit}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {u.jenis_unit}
+                                                    </p>
+                                                </div>
+                                                <p
+                                                    className={cn(
+                                                        'text-right font-semibold tabular-nums',
+                                                        u.boros &&
+                                                            'text-red-600',
+                                                    )}
+                                                >
+                                                    {num(u.km_per_liter, 2)}
+                                                    <span className="block text-xs font-normal text-muted-foreground">
+                                                        km/liter
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        Jarak
+                                                    </p>
+                                                    <p className="tabular-nums">
+                                                        {num(u.jarak)} km
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        BBM
+                                                    </p>
+                                                    <p className="tabular-nums">
+                                                        {num(u.liter, 1)} L
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        Pengisian
+                                                    </p>
+                                                    <p className="tabular-nums">
+                                                        {u.jumlah_isi}x
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {u.boros && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="border-red-300 text-red-700"
+                                                >
+                                                    Boros (rata-rata{' '}
+                                                    {num(u.rata_rata_jenis, 2)})
+                                                </Badge>
+                                            )}
+                                            {u.anomali.map((a, i) => (
+                                                <p
+                                                    key={i}
+                                                    className="text-xs text-amber-700 dark:text-amber-400"
+                                                >
+                                                    <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
+                                                    {a.tanggal}: isi{' '}
+                                                    {num(a.liter, 1)} L, hanya{' '}
+                                                    {num(
+                                                        a.jarak_sejak_isi_sebelumnya,
+                                                    )}{' '}
+                                                    km sejak isi sebelumnya
+                                                </p>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full text-sm">
                                         <thead className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
                                             <tr>
@@ -399,7 +485,7 @@ export default function UnitAnalytics({
                                                                     key={i}
                                                                     className="mt-1 text-amber-700 dark:text-amber-400"
                                                                 >
-                                                                    ⚠️{' '}
+                                                                    <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
                                                                     {a.tanggal}:
                                                                     isi{' '}
                                                                     {num(
@@ -452,7 +538,86 @@ export default function UnitAnalytics({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="overflow-x-auto">
+                                {/* Mobile: kartu per unit */}
+                                <div className="divide-y border-t md:hidden">
+                                    {service.map((s) => (
+                                        <div
+                                            key={s.unit_id}
+                                            className="space-y-2 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {s.no_unit}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {s.jenis_unit}
+                                                    </p>
+                                                </div>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={
+                                                        SERVICE_STATUS[s.status]
+                                                            .className
+                                                    }
+                                                >
+                                                    {
+                                                        SERVICE_STATUS[s.status]
+                                                            .label
+                                                    }
+                                                </Badge>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        KM saat ini
+                                                    </p>
+                                                    <p className="tabular-nums">
+                                                        {num(s.km_saat_ini)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        Jadwal
+                                                    </p>
+                                                    <p className="tabular-nums">
+                                                        {num(
+                                                            s.km_servis_berikutnya,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground">
+                                                        Sisa
+                                                    </p>
+                                                    <p
+                                                        className={cn(
+                                                            'tabular-nums',
+                                                            s.status ===
+                                                                'overdue' &&
+                                                                'font-medium text-red-600',
+                                                        )}
+                                                    >
+                                                        {s.sisa_km !== null
+                                                            ? `${num(s.sisa_km)} km`
+                                                            : '—'}
+                                                        {s.estimasi_hari &&
+                                                            ` · ±${s.estimasi_hari} hari`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {s.km_servis_terakhir !== null && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Servis terakhir:{' '}
+                                                    {num(s.km_servis_terakhir)}{' '}
+                                                    km ·{' '}
+                                                    {s.tanggal_servis_terakhir}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full text-sm">
                                         <thead className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
                                             <tr>

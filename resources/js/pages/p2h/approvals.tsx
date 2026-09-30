@@ -3,13 +3,11 @@ import {
     AlertCircle,
     AlertTriangle,
     CheckCircle2,
-    ChevronLeft,
-    ChevronRight,
     ClipboardCheck,
     ClipboardList,
     Clock,
-    ListChecks,
     Gauge,
+    ListChecks,
     Loader2,
     MapPin,
     PenLine,
@@ -20,6 +18,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
+import { PageButtons } from '@/components/pagination-bar';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -204,7 +203,7 @@ function StatCard({
             >
                 {value}
             </p>
-            <p className="text-[10px] leading-tight text-muted-foreground">
+            <p className="text-xs leading-tight text-muted-foreground">
                 {label}
             </p>
         </div>
@@ -415,7 +414,7 @@ function ReviewApproveSheet({
         >
             <SheetContent
                 side="bottom"
-                className="flex h-[95vh] flex-col rounded-t-2xl p-0"
+                className="flex h-[95dvh] flex-col rounded-t-2xl p-0"
             >
                 {/* Header */}
                 <SheetHeader className="shrink-0 border-b px-4 pt-4 pb-3">
@@ -430,7 +429,7 @@ function ReviewApproveSheet({
                             </p>
                         </div>
                         {hasCritical && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
                                 <AlertCircle className="h-3 w-3" /> CRITICAL
                             </span>
                         )}
@@ -587,7 +586,7 @@ function ReviewApproveSheet({
                                                         `Seksi ${section}`}
                                                 </p>
                                                 {hasAA && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
                                                         <AlertCircle className="h-3 w-3" />{' '}
                                                         STOP
                                                     </span>
@@ -996,7 +995,7 @@ function EntryCard({
                 <div>
                     <p className="text-xs text-muted-foreground">Driver</p>
                     <p className="truncate font-medium">{entry.driver_name}</p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                         {entry.driver_jabatan}
                     </p>
                 </div>
@@ -1005,7 +1004,7 @@ function EntryCard({
                         Tanggal · Shift
                     </p>
                     <p className="font-medium">{entry.tanggal}</p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                         {entry.shift ?? '-'}
                     </p>
                 </div>
@@ -1019,7 +1018,7 @@ function EntryCard({
                     >
                         {entry.score}%
                     </p>
-                    <p className="text-[10px] text-muted-foreground">Skor</p>
+                    <p className="text-xs text-muted-foreground">Skor</p>
                 </div>
                 <div className="h-8 w-px bg-border" />
                 <div className="flex-1 text-center">
@@ -1028,7 +1027,7 @@ function EntryCard({
                     >
                         {entry.tl_count}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">TL</p>
+                    <p className="text-xs text-muted-foreground">TL</p>
                 </div>
                 <div className="h-8 w-px bg-border" />
                 <div className="flex-1 text-center">
@@ -1037,7 +1036,7 @@ function EntryCard({
                     >
                         {entry.kondisi_akhir ?? '-'}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">Kondisi</p>
+                    <p className="text-xs text-muted-foreground">Kondisi</p>
                 </div>
             </div>
 
@@ -1063,9 +1062,14 @@ function EntryCard({
             {entry.approver_name && (
                 <div className="flex items-center gap-2">
                     <div className="flex-1 text-xs text-muted-foreground">
+                        {entry.approval_status === 'approved' ? (
+                            <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-emerald-600" />
+                        ) : (
+                            <XCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-red-600" />
+                        )}
                         {entry.approval_status === 'approved'
-                            ? '✓ Disetujui'
-                            : '✕ Ditolak'}{' '}
+                            ? 'Disetujui'
+                            : 'Ditolak'}{' '}
                         oleh{' '}
                         <span className="font-medium text-foreground">
                             {entry.approver_name}
@@ -1306,41 +1310,16 @@ export default function P2hApprovals({
                             <span className="font-medium">{entries.total}</span>{' '}
                             entri
                         </p>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={entries.current_page === 1}
-                                onClick={() =>
-                                    router.get('/p2h/approvals', {
-                                        ...filters,
-                                        page: entries.current_page - 1,
-                                    })
-                                }
-                                className="h-8 w-8 p-0"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <span className="px-2 text-sm tabular-nums">
-                                {entries.current_page} / {entries.last_page}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={
-                                    entries.current_page === entries.last_page
-                                }
-                                onClick={() =>
-                                    router.get('/p2h/approvals', {
-                                        ...filters,
-                                        page: entries.current_page + 1,
-                                    })
-                                }
-                                className="h-8 w-8 p-0"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <PageButtons
+                            currentPage={entries.current_page}
+                            lastPage={entries.last_page}
+                            onPageChange={(page) =>
+                                router.get('/p2h/approvals', {
+                                    ...filters,
+                                    page,
+                                })
+                            }
+                        />
                     </div>
                 )}
             </div>

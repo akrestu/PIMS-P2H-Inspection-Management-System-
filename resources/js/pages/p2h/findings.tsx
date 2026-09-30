@@ -2,8 +2,6 @@ import { Head, router, useForm, useHttp } from '@inertiajs/react';
 import {
     AlarmClock,
     Camera,
-    ChevronLeft,
-    ChevronRight,
     ImageIcon,
     Pencil,
     Repeat,
@@ -18,6 +16,7 @@ import {
     update,
 } from '@/actions/App/Http/Controllers/P2hFindingController';
 import InputError from '@/components/input-error';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -245,7 +244,7 @@ function FindingDialog({
 
     return (
         <Dialog open={!!finding} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+            <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Tindak Lanjut Temuan</DialogTitle>
                     <DialogDescription>
@@ -802,34 +801,11 @@ export default function P2hFindings({
                             Halaman {findings.current_page} dari{' '}
                             {findings.last_page} · {findings.total} temuan
                         </span>
-                        <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={findings.current_page <= 1}
-                                onClick={() =>
-                                    applyFilter({
-                                        page: findings.current_page - 1,
-                                    })
-                                }
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={
-                                    findings.current_page >= findings.last_page
-                                }
-                                onClick={() =>
-                                    applyFilter({
-                                        page: findings.current_page + 1,
-                                    })
-                                }
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <PageButtons
+                            currentPage={findings.current_page}
+                            lastPage={findings.last_page}
+                            onPageChange={(page) => applyFilter({ page })}
+                        />
                     </div>
                 )}
             </div>

@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import ChecklistItem from './ChecklistItem';
 import { Badge } from '@/components/ui/badge';
 import {
     Collapsible,
@@ -8,7 +9,6 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
-import ChecklistItem from './ChecklistItem';
 
 interface Props {
     section: P2hInspectionItem['section'];

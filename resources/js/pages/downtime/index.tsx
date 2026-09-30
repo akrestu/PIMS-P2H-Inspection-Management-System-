@@ -4,8 +4,6 @@ import {
     Bus,
     Car,
     CheckCircle2,
-    ChevronLeft,
-    ChevronRight,
     Clock,
     Filter,
     Plus,
@@ -15,6 +13,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -663,208 +662,339 @@ export default function DowntimeIndex({
                                 </div>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b bg-muted/30">
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Unit
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Tipe
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Jam Mulai
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Jam Selesai
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Durasi
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Keterangan
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Dicatat oleh
-                                            </th>
-                                            <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                                                Aksi
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {logs.data.map((log) => {
-                                            const tipe = tipeConfig(log.tipe);
-                                            const isOngoing = !log.jam_selesai;
-                                            const isLV =
-                                                log.jenis_unit ===
-                                                'Light Vehicle';
+                            <>
+                                {/* Mobile: kartu per log (tabel 8 kolom tidak muat di HP) */}
+                                <div className="divide-y md:hidden">
+                                    {logs.data.map((log) => {
+                                        const tipe = tipeConfig(log.tipe);
+                                        const isOngoing = !log.jam_selesai;
 
-                                            return (
-                                                <tr
-                                                    key={log.id}
-                                                    className={cn(
-                                                        'transition-colors hover:bg-muted/20',
-                                                        isOngoing &&
-                                                            'bg-red-50/40 dark:bg-red-950/10',
-                                                    )}
-                                                >
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div
-                                                                className={cn(
-                                                                    'flex h-7 w-7 items-center justify-center rounded-md',
-                                                                    isLV
-                                                                        ? 'bg-blue-100 dark:bg-blue-950/40'
-                                                                        : 'bg-purple-100 dark:bg-purple-950/40',
-                                                                )}
-                                                            >
-                                                                {isLV ? (
-                                                                    <Car className="h-3.5 w-3.5 text-blue-600" />
-                                                                ) : (
-                                                                    <Bus className="h-3.5 w-3.5 text-purple-600" />
-                                                                )}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-semibold">
-                                                                    {
-                                                                        log.no_unit
-                                                                    }
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    {
-                                                                        log.jenis_unit
-                                                                    }
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={cn(
-                                                                'text-xs',
-                                                                tipe.badgeClass,
-                                                            )}
-                                                        >
-                                                            {tipe.label}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-xs">
-                                                        <div className="flex items-center gap-1">
-                                                            <Clock className="h-3 w-3 text-muted-foreground" />
+                                        return (
+                                            <div
+                                                key={log.id}
+                                                className={cn(
+                                                    'space-y-2 p-4',
+                                                    isOngoing &&
+                                                        'bg-red-50/40 dark:bg-red-950/10',
+                                                )}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <p className="font-semibold">
+                                                            {log.no_unit}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {log.jenis_unit}
+                                                        </p>
+                                                    </div>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={cn(
+                                                            'text-xs',
+                                                            tipe.badgeClass,
+                                                        )}
+                                                    >
+                                                        {tipe.label}
+                                                    </Badge>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div>
+                                                        <p className="text-muted-foreground">
+                                                            Mulai
+                                                        </p>
+                                                        <p>
                                                             {formatDatetime(
                                                                 log.jam_mulai,
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-xs">
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-muted-foreground">
+                                                            Selesai
+                                                        </p>
                                                         {isOngoing ? (
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="gap-1 border-red-200 bg-red-50 text-xs text-red-600 dark:bg-red-950/20 dark:text-red-400"
-                                                            >
-                                                                <Timer className="h-3 w-3 animate-pulse" />
+                                                            <p className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+                                                                <Timer className="h-3 w-3" />
                                                                 Sedang BD
-                                                            </Badge>
+                                                            </p>
                                                         ) : (
-                                                            <div className="flex items-center gap-1">
-                                                                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                                            <p>
                                                                 {formatDatetime(
                                                                     log.jam_selesai,
-                                                                )}
-                                                            </div>
+                                                                )}{' '}
+                                                                <span className="font-medium">
+                                                                    (
+                                                                    {formatDuration(
+                                                                        log.duration_hours,
+                                                                    )}
+                                                                    )
+                                                                </span>
+                                                            </p>
                                                         )}
-                                                    </td>
-                                                    <td className="px-4 py-3 font-medium">
-                                                        {isOngoing ? (
-                                                            <span className="text-muted-foreground">
-                                                                —
-                                                            </span>
-                                                        ) : (
-                                                            <span
+                                                    </div>
+                                                </div>
+                                                {log.keterangan && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {log.keterangan}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-2 pt-1">
+                                                    {isOngoing && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-10 flex-1 gap-1 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400"
+                                                            onClick={() => {
+                                                                setCloseOnlyLog(
+                                                                    log,
+                                                                );
+                                                                setDialogOpen(
+                                                                    true,
+                                                                );
+                                                            }}
+                                                        >
+                                                            <CheckCircle2 className="h-4 w-4" />
+                                                            Tutup
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-10 flex-1"
+                                                        onClick={() => {
+                                                            setEditLog(log);
+                                                            setCloseOnlyLog(
+                                                                null,
+                                                            );
+                                                            setDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        aria-label="Hapus log downtime"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-10 w-10 p-0 text-destructive"
+                                                        onClick={() =>
+                                                            setDeleteLog(log)
+                                                        }
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b bg-muted/30">
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Unit
+                                                </th>
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Tipe
+                                                </th>
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Jam Mulai
+                                                </th>
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Jam Selesai
+                                                </th>
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Durasi
+                                                </th>
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Keterangan
+                                                </th>
+                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                    Dicatat oleh
+                                                </th>
+                                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                                                    Aksi
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {logs.data.map((log) => {
+                                                const tipe = tipeConfig(
+                                                    log.tipe,
+                                                );
+                                                const isOngoing =
+                                                    !log.jam_selesai;
+                                                const isLV =
+                                                    log.jenis_unit ===
+                                                    'Light Vehicle';
+
+                                                return (
+                                                    <tr
+                                                        key={log.id}
+                                                        className={cn(
+                                                            'transition-colors hover:bg-muted/20',
+                                                            isOngoing &&
+                                                                'bg-red-50/40 dark:bg-red-950/10',
+                                                        )}
+                                                    >
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div
+                                                                    className={cn(
+                                                                        'flex h-7 w-7 items-center justify-center rounded-md',
+                                                                        isLV
+                                                                            ? 'bg-blue-100 dark:bg-blue-950/40'
+                                                                            : 'bg-purple-100 dark:bg-purple-950/40',
+                                                                    )}
+                                                                >
+                                                                    {isLV ? (
+                                                                        <Car className="h-3.5 w-3.5 text-blue-600" />
+                                                                    ) : (
+                                                                        <Bus className="h-3.5 w-3.5 text-purple-600" />
+                                                                    )}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-semibold">
+                                                                        {
+                                                                            log.no_unit
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {
+                                                                            log.jenis_unit
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <Badge
+                                                                variant="outline"
                                                                 className={cn(
-                                                                    log.duration_hours &&
-                                                                        log.duration_hours >
-                                                                            8
-                                                                        ? 'text-red-600 dark:text-red-400'
-                                                                        : '',
+                                                                    'text-xs',
+                                                                    tipe.badgeClass,
                                                                 )}
                                                             >
-                                                                {formatDuration(
-                                                                    log.duration_hours,
+                                                                {tipe.label}
+                                                            </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-xs">
+                                                            <div className="flex items-center gap-1">
+                                                                <Clock className="h-3 w-3 text-muted-foreground" />
+                                                                {formatDatetime(
+                                                                    log.jam_mulai,
                                                                 )}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="max-w-[200px] px-4 py-3">
-                                                        <p className="truncate text-xs text-muted-foreground">
-                                                            {log.keterangan ||
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-xs">
+                                                            {isOngoing ? (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="gap-1 border-red-200 bg-red-50 text-xs text-red-600 dark:bg-red-950/20 dark:text-red-400"
+                                                                >
+                                                                    <Timer className="h-3 w-3 animate-pulse" />
+                                                                    Sedang BD
+                                                                </Badge>
+                                                            ) : (
+                                                                <div className="flex items-center gap-1">
+                                                                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                                                    {formatDatetime(
+                                                                        log.jam_selesai,
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3 font-medium">
+                                                            {isOngoing ? (
+                                                                <span className="text-muted-foreground">
+                                                                    —
+                                                                </span>
+                                                            ) : (
+                                                                <span
+                                                                    className={cn(
+                                                                        log.duration_hours &&
+                                                                            log.duration_hours >
+                                                                                8
+                                                                            ? 'text-red-600 dark:text-red-400'
+                                                                            : '',
+                                                                    )}
+                                                                >
+                                                                    {formatDuration(
+                                                                        log.duration_hours,
+                                                                    )}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="max-w-[200px] px-4 py-3">
+                                                            <p className="truncate text-xs text-muted-foreground">
+                                                                {log.keterangan ||
+                                                                    '—'}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                                                            {log.created_by ??
                                                                 '—'}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                                                        {log.created_by ?? '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center justify-end gap-1">
-                                                            {isOngoing && (
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                {isOngoing && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="h-8 gap-1 border-emerald-300 px-2.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400"
+                                                                        onClick={() => {
+                                                                            setCloseOnlyLog(
+                                                                                log,
+                                                                            );
+                                                                            setDialogOpen(
+                                                                                true,
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                                                        Tutup
+                                                                    </Button>
+                                                                )}
                                                                 <Button
                                                                     size="sm"
-                                                                    variant="outline"
-                                                                    className="h-8 gap-1 border-emerald-300 px-2.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400"
+                                                                    variant="ghost"
+                                                                    className="h-8 px-2.5 text-xs"
                                                                     onClick={() => {
-                                                                        setCloseOnlyLog(
+                                                                        setEditLog(
                                                                             log,
+                                                                        );
+                                                                        setCloseOnlyLog(
+                                                                            null,
                                                                         );
                                                                         setDialogOpen(
                                                                             true,
                                                                         );
                                                                     }}
                                                                 >
-                                                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                                                    Tutup
+                                                                    Edit
                                                                 </Button>
-                                                            )}
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-8 px-2.5 text-xs"
-                                                                onClick={() => {
-                                                                    setEditLog(
-                                                                        log,
-                                                                    );
-                                                                    setCloseOnlyLog(
-                                                                        null,
-                                                                    );
-                                                                    setDialogOpen(
-                                                                        true,
-                                                                    );
-                                                                }}
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                                                                onClick={() =>
-                                                                    setDeleteLog(
-                                                                        log,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                                <Button
+                                                                    aria-label="Hapus log downtime"
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                                                    onClick={() =>
+                                                                        setDeleteLog(
+                                                                            log,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
                         )}
                     </CardContent>
                 </Card>
@@ -878,50 +1008,11 @@ export default function DowntimeIndex({
                                 Menampilkan {logs.from}–{logs.to} dari{' '}
                                 {logs.total} log
                             </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={logs.current_page === 1}
-                                    onClick={() =>
-                                        goToPage(logs.current_page - 1)
-                                    }
-                                    className="h-8 w-8 p-0"
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                {Array.from(
-                                    { length: Math.min(logs.last_page, 7) },
-                                    (_, i) => i + 1,
-                                ).map((p) => (
-                                    <Button
-                                        key={p}
-                                        size="sm"
-                                        variant={
-                                            p === logs.current_page
-                                                ? 'default'
-                                                : 'outline'
-                                        }
-                                        onClick={() => goToPage(p)}
-                                        className="h-8 w-8 p-0 text-xs"
-                                    >
-                                        {p}
-                                    </Button>
-                                ))}
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={
-                                        logs.current_page === logs.last_page
-                                    }
-                                    onClick={() =>
-                                        goToPage(logs.current_page + 1)
-                                    }
-                                    className="h-8 w-8 p-0"
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            <PageButtons
+                                currentPage={logs.current_page}
+                                lastPage={logs.last_page}
+                                onPageChange={goToPage}
+                            />
                         </div>
                     </>
                 )}

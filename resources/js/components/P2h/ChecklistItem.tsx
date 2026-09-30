@@ -6,10 +6,10 @@ import {
     X,
     XCircle,
 } from 'lucide-react';
+import RiskBadge from './RiskBadge';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
-import RiskBadge from './RiskBadge';
 
 interface Props {
     item: P2hInspectionItem;
@@ -206,6 +206,7 @@ export default function ChecklistItem({
                                                 className="h-full w-full rounded-lg border object-cover"
                                             />
                                             <button
+                                                aria-label="Hapus foto bukti"
                                                 type="button"
                                                 onClick={() =>
                                                     onRemoveAttachment(

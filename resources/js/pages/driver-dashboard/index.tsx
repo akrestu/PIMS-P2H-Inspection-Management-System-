@@ -321,7 +321,7 @@ function StatsSection({ stats }: { stats: Stats }) {
                         <p className="text-3xl leading-none font-bold">
                             {stats.total_p2h}
                         </p>
-                        <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        <p className="mt-1.5 text-xs text-muted-foreground">
                             Semua waktu
                         </p>
                     </CardContent>
@@ -341,7 +341,7 @@ function StatsSection({ stats }: { stats: Stats }) {
                         <p className="text-3xl leading-none font-bold">
                             {stats.total_p2h_bulan}
                         </p>
-                        <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
+                        <p className="mt-1.5 truncate text-xs text-muted-foreground">
                             {bulanLabel}
                         </p>
                     </CardContent>
@@ -396,7 +396,7 @@ function StatsSection({ stats }: { stats: Stats }) {
                                 {stats.total_tidak_layak}
                             </p>
                             {hasTL && (
-                                <p className="mt-0.5 text-[10px] text-orange-600/70 dark:text-orange-400/70">
+                                <p className="mt-0.5 text-xs text-orange-600/70 dark:text-orange-400/70">
                                     item
                                 </p>
                             )}
@@ -452,7 +452,7 @@ function QuickActions() {
                                 >
                                     <Icon className="h-5 w-5" />
                                 </div>
-                                <span className="text-[11px] leading-tight font-medium">
+                                <span className="text-xs leading-tight font-medium">
                                     {action.label}
                                 </span>
                             </div>
@@ -516,7 +516,7 @@ function HistoryCard({ item }: { item: HistoryItem }) {
                                 <Badge
                                     variant="outline"
                                     className={cn(
-                                        'h-4 gap-0.5 px-1.5 text-[10px] font-medium',
+                                        'h-4 gap-0.5 px-1.5 text-xs font-medium',
                                         isDay
                                             ? 'border-amber-300 text-amber-700 dark:text-amber-400'
                                             : 'border-indigo-300 text-indigo-700 dark:text-indigo-400',
@@ -532,7 +532,7 @@ function HistoryCard({ item }: { item: HistoryItem }) {
                                 {item.tl_count > 0 && (
                                     <Badge
                                         variant="destructive"
-                                        className="h-4 gap-0.5 px-1.5 text-[10px]"
+                                        className="h-4 gap-0.5 px-1.5 text-xs"
                                     >
                                         <AlertTriangle className="h-2.5 w-2.5" />
                                         {item.tl_count} TL
@@ -556,14 +556,14 @@ function HistoryCard({ item }: { item: HistoryItem }) {
                         {/* Right: kondisi + chevron */}
                         <div className="flex shrink-0 flex-col items-end gap-2">
                             {item.kondisi_akhir === 'Layak Pakai' ? (
-                                <Badge className="h-5 gap-1 border-emerald-200 bg-emerald-100 px-1.5 text-[10px] text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-400">
+                                <Badge className="h-5 gap-1 border-emerald-200 bg-emerald-100 px-1.5 text-xs text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-400">
                                     <ShieldCheck className="h-3 w-3" />
                                     Layak
                                 </Badge>
                             ) : item.kondisi_akhir === 'BD' ? (
                                 <Badge
                                     variant="destructive"
-                                    className="h-5 gap-1 px-1.5 text-[10px]"
+                                    className="h-5 gap-1 px-1.5 text-xs"
                                 >
                                     <XCircle className="h-3 w-3" />
                                     BD
@@ -571,7 +571,7 @@ function HistoryCard({ item }: { item: HistoryItem }) {
                             ) : (
                                 <Badge
                                     variant="outline"
-                                    className="h-5 px-1.5 text-[10px]"
+                                    className="h-5 px-1.5 text-xs"
                                 >
                                     —
                                 </Badge>
@@ -592,7 +592,7 @@ function HistoryCard({ item }: { item: HistoryItem }) {
                                     : '[&>div]:bg-red-500',
                             )}
                         />
-                        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                        <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                             <span>{item.layak_count} Layak</span>
                             <span>{item.total_items} item total</span>
                         </div>
