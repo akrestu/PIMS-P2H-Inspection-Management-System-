@@ -6,7 +6,9 @@ use App\Models\Unit;
 use App\Models\UnitDowntimeLog;
 use App\Models\User;
 use App\Notifications\MissingP2hReminder;
+use App\Support\DailyP2hDigest;
 use App\Support\FleetAvailability;
+use App\Support\P2hDigestFormatter;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
@@ -158,4 +160,29 @@ test('admins and managers are reminded about active units without P2H today', fu
     Notification::assertSentTo([$admin, $manager], MissingP2hReminder::class,
         fn (MissingP2hReminder $n) => $n->toArray($admin)['no_unit'] === 'LV-11' && $n->toArray($admin)['jumlah'] === 1);
     Notification::assertNotSentTo($this->driver, MissingP2hReminder::class);
+});
+
+test('daily report lists units that are BD/PM/Servis separately instead of as missing P2H', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $ready = availabilityUnit('LV-30');
+    $bdKemarin = availabilityUnit('LV-31');      // BD dari P2H kemarin, hari ini tidak P2H
+    $pm = availabilityUnit('LV-32');             // PM dari admin
+    availabilityUnit('LV-33');                   // memang belum P2H
+
+    availabilityEntry($ready, '2026-10-10 07:00', 'Layak Pakai');
+    availabilityEntry($bdKemarin, '2026-10-09 07:00', 'BD');
+    $this->actingAs($admin)->patch(route('units.status', $pm), ['status' => 'PM', 'waktu' => '2026-10-09 08:00']);
+
+    $digest = DailyP2hDigest::build(Carbon::parse('2026-10-10'));
+    $tanggal = '2026-10-10';
+
+    expect($digest['tidak_ready'][$tanggal])->toBe([
+        ['no_unit' => 'LV-31', 'status' => 'BD'],
+        ['no_unit' => 'LV-32', 'status' => 'PM'],
+    ])->and($digest['belum_p2h'][$tanggal])->toBe(['LV-33']);
+
+    expect(P2hDigestFormatter::toWhatsApp($digest))
+        ->toContain('Sudah P2H: *1 dari 2 unit* (2 unit tidak Ready)')
+        ->toContain("*TIDAK READY (2)*\nLV-31 (BD), LV-32 (PM)")
+        ->toContain("*BELUM P2H (1)*\nLV-33");
 });

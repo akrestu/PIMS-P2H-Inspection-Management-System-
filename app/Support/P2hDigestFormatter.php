@@ -49,16 +49,29 @@ class P2hDigestFormatter
         foreach (array_keys($belum) ?: $byDate->keys()->all() as $tanggal) {
             $units = $byDate->get($tanggal, collect());
             $missing = $belum[$tanggal] ?? [];
+            $notReady = $digest['tidak_ready'][$tanggal] ?? [];
 
             if ($digest['multi_hari'] ?? false) {
                 $lines[] = '';
                 $lines[] = '*'.strtoupper(Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d M Y')).'*';
             }
             if ($total !== null) {
-                $lines[] = "Sudah P2H: *{$units->count()} dari {$total} unit*";
+                // Unit yang sedang BD/PM/Servis tidak wajib P2H
+                $wajib = $total - count($notReady);
+                $lines[] = "Sudah P2H: *{$units->count()} dari {$wajib} unit*"
+                    .($notReady !== [] ? ' ('.count($notReady).' unit tidak Ready)' : '');
             }
 
             $lines = [...$lines, ...self::dayLines($units)];
+
+            if ($notReady !== []) {
+                $lines[] = '';
+                $lines[] = '*TIDAK READY ('.count($notReady).')*';
+                $lines[] = collect($notReady)
+                    ->sortBy(fn ($u) => preg_replace('/\s+/', '', $u['no_unit']), SORT_NATURAL | SORT_FLAG_CASE)
+                    ->map(fn ($u) => self::clean($u['no_unit'])." ({$u['status']})")
+                    ->implode(', ');
+            }
 
             if ($missing !== []) {
                 $lines[] = '';

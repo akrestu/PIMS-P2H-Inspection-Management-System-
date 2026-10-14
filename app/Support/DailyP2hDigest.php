@@ -7,6 +7,7 @@ use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Site;
 use App\Models\Unit;
+use App\Models\UnitDowntimeLog;
 use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
@@ -96,15 +97,40 @@ class DailyP2hDigest
             ];
         });
 
-        // Unit aktif yang tidak melakukan P2H, per tanggal
+        // Unit aktif yang tidak melakukan P2H, per tanggal. Unit yang hari itu sedang
+        // BD/PM/Servis (status dari admin atau P2H sebelumnya) dipisahkan sebagai "tidak Ready"
+        // karena memang tidak wajib P2H.
         $filled = $units->groupBy('tanggal')->map(fn ($g) => $g->pluck('no_unit')->all());
-        $activeUnits = Unit::active()->where($unitScope)->orderBy('no_unit')->pluck('no_unit');
-        $belumP2h = collect(CarbonPeriod::create($start, $end))
-            ->mapWithKeys(fn ($d) => [$d->toDateString() => $activeUnits
-                ->diff($filled->get($d->toDateString(), []))
-                ->values()
-                ->all()])
-            ->all();
+        $activeUnits = Unit::active()->where($unitScope)->orderBy('no_unit')->get(['id', 'no_unit']);
+        $downtimes = UnitDowntimeLog::whereIn('unit_id', $activeUnits->pluck('id'))
+            ->inRange($start->toDateString(), $end->toDateString())
+            ->get(['unit_id', 'tipe', 'jam_mulai', 'jam_selesai'])
+            ->groupBy('unit_id');
+
+        $belumP2h = [];
+        $tidakReady = [];
+        foreach (CarbonPeriod::create($start, $end) as $day) {
+            $date = $day->toDateString();
+            $dayStart = $day->copy()->startOfDay();
+            $dayEnd = $day->copy()->endOfDay()->min(now());
+            $belumP2h[$date] = [];
+            $tidakReady[$date] = [];
+
+            foreach ($activeUnits as $unit) {
+                if (in_array($unit->no_unit, $filled->get($date, []), true)) {
+                    continue;
+                }
+
+                $log = $downtimes->get($unit->id, collect())->first(fn (UnitDowntimeLog $l) => $l->jam_mulai->lessThanOrEqualTo($dayEnd)
+                    && ($l->jam_selesai === null || $l->jam_selesai->greaterThan($dayStart)));
+
+                if ($log) {
+                    $tidakReady[$date][] = ['no_unit' => $unit->no_unit, 'status' => $log->tipe];
+                } else {
+                    $belumP2h[$date][] = $unit->no_unit;
+                }
+            }
+        }
 
         $availability = FleetAvailability::build($start, $end, ['site_id' => $siteId, 'jenis_unit' => $jenisUnit])['summary'];
 
@@ -129,9 +155,11 @@ class DailyP2hDigest
                 'temuan_overdue' => $allFindings->where('overdue', true)->count(),
                 'total_unit' => $activeUnits->count(),
                 'belum_p2h' => collect($belumP2h)->sum(fn ($list) => count($list)),
+                'tidak_ready' => collect($tidakReady)->sum(fn ($list) => count($list)),
             ],
             'units' => $units->all(),
             'belum_p2h' => $belumP2h,
+            'tidak_ready' => $tidakReady,
             'pa' => $availability['pa_by_jenis'],
         ];
     }
