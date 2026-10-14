@@ -35,6 +35,9 @@ return [
         'overdue_reminder_time' => env('P2H_OVERDUE_REMINDER_TIME', '07:00'),
     ],
 
+    // Jam pengingat harian ke admin/manager berisi unit aktif yang belum P2H hari ini
+    'missing_reminder_time' => env('P2H_MISSING_REMINDER_TIME', '10:00'),
+
     /*
     |--------------------------------------------------------------------------
     | Approval P2H LV

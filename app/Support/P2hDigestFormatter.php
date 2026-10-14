@@ -33,27 +33,39 @@ class P2hDigestFormatter
             "_{$scope} · {$digest['tanggal_label']}_",
         ];
 
-        if ($digest['units'] === []) {
-            $lines[] = '';
-            $lines[] = '_Tidak ada unit yang melakukan P2H pada periode ini._';
-        }
+        $byDate = collect($digest['units'])->groupBy('tanggal');
+        $belum = $digest['belum_p2h'] ?? [];
+        $total = $digest['stats']['total_unit'] ?? null;
 
-        // Rentang lebih dari 1 hari → dikelompokkan per tanggal P2H
-        foreach (collect($digest['units'])->groupBy('tanggal') as $tanggal => $units) {
+        // Rentang lebih dari 1 hari → dikelompokkan per tanggal
+        foreach (array_keys($belum) ?: $byDate->keys()->all() as $tanggal) {
+            $units = $byDate->get($tanggal, collect());
+            $missing = $belum[$tanggal] ?? [];
+
             if ($digest['multi_hari'] ?? false) {
                 $lines[] = '';
                 $lines[] = '🗓️ *'.strtoupper(Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d M Y')).'*';
             }
 
+            if ($total !== null) {
+                $lines[] = '';
+                $lines[] = "📋 Sudah P2H: *{$units->count()}/{$total} unit*";
+            }
+
             $lines = [...$lines, ...self::dayLines($units)];
+
+            if ($missing !== []) {
+                $lines[] = '';
+                $lines[] = '⏳ *BELUM P2H ('.count($missing).' unit)*';
+                $lines[] = collect($missing)->map(fn ($u) => self::clean($u))->implode(', ');
+            }
         }
 
-        if (($digest['servis'] ?? []) !== []) {
+        if (($digest['pa'] ?? []) !== []) {
             $lines[] = '';
-            $lines[] = '*JADWAL SERVIS BERKALA*';
-
-            foreach ($digest['servis'] as $unit) {
-                $lines[] = self::serviceLine($unit);
+            $lines[] = '*PHYSICAL AVAILABILITY (PA)*';
+            foreach ($digest['pa'] as $jenis => $group) {
+                $lines[] = self::paLine($jenis, $group);
             }
         }
 
@@ -232,16 +244,11 @@ class P2hDigestFormatter
         return trim(preg_replace('/\s+/', ' ', str_replace(['*', '_', '~', '`'], '', (string) $text)));
     }
 
-    public static function serviceLine(array $unit): string
+    /** @param  array{pa: ?float, total: int, bd: int}  $group */
+    public static function paLine(string $jenis, array $group): string
     {
-        $km = fn (?int $v) => $v === null ? '-' : number_format($v, 0, ',', '.');
+        $pa = $group['pa'] !== null ? str_replace('.', ',', (string) $group['pa']).'%' : '-';
 
-        if ($unit['status'] === 'overdue') {
-            return "- 🔴 *{$unit['no_unit']}* terlambat {$km(abs($unit['sisa_km']))} km (jadwal {$km($unit['km_servis_berikutnya'])})";
-        }
-
-        $estimasi = $unit['estimasi_hari'] ? " / ±{$unit['estimasi_hari']} hari" : '';
-
-        return "- 🟡 *{$unit['no_unit']}* {$km($unit['sisa_km'])} km lagi{$estimasi} (jadwal {$km($unit['km_servis_berikutnya'])})";
+        return "- {$jenis}: *{$pa}* ({$group['total']} unit, {$group['bd']} tidak Ready)";
     }
 }

@@ -7,13 +7,12 @@ use App\Exports\MonitoringP2hExport;
 use App\Exports\MonitoringPaExport;
 use App\Models\P2hSession;
 use App\Models\Unit;
-use App\Models\UnitDowntimeLog;
+use App\Support\FleetAvailability;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 
 class DataExportController extends Controller
@@ -111,157 +110,18 @@ class DataExportController extends Controller
 
     private function buildMonitoringPaData(Request $request): array
     {
-        $PA_THRESHOLD = 80.0;
-        $SHIFT_HOURS = 12.0;
-
-        $dateFrom = $request->input('date_from', now()->startOfMonth()->toDateString());
-        $dateTo = $request->input('date_to', now()->toDateString());
-        $unitId = $request->input('unit_id');
-        $jenis = $request->input('jenis_unit');
-
-        $from = Carbon::parse($dateFrom);
-        $to = Carbon::parse($dateTo);
+        $from = Carbon::parse($request->input('date_from', now()->startOfMonth()->toDateString()));
+        $to = Carbon::parse($request->input('date_to', now()->toDateString()));
         if ($from->diffInDays($to) > 90) {
             $from = $to->copy()->subDays(89);
-            $dateFrom = $from->toDateString();
         }
 
-        $unitQuery = Unit::active()->orderBy('no_unit');
-        if ($unitId) {
-            $unitQuery->where('id', $unitId);
-        }
-        if ($jenis) {
-            $unitQuery->where('jenis_unit', $jenis);
-        }
-        $units = $unitQuery->get();
+        $result = FleetAvailability::build($from, $to, [
+            'unit_id' => $request->input('unit_id'),
+            'jenis_unit' => $request->input('jenis_unit'),
+        ], $request->user());
 
-        $sessions = P2hSession::with([
-            'unit',
-            'userEntries' => fn ($query) => $query->operational(),
-            'userEntries.answers',
-        ])
-            ->whereHas('userEntries', fn ($query) => $query->operational())
-            ->whereBetween('tanggal', [$dateFrom, $dateTo])
-            ->when($unitId, fn ($q) => $q->where('unit_id', $unitId))
-            ->when($jenis, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $jenis)))
-            ->get()
-            ->groupBy('unit_id');
-
-        $downtimeByUnit = UnitDowntimeLog::whereIn('unit_id', $units->pluck('id'))
-            ->completed()
-            ->inRange($dateFrom, $dateTo)
-            ->get()
-            ->groupBy('unit_id');
-
-        $unitData = $units->map(function (Unit $unit) use ($sessions, $downtimeByUnit, $from, $to, $PA_THRESHOLD, $SHIFT_HOURS) {
-            $unitSessions = $sessions->get($unit->id, collect());
-            $sessionsByDate = $unitSessions->groupBy(fn ($s) => $s->tanggal->toDateString());
-            $totalDaysWithSession = $sessionsByDate->count();
-            $totalDays = $from->diffInDays($to) + 1;
-
-            $dailyData = $sessionsByDate->map(function (Collection $daySessions) use ($PA_THRESHOLD) {
-                $bestScore = $daySessions->map(function ($session) {
-                    $total = 0;
-                    $layak = 0;
-                    foreach ($session->userEntries as $entry) {
-                        foreach ($entry->answers as $ans) {
-                            $total++;
-                            if ($ans->kondisi === 'Layak') {
-                                $layak++;
-                            }
-                        }
-                    }
-
-                    return $total > 0 ? round(($layak / $total) * 100, 1) : null;
-                })->filter()->max();
-
-                $kondisiEntries = $daySessions->flatMap(fn ($s) => $s->userEntries)->pluck('kondisi_akhir')->filter()->values();
-                $hasOverride = $daySessions->flatMap(fn ($s) => $s->userEntries)->contains(fn ($e) => $e->is_override);
-
-                if ($kondisiEntries->contains('BD')) {
-                    $effectiveStatus = 'bd';
-                } elseif ($kondisiEntries->isNotEmpty()) {
-                    $effectiveStatus = 'operation';
-                } elseif ($bestScore !== null) {
-                    $effectiveStatus = $bestScore >= $PA_THRESHOLD ? 'operation' : 'bd';
-                } else {
-                    $effectiveStatus = 'no_data';
-                }
-
-                return ['compliance_score' => $bestScore, 'effective_status' => $effectiveStatus, 'has_override' => $hasOverride];
-            });
-
-            $operationDays = $dailyData->where('effective_status', 'operation')->count();
-            $bdDays = $dailyData->where('effective_status', 'bd')->count();
-            $compliancePa = $totalDaysWithSession > 0 ? round(($operationDays / $totalDaysWithSession) * 100, 1) : null;
-
-            $uniqueShifts = [];
-            foreach ($unitSessions as $s) {
-                foreach ($s->userEntries as $e) {
-                    $key = $s->tanggal->toDateString().'_'.($e->shift ?? 'unknown');
-                    $uniqueShifts[$key] = true;
-                }
-            }
-            $workingHours = count($uniqueShifts) * $SHIFT_HOURS;
-            $downtimeHours = $downtimeByUnit->get($unit->id, collect())
-                ->sum(fn (UnitDowntimeLog $log) => $log->durationHoursWithin(
-                    $from->toDateString(),
-                    $to->toDateString(),
-                ));
-            $actualPa = ($workingHours + $downtimeHours) > 0
-                ? round($workingHours / ($workingHours + $downtimeHours) * 100, 1)
-                : null;
-
-            $latestSession = $unitSessions->sortByDesc('tanggal')->first();
-            $currentStatus = 'no_data';
-            if ($latestSession) {
-                $ke = $latestSession->userEntries->pluck('kondisi_akhir')->filter()->values();
-                $currentStatus = $ke->contains('BD') ? 'bd' : ($ke->isNotEmpty() ? 'operation' : 'no_data');
-            }
-
-            $totalTL = 0;
-            foreach ($unitSessions as $session) {
-                foreach ($session->userEntries as $entry) {
-                    $totalTL += $entry->answers->where('kondisi', 'Tidak Layak')->count();
-                }
-            }
-
-            return [
-                'id' => $unit->id,
-                'no_unit' => $unit->no_unit,
-                'jenis_unit' => $unit->jenis_unit,
-                'no_lambung' => $unit->no_lambung,
-                'compliance_pa' => $compliancePa,
-                'actual_pa' => $actualPa,
-                'working_hours' => round($workingHours, 1),
-                'downtime_hours' => round($downtimeHours, 1),
-                'has_time_data' => $workingHours > 0,
-                'current_status' => $currentStatus,
-                'latest_date' => $latestSession?->tanggal->toDateString(),
-                'total_sessions' => $totalDaysWithSession,
-                'total_days' => $totalDays,
-                'operation_days' => $operationDays,
-                'bd_days' => $bdDays,
-                'total_tl' => $totalTL,
-            ];
-        })->values()->toArray();
-
-        $withCompliance = collect($unitData)->filter(fn ($u) => $u['compliance_pa'] !== null);
-        $withActual = collect($unitData)->filter(fn ($u) => $u['actual_pa'] !== null);
-
-        $summary = [
-            'fleet_compliance_pa' => $withCompliance->count() > 0 ? round($withCompliance->avg('compliance_pa'), 1) : null,
-            'fleet_actual_pa' => $withActual->count() > 0 ? round($withActual->avg('actual_pa'), 1) : null,
-            'total_units' => count($unitData),
-            'operation_count' => collect($unitData)->where('current_status', 'operation')->count(),
-            'bd_count' => collect($unitData)->where('current_status', 'bd')->count(),
-            'no_data_count' => collect($unitData)->where('current_status', 'no_data')->count(),
-            'units_with_time_data' => collect($unitData)->where('has_time_data', true)->count(),
-            'pa_threshold' => $PA_THRESHOLD,
-            'shift_hours' => $SHIFT_HOURS,
-        ];
-
-        return [$unitData, $summary, $dateFrom, $dateTo];
+        return [$result['units']->toArray(), $result['summary'], $from->toDateString(), $to->toDateString()];
     }
 
     private function buildMonitoringP2hData(Request $request): array

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -227,7 +228,7 @@ export default function UnitsTrashed({ units, filters }: Props) {
         debounceRef.current = setTimeout(() => {
             router.get(
                 '/units/trashed',
-                { search: val },
+                { search: val, ...sortParams() },
                 { preserveState: true, replace: true },
             );
         }, 350);
@@ -280,13 +281,27 @@ export default function UnitsTrashed({ units, filters }: Props) {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead>No. Unit</TableHead>
-                                        <TableHead>Jenis Unit</TableHead>
-                                        <TableHead>No. Polisi</TableHead>
-                                        <TableHead className="hidden md:table-cell">
+                                        <SortableHead column="no_unit">
+                                            No. Unit
+                                        </SortableHead>
+                                        <SortableHead column="jenis_unit">
+                                            Jenis Unit
+                                        </SortableHead>
+                                        <SortableHead column="no_lambung">
+                                            No. Polisi
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="department"
+                                            className="hidden md:table-cell"
+                                        >
                                             Departemen
-                                        </TableHead>
-                                        <TableHead>Dihapus Pada</TableHead>
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="deleted_at"
+                                            descFirst
+                                        >
+                                            Dihapus Pada
+                                        </SortableHead>
                                         <TableHead className="w-40 text-right">
                                             Aksi
                                         </TableHead>

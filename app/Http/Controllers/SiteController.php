@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SortsTable;
 use App\Http\Requests\StoreSiteRequest;
 use App\Models\Site;
 use App\Models\Unit;
@@ -13,26 +14,28 @@ use Inertia\Response;
 
 class SiteController extends Controller
 {
+    use SortsTable;
+
     public function index(Request $request): Response
     {
-        $sites = Site::query()
+        $query = Site::query()
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->withCount(['units', 'users'])
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->withCount(['units', 'users']);
 
-        $stats = [
-            'total' => Site::count(),
-            'active' => Site::where('status', 'active')->count(),
-            'inactive' => Site::where('status', 'inactive')->count(),
-        ];
+        $sort = $this->applySort($query, $request, [
+            'name' => 'name',
+            'units_count' => 'units_count',
+            'users_count' => 'users_count',
+            'status' => 'status',
+        ], 'name');
+
+        $sites = $query->paginate(15)->withQueryString();
 
         return Inertia::render('sites/index', [
             'sites' => $sites,
-            'filters' => $request->only(['search', 'status']),
-            'stats' => $stats,
+            'filters' => $request->only(['search', 'status', 'sort', 'dir']),
+            'sort' => $sort,
         ]);
     }
 
@@ -150,15 +153,20 @@ class SiteController extends Controller
 
     public function trashed(Request $request): Response
     {
-        $sites = Site::onlyTrashed()
-            ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
-            ->orderByDesc('deleted_at')
-            ->paginate(15)
-            ->withQueryString();
+        $query = Site::onlyTrashed()
+            ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%"));
+
+        $sort = $this->applySort($query, $request, [
+            'name' => 'name',
+            'deleted_at' => 'deleted_at',
+        ], 'name');
+
+        $sites = $query->paginate(15)->withQueryString();
 
         return Inertia::render('sites/trashed', [
             'sites' => $sites,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'sort', 'dir']),
+            'sort' => $sort,
         ]);
     }
 

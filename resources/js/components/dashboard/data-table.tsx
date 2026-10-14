@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table';
 import { ChevronLeft, ChevronRight, ClipboardList, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -144,7 +145,13 @@ const columns: ColumnDef<RecentP2h>[] = [
 ];
 
 export function DataTable({ data }: { data: RecentP2h[] }) {
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>([
+        { id: 'no_unit', desc: false },
+    ]);
+    const sortState = {
+        by: sorting[0]?.id ?? '',
+        dir: sorting[0]?.desc ? ('desc' as const) : ('asc' as const),
+    };
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
         {},
@@ -266,20 +273,41 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                                 key={hg.id}
                                 className="border-b hover:bg-transparent"
                             >
-                                {hg.headers.map((header) => (
-                                    <TableHead
-                                        key={header.id}
-                                        className="h-9 text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef
-                                                      .header,
-                                                  header.getContext(),
-                                              )}
-                                    </TableHead>
-                                ))}
+                                {hg.headers.map((header) => {
+                                    const className =
+                                        'h-9 text-xs font-medium tracking-wide text-muted-foreground uppercase';
+                                    const label = header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                              header.column.columnDef.header,
+                                              header.getContext(),
+                                          );
+
+                                    return header.column.getCanSort() ? (
+                                        <SortableHead
+                                            key={header.id}
+                                            column={header.column.id}
+                                            sort={sortState}
+                                            onSort={() =>
+                                                header.column.toggleSorting(
+                                                    sortState.by ===
+                                                        header.column.id &&
+                                                        sortState.dir === 'asc',
+                                                )
+                                            }
+                                            className={className}
+                                        >
+                                            {label}
+                                        </SortableHead>
+                                    ) : (
+                                        <TableHead
+                                            key={header.id}
+                                            className={className}
+                                        >
+                                            {label}
+                                        </TableHead>
+                                    );
+                                })}
                             </TableRow>
                         ))}
                     </TableHeader>

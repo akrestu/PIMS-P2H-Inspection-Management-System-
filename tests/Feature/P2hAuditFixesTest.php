@@ -212,6 +212,7 @@ test('dashboard critical count uses the snapshot hazard code', function () {
 
 test('period and analytics reports reject ranges longer than a year', function () {
     $admin = auditAdmin();
+    AppSetting::set('unit_analytics_enabled', true);
 
     $this->actingAs($admin)
         ->get(route('p2h.period-report', ['period' => 'custom', 'start' => '2024-01-01', 'end' => '2026-01-01']))

@@ -23,10 +23,11 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
 import { SiteSelect } from '@/components/site-select';
+import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -105,13 +106,6 @@ interface PaginatedData {
     to: number | null;
 }
 
-interface Stats {
-    total: number;
-    admin: number;
-    manager: number;
-    driver: number;
-}
-
 interface Props {
     users: PaginatedData;
     filters: {
@@ -120,7 +114,6 @@ interface Props {
         jabatan?: string;
         per_page?: string;
     };
-    stats: Stats;
     units: UnitOption[];
     sites: Site[];
 }
@@ -1180,40 +1173,10 @@ function ImportSheet({
     );
 }
 
-/* ───────────────── StatCard ─────────────────────────────────── */
-function StatCard({
-    title,
-    value,
-    icon: Icon,
-    colorClass,
-}: {
-    title: string;
-    value: number;
-    icon: React.ElementType;
-    colorClass: string;
-}) {
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {title}
-                </CardTitle>
-                <div className={`rounded-md p-2 ${colorClass}`}>
-                    <Icon className="h-4 w-4" />
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-            </CardContent>
-        </Card>
-    );
-}
-
 /* ──────────────────────── Main Page ────────────────────────── */
 export default function UsersIndex({
     users,
     filters,
-    stats,
     units,
     sites,
 }: Props) {
@@ -1260,7 +1223,13 @@ export default function UsersIndex({
             debounceRef.current = setTimeout(() => {
                 router.get(
                     '/users',
-                    { search: s, role: r, jabatan: j, per_page: pp },
+                    {
+                        search: s,
+                        role: r,
+                        jabatan: j,
+                        per_page: pp,
+                        ...sortParams(),
+                    },
                     { preserveState: true, replace: true },
                 );
             }, 350);
@@ -1286,7 +1255,13 @@ export default function UsersIndex({
         setPerPage(pp);
         router.get(
             '/users',
-            { search, role: roleFilter, jabatan: jabatanFilter, per_page: pp },
+            {
+                search,
+                role: roleFilter,
+                jabatan: jabatanFilter,
+                per_page: pp,
+                ...sortParams(),
+            },
             { preserveState: true, replace: true },
         );
     };
@@ -1393,34 +1368,6 @@ export default function UsersIndex({
                         </div>
                     </div>
                 )}
-
-                {/* ── Stat Cards ── */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <StatCard
-                        title="Total User"
-                        value={stats.total}
-                        icon={Users}
-                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    />
-                    <StatCard
-                        title="Admin"
-                        value={stats.admin}
-                        icon={ShieldCheck}
-                        colorClass="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                    />
-                    <StatCard
-                        title="Manager"
-                        value={stats.manager}
-                        icon={Shield}
-                        colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-                    />
-                    <StatCard
-                        title="Driver"
-                        value={stats.driver}
-                        icon={UserCheck}
-                        colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                    />
-                </div>
 
                 {/* ── Filter Bar ── */}
                 <Card>
@@ -1549,20 +1496,36 @@ export default function UsersIndex({
                                         <TableHead className="hidden w-10 text-center sm:table-cell">
                                             #
                                         </TableHead>
-                                        <TableHead>Nama</TableHead>
-                                        <TableHead className="hidden sm:table-cell">
+                                        <SortableHead column="name">
+                                            Nama
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="nik"
+                                            className="hidden sm:table-cell"
+                                        >
                                             NIK / NRPP
-                                        </TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead className="hidden md:table-cell">
+                                        </SortableHead>
+                                        <SortableHead column="role">
+                                            Role
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="jabatan"
+                                            className="hidden md:table-cell"
+                                        >
                                             Jabatan
-                                        </TableHead>
-                                        <TableHead className="hidden lg:table-cell">
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="department"
+                                            className="hidden lg:table-cell"
+                                        >
                                             Departemen
-                                        </TableHead>
-                                        <TableHead className="hidden lg:table-cell">
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="site"
+                                            className="hidden lg:table-cell"
+                                        >
                                             Site
-                                        </TableHead>
+                                        </SortableHead>
                                         <TableHead className="w-14 text-right">
                                             Aksi
                                         </TableHead>

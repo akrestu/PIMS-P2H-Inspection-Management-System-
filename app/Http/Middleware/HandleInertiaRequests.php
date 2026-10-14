@@ -60,6 +60,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'options' => [
                 'shifts' => AppSetting::shifts(),
+                'unit_analytics' => AppSetting::unitAnalyticsEnabled(),
                 'session_lifetime_minutes' => (int) config('session.lifetime', 120),
             ],
             'auth' => [

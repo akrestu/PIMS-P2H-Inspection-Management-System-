@@ -161,55 +161,6 @@ function ApprovalStatusBadge({ status }: { status: ApprovalStatus | null }) {
     );
 }
 
-/* ─────────────────── Stat Card ─────────────────────────────── */
-function StatCard({
-    value,
-    label,
-    icon: Icon,
-    color,
-}: {
-    value: number;
-    label: string;
-    icon: React.ElementType;
-    color: 'amber' | 'green' | 'red';
-}) {
-    const colors = {
-        amber: 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800',
-        green: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
-        red: 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800',
-    };
-    const iconColors = {
-        amber: 'text-amber-600 dark:text-amber-400',
-        green: 'text-emerald-600 dark:text-emerald-400',
-        red: 'text-red-600 dark:text-red-400',
-    };
-    const valueColors = {
-        amber: 'text-amber-700 dark:text-amber-300',
-        green: 'text-emerald-700 dark:text-emerald-300',
-        red: 'text-red-700 dark:text-red-300',
-    };
-
-    return (
-        <div
-            className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center ${colors[color]}`}
-        >
-            <div
-                className={`rounded-lg bg-white/60 p-1.5 dark:bg-black/20 ${iconColors[color]}`}
-            >
-                <Icon className="h-4 w-4" />
-            </div>
-            <p
-                className={`text-2xl leading-none font-bold tabular-nums ${valueColors[color]}`}
-            >
-                {value}
-            </p>
-            <p className="text-xs leading-tight text-muted-foreground">
-                {label}
-            </p>
-        </div>
-    );
-}
-
 /* ─────────────── Reject Dialog ─────────────────────────────── */
 function RejectDialog({
     entry,
@@ -1221,28 +1172,6 @@ export default function P2hApprovals({
                                 Setujui Semua ({bulkApprovable})
                             </Button>
                         )}
-                </div>
-
-                {/* ── Stats summary ── */}
-                <div className="grid grid-cols-3 gap-3">
-                    <StatCard
-                        value={stats.pending}
-                        label="Menunggu Persetujuan"
-                        icon={Clock}
-                        color="amber"
-                    />
-                    <StatCard
-                        value={stats.approved_today}
-                        label="Disetujui Hari Ini"
-                        icon={CheckCircle2}
-                        color="green"
-                    />
-                    <StatCard
-                        value={stats.rejected_today}
-                        label="Ditolak Hari Ini"
-                        icon={XCircle}
-                        color="red"
-                    />
                 </div>
 
                 {/* ── Status filter ── */}

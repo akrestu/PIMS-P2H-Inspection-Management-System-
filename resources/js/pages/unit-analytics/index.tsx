@@ -1,13 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    CalendarClock,
-    Fuel,
-    Gauge,
-    Wrench,
-} from 'lucide-react';
+import { AlertTriangle, Fuel, Gauge, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
+import { SortableHead, useClientSort } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,6 +118,29 @@ export default function UnitAnalytics({
     jenisOptions,
     sites,
 }: Props) {
+    const fuelSort = useClientSort(
+        fuel.units,
+        {
+            unit: (u) => u.no_unit,
+            jarak: (u) => u.jarak,
+            liter: (u) => u.liter,
+            jumlah_isi: (u) => u.jumlah_isi,
+            km_per_liter: (u) => u.km_per_liter,
+        },
+        { by: 'unit', dir: 'asc' },
+    );
+    const serviceSort = useClientSort(
+        service,
+        {
+            unit: (s) => s.no_unit,
+            km_saat_ini: (s) => s.km_saat_ini,
+            servis_terakhir: (s) => s.tanggal_servis_terakhir,
+            km_servis_berikutnya: (s) => s.km_servis_berikutnya,
+            sisa_km: (s) => s.sisa_km,
+            status: (s) => s.status,
+        },
+        { by: 'unit', dir: 'asc' },
+    );
     const [range, setRange] = useState({
         start: filters.start,
         end: filters.end,
@@ -255,33 +273,6 @@ export default function UnitAnalytics({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <Stat
-                        icon={Fuel}
-                        label="Total BBM"
-                        value={`${num(fuel.total_liter, 1)} L`}
-                        tone="text-blue-600"
-                    />
-                    <Stat
-                        icon={Gauge}
-                        label="Total jarak"
-                        value={`${num(fuel.total_jarak)} km`}
-                        tone="text-slate-600"
-                    />
-                    <Stat
-                        icon={AlertTriangle}
-                        label="Unit boros · isi tidak wajar"
-                        value={`${fuel.unit_boros} · ${fuel.jumlah_anomali}`}
-                        tone="text-amber-600"
-                    />
-                    <Stat
-                        icon={CalendarClock}
-                        label="Servis segera / terlambat"
-                        value={dueCount}
-                        tone="text-red-600"
-                    />
-                </div>
-
                 <Tabs defaultValue="fuel">
                     <TabsList>
                         <TabsTrigger value="fuel" className="gap-1.5">
@@ -321,7 +312,7 @@ export default function UnitAnalytics({
                                             Belum ada data P2H pada periode ini.
                                         </p>
                                     )}
-                                    {fuel.units.map((u) => (
+                                    {fuelSort.rows.map((u) => (
                                         <div
                                             key={u.unit_id}
                                             className="space-y-2 p-4"
@@ -404,21 +395,55 @@ export default function UnitAnalytics({
                                     <table className="w-full text-sm">
                                         <thead className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
                                             <tr>
-                                                <th className="px-4 py-3">
+                                                <SortableHead
+                                                    column="unit"
+                                                    plain
+                                                    sort={fuelSort.sort}
+                                                    onSort={fuelSort.onSort}
+                                                    className="px-4 py-3"
+                                                >
                                                     Unit
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="jarak"
+                                                    descFirst
+                                                    plain
+                                                    sort={fuelSort.sort}
+                                                    onSort={fuelSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     Jarak (km)
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="liter"
+                                                    descFirst
+                                                    plain
+                                                    sort={fuelSort.sort}
+                                                    onSort={fuelSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     BBM (L)
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="jumlah_isi"
+                                                    descFirst
+                                                    plain
+                                                    sort={fuelSort.sort}
+                                                    onSort={fuelSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     Pengisian
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="km_per_liter"
+                                                    descFirst
+                                                    plain
+                                                    sort={fuelSort.sort}
+                                                    onSort={fuelSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     km/liter
-                                                </th>
+                                                </SortableHead>
                                                 <th className="px-4 py-3">
                                                     Catatan
                                                 </th>
@@ -436,7 +461,7 @@ export default function UnitAnalytics({
                                                     </td>
                                                 </tr>
                                             )}
-                                            {fuel.units.map((u) => (
+                                            {fuelSort.rows.map((u) => (
                                                 <tr
                                                     key={u.unit_id}
                                                     className="align-top"
@@ -542,7 +567,7 @@ export default function UnitAnalytics({
                             <CardContent className="p-0">
                                 {/* Mobile: kartu per unit */}
                                 <div className="divide-y border-t md:hidden">
-                                    {service.map((s) => (
+                                    {serviceSort.rows.map((s) => (
                                         <div
                                             key={s.unit_id}
                                             className="space-y-2 p-4"
@@ -623,28 +648,66 @@ export default function UnitAnalytics({
                                     <table className="w-full text-sm">
                                         <thead className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
                                             <tr>
-                                                <th className="px-4 py-3">
+                                                <SortableHead
+                                                    column="unit"
+                                                    plain
+                                                    sort={serviceSort.sort}
+                                                    onSort={serviceSort.onSort}
+                                                    className="px-4 py-3"
+                                                >
                                                     Unit
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="km_saat_ini"
+                                                    descFirst
+                                                    plain
+                                                    sort={serviceSort.sort}
+                                                    onSort={serviceSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     KM saat ini
-                                                </th>
-                                                <th className="px-4 py-3">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="servis_terakhir"
+                                                    descFirst
+                                                    plain
+                                                    sort={serviceSort.sort}
+                                                    onSort={serviceSort.onSort}
+                                                    className="px-4 py-3"
+                                                >
                                                     Servis terakhir
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="km_servis_berikutnya"
+                                                    plain
+                                                    sort={serviceSort.sort}
+                                                    onSort={serviceSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     Jadwal berikutnya
-                                                </th>
-                                                <th className="px-4 py-3 text-right">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="sisa_km"
+                                                    plain
+                                                    sort={serviceSort.sort}
+                                                    onSort={serviceSort.onSort}
+                                                    className="px-4 py-3 text-right"
+                                                >
                                                     Sisa
-                                                </th>
-                                                <th className="px-4 py-3">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="status"
+                                                    plain
+                                                    sort={serviceSort.sort}
+                                                    onSort={serviceSort.onSort}
+                                                    className="px-4 py-3"
+                                                >
                                                     Status
-                                                </th>
+                                                </SortableHead>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
-                                            {service.map((s) => (
+                                            {serviceSort.rows.map((s) => (
                                                 <tr key={s.unit_id}>
                                                     <td className="px-4 py-3">
                                                         <p className="font-medium">
@@ -716,32 +779,6 @@ export default function UnitAnalytics({
                 </Tabs>
             </div>
         </>
-    );
-}
-
-function Stat({
-    icon: Icon,
-    label,
-    value,
-    tone,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value: string | number;
-    tone: string;
-}) {
-    return (
-        <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-                <Icon className={cn('h-8 w-8 shrink-0', tone)} />
-                <div className="min-w-0">
-                    <p className="text-xl font-bold tabular-nums">{value}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                        {label}
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
     );
 }
 

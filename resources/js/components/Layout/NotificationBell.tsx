@@ -5,6 +5,7 @@ import {
     Bell,
     CheckCircle,
     ClipboardCheck,
+    ClipboardX,
     Timer,
     Wrench,
     XCircle,
@@ -26,6 +27,7 @@ interface RecentNotification {
         driver_name?: string;
         submitter?: string;
         status?: string;
+        jumlah?: number;
     };
     read_at: string | null;
     created_at: string;
@@ -55,6 +57,10 @@ function notifIcon(type?: string, status?: string) {
 
     if (type === 'finding_assigned') {
         return <Wrench className="h-4 w-4 text-blue-500" />;
+    }
+
+    if (type === 'p2h_missing') {
+        return <ClipboardX className="h-4 w-4 text-amber-500" />;
     }
 
     if (type === 'finding_overdue') {
@@ -87,6 +93,10 @@ function notifLabel(data: RecentNotification['data']): string {
 
     if (data.type === 'finding_overdue') {
         return `Temuan lewat target — ${unit}`;
+    }
+
+    if (data.type === 'p2h_missing') {
+        return `Belum P2H (${data.jumlah ?? 0} unit) — ${data.no_unit ?? ''}`;
     }
 
     return `Critical Alert — ${unit}`;

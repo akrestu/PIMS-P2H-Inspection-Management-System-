@@ -161,6 +161,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/units/batch', [UnitController::class, 'destroyBatch'])->name('units.batch-destroy');
         Route::get('/units/trashed', [UnitController::class, 'trashed'])->name('units.trashed');
         Route::post('/units/{id}/restore', [UnitController::class, 'restore'])->name('units.restore');
+        Route::patch('/units/{unit}/status', [UnitController::class, 'updateStatus'])->name('units.status');
         Route::resource('units', UnitController::class)->except(['show']);
 
         Route::delete('/sites/batch', [SiteController::class, 'destroyBatch'])->name('sites.batch-destroy');

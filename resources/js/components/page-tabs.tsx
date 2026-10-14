@@ -7,6 +7,8 @@ type PageTab = {
     href: string;
     // Hanya admin/manager (sesuai middleware route)
     managerOnly?: boolean;
+    // Tampil hanya bila fitur opsional diaktifkan di Pengaturan Aplikasi
+    feature?: 'unit_analytics';
 };
 
 // Halaman-halaman terpisah yang ditampilkan sebagai satu menu bertab
@@ -17,7 +19,12 @@ export const PAGE_TAB_GROUPS = {
     ],
     unitPerformance: [
         { title: 'Monitoring PA', href: '/monitoring' },
-        { title: 'Analitik Unit', href: '/unit-analytics', managerOnly: true },
+        {
+            title: 'Analitik Unit',
+            href: '/unit-analytics',
+            managerOnly: true,
+            feature: 'unit_analytics',
+        },
         { title: 'Downtime Log', href: '/downtime', managerOnly: true },
     ],
     p2hReport: [
@@ -33,14 +40,18 @@ export function pageTabHrefs(group: PageTabGroup): string[] {
 }
 
 export function PageTabs({ group }: { group: PageTabGroup }) {
-    const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
-        .props;
+    const { auth, options } = usePage<{
+        auth: { user: { roles: string[] } | null };
+        options: { unit_analytics?: boolean };
+    }>().props;
     const { isCurrentUrl } = useCurrentUrl();
     const roles = auth?.user?.roles ?? [];
     const isManager = roles.includes('admin') || roles.includes('manager');
 
     const tabs = (PAGE_TAB_GROUPS[group] as PageTab[]).filter(
-        (tab) => !tab.managerOnly || isManager,
+        (tab) =>
+            (!tab.managerOnly || isManager) &&
+            (!tab.feature || !!options?.[tab.feature]),
     );
 
     if (tabs.length < 2) {

@@ -32,7 +32,6 @@ class MonitoringPaExport implements FromArray, WithColumnWidths, WithEvents, Wit
                 $unit['jenis_unit'],
                 $unit['no_lambung'] ?? '-',
                 $unit['actual_pa'] !== null ? $unit['actual_pa'].'%' : '-',
-                $unit['compliance_pa'] !== null ? $unit['compliance_pa'].'%' : '-',
                 $this->statusLabel($unit['current_status']),
                 $unit['working_hours'],
                 $unit['downtime_hours'],
@@ -45,13 +44,14 @@ class MonitoringPaExport implements FromArray, WithColumnWidths, WithEvents, Wit
 
         // Blank row + summary
         $rows[] = [];
-        $rows[] = ['RINGKASAN FLEET', '', '', '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['RINGKASAN FLEET', '', '', '', '', '', '', '', '', '', ''];
         $rows[] = ['PA Aktual Fleet', $this->summary['fleet_actual_pa'] !== null ? $this->summary['fleet_actual_pa'].'%' : '-'];
-        $rows[] = ['Kelayakan P2H Fleet', $this->summary['fleet_compliance_pa'] !== null ? $this->summary['fleet_compliance_pa'].'%' : '-'];
+        foreach ($this->summary['pa_by_jenis'] as $jenis => $group) {
+            $rows[] = ["PA {$jenis}", $group['pa'] !== null ? $group['pa'].'%' : '-'];
+        }
         $rows[] = ['Total Unit', $this->summary['total_units']];
-        $rows[] = ['Unit Operation', $this->summary['operation_count']];
+        $rows[] = ['Unit Ready', $this->summary['operation_count']];
         $rows[] = ['Unit Breakdown', $this->summary['bd_count']];
-        $rows[] = ['Unit No Data', $this->summary['no_data_count']];
 
         return $rows;
     }
@@ -63,9 +63,8 @@ class MonitoringPaExport implements FromArray, WithColumnWidths, WithEvents, Wit
             'Jenis Unit',
             'No. Lambung',
             'PA Aktual',
-            'Kelayakan P2H',
             'Status Saat Ini',
-            'Working Hours (j)',
+            'Jam Tersedia (j)',
             'Downtime Hours (j)',
             'Hari Operation',
             'Hari BD',
@@ -143,7 +142,7 @@ class MonitoringPaExport implements FromArray, WithColumnWidths, WithEvents, Wit
     private function statusLabel(string $status): string
     {
         return match ($status) {
-            'operation' => 'Operation',
+            'operation' => 'Ready',
             'bd' => 'Breakdown',
             default => 'No Data',
         };

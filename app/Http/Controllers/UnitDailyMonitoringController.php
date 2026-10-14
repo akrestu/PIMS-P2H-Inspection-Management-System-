@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\DailyUnitMonitoringExport;
+use App\Http\Controllers\Concerns\SortsTable;
 use App\Models\Site;
 use App\Support\DailyUnitMonitoring;
 use Illuminate\Http\Request;
@@ -17,17 +18,20 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 /** Monitoring harian unit LV & Bus: P2H, temuan & tindak lanjut, KM, BBM (admin & manager). */
 class UnitDailyMonitoringController extends Controller
 {
+    use SortsTable;
+
     private const PER_PAGE = 50;
 
     public function index(Request $request): Response
     {
         [$start, $end, $filters] = $this->filters($request);
         $data = DailyUnitMonitoring::build($start, $end, $filters);
+        [$sorted, $sort] = $this->sortRows($request, $data['rows']);
 
         $page = LengthAwarePaginator::resolveCurrentPage();
         $rows = new LengthAwarePaginator(
-            array_slice($data['rows'], ($page - 1) * self::PER_PAGE, self::PER_PAGE),
-            count($data['rows']),
+            array_slice($sorted, ($page - 1) * self::PER_PAGE, self::PER_PAGE),
+            count($sorted),
             self::PER_PAGE,
             $page,
             ['path' => $request->url(), 'query' => $request->query()],
@@ -35,12 +39,13 @@ class UnitDailyMonitoringController extends Controller
 
         return Inertia::render('unit-monitoring/index', [
             'rows' => $rows,
-            'summary' => $data['summary'],
             'filters' => [
                 'start' => $start->toDateString(),
                 'end' => $end->toDateString(),
                 ...$filters,
+                ...$request->only(['sort', 'dir']),
             ],
+            'sort' => $sort,
             'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
             'maxDays' => DailyUnitMonitoring::MAX_DAYS,
         ]);
@@ -50,11 +55,43 @@ class UnitDailyMonitoringController extends Controller
     {
         [$start, $end, $filters] = $this->filters($request);
         $data = DailyUnitMonitoring::build($start, $end, $filters);
+        [$rows] = $this->sortRows($request, $data['rows']);
 
         return Excel::download(
-            new DailyUnitMonitoringExport($data['rows'], $data['summary'], $start->toDateString(), $end->toDateString()),
+            new DailyUnitMonitoringExport($rows, $data['summary'], $start->toDateString(), $end->toDateString()),
             'monitoring-harian-unit_'.$start->format('Ymd').'_'.$end->format('Ymd').'.xlsx',
         );
+    }
+
+    /**
+     * Urutkan baris hasil build (sudah tanggal terbaru → unit). Sort PHP stabil,
+     * jadi urutan asal tetap menjadi urutan kedua.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array{0: array<int, array<string, mixed>>, 1: array{by: string, dir: string}}
+     */
+    private function sortRows(Request $request, array $rows): array
+    {
+        $keys = [
+            'unit' => fn (array $r) => $r['no_unit'],
+            'tanggal' => fn (array $r) => $r['tanggal'],
+            'p2h' => fn (array $r) => $r['terisi'] ? 1 : 0,
+            'temuan' => fn (array $r) => count($r['temuan']),
+            'km' => fn (array $r) => $r['km'] ?? -1,
+            'bbm' => fn (array $r) => $r['bbm_liter'] ?? -1,
+        ];
+        $sort = $this->sortState($request, array_keys($keys), 'unit');
+        $get = $keys[$sort['by']];
+
+        usort($rows, function (array $a, array $b) use ($get, $sort) {
+            $va = $get($a);
+            $vb = $get($b);
+            $cmp = is_string($va) ? strnatcasecmp($va, $vb) : $va <=> $vb;
+
+            return $sort['dir'] === 'desc' ? -$cmp : $cmp;
+        });
+
+        return [$rows, $sort];
     }
 
     /** @return array{0: Carbon, 1: Carbon, 2: array{site_id: ?int, jenis_unit: ?string, search: ?string, status: ?string}} */

@@ -1,16 +1,12 @@
 import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import {
     AlarmClock,
-    AlertTriangle,
-    CheckCircle2,
     ClipboardCopy,
-    ClockAlert,
     MessageSquareText,
     Repeat,
     RotateCcw,
     Send,
     Sparkles,
-    XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -163,8 +159,6 @@ export default function DailySummary({
         }
     };
 
-    const { stats } = digest;
-
     return (
         <>
             <Head title="Daily Report P2H" />
@@ -278,40 +272,6 @@ export default function DailySummary({
                             </Select>
                         </div>
                     </div>
-                </div>
-
-                {/* ── Stats ── */}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <StatCard
-                        icon={CheckCircle2}
-                        label="Sudah P2H"
-                        value={stats.sudah_p2h}
-                        tone="text-emerald-600"
-                    />
-                    <StatCard
-                        icon={AlertTriangle}
-                        label="Temuan"
-                        value={stats.temuan}
-                        hint={`${stats.unit_temuan + stats.unit_tidak_layak} unit`}
-                        tone="text-amber-600"
-                    />
-                    <StatCard
-                        icon={XCircle}
-                        label="Unit BD"
-                        value={stats.unit_tidak_layak}
-                        tone="text-red-600"
-                    />
-                    <StatCard
-                        icon={ClockAlert}
-                        label="Temuan belum selesai"
-                        value={stats.temuan_belum_selesai}
-                        hint={
-                            stats.temuan_overdue
-                                ? `${stats.temuan_overdue} lewat target`
-                                : undefined
-                        }
-                        tone="text-red-600"
-                    />
                 </div>
 
                 <div className="grid gap-5 lg:grid-cols-5">
@@ -433,35 +393,6 @@ export default function DailySummary({
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
-
-function StatCard({
-    icon: Icon,
-    label,
-    value,
-    hint,
-    tone,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value: number;
-    hint?: string;
-    tone: string;
-}) {
-    return (
-        <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-                <Icon className={cn('h-8 w-8 shrink-0', tone)} />
-                <div className="min-w-0">
-                    <p className="text-2xl font-bold tabular-nums">{value}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                        {label}
-                        {hint ? ` · ${hint}` : ''}
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
 
 function FindingRow({
     unit,

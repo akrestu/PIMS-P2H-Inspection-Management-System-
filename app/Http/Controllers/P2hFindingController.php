@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Ai\Agents\P2hRepairSuggestionAgent;
 use App\Enums\FindingStatus;
+use App\Http\Controllers\Concerns\SortsTable;
 use App\Http\Requests\UpdateP2hFindingRequest;
 use App\Models\P2hFinding;
 use App\Models\Site;
+use App\Models\Unit;
 use App\Models\User;
 use App\Notifications\FindingAssigned;
 use App\Support\AiText;
@@ -20,6 +22,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class P2hFindingController extends Controller
 {
+    use SortsTable;
+
     public function index(Request $request): Response
     {
         $filters = $request->validate([
@@ -36,7 +40,7 @@ class P2hFindingController extends Controller
         // Pastikan tidak ada item Tidak Layak yang terlewat menjadi temuan
         P2hFinding::syncRecent();
 
-        $findings = P2hFinding::query()
+        $query = P2hFinding::query()
             ->where($scope)
             ->with(['unit:id,no_unit,jenis_unit,no_lambung', 'pic:id,name', 'closer:id,name', 'entry:id,kondisi_akhir,justifikasi_kondisi'])
             ->when($status === 'unresolved', fn ($q) => $q->where('status', '!=', FindingStatus::Closed->value))
@@ -46,11 +50,25 @@ class P2hFindingController extends Controller
             ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(function ($q) use ($search) {
                 $q->where('item_nama', 'like', "%{$search}%")
                     ->orWhereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$search}%"));
-            }))
-            ->orderByDesc('tanggal_temuan')
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString();
+            }));
+
+        $sort = $this->applySort($query, $request, [
+            'tanggal_temuan' => 'tanggal_temuan',
+            'unit' => fn ($q, $dir) => $q->orderBy(
+                Unit::withTrashed()->select('no_unit')->whereColumn('units.id', 'p2h_findings.unit_id'),
+                $dir,
+            ),
+            'item_nama' => 'item_nama',
+            'tindakan_perbaikan' => 'tindakan_perbaikan',
+            'pic' => fn ($q, $dir) => $q->orderBy(
+                User::select('name')->whereColumn('users.id', 'p2h_findings.pic_user_id'),
+                $dir,
+            ),
+            'target_selesai' => 'target_selesai',
+            'status' => 'status',
+        ], 'unit');
+
+        $findings = $query->paginate(20)->withQueryString();
 
         $recurrence = P2hFinding::recurrenceCounts(today());
 
@@ -88,7 +106,13 @@ class P2hFindingController extends Controller
                 ? User::whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'manager', 'driver']))->orderBy('name')->get(['id', 'name'])
                 : [],
             'sites' => $canManage ? Site::where('status', 'active')->orderBy('name')->get(['id', 'name']) : [],
-            'filters' => ['status' => $status, 'site_id' => $filters['site_id'] ?? null, 'search' => $filters['search'] ?? null],
+            'filters' => [
+                'status' => $status,
+                'site_id' => $filters['site_id'] ?? null,
+                'search' => $filters['search'] ?? null,
+                ...$request->only(['sort', 'dir']),
+            ],
+            'sort' => $sort,
             'canManage' => $canManage,
             'aiEnabled' => AiText::enabled(),
             'recurringWindowDays' => config('p2h.findings.recurring_window_days'),

@@ -3,9 +3,13 @@
 use App\Models\P2hChecklistAnswer;
 use App\Models\P2hFinding;
 use App\Models\P2hUserEntry;
+use App\Models\Unit;
+use App\Models\UnitDowntimeLog;
 use App\Models\User;
 use App\Notifications\FindingOverdue;
 use App\Notifications\LvP2hApprovalEscalation;
+use App\Notifications\MissingP2hReminder;
+use App\Support\UnitStatus;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -121,5 +125,40 @@ Artisan::command('p2h:escalate-pending-approvals', function () {
     $this->info("{$sent} approval P2H LV dieskalasi ke admin.");
 })->purpose('Eskalasi approval P2H LV yang belum direspons PIC sampai akhir shift ke admin');
 
+Artisan::command('p2h:remind-missing', function () {
+    $missing = Unit::active()
+        ->whereDoesntHave('p2hSessions', fn ($q) => $q->whereDate('tanggal', today())
+            ->whereHas('userEntries', fn ($e) => $e->notRejected()))
+        ->orderBy('no_unit')
+        ->pluck('no_unit')
+        ->all();
+
+    if ($missing === []) {
+        $this->info('Semua unit aktif sudah P2H hari ini.');
+
+        return;
+    }
+
+    $recipients = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'manager']))->get();
+    Notification::send($recipients, new MissingP2hReminder(today()->toDateString(), $missing));
+    $recipients->each(fn (User $user) => cache()->forget("recent_notifications_user_{$user->id}"));
+
+    $this->info(count($missing).' unit belum P2H, pengingat dikirim ke '.$recipients->count().' admin/manager.');
+})->purpose('Kirim pengingat daftar unit aktif yang belum melakukan P2H hari ini');
+
+Artisan::command('p2h:sync-downtime {--days=30 : Proses P2H N hari terakhir}', function () {
+    // Bangun ulang downtime BD otomatis dari P2H lama (untuk data sebelum fitur ini ada)
+    $created = UnitDowntimeLog::count();
+    P2hUserEntry::query()
+        ->whereDate('submitted_at', '>=', today()->subDays((int) $this->option('days')))
+        ->whereNotNull('kondisi_akhir')
+        ->with('session:id,unit_id')
+        ->orderBy('submitted_at')
+        ->each(fn (P2hUserEntry $entry) => UnitStatus::fromEntry($entry));
+
+    $this->info((UnitDowntimeLog::count() - $created).' downtime BD baru dibuat dari P2H.');
+})->purpose('Buat/tutup downtime BD otomatis dari riwayat P2H');
+
 Schedule::command('p2h:remind-overdue-findings')->dailyAt(config('p2h.findings.overdue_reminder_time'));
+Schedule::command('p2h:remind-missing')->dailyAt(config('p2h.missing_reminder_time'));
 Schedule::command('p2h:escalate-pending-approvals')->everyFifteenMinutes()->withoutOverlapping();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\P2hChecklistAnswer;
 use App\Models\P2hSession;
 use App\Models\Unit;
+use App\Support\FleetAvailability;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -81,27 +82,10 @@ class DashboardController extends Controller
                 $weekEnd = now()->endOfDay();
             }
 
-            $totalUnits = Unit::active()->count();
-            if ($totalUnits === 0) {
-                return ['label' => $label, 'pa' => 0];
-            }
+            // Rumus PA yang sama dengan Monitoring PA
+            $pa = FleetAvailability::build($weekStart, $weekEnd)['summary']['fleet_actual_pa'];
 
-            // Hitung hari di minggu ini dengan setidaknya 1 sesi P2H yang Layak Pakai
-            $daysInWeek = $weekStart->diffInDays($weekEnd) + 1;
-            $totalSlots = $totalUnits * $daysInWeek;
-
-            // Satu sesi mewakili satu unit-hari (unit_id + tanggal unik).
-            // Hanya unit aktif agar pembilang sejalan dengan penyebut (total unit aktif)
-            $operationSessions = P2hSession::whereBetween('tanggal', [$weekStart->toDateString(), $weekEnd->toDateString()])
-                ->whereHas('unit', fn ($q) => $q->active())
-                ->whereHas('userEntries', fn ($q) => $q->operational()->where('kondisi_akhir', 'Layak Pakai'))
-                ->whereDoesntHave('userEntries', fn ($q) => $q->operational()->where('kondisi_akhir', 'BD'))
-                ->count();
-
-            // PA = jumlah unit yang masuk operasi / total slot unit × 100
-            $pa = $totalSlots > 0 ? round(($operationSessions / $totalSlots) * 100, 1) : 0;
-
-            return ['label' => $label, 'pa' => $pa];
+            return ['label' => $label, 'pa' => $pa ?? 0];
         });
 
         return Inertia::render('dashboard/index', [

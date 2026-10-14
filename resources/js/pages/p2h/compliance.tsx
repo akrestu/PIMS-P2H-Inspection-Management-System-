@@ -6,12 +6,12 @@ import {
     FileSpreadsheet,
     FileText,
     Filter,
-    MessageCircle,
     RefreshCw,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
+import { SortableHead, useClientSort } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,9 +21,6 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -50,12 +47,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
 import { cn } from '@/lib/utils';
-import {
-    formatP2hReport,
-    formatP2hHistoryReport,
-} from '@/lib/whatsapp-formatters';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -183,23 +175,17 @@ function complianceColor(pct: number): string {
     return 'text-red-600 dark:text-red-400';
 }
 
-// ── Summary Cards ──────────────────────────────────────────────────────────────
-
 // ── Filter Bar ─────────────────────────────────────────────────────────────────
 
 function FilterBar({
     filters,
     highlightMissing,
     onToggleHighlight,
-    onShareWhatsApp,
-    onShareWhatsAppHistory,
     canExport,
 }: {
     filters: Filters;
     highlightMissing: boolean;
     onToggleHighlight: () => void;
-    onShareWhatsApp: () => void;
-    onShareWhatsAppHistory: () => void;
     canExport: boolean;
 }) {
     const [form, setForm] = useState<Filters>(filters);
@@ -294,81 +280,47 @@ function FilterBar({
                         <RefreshCw className="h-3.5 w-3.5" />
                         Reset
                     </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 gap-1.5 text-xs"
-                            >
-                                <Download className="h-3.5 w-3.5" />
-                                Export
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel className="text-xs text-muted-foreground">
-                                Unduh Laporan
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {/* Export file hanya untuk admin/manager (route dibatasi) */}
-                            {canExport && (
-                                <>
-                                    <DropdownMenuItem asChild>
-                                        <a
-                                            href={`/export/monitoring-p2h/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex cursor-pointer items-center gap-2"
-                                        >
-                                            <FileText className="h-4 w-4 text-red-500" />
-                                            Export PDF
-                                        </a>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <a
-                                            href={`/export/monitoring-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                            className="flex cursor-pointer items-center gap-2"
-                                        >
-                                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                            Export Excel
-                                        </a>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                </>
-                            )}
-                            <DropdownMenuSub>
-                                <DropdownMenuSubTrigger className="flex cursor-pointer items-center gap-2">
-                                    <MessageCircle className="h-4 w-4 text-green-500" />
-                                    Bagikan via WhatsApp
-                                </DropdownMenuSubTrigger>
-                                <DropdownMenuSubContent>
-                                    <DropdownMenuItem
-                                        onSelect={onShareWhatsApp}
-                                        className="flex cursor-pointer flex-col items-start"
+                    {/* Export hanya untuk admin/manager (route dibatasi) */}
+                    {canExport && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 gap-1.5 text-xs"
+                                >
+                                    <Download className="h-3.5 w-3.5" />
+                                    Export
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                    Unduh Laporan
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <a
+                                        href={`/export/monitoring-p2h/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex cursor-pointer items-center gap-2"
                                     >
-                                        <span className="font-medium">
-                                            Reminder Harian
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            Siapa belum & sudah P2H hari ini
-                                        </span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onSelect={onShareWhatsAppHistory}
-                                        className="flex cursor-pointer flex-col items-start"
+                                        <FileText className="h-4 w-4 text-red-500" />
+                                        Export PDF
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a
+                                        href={`/export/monitoring-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
+                                        className="flex cursor-pointer items-center gap-2"
                                     >
-                                        <span className="font-medium">
-                                            Laporan Historis
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            Compliance tiap unit sepanjang
-                                            periode
-                                        </span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuSubContent>
-                            </DropdownMenuSub>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                        <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                        Export Excel
+                                    </a>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
             </div>
 
@@ -611,16 +563,23 @@ export default function P2hCompliancePage({
     filters,
 }: Props) {
     const [highlightMissing, setHighlightMissing] = useState(false);
-    const { share } = useWhatsAppShare();
+    const {
+        rows: sortedMatrix,
+        sort: matrixSort,
+        onSort: onMatrixSort,
+    } = useClientSort(
+        matrix,
+        {
+            unit: (r) => r.no_unit,
+            compliance: (r) => r.compliance_pct,
+        },
+        { by: 'unit', dir: 'asc' },
+    );
     const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
         .props;
     const canExport = (auth?.user?.roles ?? []).some((r) =>
         ['admin', 'manager'].includes(r),
     );
-    const handleShareWhatsApp = () =>
-        share(formatP2hReport(matrix, dates, summary, filters));
-    const handleShareWhatsAppHistory = () =>
-        share(formatP2hHistoryReport(matrix, summary, filters));
 
     return (
         <>
@@ -646,8 +605,6 @@ export default function P2hCompliancePage({
                     filters={filters}
                     highlightMissing={highlightMissing}
                     onToggleHighlight={() => setHighlightMissing((v) => !v)}
-                    onShareWhatsApp={handleShareWhatsApp}
-                    onShareWhatsAppHistory={handleShareWhatsAppHistory}
                     canExport={canExport}
                 />
 
@@ -690,9 +647,14 @@ export default function P2hCompliancePage({
 
                                     <TableHeader>
                                         <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                            <TableHead className="sticky left-0 z-20 border-r bg-muted/40">
+                                            <SortableHead
+                                                column="unit"
+                                                sort={matrixSort}
+                                                onSort={onMatrixSort}
+                                                className="sticky left-0 z-20 border-r bg-muted/40"
+                                            >
                                                 Unit
-                                            </TableHead>
+                                            </SortableHead>
                                             {dates.map((d) => (
                                                 <TableHead
                                                     key={d}
@@ -701,14 +663,20 @@ export default function P2hCompliancePage({
                                                     {fmtShort(d)}
                                                 </TableHead>
                                             ))}
-                                            <TableHead className="sticky right-0 z-20 border-l bg-muted/40 text-center">
+                                            <SortableHead
+                                                column="compliance"
+                                                descFirst
+                                                sort={matrixSort}
+                                                onSort={onMatrixSort}
+                                                className="sticky right-0 z-20 border-l bg-muted/40 text-center"
+                                            >
                                                 Compliance
-                                            </TableHead>
+                                            </SortableHead>
                                         </TableRow>
                                     </TableHeader>
 
                                     <TableBody>
-                                        {matrix.map((row) => (
+                                        {sortedMatrix.map((row) => (
                                             <TableRow
                                                 key={row.id}
                                                 className="hover:bg-muted/10"

@@ -16,6 +16,7 @@ class AppSettingController extends Controller
         return Inertia::render('settings/app', [
             'settings' => [
                 'shifts' => AppSetting::shifts(),
+                'unit_analytics' => AppSetting::unitAnalyticsEnabled(),
             ],
         ]);
     }
@@ -25,9 +26,11 @@ class AppSettingController extends Controller
         $validated = $request->validate([
             'shifts' => ['required', 'array', 'min:1', 'max:2'],
             'shifts.*' => ['required', 'string', 'distinct', Rule::in(AppSetting::SUPPORTED_SHIFTS)],
+            'unit_analytics' => ['boolean'],
         ]);
 
         AppSetting::set('shifts', $validated['shifts']);
+        AppSetting::set('unit_analytics_enabled', (bool) ($validated['unit_analytics'] ?? false));
 
         Inertia::flash('toast', [
             'type' => 'success',

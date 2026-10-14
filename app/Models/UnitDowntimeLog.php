@@ -11,6 +11,7 @@ class UnitDowntimeLog extends Model
 {
     protected $fillable = [
         'unit_id', 'tipe', 'jam_mulai', 'jam_selesai', 'keterangan', 'created_by',
+        'opened_by_entry_id', 'closed_by_entry_id',
     ];
 
     protected $casts = [
@@ -42,17 +43,17 @@ class UnitDowntimeLog extends Model
         return round($minutes / 60, 2);
     }
 
-    /** Durasi yang hanya dihitung pada batas periode laporan. */
+    /**
+     * Durasi yang hanya dihitung pada batas periode laporan.
+     * Downtime yang masih berjalan dihitung sampai saat ini.
+     */
     public function durationHoursWithin(string $from, string $to): float
     {
-        if ($this->jam_selesai === null) {
-            return 0.0;
-        }
-
         $rangeStart = Carbon::parse($from)->startOfDay();
         $rangeEnd = Carbon::parse($to)->endOfDay();
+        $finish = $this->jam_selesai ?? now();
         $start = $this->jam_mulai->greaterThan($rangeStart) ? $this->jam_mulai : $rangeStart;
-        $end = $this->jam_selesai->lessThan($rangeEnd) ? $this->jam_selesai : $rangeEnd;
+        $end = $finish->lessThan($rangeEnd) ? $finish : $rangeEnd;
 
         if ($end->lessThanOrEqualTo($start)) {
             return 0.0;

@@ -9,18 +9,21 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 
 interface Props {
     settings: {
         shifts: string[];
+        unit_analytics: boolean;
     };
 }
 
 export default function AppSettingsPage({ settings }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         shifts: settings.shifts ?? ['Shift I', 'Shift II'],
+        unit_analytics: settings.unit_analytics ?? false,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -53,7 +56,7 @@ export default function AppSettingsPage({ settings }: Props) {
                             Pengaturan Aplikasi
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Konfigurasi shift yang tersedia di Form P2H
+                            Konfigurasi shift Form P2H dan fitur opsional
                         </p>
                     </div>
                 </div>
@@ -111,6 +114,40 @@ export default function AppSettingsPage({ settings }: Props) {
                                 <Plus className="h-4 w-4" />
                                 Tambah Shift
                             </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Fitur opsional */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base">
+                                Fitur Opsional
+                            </CardTitle>
+                            <CardDescription>
+                                Fitur di luar alur utama P2H, monitoring,
+                                temuan, laporan, dan PA
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <label className="flex cursor-pointer items-start gap-3">
+                                <Checkbox
+                                    checked={data.unit_analytics}
+                                    onCheckedChange={(v) =>
+                                        setData('unit_analytics', v === true)
+                                    }
+                                    className="mt-0.5"
+                                />
+                                <span>
+                                    <span className="text-sm font-medium">
+                                        Analitik Unit
+                                    </span>
+                                    <span className="block text-sm text-muted-foreground">
+                                        Efisiensi BBM, pengisian tidak wajar,
+                                        dan jadwal servis berkala. Tampil
+                                        sebagai tab di menu Kinerja Unit.
+                                    </span>
+                                </span>
+                            </label>
                         </CardContent>
                     </Card>
 

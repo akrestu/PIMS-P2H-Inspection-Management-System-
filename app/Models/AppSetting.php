@@ -36,6 +36,12 @@ class AppSetting extends Model
         return "app_setting_{$key}";
     }
 
+    /** Menu Analitik Unit (BBM & servis) — di luar fokus utama P2H, nonaktif secara default */
+    public static function unitAnalyticsEnabled(): bool
+    {
+        return (bool) static::cached('unit_analytics_enabled', false);
+    }
+
     /** @return list<string> */
     public static function shifts(): array
     {

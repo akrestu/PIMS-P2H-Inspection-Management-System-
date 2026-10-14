@@ -1,19 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    AlertTriangle,
     CalendarDays,
     CheckCircle2,
-    ClipboardCheck,
-    ClipboardX,
     FileSpreadsheet,
-    Fuel,
     Search,
-    Wrench,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,14 +72,6 @@ interface Props {
         from: number | null;
         to: number | null;
     };
-    summary: {
-        total: number;
-        terisi: number;
-        kosong: number;
-        temuan: number;
-        bd: number;
-        bbm_liter: number;
-    };
     filters: Filters;
     sites: { id: number; name: string }[];
     maxDays: number;
@@ -120,7 +108,6 @@ const fmtDate = (d: string) =>
 
 export default function UnitMonitoring({
     rows,
-    summary,
     filters,
     sites,
     maxDays,
@@ -295,40 +282,6 @@ export default function UnitMonitoring({
                     </p>
                 </div>
 
-                {/* ── Summary ── */}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                    <SummaryCard
-                        icon={ClipboardCheck}
-                        label="Terisi P2H"
-                        value={`${num(summary.terisi)} / ${num(summary.total)}`}
-                        className="text-emerald-600"
-                    />
-                    <SummaryCard
-                        icon={ClipboardX}
-                        label="Tidak mengisi"
-                        value={num(summary.kosong)}
-                        className="text-red-600"
-                    />
-                    <SummaryCard
-                        icon={Wrench}
-                        label="Temuan"
-                        value={num(summary.temuan)}
-                        className="text-amber-600"
-                    />
-                    <SummaryCard
-                        icon={AlertTriangle}
-                        label="Hari kondisi BD"
-                        value={num(summary.bd)}
-                        className="text-orange-600"
-                    />
-                    <SummaryCard
-                        icon={Fuel}
-                        label="Total BBM"
-                        value={`${num(summary.bbm_liter, 2)} L`}
-                        className="text-sky-600"
-                    />
-                </div>
-
                 {/* ── Status filter ── */}
                 <div className="flex flex-wrap gap-1.5">
                     {STATUS_FILTERS.map((s) => (
@@ -369,25 +322,55 @@ export default function UnitMonitoring({
                     <table className="w-full min-w-[1100px] text-sm">
                         <thead className="bg-muted/60 text-xs text-muted-foreground">
                             <tr className="text-left">
-                                <th className="px-3 py-2.5 font-medium">
+                                <SortableHead
+                                    column="tanggal"
+                                    descFirst
+                                    plain
+                                    className="px-3 py-2.5 font-medium"
+                                >
                                     Tanggal
-                                </th>
-                                <th className="px-3 py-2.5 font-medium">
+                                </SortableHead>
+                                <SortableHead
+                                    column="unit"
+                                    plain
+                                    className="px-3 py-2.5 font-medium"
+                                >
                                     Unit
-                                </th>
-                                <th className="px-3 py-2.5 font-medium">P2H</th>
-                                <th className="px-3 py-2.5 font-medium">
+                                </SortableHead>
+                                <SortableHead
+                                    column="p2h"
+                                    plain
+                                    className="px-3 py-2.5 font-medium"
+                                >
+                                    P2H
+                                </SortableHead>
+                                <SortableHead
+                                    column="temuan"
+                                    descFirst
+                                    plain
+                                    className="px-3 py-2.5 font-medium"
+                                >
                                     Temuan
-                                </th>
+                                </SortableHead>
                                 <th className="px-3 py-2.5 font-medium">
                                     Action / Tindak Lanjut
                                 </th>
-                                <th className="px-3 py-2.5 text-right font-medium">
+                                <SortableHead
+                                    column="km"
+                                    descFirst
+                                    plain
+                                    className="px-3 py-2.5 text-right font-medium"
+                                >
                                     KM
-                                </th>
-                                <th className="px-3 py-2.5 text-right font-medium">
+                                </SortableHead>
+                                <SortableHead
+                                    column="bbm"
+                                    descFirst
+                                    plain
+                                    className="px-3 py-2.5 text-right font-medium"
+                                >
                                     BBM (L)
-                                </th>
+                                </SortableHead>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -432,30 +415,6 @@ export default function UnitMonitoring({
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
-
-function SummaryCard({
-    icon: Icon,
-    label,
-    value,
-    className,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value: string;
-    className?: string;
-}) {
-    return (
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
-            <Icon className={cn('h-5 w-5 shrink-0', className)} />
-            <div className="min-w-0">
-                <p className="text-lg leading-tight font-bold tabular-nums">
-                    {value}
-                </p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-            </div>
-        </div>
-    );
-}
 
 /** PIC paling banyak di satu unit-hari: ditulis sekali, bukan diulang di setiap temuan. */
 function mainPicOf(row: Row): { mainPic: string | null; allSamePic: boolean } {

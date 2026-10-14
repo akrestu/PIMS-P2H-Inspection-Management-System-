@@ -17,6 +17,7 @@ import {
 } from '@/actions/App/Http/Controllers/P2hFindingController';
 import InputError from '@/components/input-error';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -632,15 +633,56 @@ export default function P2hFindings({
                             <table className="w-full text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                                     <tr>
-                                        <th className="px-4 py-3">Tanggal</th>
-                                        <th className="px-4 py-3">Unit</th>
-                                        <th className="px-4 py-3">Temuan</th>
-                                        <th className="px-4 py-3">
+                                        <SortableHead
+                                            column="tanggal_temuan"
+                                            descFirst
+                                            plain
+                                            className="px-4 py-3"
+                                        >
+                                            Tanggal
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="unit"
+                                            plain
+                                            className="px-4 py-3"
+                                        >
+                                            Unit
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="item_nama"
+                                            plain
+                                            className="px-4 py-3"
+                                        >
+                                            Temuan
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="tindakan_perbaikan"
+                                            plain
+                                            className="px-4 py-3"
+                                        >
                                             Tindakan perbaikan
-                                        </th>
-                                        <th className="px-4 py-3">PIC</th>
-                                        <th className="px-4 py-3">Target</th>
-                                        <th className="px-4 py-3">Status</th>
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="pic"
+                                            plain
+                                            className="px-4 py-3"
+                                        >
+                                            PIC
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="target_selesai"
+                                            plain
+                                            className="px-4 py-3"
+                                        >
+                                            Target
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="status"
+                                            plain
+                                            className="px-4 py-3"
+                                        >
+                                            Status
+                                        </SortableHead>
                                         <th className="px-4 py-3" />
                                     </tr>
                                 </thead>

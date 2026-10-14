@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\UnitStatus;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,22 @@ class P2hUserEntry extends Model
         'approved_at' => 'datetime',
         'escalated_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // P2H sah menentukan status BD unit (buka/tutup downtime otomatis)
+        static::saved(function (P2hUserEntry $entry) {
+            if (! $entry->wasRecentlyCreated && ! $entry->wasChanged(['approval_status', 'kondisi_akhir'])) {
+                return;
+            }
+
+            $entry->approval_status === 'rejected'
+                ? UnitStatus::revertEntry($entry)
+                : UnitStatus::fromEntry($entry);
+        });
+
+        static::deleted(fn (P2hUserEntry $entry) => UnitStatus::revertEntry($entry));
+    }
 
     /**
      * Waktu berakhirnya shift entry ini: jam akhir shift pertama setelah submit.

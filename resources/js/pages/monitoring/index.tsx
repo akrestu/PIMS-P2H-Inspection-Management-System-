@@ -12,10 +12,7 @@ import {
     FileSpreadsheet,
     FileText,
     Filter,
-    MessageCircle,
     RefreshCw,
-    TrendingDown,
-    TrendingUp,
     WrenchIcon,
     X,
 } from 'lucide-react';
@@ -49,9 +46,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
 import { cn } from '@/lib/utils';
-import { formatPaReport } from '@/lib/whatsapp-formatters';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,13 +64,14 @@ interface UnitPA {
     jenis_unit: 'Bus' | 'Light Vehicle';
     no_lambung: string | null;
     department: string | null;
-    compliance_pa: number | null;
     actual_pa: number | null;
+    calendar_hours: number;
     working_hours: number;
     downtime_hours: number;
     has_time_data: boolean;
-    current_score: number | null;
     current_status: 'operation' | 'bd' | 'no_data';
+    downtime_tipe: 'BD' | 'PM' | 'Servis Berkala' | null;
+    downtime_since: string | null;
     latest_date: string | null;
     total_sessions: number;
     total_days: number;
@@ -86,15 +82,17 @@ interface UnitPA {
 }
 
 interface Summary {
-    fleet_compliance_pa: number | null;
     fleet_actual_pa: number | null;
+    pa_by_jenis: Record<
+        string,
+        { pa: number | null; total: number; bd: number }
+    >;
     total_units: number;
     operation_count: number;
     bd_count: number;
     no_data_count: number;
     units_with_time_data: number;
     pa_threshold: number;
-    shift_hours: number;
 }
 
 interface Filters {
@@ -155,7 +153,7 @@ function statusConfig(status: UnitPA['current_status']) {
     switch (status) {
         case 'operation':
             return {
-                label: 'Operation',
+                label: 'Ready',
                 icon: CheckCircle2,
                 badgeClass:
                     'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
@@ -268,7 +266,7 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                                 }
                                             >
                                                 {day.status === 'operation'
-                                                    ? 'Operation'
+                                                    ? 'Ready'
                                                     : 'Breakdown'}
                                             </span>
                                             {day.has_override && (
@@ -292,162 +290,9 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
     );
 }
 
-// ── Summary Cards ──────────────────────────────────────────────────────────────
-
-function SummaryCards({ summary }: { summary: Summary }) {
-    return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {/* PA Aktual Fleet */}
-            <Card className="border-2 border-primary/20">
-                <CardContent className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-muted-foreground">
-                            PA Aktual Fleet
-                        </p>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                            <BarChart3 className="h-4 w-4 text-primary" />
-                        </div>
-                    </div>
-                    <p
-                        className={cn(
-                            'text-3xl font-bold tabular-nums',
-                            paColor(summary.fleet_actual_pa),
-                        )}
-                    >
-                        {summary.fleet_actual_pa !== null
-                            ? `${summary.fleet_actual_pa}%`
-                            : '—'}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        W÷(W+S) · {summary.units_with_time_data} unit
-                    </p>
-                    {summary.fleet_actual_pa !== null && (
-                        <div className="mt-2 flex items-center gap-1.5">
-                            {summary.fleet_actual_pa >= 90 ? (
-                                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                            ) : summary.fleet_actual_pa >= 75 ? (
-                                <Activity className="h-3.5 w-3.5 text-yellow-500" />
-                            ) : (
-                                <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-                            )}
-                            <span
-                                className={cn(
-                                    'text-xs font-medium',
-                                    paColor(summary.fleet_actual_pa),
-                                )}
-                            >
-                                {summary.fleet_actual_pa >= 90
-                                    ? 'Sangat Baik'
-                                    : summary.fleet_actual_pa >= 75
-                                      ? 'Cukup'
-                                      : 'Perlu Perhatian'}
-                            </span>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Kelayakan P2H Fleet */}
-            <Card className="border-2">
-                <CardContent className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-muted-foreground">
-                            Kelayakan P2H
-                        </p>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40">
-                            <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                    </div>
-                    <p
-                        className={cn(
-                            'text-3xl font-bold tabular-nums',
-                            paColor(summary.fleet_compliance_pa),
-                        )}
-                    >
-                        {summary.fleet_compliance_pa !== null
-                            ? `${summary.fleet_compliance_pa}%`
-                            : '—'}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        Rata-rata compliance P2H
-                    </p>
-                </CardContent>
-            </Card>
-
-            {/* Operation */}
-            <Card className="border-2 border-emerald-200 dark:border-emerald-900">
-                <CardContent className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-muted-foreground">
-                            Operation
-                        </p>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/40">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold text-emerald-600 tabular-nums dark:text-emerald-400">
-                        {summary.operation_count}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        unit beroperasi normal
-                    </p>
-                </CardContent>
-            </Card>
-
-            {/* BD */}
-            <Card className="border-2 border-red-200 dark:border-red-900">
-                <CardContent className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-muted-foreground">
-                            Breakdown
-                        </p>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 dark:bg-red-950/40">
-                            <WrenchIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold text-red-600 tabular-nums dark:text-red-400">
-                        {summary.bd_count}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        unit terdeteksi masalah
-                    </p>
-                </CardContent>
-            </Card>
-
-            {/* Total */}
-            <Card className="border-2">
-                <CardContent className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-muted-foreground">
-                            Total Unit
-                        </p>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40">
-                            <Car className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold tabular-nums">
-                        {summary.total_units}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        {summary.no_data_count > 0
-                            ? `${summary.no_data_count} belum ada data`
-                            : 'semua unit aktif'}
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
 // ── Unit PA Card ───────────────────────────────────────────────────────────────
 
-function UnitPACard({
-    unit,
-    paThreshold,
-}: {
-    unit: UnitPA;
-    paThreshold: number;
-}) {
+function UnitPACard({ unit }: { unit: UnitPA }) {
     const status = statusConfig(unit.current_status);
     const StatusIcon = status.icon;
     const isLV = unit.jenis_unit === 'Light Vehicle';
@@ -540,49 +385,30 @@ function UnitPACard({
                             <>
                                 <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    W: {unit.working_hours}j · BD:{' '}
+                                    Tersedia {unit.working_hours}j · Downtime{' '}
                                     {unit.downtime_hours}j
                                 </span>
-                                <span>W÷(W+S)×100</span>
+                                <span>(T−S)÷T</span>
                             </>
                         ) : (
-                            <span className="italic">Belum ada data shift</span>
+                            <span className="italic">Belum ada data</span>
                         )}
                     </div>
                 </div>
 
-                {/* ── Kelayakan P2H (secondary) ── */}
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                    <span className="text-xs text-muted-foreground">
-                        Kelayakan P2H
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                        {unit.compliance_pa !== null ? (
-                            <>
-                                <div
-                                    className={cn(
-                                        'h-2 w-2 rounded-full',
-                                        unit.compliance_pa >= paThreshold
-                                            ? 'bg-emerald-500'
-                                            : 'bg-red-500',
-                                    )}
-                                />
-                                <span
-                                    className={cn(
-                                        'text-sm font-bold tabular-nums',
-                                        paColor(unit.compliance_pa),
-                                    )}
-                                >
-                                    {unit.compliance_pa}%
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-sm text-muted-foreground">
-                                —
+                {/* ── Downtime berjalan (sumber status unit) ── */}
+                {unit.downtime_tipe && (
+                    <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 text-xs dark:bg-red-950/30">
+                        <span className="font-medium text-red-700 dark:text-red-400">
+                            {unit.downtime_tipe} berjalan
+                        </span>
+                        {unit.downtime_since && (
+                            <span className="text-muted-foreground">
+                                sejak {unit.downtime_since}
                             </span>
                         )}
                     </div>
-                </div>
+                )}
 
                 {/* ── Timeline Sparkline ── */}
                 <div>
@@ -686,9 +512,6 @@ export default function MonitoringIndex({
     const isStaffDriver = !isAdminOrManager && !!auth?.user?.can_monitor;
 
     const [form, setForm] = useState(filters);
-    const { share } = useWhatsAppShare();
-    const handleShareWhatsApp = () =>
-        share(formatPaReport(unitData, summary, filters));
     const [sortBy, setSortBy] = useState<
         'actual_asc' | 'actual_desc' | 'name' | 'status'
     >('actual_asc');
@@ -786,6 +609,19 @@ export default function MonitoringIndex({
                             {formatDate(filters.date_from)} –{' '}
                             {formatDate(filters.date_to)}
                         </p>
+                        <p className="mt-1 text-sm">
+                            {Object.entries(summary.pa_by_jenis).map(
+                                ([jenis, g], i) => (
+                                    <span key={jenis}>
+                                        {i > 0 && ' · '}
+                                        PA {jenis}{' '}
+                                        <strong className={paColor(g.pa)}>
+                                            {g.pa !== null ? `${g.pa}%` : '—'}
+                                        </strong>
+                                    </span>
+                                ),
+                            )}
+                        </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
@@ -842,14 +678,6 @@ export default function MonitoringIndex({
                                             <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                             Export Excel
                                         </a>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        onSelect={handleShareWhatsApp}
-                                        className="flex cursor-pointer items-center gap-2"
-                                    >
-                                        <MessageCircle className="h-4 w-4 text-green-500" />
-                                        Bagikan via WhatsApp
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -1005,9 +833,6 @@ export default function MonitoringIndex({
                     </Card>
                 )}
 
-                {/* ── Summary Cards ── */}
-                <SummaryCards summary={summary} />
-
                 {/* ── Legend ── */}
                 <Legend threshold={summary.pa_threshold} />
 
@@ -1061,11 +886,7 @@ export default function MonitoringIndex({
                 ) : (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {sorted.map((unit) => (
-                            <UnitPACard
-                                key={unit.id}
-                                unit={unit}
-                                paThreshold={summary.pa_threshold}
-                            />
+                            <UnitPACard key={unit.id} unit={unit} />
                         ))}
                     </div>
                 )}
@@ -1073,23 +894,18 @@ export default function MonitoringIndex({
                 {/* ── Info Footer ── */}
                 <div className="space-y-1 rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
                     <p>
-                        <strong className="text-foreground">PA Aktual</strong> =
-                        W ÷ (W + S) × 100% — di mana{' '}
-                        <strong className="text-foreground">W</strong> (Working
-                        Hours) dihitung otomatis dari jumlah shift P2H ×{' '}
-                        {summary.shift_hours} jam, dan{' '}
-                        <strong className="text-foreground">S</strong> (Service
-                        Hours) dari log downtime yang dicatat di halaman
-                        Downtime Log.
+                        <strong className="text-foreground">PA</strong> = (T −
+                        S) ÷ T × 100% —{' '}
+                        <strong className="text-foreground">T</strong> = jam
+                        kalender unit dalam periode (sampai saat ini),{' '}
+                        <strong className="text-foreground">S</strong> = jam
+                        downtime BD / PM / Servis. Semua unit aktif ikut
+                        dihitung.
                     </p>
                     <p>
-                        <strong className="text-foreground">
-                            Kelayakan P2H
-                        </strong>{' '}
-                        adalah % hari unit beroperasi normal berdasarkan
-                        checklist P2H (score ≥ {summary.pa_threshold}%).
-                        Operator dapat override status unit via keputusan akhir
-                        P2H.
+                        Status unit diatur admin di menu Unit. P2H ikut
+                        memperbarui: P2H BD → unit BD, P2H Layak Pakai → unit
+                        Ready (perubahan terakhir yang berlaku).
                     </p>
                 </div>
             </div>

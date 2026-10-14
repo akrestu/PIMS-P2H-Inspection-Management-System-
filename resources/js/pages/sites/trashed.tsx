@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -222,7 +223,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
         debounceRef.current = setTimeout(() => {
             router.get(
                 '/sites/trashed',
-                { search: val },
+                { search: val, ...sortParams() },
                 { preserveState: true, replace: true },
             );
         }, 350);
@@ -275,8 +276,15 @@ export default function SitesTrashed({ sites, filters }: Props) {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead>Nama Site</TableHead>
-                                        <TableHead>Dihapus Pada</TableHead>
+                                        <SortableHead column="name">
+                                            Nama Site
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="deleted_at"
+                                            descFirst
+                                        >
+                                            Dihapus Pada
+                                        </SortableHead>
                                         <TableHead className="w-40 text-right">
                                             Aksi
                                         </TableHead>

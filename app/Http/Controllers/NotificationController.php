@@ -49,6 +49,13 @@ class NotificationController extends Controller
             return redirect()->route('p2h.approvals');
         }
 
+        // Pengingat unit belum P2H → Monitoring Harian Unit, difilter unit yang kosong hari itu
+        if ($type === 'p2h_missing') {
+            $tanggal = $data['tanggal'] ?? today()->toDateString();
+
+            return redirect()->route('unit-monitoring.index', ['start' => $tanggal, 'end' => $tanggal, 'status' => 'kosong']);
+        }
+
         // Penugasan / pengingat temuan → halaman Temuan P2H (driver melihat temuan miliknya)
         if (in_array($type, ['finding_assigned', 'finding_overdue'], true)) {
             return redirect()->route('p2h.findings.index', [

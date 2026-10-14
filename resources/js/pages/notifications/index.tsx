@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import {
     AlarmClock,
+    ClipboardX,
     AlertTriangle,
     Bell,
     BellOff,
@@ -128,7 +129,8 @@ type NotifType =
     | 'lv_approval_escalation'
     | 'lv_approval_result'
     | 'finding_assigned'
-    | 'finding_overdue';
+    | 'finding_overdue'
+    | 'p2h_missing';
 
 function getTypeConfig(data: PimsNotification['data']) {
     const type = (data.type ?? 'critical_alert') as NotifType;
@@ -150,6 +152,26 @@ function getTypeConfig(data: PimsNotification['data']) {
                 </Badge>
             ),
             actionHint: 'Lihat temuan',
+        };
+    }
+
+    if (type === 'p2h_missing') {
+        return {
+            icon: ClipboardX,
+            iconClass:
+                'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+            borderColor: 'border-l-amber-500',
+            bgUnread: 'bg-amber-50/40 dark:bg-amber-950/15',
+            badge: (
+                <Badge
+                    variant="secondary"
+                    className="gap-1 border-amber-200 bg-amber-100 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                >
+                    <ClipboardX className="h-3 w-3" />
+                    Belum P2H ({data.jumlah ?? 0} unit)
+                </Badge>
+            ),
+            actionHint: 'Lihat unit yang belum P2H',
         };
     }
 

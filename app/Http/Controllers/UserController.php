@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\UsersExport;
 use App\Exports\UsersImportTemplateExport;
+use App\Http\Controllers\Concerns\SortsTable;
 use App\Imports\UsersImport;
 use App\Models\Site;
 use App\Models\Unit;
@@ -23,6 +24,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UserController extends Controller
 {
+    use SortsTable;
+
     public function index(Request $request): Response
     {
         $query = User::with(['roles', 'units', 'site'])
@@ -35,24 +38,36 @@ class UserController extends Controller
                 });
             })
             ->when($request->role, fn ($q) => $q->role($request->role))
-            ->when($request->jabatan, fn ($q) => $q->where('jabatan', $request->jabatan))
-            ->latest();
+            ->when($request->jabatan, fn ($q) => $q->where('jabatan', $request->jabatan));
+
+        $sort = $this->applySort($query, $request, [
+            'name' => 'name',
+            'nik' => 'nik',
+            'role' => fn ($q, $dir) => $q->orderBy(
+                DB::table('model_has_roles')
+                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                    ->whereColumn('model_has_roles.model_id', 'users.id')
+                    ->where('model_has_roles.model_type', User::class)
+                    ->select('roles.name')
+                    ->limit(1),
+                $dir,
+            ),
+            'jabatan' => 'jabatan',
+            'department' => 'department',
+            'site' => fn ($q, $dir) => $q->orderBy(
+                Site::select('name')->whereColumn('sites.id', 'users.site_id'),
+                $dir,
+            ),
+        ], 'name');
 
         $perPage = (int) ($request->per_page ?? 15);
         $perPage = in_array($perPage, [15, 50, 100], true) ? $perPage : 15;
         $users = $query->paginate($perPage)->withQueryString();
 
-        $stats = [
-            'total' => User::count(),
-            'admin' => User::role('admin')->count(),
-            'manager' => User::role('manager')->count(),
-            'driver' => User::role('driver')->count(),
-        ];
-
         return Inertia::render('users/index', [
             'users' => $users,
-            'filters' => $request->only(['search', 'role', 'jabatan', 'per_page']),
-            'stats' => $stats,
+            'filters' => $request->only(['search', 'role', 'jabatan', 'per_page', 'sort', 'dir']),
+            'sort' => $sort,
             'units' => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit', 'site_id']),
             'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);

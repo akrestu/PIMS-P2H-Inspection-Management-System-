@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use App\Models\Site;
 use App\Models\Unit;
 use App\Support\UnitUsageAnalytics;
@@ -15,6 +16,9 @@ class UnitAnalyticsController extends Controller
 {
     public function index(Request $request): Response
     {
+        // Fitur opsional, diaktifkan dari Pengaturan Aplikasi
+        abort_unless(AppSetting::unitAnalyticsEnabled(), 404);
+
         $validated = $request->validate([
             'start' => ['nullable', 'date_format:Y-m-d'],
             'end' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start'],

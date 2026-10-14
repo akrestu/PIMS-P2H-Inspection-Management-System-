@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { ClipboardList, Search, Shield, Trash2, User } from 'lucide-react';
 import { useRef } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,6 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableHead,
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
@@ -185,16 +185,28 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-32">
+                                        <SortableHead
+                                            column="created_at"
+                                            descFirst
+                                            className="w-32"
+                                        >
                                             Waktu
-                                        </TableHead>
-                                        <TableHead className="w-20">
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="log_name"
+                                            className="w-20"
+                                        >
                                             Kategori
-                                        </TableHead>
-                                        <TableHead>Deskripsi</TableHead>
-                                        <TableHead className="w-40">
+                                        </SortableHead>
+                                        <SortableHead column="description">
+                                            Deskripsi
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="causer"
+                                            className="w-40"
+                                        >
                                             Dilakukan oleh
-                                        </TableHead>
+                                        </SortableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

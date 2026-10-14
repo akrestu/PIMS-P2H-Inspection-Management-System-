@@ -45,17 +45,19 @@
         <div class="value {{ $summary['fleet_actual_pa'] !== null ? ($summary['fleet_actual_pa'] >= 90 ? 'green' : ($summary['fleet_actual_pa'] >= 75 ? 'yellow' : 'red')) : 'gray' }}">
             {{ $summary['fleet_actual_pa'] !== null ? $summary['fleet_actual_pa'].'%' : '—' }}
         </div>
-        <div class="sub">W÷(W+S)×100</div>
+        <div class="sub">(T−S)÷T×100</div>
     </div>
+    @foreach ($summary['pa_by_jenis'] as $jenis => $group)
     <div class="summary-card">
-        <div class="label">Kelayakan P2H</div>
-        <div class="value {{ $summary['fleet_compliance_pa'] !== null ? ($summary['fleet_compliance_pa'] >= 90 ? 'green' : ($summary['fleet_compliance_pa'] >= 75 ? 'yellow' : 'red')) : 'gray' }}">
-            {{ $summary['fleet_compliance_pa'] !== null ? $summary['fleet_compliance_pa'].'%' : '—' }}
+        <div class="label">PA {{ $jenis }}</div>
+        <div class="value {{ $group['pa'] !== null ? ($group['pa'] >= 90 ? 'green' : ($group['pa'] >= 75 ? 'yellow' : 'red')) : 'gray' }}">
+            {{ $group['pa'] !== null ? $group['pa'].'%' : '—' }}
         </div>
-        <div class="sub">Rata-rata compliance P2H</div>
+        <div class="sub">{{ $group['total'] }} unit · {{ $group['bd'] }} BD</div>
     </div>
+    @endforeach
     <div class="summary-card">
-        <div class="label">Operation</div>
+        <div class="label">Ready</div>
         <div class="value green">{{ $summary['operation_count'] }}</div>
         <div class="sub">unit beroperasi</div>
     </div>
@@ -67,7 +69,7 @@
     <div class="summary-card">
         <div class="label">Total Unit</div>
         <div class="value">{{ $summary['total_units'] }}</div>
-        <div class="sub">{{ $summary['no_data_count'] > 0 ? $summary['no_data_count'].' belum ada data' : 'semua aktif' }}</div>
+        <div class="sub">unit aktif</div>
     </div>
 </div>
 
@@ -80,9 +82,8 @@
             <th>Jenis</th>
             <th>No. Lambung</th>
             <th class="text-center">PA Aktual</th>
-            <th class="text-center">Kelayakan P2H</th>
             <th class="text-center">Status</th>
-            <th class="text-right">Working (j)</th>
+            <th class="text-right">Tersedia (j)</th>
             <th class="text-right">Downtime (j)</th>
             <th class="text-center">Hari Op</th>
             <th class="text-center">Hari BD</th>
@@ -99,12 +100,9 @@
             <td class="text-center {{ $unit['actual_pa'] !== null ? ($unit['actual_pa'] >= 90 ? 'green' : ($unit['actual_pa'] >= 75 ? 'yellow' : 'red')) : 'gray' }}">
                 <strong>{{ $unit['actual_pa'] !== null ? $unit['actual_pa'].'%' : '—' }}</strong>
             </td>
-            <td class="text-center {{ $unit['compliance_pa'] !== null ? ($unit['compliance_pa'] >= 90 ? 'green' : ($unit['compliance_pa'] >= 75 ? 'yellow' : 'red')) : 'gray' }}">
-                {{ $unit['compliance_pa'] !== null ? $unit['compliance_pa'].'%' : '—' }}
-            </td>
             <td class="text-center">
                 @if ($unit['current_status'] === 'operation')
-                    <span class="badge badge-op">Operation</span>
+                    <span class="badge badge-op">Ready</span>
                 @elseif ($unit['current_status'] === 'bd')
                     <span class="badge badge-bd">Breakdown</span>
                 @else
@@ -124,9 +122,9 @@
 
 <div class="footer">
     <p>
-        <strong>PA Aktual</strong> = W ÷ (W + S) × 100% &nbsp;|&nbsp;
-        <strong>W</strong> = Jumlah shift P2H × {{ $summary['shift_hours'] }} jam &nbsp;|&nbsp;
-        <strong>S</strong> = Total jam downtime log &nbsp;|&nbsp;
+        <strong>PA</strong> = (T − S) ÷ T × 100% &nbsp;|&nbsp;
+        <strong>T</strong> = Jam kalender unit dalam periode &nbsp;|&nbsp;
+        <strong>S</strong> = Jam downtime BD / PM / Servis &nbsp;|&nbsp;
         Threshold kelayakan: <strong>{{ $summary['pa_threshold'] }}%</strong>
     </p>
     <p style="margin-top:3px;">Dokumen ini digenerate otomatis oleh sistem PIMS — PT. Wahana Bandhawa Kencana</p>

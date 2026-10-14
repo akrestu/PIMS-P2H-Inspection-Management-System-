@@ -28,7 +28,6 @@
     @php
         $k = $report['kepatuhan'];
         $t = $report['temuan'];
-        $b = $report['bbm'];
         $n = fn ($v) => number_format((float) $v, 0, ',', '.');
     @endphp
 
@@ -93,46 +92,28 @@
         </table>
     @endif
 
-    <h2>E. KONSUMSI BBM</h2>
+    <h2>E. PHYSICAL AVAILABILITY (PA)</h2>
     <table class="data">
-        <tr><th>Total BBM</th><th>Total jarak</th><th>Rata-rata km/liter</th><th>Pengisian tidak wajar</th></tr>
-        <tr>
-            <td>{{ $n($b['total_liter']) }} liter</td>
-            <td>{{ $n($b['total_jarak']) }} km</td>
-            <td>
-                @forelse ($b['rata_rata_km_per_liter'] as $jenis => $avg)
-                    {{ $jenis }}: {{ $avg }}<br>
-                @empty
-                    <span class="muted">-</span>
-                @endforelse
-            </td>
-            <td>{{ $b['jumlah_anomali'] }}</td>
-        </tr>
+        <tr><th>Jenis unit</th><th>PA</th><th>Jumlah unit</th><th>Tidak Ready</th></tr>
+        @forelse ($report['pa'] as $jenis => $g)
+            <tr><td>{{ $jenis }}</td><td>{{ $g['pa'] !== null ? $g['pa'].'%' : '-' }}</td><td>{{ $g['total'] }}</td><td>{{ $g['bd'] }}</td></tr>
+        @empty
+            <tr><td colspan="4" class="muted">Belum ada data</td></tr>
+        @endforelse
     </table>
-    @if ($b['unit_boros'])
-        <table class="data" style="margin-top:6px">
-            <tr><th>Unit boros</th><th>km/liter</th><th>Rata-rata jenis</th></tr>
-            @foreach ($b['unit_boros'] as $row)
-                <tr><td>{{ $row['no_unit'] }}</td><td class="red">{{ $row['km_per_liter'] }}</td><td>{{ $row['rata_rata_jenis'] }}</td></tr>
-            @endforeach
-        </table>
-    @endif
 
-    @if ($report['servis'])
-        <h2>F. JADWAL SERVIS BERKALA</h2>
-        <table class="data">
-            <tr><th>Unit</th><th>KM saat ini</th><th>Jadwal servis</th><th>Sisa</th><th>Status</th></tr>
-            @foreach ($report['servis'] as $row)
-                <tr>
-                    <td>{{ $row['no_unit'] }}</td>
-                    <td>{{ $n($row['km_saat_ini']) }}</td>
-                    <td>{{ $n($row['km_servis_berikutnya']) }}</td>
-                    <td>{{ $n($row['sisa_km']) }} km{{ $row['estimasi_hari'] ? ' (±'.$row['estimasi_hari'].' hari)' : '' }}</td>
-                    <td class="{{ $row['status'] === 'overdue' ? 'red' : 'amber' }}">{{ $row['status'] === 'overdue' ? 'Terlambat' : 'Segera' }}</td>
-                </tr>
-            @endforeach
-        </table>
-    @endif
+    <h2>F. CHECKLIST P2H PER UNIT</h2>
+    <table class="data">
+        <tr><th>Unit</th><th>Jenis</th><th>Hari P2H</th><th>Status</th></tr>
+        @foreach ($report['checklist'] as $row)
+            <tr>
+                <td>{{ $row['no_unit'] }}</td>
+                <td>{{ $row['jenis_unit'] }}</td>
+                <td>{{ $row['hari_p2h'] }}/{{ $row['hari_periode'] }}</td>
+                <td class="{{ $row['hari_p2h'] >= $row['hari_periode'] ? '' : ($row['hari_p2h'] === 0 ? 'red' : 'amber') }}">{{ $row['hari_p2h'] >= $row['hari_periode'] ? 'Lengkap' : ($row['hari_p2h'] === 0 ? 'Tidak P2H' : 'Kurang') }}</td>
+            </tr>
+        @endforeach
+    </table>
 
     <div class="footer">Dicetak {{ now()->format('d/m/Y H:i') }} · PIMS - P2H Management System</div>
 </body>

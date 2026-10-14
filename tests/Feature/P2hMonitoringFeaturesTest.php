@@ -3,6 +3,7 @@
 use App\Ai\Agents\P2hPeriodReportAgent;
 use App\Ai\Agents\P2hRepairSuggestionAgent;
 use App\Enums\FindingStatus;
+use App\Models\AppSetting;
 use App\Models\P2hChecklistAnswer;
 use App\Models\P2hFinding;
 use App\Models\P2hFuelLog;
@@ -202,9 +203,9 @@ test('service forecast marks units due soon or overdue from the last periodic se
         ->and($forecast['LV-LATE']['status'])->toBe('overdue')
         ->and($forecast['LV-NEW']['status'])->toBe('unknown');
 
+    // Jadwal servis tidak lagi masuk laporan P2H harian (di luar fokus laporan)
     expect(P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today())))
-        ->toContain('SERVIS BERKALA', 'LV-SOON', 'LV-LATE')
-        ->not->toContain('LV-NEW');
+        ->not->toContain('SERVIS BERKALA');
 });
 
 // ── #8 Periodic report ───────────────────────────────────────────────────────
@@ -275,9 +276,13 @@ test('drivers cannot access the new monitoring pages', function () {
     $this->actingAs($driver)->get(route('unit-analytics.index'))->assertForbidden();
 });
 
-test('unit analytics page renders for managers', function () {
+test('unit analytics page renders for managers only when the optional feature is enabled', function () {
     p2hEntry(lvUnit(), today(), km: 1000, liter: 30);
 
+    // Nonaktif secara default (di luar fokus utama P2H)
+    $this->actingAs(monitoringManager())->get(route('unit-analytics.index'))->assertNotFound();
+
+    AppSetting::set('unit_analytics_enabled', true);
     $this->actingAs(monitoringManager())->get(route('unit-analytics.index'))->assertOk();
 });
 

@@ -6,10 +6,11 @@ use App\Models\P2hFinding;
 use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Site;
+use App\Models\Unit;
 use Carbon\CarbonInterface;
+use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Menyusun data P2H pada rentang tanggal yang dipilih, terstruktur dan deterministik.
@@ -95,16 +96,17 @@ class DailyP2hDigest
             ];
         });
 
-        // Hanya unit yang perlu segera servis (lewat / mendekati jadwal) yang masuk laporan
-        // Prediksi servis membaca riwayat KM setahun → di-cache 10 menit
-        $service = Cache::remember(
-            "p2h_service_due:{$siteId}:{$jenisUnit}:{$end->toDateString()}",
-            now()->addMinutes(10),
-            fn () => collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit, $end))
-                ->whereIn('status', ['overdue', 'due_soon'])
+        // Unit aktif yang tidak melakukan P2H, per tanggal
+        $filled = $units->groupBy('tanggal')->map(fn ($g) => $g->pluck('no_unit')->all());
+        $activeUnits = Unit::active()->where($unitScope)->orderBy('no_unit')->pluck('no_unit');
+        $belumP2h = collect(CarbonPeriod::create($start, $end))
+            ->mapWithKeys(fn ($d) => [$d->toDateString() => $activeUnits
+                ->diff($filled->get($d->toDateString(), []))
                 ->values()
-                ->all(),
-        );
+                ->all()])
+            ->all();
+
+        $availability = FleetAvailability::build($start, $end, ['site_id' => $siteId, 'jenis_unit' => $jenisUnit])['summary'];
 
         $label = fn (CarbonInterface $d) => $d->copy()->locale('id')->translatedFormat('l, d F Y');
         $allFindings = $units->flatMap(fn ($u) => $u['findings']);
@@ -125,10 +127,12 @@ class DailyP2hDigest
                 'temuan' => $allFindings->count(),
                 'temuan_belum_selesai' => $allFindings->where('status', '!=', 'closed')->count(),
                 'temuan_overdue' => $allFindings->where('overdue', true)->count(),
-                'servis_mendekat' => count($service),
+                'total_unit' => $activeUnits->count(),
+                'belum_p2h' => collect($belumP2h)->sum(fn ($list) => count($list)),
             ],
             'units' => $units->all(),
-            'servis' => $service,
+            'belum_p2h' => $belumP2h,
+            'pa' => $availability['pa_by_jenis'],
         ];
     }
 

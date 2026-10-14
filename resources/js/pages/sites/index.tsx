@@ -14,9 +14,10 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -75,16 +76,9 @@ interface PaginatedData {
 interface Filters {
     search?: string;
     status?: string;
-}
-interface Stats {
-    total: number;
-    active: number;
-    inactive: number;
-}
-interface Props {
+}interface Props {
     sites: PaginatedData;
     filters: Filters;
-    stats: Stats;
 }
 
 /* ─────────────────── SiteFormDialog (Add / Edit) ─────────────── */
@@ -365,37 +359,8 @@ function BatchDeleteDialog({
     );
 }
 
-/* ──────────────────────── Stat Card ────────────────────────── */
-function StatCard({
-    title,
-    value,
-    icon: Icon,
-    colorClass,
-}: {
-    title: string;
-    value: number;
-    icon: React.ElementType;
-    colorClass: string;
-}) {
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {title}
-                </CardTitle>
-                <div className={`rounded-md p-2 ${colorClass}`}>
-                    <Icon className="h-4 w-4" />
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-            </CardContent>
-        </Card>
-    );
-}
-
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function SitesIndex({ sites, filters, stats }: Props) {
+export default function SitesIndex({ sites, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
 
@@ -428,7 +393,7 @@ export default function SitesIndex({ sites, filters, stats }: Props) {
         debounceRef.current = setTimeout(() => {
             router.get(
                 '/sites',
-                { search: s, status: st },
+                { search: s, status: st, ...sortParams() },
                 { preserveState: true, replace: true },
             );
         }, 350);
@@ -544,28 +509,6 @@ export default function SitesIndex({ sites, filters, stats }: Props) {
                     </div>
                 )}
 
-                {/* ── Stat Cards ── */}
-                <div className="grid grid-cols-3 gap-3">
-                    <StatCard
-                        title="Total Site"
-                        value={stats.total}
-                        icon={MapPin}
-                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    />
-                    <StatCard
-                        title="Active"
-                        value={stats.active}
-                        icon={CheckCircle2}
-                        colorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                    />
-                    <StatCard
-                        title="Inactive"
-                        value={stats.inactive}
-                        icon={XCircle}
-                        colorClass="bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
-                    />
-                </div>
-
                 {/* ── Filter Bar ── */}
                 <Card>
                     <CardContent className="flex flex-wrap items-center gap-3 py-3">
@@ -657,10 +600,24 @@ export default function SitesIndex({ sites, filters, stats }: Props) {
                                         <TableHead className="hidden w-12 text-center sm:table-cell">
                                             #
                                         </TableHead>
-                                        <TableHead>Nama Site</TableHead>
-                                        <TableHead>Unit</TableHead>
-                                        <TableHead>Manpower</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <SortableHead column="name">
+                                            Nama Site
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="units_count"
+                                            descFirst
+                                        >
+                                            Unit
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="users_count"
+                                            descFirst
+                                        >
+                                            Manpower
+                                        </SortableHead>
+                                        <SortableHead column="status">
+                                            Status
+                                        </SortableHead>
                                         <TableHead className="w-14 text-right">
                                             Aksi
                                         </TableHead>

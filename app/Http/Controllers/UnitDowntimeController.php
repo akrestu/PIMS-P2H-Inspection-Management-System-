@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SortsTable;
 use App\Models\Unit;
 use App\Models\UnitDowntimeLog;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,10 +15,11 @@ use Inertia\Response;
 
 class UnitDowntimeController extends Controller
 {
+    use SortsTable;
+
     public function index(Request $request): Response
     {
-        $query = UnitDowntimeLog::with(['unit', 'creator'])
-            ->orderByDesc('jam_mulai');
+        $query = UnitDowntimeLog::with(['unit', 'creator']);
 
         if ($request->filled('unit_id')) {
             $query->where('unit_id', $request->unit_id);
@@ -43,6 +46,21 @@ class UnitDowntimeController extends Controller
             $query->whereNotNull('jam_selesai');
         }
 
+        $sort = $this->applySort($query, $request, [
+            'unit' => fn ($q, $dir) => $q->orderBy(
+                Unit::withTrashed()->select('no_unit')->whereColumn('units.id', 'unit_downtime_logs.unit_id'),
+                $dir,
+            ),
+            'tipe' => 'tipe',
+            'jam_mulai' => 'jam_mulai',
+            'jam_selesai' => 'jam_selesai',
+            'keterangan' => 'keterangan',
+            'created_by' => fn ($q, $dir) => $q->orderBy(
+                User::select('name')->whereColumn('users.id', 'unit_downtime_logs.created_by'),
+                $dir,
+            ),
+        ], 'unit');
+
         $logs = $query->paginate(20)->withQueryString();
 
         $allUnits = Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit']);
@@ -64,7 +82,8 @@ class UnitDowntimeController extends Controller
                 'created_by' => $log->creator?->name,
             ]),
             'allUnits' => $allUnits,
-            'filters' => $request->only(['unit_id', 'tipe', 'date_from', 'date_to', 'status']),
+            'filters' => $request->only(['unit_id', 'tipe', 'date_from', 'date_to', 'status', 'sort', 'dir']),
+            'sort' => $sort,
             'ongoingCount' => $ongoingCount,
         ]);
     }

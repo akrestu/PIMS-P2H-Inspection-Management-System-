@@ -3,14 +3,11 @@ import {
     AlarmClock,
     ClipboardCopy,
     FileDown,
-    Gauge,
     Repeat,
     RotateCcw,
     Send,
-    ShieldCheck,
     Sparkles,
     TrendingUp,
-    Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -179,8 +176,6 @@ export default function PeriodReport({
         }
     };
 
-    const { kepatuhan: k, temuan: t } = report;
-
     return (
         <>
             <Head title="Periodic Report P2H" />
@@ -195,7 +190,7 @@ export default function PeriodReport({
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Evaluasi mingguan / bulanan: kepatuhan, tren temuan,
-                            BBM, dan servis · {report.periode.label}
+                            PA, dan checklist unit · {report.periode.label}
                         </p>
                     </div>
                     <div className="flex flex-wrap items-end gap-3">
@@ -332,45 +327,6 @@ export default function PeriodReport({
                     </div>
                 </div>
 
-                {/* ── KPI ── */}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <Kpi
-                        icon={ShieldCheck}
-                        label="Kepatuhan P2H"
-                        value={`${(k.persen ?? 0).toLocaleString('id-ID')}%`}
-                        hint={`${k.p2h_masuk}/${k.p2h_seharusnya} P2H`}
-                        tone={
-                            (k.persen ?? 0) >= 90
-                                ? 'text-emerald-600'
-                                : 'text-amber-600'
-                        }
-                    />
-                    <Kpi
-                        icon={Wrench}
-                        label="Total temuan"
-                        value={t.total}
-                        hint={`${t.closed} closed · AA ${t.kode_aa}`}
-                        tone="text-slate-600"
-                    />
-                    <Kpi
-                        icon={Gauge}
-                        label="Rata-rata penyelesaian"
-                        value={
-                            t.rata_rata_hari_penyelesaian !== null
-                                ? `${t.rata_rata_hari_penyelesaian.toLocaleString('id-ID')} hari`
-                                : '—'
-                        }
-                        tone="text-blue-600"
-                    />
-                    <Kpi
-                        icon={AlarmClock}
-                        label="Lewat target"
-                        value={report.overdue.length}
-                        hint={`${t.tanpa_pic} tanpa PIC`}
-                        tone="text-red-600"
-                    />
-                </div>
-
                 <div className="grid gap-5 lg:grid-cols-5">
                     {/* ── WhatsApp text ── */}
                     <Card className="lg:col-span-3">
@@ -492,35 +448,6 @@ export default function PeriodReport({
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
-
-function Kpi({
-    icon: Icon,
-    label,
-    value,
-    hint,
-    tone,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value: string | number;
-    hint?: string;
-    tone: string;
-}) {
-    return (
-        <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-                <Icon className={cn('h-8 w-8 shrink-0', tone)} />
-                <div className="min-w-0">
-                    <p className="text-xl font-bold tabular-nums">{value}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                        {label}
-                        {hint ? ` · ${hint}` : ''}
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
 
 function RankCard({
     title,

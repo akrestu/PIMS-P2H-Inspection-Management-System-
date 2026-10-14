@@ -96,13 +96,15 @@ test('digest lists only P2H and findings within the selected date, scoped by sit
         ->and($digest['stats']['temuan'])->toBe(1)
         ->and($digest['units'][0]['no_unit'])->toBe('LV-01')
         ->and($digest['units'][0]['findings'][0]['pic'])->toBe('Andi PIC')
-        ->and($digest)->not->toHaveKey('carry_over');
+        ->and($digest)->not->toHaveKey('carry_over')
+        // Unit yang hanya punya temuan lama tidak tampil sebagai P2H hari ini, melainkan "belum P2H"
+        ->and($digest['belum_p2h'][today()->toDateString()])->toBe(['LV-02']);
 
     $text = P2hDigestFormatter::toWhatsApp($digest);
 
     expect($text)->toContain('DAILY REPORT P2H', 'LV-01', 'Rem', 'Ganti kampas rem', 'Andi PIC', '🔴 Open')
+        ->toContain('Sudah P2H: *1/2 unit*', "BELUM P2H (1 unit)*\nLV-02")
         ->not->toContain('LV-99')
-        ->not->toContain('LV-02')
         ->not->toContain('SEBELUMNYA');
 });
 

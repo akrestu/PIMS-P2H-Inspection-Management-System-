@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\UnitsExport;
 use App\Exports\UnitsImportTemplateExport;
+use App\Http\Controllers\Concerns\SortsTable;
 use App\Http\Requests\StoreUnitRequest;
 use App\Imports\UnitsImport;
 use App\Models\P2hFinding;
@@ -12,10 +13,13 @@ use App\Models\P2hUserEntry;
 use App\Models\Site;
 use App\Models\Unit;
 use App\Support\P2hFileStorage;
+use App\Support\UnitStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -23,9 +27,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UnitController extends Controller
 {
+    use SortsTable;
+
     public function index(Request $request): Response
     {
-        $units = Unit::query()
+        $query = Unit::query()
             ->with(['site:id,name', 'downtimeLogs' => function ($q) {
                 $q->whereNull('jam_selesai')
                     ->latest('jam_mulai')
@@ -33,25 +39,61 @@ class UnitController extends Controller
             }])
             ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
             ->when($request->jenis_unit, fn ($q) => $q->where('jenis_unit', $request->jenis_unit))
-            ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->when($request->status, fn ($q) => $q->where('status', $request->status));
 
-        $stats = [
-            'total' => Unit::count(),
-            'active' => Unit::where('status', 'active')->count(),
-            'inactive' => Unit::where('status', 'inactive')->count(),
-            'bus' => Unit::where('jenis_unit', 'Bus')->count(),
-            'lv' => Unit::where('jenis_unit', 'Light Vehicle')->count(),
-        ];
+        $sort = $this->applySort($query, $request, [
+            'no_unit' => 'no_unit',
+            'jenis_unit' => 'jenis_unit',
+            'no_lambung' => 'no_lambung',
+            'department' => 'department',
+            'site' => fn ($q, $dir) => $q->orderBy(
+                Site::select('name')->whereColumn('sites.id', 'units.site_id'),
+                $dir,
+            ),
+            'status' => 'status',
+        ], 'no_unit');
+
+        $units = $query->paginate(15)->withQueryString();
 
         return Inertia::render('units/index', [
             'units' => $units,
-            'filters' => $request->only(['search', 'jenis_unit', 'status']),
-            'stats' => $stats,
+            'filters' => $request->only(['search', 'jenis_unit', 'status', 'sort', 'dir']),
+            'sort' => $sort,
             'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    /** Admin/manager memperbarui status operasional unit (Ready / BD / PM / Servis Berkala). */
+    public function updateStatus(Request $request, Unit $unit): RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in([UnitStatus::READY, ...UnitStatus::DOWN_TYPES])],
+            'waktu' => ['nullable', 'date', 'before_or_equal:now'],
+            'keterangan' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($data, $unit, $request) {
+            Unit::whereKey($unit->id)->lockForUpdate()->firstOrFail();
+            UnitStatus::setByAdmin(
+                $unit,
+                $data['status'],
+                isset($data['waktu']) ? Carbon::parse($data['waktu']) : now(),
+                $request->user()->id,
+                $data['keterangan'] ?? null,
+            );
+        });
+
+        activity('unit')
+            ->causedBy($request->user())
+            ->performedOn($unit)
+            ->log("Mengubah status unit {$unit->no_unit} menjadi {$data['status']}");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Status {$unit->no_unit}: {$data['status']}",
+        ]);
+
+        return back();
     }
 
     public function create(): Response
@@ -150,16 +192,24 @@ class UnitController extends Controller
 
     public function trashed(Request $request): Response
     {
-        $units = Unit::onlyTrashed()
+        $query = Unit::onlyTrashed()
             ->with('site:id,name')
-            ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
-            ->orderByDesc('deleted_at')
-            ->paginate(15)
-            ->withQueryString();
+            ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"));
+
+        $sort = $this->applySort($query, $request, [
+            'no_unit' => 'no_unit',
+            'jenis_unit' => 'jenis_unit',
+            'no_lambung' => 'no_lambung',
+            'department' => 'department',
+            'deleted_at' => 'deleted_at',
+        ], 'no_unit');
+
+        $units = $query->paginate(15)->withQueryString();
 
         return Inertia::render('units/trashed', [
             'units' => $units,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'sort', 'dir']),
+            'sort' => $sort,
         ]);
     }
 

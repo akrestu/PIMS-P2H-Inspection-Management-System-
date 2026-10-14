@@ -12,7 +12,6 @@ import {
     RotateCcw,
     Search,
     Trash2,
-    Truck,
     Upload,
     X,
     XCircle,
@@ -20,9 +19,10 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
 import { SiteSelect } from '@/components/site-select';
+import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -79,17 +79,9 @@ interface Filters {
     jenis_unit?: string;
     status?: string;
 }
-interface Stats {
-    total: number;
-    active: number;
-    inactive: number;
-    bus: number;
-    lv: number;
-}
 interface Props {
     units: PaginatedData;
     filters: Filters;
-    stats: Stats;
     sites: Site[];
 }
 
@@ -679,35 +671,6 @@ function BatchDeleteDialog({
     );
 }
 
-/* ──────────────────────── Stat Card ────────────────────────── */
-function StatCard({
-    title,
-    value,
-    icon: Icon,
-    colorClass,
-}: {
-    title: string;
-    value: number;
-    icon: React.ElementType;
-    colorClass: string;
-}) {
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {title}
-                </CardTitle>
-                <div className={`rounded-md p-2 ${colorClass}`}>
-                    <Icon className="h-4 w-4" />
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-            </CardContent>
-        </Card>
-    );
-}
-
 /* ──────────────────── Operational Status Badge ─────────────── */
 type DowntimeTipe = 'BD' | 'PM' | 'Servis Berkala';
 
@@ -746,7 +709,7 @@ function OperationalStatusBadge({
                 className="border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
             >
                 <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                Operation
+                Ready
             </Badge>
         );
     }
@@ -764,8 +727,145 @@ function OperationalStatusBadge({
     );
 }
 
+/* ─────────────── Ubah status operasional unit ─────────────── */
+const STATUS_OPTIONS = ['Ready', 'BD', 'PM', 'Servis Berkala'] as const;
+
+function nowLocal(): string {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+
+    return d.toISOString().slice(0, 16);
+}
+
+function UnitStatusControl({ unit }: { unit: Unit }) {
+    const current = unit.downtime_logs?.[0]?.tipe ?? 'Ready';
+    const [open, setOpen] = useState(false);
+    const form = useForm({
+        status: current as string,
+        waktu: nowLocal(),
+        keterangan: '',
+    });
+
+    const openDialog = () => {
+        form.setData({ status: current, waktu: nowLocal(), keterangan: '' });
+        form.clearErrors();
+        setOpen(true);
+    };
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        form.patch(`/units/${unit.id}/status`, {
+            preserveScroll: true,
+            onSuccess: () => setOpen(false),
+        });
+    };
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={openDialog}
+                className="rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                aria-label={`Ubah status ${unit.no_unit}`}
+                title="Klik untuk mengubah status"
+            >
+                <OperationalStatusBadge downtimeLogs={unit.downtime_logs} />
+            </button>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <form onSubmit={submit} className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>
+                                Status Unit {unit.no_unit}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Status saat ini: <strong>{current}</strong>. P2H
+                                berikutnya tetap dapat memperbarui status (BD →
+                                BD, Layak Pakai → Ready).
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-1.5">
+                            <Label>Status baru</Label>
+                            <Select
+                                value={form.data.status}
+                                onValueChange={(v) => form.setData('status', v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {STATUS_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt} value={opt}>
+                                            {opt}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor={`waktu-${unit.id}`}>
+                                Berlaku sejak
+                            </Label>
+                            <Input
+                                id={`waktu-${unit.id}`}
+                                type="datetime-local"
+                                value={form.data.waktu}
+                                max={nowLocal()}
+                                onChange={(e) =>
+                                    form.setData('waktu', e.target.value)
+                                }
+                            />
+                            {form.errors.waktu && (
+                                <p className="text-sm text-destructive">
+                                    {form.errors.waktu}
+                                </p>
+                            )}
+                        </div>
+                        {form.data.status !== 'Ready' && (
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ket-${unit.id}`}>
+                                    Keterangan
+                                </Label>
+                                <Input
+                                    id={`ket-${unit.id}`}
+                                    value={form.data.keterangan}
+                                    placeholder="Contoh: Ganti kampas rem di workshop"
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'keterangan',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </div>
+                        )}
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setOpen(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={
+                                    form.processing ||
+                                    form.data.status === current
+                                }
+                            >
+                                Simpan
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+}
+
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UnitsIndex({ units, filters, stats, sites }: Props) {
+export default function UnitsIndex({ units, filters, sites }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_unit ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
@@ -803,7 +903,7 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
         debounceRef.current = setTimeout(() => {
             router.get(
                 '/units',
-                { search: s, jenis_unit: j, status: st },
+                { search: s, jenis_unit: j, status: st, ...sortParams() },
                 { preserveState: true, replace: true },
             );
         }, 350);
@@ -958,40 +1058,6 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                     </div>
                 )}
 
-                {/* ── Stat Cards ── */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                    <StatCard
-                        title="Total Unit"
-                        value={stats.total}
-                        icon={Truck}
-                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    />
-                    <StatCard
-                        title="Active"
-                        value={stats.active}
-                        icon={CheckCircle2}
-                        colorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                    />
-                    <StatCard
-                        title="Inactive"
-                        value={stats.inactive}
-                        icon={XCircle}
-                        colorClass="bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
-                    />
-                    <StatCard
-                        title="Bus"
-                        value={stats.bus}
-                        icon={Bus}
-                        colorClass="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
-                    />
-                    <StatCard
-                        title="Light Vehicle"
-                        value={stats.lv}
-                        icon={Car}
-                        colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                    />
-                </div>
-
                 {/* ── Filter Bar ── */}
                 <Card>
                     <CardContent className="flex flex-wrap items-center gap-3 py-3">
@@ -1116,19 +1182,31 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                         <TableHead className="hidden w-12 text-center sm:table-cell">
                                             #
                                         </TableHead>
-                                        <TableHead>No. Unit</TableHead>
-                                        <TableHead>Jenis Unit</TableHead>
-                                        <TableHead>No. Polisi</TableHead>
-                                        <TableHead className="hidden md:table-cell">
+                                        <SortableHead column="no_unit">
+                                            No. Unit
+                                        </SortableHead>
+                                        <SortableHead column="jenis_unit">
+                                            Jenis Unit
+                                        </SortableHead>
+                                        <SortableHead column="no_lambung">
+                                            No. Polisi
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="department"
+                                            className="hidden md:table-cell"
+                                        >
                                             Departemen
-                                        </TableHead>
-                                        <TableHead className="hidden md:table-cell">
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="site"
+                                            className="hidden md:table-cell"
+                                        >
                                             Site
-                                        </TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>
-                                            Status Operasional
-                                        </TableHead>
+                                        </SortableHead>
+                                        <SortableHead column="status">
+                                            Status
+                                        </SortableHead>
+                                        <TableHead>Status Unit</TableHead>
                                         <TableHead className="w-14 text-right">
                                             Aksi
                                         </TableHead>
@@ -1268,10 +1346,8 @@ export default function UnitsIndex({ units, filters, stats, sites }: Props) {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <OperationalStatusBadge
-                                                        downtimeLogs={
-                                                            unit.downtime_logs
-                                                        }
+                                                    <UnitStatusControl
+                                                        unit={unit}
                                                     />
                                                 </TableCell>
                                                 <TableCell className="text-right">

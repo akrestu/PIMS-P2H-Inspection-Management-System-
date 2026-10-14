@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
+import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -460,7 +461,11 @@ export default function DowntimeIndex({
     const [deleteLog, setDeleteLog] = useState<DowntimeLog | null>(null);
 
     const handleFilter = () => {
-        router.get('/downtime', form, { preserveState: true });
+        router.get(
+            '/downtime',
+            { ...form, ...sortParams() },
+            { preserveState: true },
+        );
     };
 
     const handleReset = () => {
@@ -793,27 +798,53 @@ export default function DowntimeIndex({
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b bg-muted/30">
-                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                <SortableHead
+                                                    column="unit"
+                                                    plain
+                                                    className="px-4 py-3 text-left font-medium text-muted-foreground"
+                                                >
                                                     Unit
-                                                </th>
-                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="tipe"
+                                                    plain
+                                                    className="px-4 py-3 text-left font-medium text-muted-foreground"
+                                                >
                                                     Tipe
-                                                </th>
-                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="jam_mulai"
+                                                    descFirst
+                                                    plain
+                                                    className="px-4 py-3 text-left font-medium text-muted-foreground"
+                                                >
                                                     Jam Mulai
-                                                </th>
-                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="jam_selesai"
+                                                    descFirst
+                                                    plain
+                                                    className="px-4 py-3 text-left font-medium text-muted-foreground"
+                                                >
                                                     Jam Selesai
-                                                </th>
+                                                </SortableHead>
                                                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                                                     Durasi
                                                 </th>
-                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                <SortableHead
+                                                    column="keterangan"
+                                                    plain
+                                                    className="px-4 py-3 text-left font-medium text-muted-foreground"
+                                                >
                                                     Keterangan
-                                                </th>
-                                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                                </SortableHead>
+                                                <SortableHead
+                                                    column="created_by"
+                                                    plain
+                                                    className="px-4 py-3 text-left font-medium text-muted-foreground"
+                                                >
                                                     Dicatat oleh
-                                                </th>
+                                                </SortableHead>
                                                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                                                     Aksi
                                                 </th>

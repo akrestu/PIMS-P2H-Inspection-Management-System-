@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Data laporan P2H periodik (mingguan/bulanan): kepatuhan, temuan, tren,
- * BBM, dan servis. Deterministik — AI hanya merangkum dari data ini.
+ * PA, dan checklist P2H per unit. Deterministik — AI hanya merangkum dari data ini.
  */
 class PeriodP2hReport
 {
@@ -105,7 +105,26 @@ class PeriodP2hReport
             ])
             ->all();
 
-        $fuel = UnitUsageAnalytics::fuel($start, $end, $siteId, $jenisUnit);
+        // ── Checklist P2H per unit: berapa hari unit melakukan P2H dalam periode ──
+        $filledDays = P2hSession::query()
+            ->whereDate('tanggal', '>=', $start)
+            ->whereDate('tanggal', '<=', $end)
+            ->whereHas('userEntries', fn ($q) => $q->notRejected())
+            ->selectRaw('unit_id, COUNT(DISTINCT tanggal) as hari')
+            ->groupBy('unit_id')
+            ->pluck('hari', 'unit_id');
+        $checklist = Unit::active()->where($unitScope)->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit'])
+            ->map(fn (Unit $u) => [
+                'no_unit' => $u->no_unit,
+                'jenis_unit' => $u->jenis_unit,
+                'hari_p2h' => (int) ($filledDays[$u->id] ?? 0),
+                'hari_periode' => $days,
+            ])
+            ->sortBy(fn ($row) => [$row['hari_p2h'], $row['no_unit']])
+            ->values()
+            ->all();
+
+        $availability = FleetAvailability::build($start, min($end, today()), ['site_id' => $siteId, 'jenis_unit' => $jenisUnit])['summary'];
 
         return [
             'periode' => [
@@ -150,17 +169,8 @@ class PeriodP2hReport
                 ->map(fn ($row) => collect($row)->only(['no_unit', 'item', 'jumlah'])->all())
                 ->sortByDesc('jumlah')->values()->all(),
             'overdue' => $overdueNow,
-            'bbm' => [
-                'total_liter' => $fuel['total_liter'],
-                'total_jarak' => $fuel['total_jarak'],
-                'rata_rata_km_per_liter' => $fuel['rata_rata_jenis'],
-                'unit_boros' => collect($fuel['units'])->where('boros', true)
-                    ->map(fn ($u) => ['no_unit' => $u['no_unit'], 'km_per_liter' => $u['km_per_liter'], 'rata_rata_jenis' => $u['rata_rata_jenis']])
-                    ->values()->all(),
-                'jumlah_anomali' => $fuel['jumlah_anomali'],
-            ],
-            'servis' => collect(UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit))
-                ->whereIn('status', ['overdue', 'due_soon'])->values()->all(),
+            'checklist' => $checklist,
+            'pa' => $availability['pa_by_jenis'],
         ];
     }
 
@@ -269,26 +279,22 @@ class PeriodP2hReport
             }
         }
 
-        $b = $r['bbm'];
-        $lines[] = '';
-        $lines[] = $section('KONSUMSI BBM');
-        $lines[] = "• Total BBM : {$num($b['total_liter'])} liter | Jarak : {$num($b['total_jarak'])} km";
-        foreach ($b['rata_rata_km_per_liter'] as $jenis => $avg) {
-            $lines[] = "• Rata-rata {$jenis} : {$avg} km/liter";
-        }
-        foreach ($b['unit_boros'] as $row) {
-            $lines[] = "• ⚠️ *{$row['no_unit']}* boros: {$row['km_per_liter']} km/l (rata-rata {$row['rata_rata_jenis']})";
-        }
-        if ($b['jumlah_anomali'] > 0) {
-            $lines[] = "• ⚠️ {$b['jumlah_anomali']} pengisian BBM tidak wajar perlu dicek";
+        if ($r['pa'] !== []) {
+            $lines[] = '';
+            $lines[] = $section('PHYSICAL AVAILABILITY (PA)');
+            foreach ($r['pa'] as $jenis => $group) {
+                $lines[] = P2hDigestFormatter::paLine($jenis, $group);
+            }
         }
 
-        if ($r['servis'] !== []) {
-            $lines[] = '';
-            $lines[] = $section('JADWAL SERVIS BERKALA');
-            foreach ($r['servis'] as $unit) {
-                $lines[] = P2hDigestFormatter::serviceLine($unit);
-            }
+        // Checklist: unit yang tidak P2H setiap hari dalam periode
+        $kurang = collect($r['checklist'])->filter(fn ($u) => $u['hari_p2h'] < $u['hari_periode']);
+        $lines[] = '';
+        $lines[] = $section('CHECKLIST P2H PER UNIT');
+        $lines[] = '• ✅ Lengkap setiap hari : '.(count($r['checklist']) - $kurang->count()).' unit';
+        foreach ($kurang as $u) {
+            $icon = $u['hari_p2h'] === 0 ? '❌' : '⚠️';
+            $lines[] = "• {$icon} *{$u['no_unit']}* - {$u['hari_p2h']}/{$u['hari_periode']} hari";
         }
 
         // Bagian analisis hanya ada bila ditulis oleh AI

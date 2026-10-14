@@ -169,6 +169,8 @@ export interface PimsNotification {
         assigned_by?: string;
         pic_name?: string | null;
         hari_terlambat?: number;
+        // MissingP2hReminder
+        jumlah?: number;
     };
     read_at: string | null;
     created_at: string;
