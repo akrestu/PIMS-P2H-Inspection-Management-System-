@@ -3,20 +3,21 @@ import {
     Activity,
     Bell,
     CalendarCheck,
-    CalendarDays,
     Car,
     ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
-    ClockAlert,
     LayoutGrid,
     MapPin,
+    MessageSquareText,
     MoreHorizontal,
     Settings2,
     ShieldCheck,
     Users,
+    Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PAGE_TAB_GROUPS } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import {
     Sheet,
@@ -44,7 +45,15 @@ type NavItem = {
 export function MobileSidebarTrigger() {
     const [showMore, setShowMore] = useState(false);
     const scrollDir = useScrollDirection();
-    const { isCurrentUrl } = useCurrentUrl();
+    const { isCurrentUrl: isExactUrl } = useCurrentUrl();
+    // Item yang membuka halaman bertab tetap aktif di tab lain grup tersebut
+    const isCurrentUrl = (href: string) =>
+        isExactUrl(href) ||
+        Object.values(PAGE_TAB_GROUPS).some(
+            (tabs) =>
+                tabs[0].href === href &&
+                tabs.some((tab) => isExactUrl(tab.href)),
+        );
     const { auth, notifications } = usePage<{
         auth: {
             user: {
@@ -72,7 +81,7 @@ export function MobileSidebarTrigger() {
     if (isAdminOrManager) {
         primaryNav = [
             { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-            { title: 'Monitoring', href: '/monitoring', icon: Activity },
+            { title: 'Kinerja Unit', href: '/monitoring', icon: Activity },
             { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
             {
                 title: 'Persetujuan',
@@ -88,21 +97,15 @@ export function MobileSidebarTrigger() {
                 icon: CalendarCheck,
             },
             {
-                title: 'Monitoring Harian Unit',
-                href: '/unit-monitoring',
-                icon: CalendarDays,
+                title: 'Laporan P2H',
+                href: '/p2h/daily-summary',
+                icon: MessageSquareText,
             },
-            { title: 'Downtime Log', href: '/downtime', icon: ClockAlert },
             { title: 'Riwayat P2H', href: '/p2h', icon: ClipboardList },
+            { title: 'Temuan P2H', href: '/p2h/findings', icon: Wrench },
             { title: 'Unit', href: '/units', icon: Car },
             { title: 'Site', href: '/sites', icon: MapPin },
             { title: 'Manajemen User', href: '/users', icon: Users },
-            {
-                title: 'Notifikasi',
-                href: '/notifications',
-                icon: Bell,
-                badge: unreadCount,
-            },
             ...(isAdmin
                 ? [
                       {

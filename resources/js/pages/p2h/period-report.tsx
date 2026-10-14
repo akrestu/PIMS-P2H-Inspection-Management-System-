@@ -18,6 +18,7 @@ import {
     generateAi,
     pdf,
 } from '@/actions/App/Http/Controllers/P2hPeriodReportController';
+import { PageTabs } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -184,6 +185,7 @@ export default function PeriodReport({
         <>
             <Head title="Periodic Report P2H" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="p2hReport" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                     <div>

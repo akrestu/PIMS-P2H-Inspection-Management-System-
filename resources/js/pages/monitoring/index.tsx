@@ -20,6 +20,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PageTabs } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -772,6 +773,7 @@ export default function MonitoringIndex({
         <>
             <Head title="Monitoring PA" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="unitPerformance" />
                 {/* ── Page Header ── */}
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>

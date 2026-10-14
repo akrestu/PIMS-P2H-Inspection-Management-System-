@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { generateAi } from '@/actions/App/Http/Controllers/P2hDailySummaryController';
 import InputError from '@/components/input-error';
+import { PageTabs } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -168,6 +169,7 @@ export default function DailySummary({
         <>
             <Head title="Daily Report P2H" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="p2hReport" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>

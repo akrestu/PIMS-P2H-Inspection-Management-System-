@@ -13,6 +13,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -475,6 +476,7 @@ export default function DowntimeIndex({
         <>
             <Head title="Downtime Log" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="unitPerformance" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>

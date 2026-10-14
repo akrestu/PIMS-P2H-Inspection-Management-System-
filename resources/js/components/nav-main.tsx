@@ -21,7 +21,11 @@ import type { NavItem } from '@/types';
 
 export interface NavGroup {
     label: string;
-    items: (NavItem & { badge?: number | string })[];
+    items: (NavItem & {
+        badge?: number | string;
+        // URL lain (mis. tab halaman) yang juga menandai item ini aktif
+        activeMatch?: string[];
+    })[];
     defaultOpen?: boolean;
 }
 
@@ -86,7 +90,11 @@ function NavGroup({
                 <CollapsibleContent>
                     <SidebarMenu className="gap-0.5">
                         {group.items.map((item) => {
-                            const active = isActive(item.href);
+                            const active =
+                                isActive(item.href) ||
+                                (item.activeMatch ?? []).some((href) =>
+                                    isActive(href),
+                                );
 
                             return (
                                 <SidebarMenuItem key={item.title}>

@@ -12,6 +12,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -159,6 +160,7 @@ export default function UnitMonitoring({
         <>
             <Head title="Monitoring Harian Unit" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="p2hMonitoring" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>

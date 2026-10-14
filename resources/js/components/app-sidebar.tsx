@@ -3,19 +3,15 @@ import {
     Activity,
     Bell,
     CalendarCheck,
-    CalendarDays,
     Car,
     ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
-    ClockAlert,
-    Gauge,
     LayoutGrid,
     MapPin,
     MessageSquareText,
     Settings2,
     ShieldCheck,
-    TrendingUp,
     Users,
     Wrench,
 } from 'lucide-react';
@@ -23,6 +19,7 @@ import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import type { NavGroup } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { pageTabHrefs } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import {
     Sidebar,
@@ -34,6 +31,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import { dashboard } from '@/routes';
 import { dashboard as driverDashboard } from '@/routes/driver';
 
@@ -59,87 +57,51 @@ export function AppSidebar() {
     const pendingApprovals = notifications?.pending_approvals ?? 0;
     const unreadCount = notifications?.unread_count ?? 0;
     const { state } = useSidebar();
+    const { isCurrentOrParentUrl } = useCurrentUrl();
     const isCollapsed = state === 'collapsed';
 
+    const adminItems = [
+        { title: 'Unit', href: '/units', icon: Car },
+        { title: 'Site', href: '/sites', icon: MapPin },
+        { title: 'Manajemen User', href: '/users', icon: Users },
+        ...(isAdmin
+            ? [
+                  { title: 'Audit Log', href: '/audit-log', icon: ShieldCheck },
+                  {
+                      title: 'Pengaturan Aplikasi',
+                      href: '/app-settings',
+                      icon: Settings2,
+                  },
+              ]
+            : []),
+    ];
+    // Grup Administrasi tertutup default, kecuali sedang membuka salah satu halamannya
+    const onAdminPage = adminItems.some((item) =>
+        isCurrentOrParentUrl(item.href),
+    );
+
     const navGroups: NavGroup[] = [
-        // ── Manajemen (admin/manager only) ───────────────────────
-        ...(isAdminOrManager
+        // ── Utama ────────────────────────────────────────────────
+        ...(isAdminOrManager || isDriver
             ? [
                   {
-                      label: 'Manajemen',
-                      defaultOpen: true,
+                      label: 'Utama',
                       items: [
-                          {
-                              title: 'Dashboard',
-                              href: dashboard(),
-                              icon: LayoutGrid,
-                          },
-                          {
-                              title: 'Monitoring PA',
-                              href: '/monitoring',
-                              icon: Activity,
-                          },
-                          {
-                              title: 'Monitoring P2H',
-                              href: '/p2h-compliance',
-                              icon: CalendarCheck,
-                          },
-                          {
-                              title: 'Monitoring Harian Unit',
-                              href: '/unit-monitoring',
-                              icon: CalendarDays,
-                          },
-                          {
-                              title: 'Daily Report P2H',
-                              href: '/p2h/daily-summary',
-                              icon: MessageSquareText,
-                          },
-                          {
-                              title: 'Periodic Report P2H',
-                              href: '/p2h/period-report',
-                              icon: TrendingUp,
-                          },
-                          {
-                              title: 'Temuan P2H',
-                              href: '/p2h/findings',
-                              icon: Wrench,
-                          },
-                          {
-                              title: 'Analitik Unit',
-                              href: '/unit-analytics',
-                              icon: Gauge,
-                          },
-                          {
-                              title: 'Downtime Log',
-                              href: '/downtime',
-                              icon: ClockAlert,
-                          },
-                          {
-                              title: 'Unit',
-                              href: '/units',
-                              icon: Car,
-                          },
-                          {
-                              title: 'Site',
-                              href: '/sites',
-                              icon: MapPin,
-                          },
-                          {
-                              title: 'Manajemen User',
-                              href: '/users',
-                              icon: Users,
-                          },
-                          ...(isAdmin
+                          ...(isAdminOrManager
                               ? [
                                     {
-                                        title: 'Audit Log',
-                                        href: '/audit-log',
-                                        icon: ShieldCheck,
+                                        title: 'Dashboard',
+                                        href: dashboard(),
+                                        icon: LayoutGrid,
                                     },
+                                ]
+                              : []),
+                          ...(isDriver
+                              ? [
                                     {
-                                        title: 'Pengaturan Aplikasi',
-                                        href: '/app-settings',
-                                        icon: Settings2,
+                                        title: 'Dashboard Saya',
+                                        href: driverDashboard(),
+                                        icon: LayoutGrid,
                                     },
                                 ]
                               : []),
@@ -148,62 +110,12 @@ export function AppSidebar() {
               ]
             : []),
 
-        // ── Driver ──────────────────────────────────────────────
-        ...(isDriver
-            ? [
-                  {
-                      label: 'Driver',
-                      defaultOpen: true,
-                      items: [
-                          {
-                              title: 'Dashboard Saya',
-                              href: driverDashboard(),
-                              icon: LayoutGrid,
-                          },
-                          // Admin/manager sudah punya menu "Temuan P2H" di grup Manajemen
-                          ...(!isAdminOrManager
-                              ? [
-                                    {
-                                        title: 'Temuan Saya',
-                                        href: '/p2h/findings',
-                                        icon: Wrench,
-                                    },
-                                ]
-                              : []),
-                          ...(isStaff
-                              ? [
-                                    {
-                                        title: 'Monitoring PA',
-                                        href: '/monitoring',
-                                        icon: Activity,
-                                    },
-                                    {
-                                        title: 'Monitoring P2H',
-                                        href: '/p2h-compliance',
-                                        icon: CalendarCheck,
-                                    },
-                                ]
-                              : []),
-                      ],
-                  },
-              ]
-            : []),
-
-        // ── Operasional (all roles) ──────────────────────────────
+        // ── P2H (semua role) ─────────────────────────────────────
         {
-            label: 'Operasional',
-            defaultOpen: true,
+            label: 'P2H',
             items: [
-                {
-                    title: 'Form P2H',
-                    href: '/p2h/form',
-                    icon: ClipboardPlus,
-                },
-                {
-                    title: 'Riwayat P2H',
-                    href: '/p2h',
-                    icon: ClipboardList,
-                },
+                { title: 'Form P2H', href: '/p2h/form', icon: ClipboardPlus },
+                { title: 'Riwayat P2H', href: '/p2h', icon: ClipboardList },
                 ...(canApprove
                     ? [
                           {
@@ -214,14 +126,65 @@ export function AppSidebar() {
                           },
                       ]
                     : []),
-                {
-                    title: 'Notifikasi',
-                    href: '/notifications',
-                    icon: Bell,
-                    badge: unreadCount,
-                },
+                ...(isAdminOrManager || isDriver
+                    ? [
+                          {
+                              title: isAdminOrManager
+                                  ? 'Temuan P2H'
+                                  : 'Temuan Saya',
+                              href: '/p2h/findings',
+                              icon: Wrench,
+                          },
+                      ]
+                    : []),
             ],
         },
+
+        // ── Monitoring (admin/manager + staf pemantau) ───────────
+        ...(isAdminOrManager || isStaff
+            ? [
+                  {
+                      label: 'Monitoring',
+                      items: [
+                          {
+                              title: 'Monitoring P2H',
+                              href: '/p2h-compliance',
+                              icon: CalendarCheck,
+                              activeMatch: pageTabHrefs('p2hMonitoring'),
+                          },
+                          {
+                              title: isAdminOrManager
+                                  ? 'Kinerja Unit'
+                                  : 'Monitoring PA',
+                              href: '/monitoring',
+                              icon: Activity,
+                              activeMatch: pageTabHrefs('unitPerformance'),
+                          },
+                          ...(isAdminOrManager
+                              ? [
+                                    {
+                                        title: 'Laporan P2H',
+                                        href: '/p2h/daily-summary',
+                                        icon: MessageSquareText,
+                                        activeMatch: pageTabHrefs('p2hReport'),
+                                    },
+                                ]
+                              : []),
+                      ],
+                  },
+              ]
+            : []),
+
+        // ── Administrasi (admin/manager) ─────────────────────────
+        ...(isAdminOrManager
+            ? [
+                  {
+                      label: 'Administrasi',
+                      defaultOpen: onAdminPage,
+                      items: adminItems,
+                  },
+              ]
+            : []),
     ];
 
     return (

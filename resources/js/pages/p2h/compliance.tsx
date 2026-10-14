@@ -11,6 +11,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PageTabs } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -625,6 +626,7 @@ export default function P2hCompliancePage({
         <>
             <Head title="Monitoring P2H — Compliance Matrix" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="p2hMonitoring" />
                 {/* ── Page Header ── */}
                 <div className="flex flex-col gap-1">
                     <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">

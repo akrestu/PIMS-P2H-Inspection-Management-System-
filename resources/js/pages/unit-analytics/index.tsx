@@ -7,6 +7,7 @@ import {
     Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PageTabs } from '@/components/page-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,6 +145,7 @@ export default function UnitAnalytics({
         <>
             <Head title="Analitik Unit" />
             <div className="flex flex-col gap-5 p-4 md:p-6">
+                <PageTabs group="unitPerformance" />
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                     <div>
                         <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
