@@ -162,3 +162,9 @@ Artisan::command('p2h:sync-downtime {--days=30 : Proses P2H N hari terakhir}', f
 Schedule::command('p2h:remind-overdue-findings')->dailyAt(config('p2h.findings.overdue_reminder_time'));
 Schedule::command('p2h:remind-missing')->dailyAt(config('p2h.missing_reminder_time'));
 Schedule::command('p2h:escalate-pending-approvals')->everyFifteenMinutes()->withoutOverlapping();
+
+// Hosting (Plesk) tanpa proses worker permanen: proses antrean notifikasi lewat scheduler,
+// berhenti saat antrean kosong agar tidak melewati jendela 1 menit cron schedule:run
+Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
+    ->everyMinute()
+    ->withoutOverlapping();
