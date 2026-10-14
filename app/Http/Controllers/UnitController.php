@@ -238,6 +238,72 @@ class UnitController extends Controller
     {
         $unit = Unit::withTrashed()->findOrFail($id);
         $noUnit = $unit->no_unit;
+        $sessionCount = $this->purge($unit);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Unit dihapus permanen',
+            'description' => "Unit {$noUnit} beserta {$sessionCount} P2H terkait telah dihapus permanen dari sistem.",
+        ]);
+
+        return redirect()->route('units.trashed');
+    }
+
+    /** Pulihkan beberapa unit dari sampah sekaligus. */
+    public function restoreBatch(Request $request): RedirectResponse
+    {
+        $units = Unit::onlyTrashed()->whereIn('id', $this->batchIds($request))->get();
+
+        foreach ($units as $unit) {
+            $unit->restore();
+
+            activity('unit')
+                ->causedBy($request->user())
+                ->performedOn($unit)
+                ->log("Memulihkan unit (batch): {$unit->no_unit}");
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$units->count()} unit berhasil dipulihkan",
+            'description' => 'Unit yang dipilih telah dikembalikan ke daftar unit aktif.',
+        ]);
+
+        return redirect()->route('units.trashed');
+    }
+
+    /** Hapus permanen beberapa unit di sampah beserta riwayat P2H-nya. */
+    public function forceDestroyBatch(Request $request): RedirectResponse
+    {
+        $units = Unit::onlyTrashed()->whereIn('id', $this->batchIds($request))->get();
+        $sessionCount = $units->sum(fn (Unit $unit) => $this->purge($unit));
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$units->count()} unit dihapus permanen",
+            'description' => "Beserta {$sessionCount} P2H terkait telah dihapus permanen dari sistem.",
+        ]);
+
+        return redirect()->route('units.trashed');
+    }
+
+    /** @return list<int> */
+    private function batchIds(Request $request): array
+    {
+        return $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ])['ids'];
+    }
+
+    /**
+     * Hapus permanen satu unit beserta seluruh P2H, temuan, dan file terkait.
+     *
+     * @return int jumlah sesi P2H yang ikut terhapus
+     */
+    private function purge(Unit $unit): int
+    {
+        $noUnit = $unit->no_unit;
 
         $sessionIds = P2hSession::withTrashed()->where('unit_id', $unit->id)->pluck('id');
         $filesToDelete = P2hUserEntry::withTrashed()
@@ -282,13 +348,7 @@ class UnitController extends Controller
             ->withProperties(['no_unit' => $noUnit, 'p2h_sessions_deleted' => $sessionCount])
             ->log("Menghapus permanen unit: {$noUnit} (beserta {$sessionCount} P2H terkait)");
 
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => 'Unit dihapus permanen',
-            'description' => "Unit {$noUnit} beserta {$sessionCount} P2H terkait telah dihapus permanen dari sistem.",
-        ]);
-
-        return redirect()->route('units.trashed');
+        return $sessionCount;
     }
 
     public function export(): BinaryFileResponse

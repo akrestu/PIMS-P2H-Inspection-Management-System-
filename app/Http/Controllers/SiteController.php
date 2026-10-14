@@ -220,4 +220,73 @@ class SiteController extends Controller
 
         return redirect()->route('sites.trashed');
     }
+
+    /** Pulihkan beberapa site dari sampah sekaligus. */
+    public function restoreBatch(Request $request): RedirectResponse
+    {
+        $sites = Site::onlyTrashed()->whereIn('id', $this->batchIds($request))->get();
+
+        foreach ($sites as $site) {
+            $site->restore();
+
+            activity('site')
+                ->causedBy($request->user())
+                ->performedOn($site)
+                ->log("Memulihkan site (batch): {$site->name}");
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$sites->count()} site berhasil dipulihkan",
+            'description' => 'Site yang dipilih telah dikembalikan ke daftar site aktif.',
+        ]);
+
+        return redirect()->route('sites.trashed');
+    }
+
+    /** Hapus permanen beberapa site; site yang masih dipakai unit/user dilewati. */
+    public function forceDestroyBatch(Request $request): RedirectResponse
+    {
+        $sites = Site::onlyTrashed()->whereIn('id', $this->batchIds($request))->get();
+        $deleted = 0;
+
+        foreach ($sites as $site) {
+            $inUse = Unit::withTrashed()->where('site_id', $site->id)->exists()
+                || User::where('site_id', $site->id)->exists();
+
+            if ($inUse) {
+                continue;
+            }
+
+            $name = $site->name;
+            $site->forceDelete();
+            $deleted++;
+
+            activity('site')
+                ->causedBy($request->user())
+                ->withProperties(['name' => $name])
+                ->log("Menghapus permanen site (batch): {$name}");
+        }
+
+        $skipped = $sites->count() - $deleted;
+
+        Inertia::flash('toast', [
+            'type' => $skipped > 0 ? 'warning' : 'success',
+            'message' => "{$deleted} site dihapus permanen",
+            'description' => $skipped > 0
+                ? "{$skipped} site dilewati karena masih digunakan unit atau user."
+                : 'Site yang dipilih telah dihapus permanen dari sistem.',
+        ]);
+
+        return redirect()->route('sites.trashed');
+    }
+
+    /** @return list<int> */
+    private function batchIds(Request $request): array
+    {
+        return $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ])['ids'];
+    }
 }

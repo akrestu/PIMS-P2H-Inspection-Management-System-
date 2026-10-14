@@ -12,9 +12,14 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
 import { SortableHead, sortParams } from '@/components/sortable-head';
+import {
+    TrashBatchActions,
+    useRowSelection,
+} from '@/components/trash-batch-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -208,6 +213,7 @@ export default function UnitsTrashed({ units, filters }: Props) {
         .props;
     const roles = auth?.user?.roles ?? [];
     const isAdmin = roles.includes('admin');
+    const selection = useRowSelection(units.data.map((x) => x.id));
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [restoreUnit, setRestoreUnit] = useState<TrashedUnit | null>(null);
@@ -275,12 +281,40 @@ export default function UnitsTrashed({ units, filters }: Props) {
                     </CardContent>
                 </Card>
 
+                <TrashBatchActions
+                    selected={selection.selected}
+                    noun="unit"
+                    restoreUrl="/units/trashed/restore"
+                    forceDeleteUrl="/units/trashed/force"
+                    canForceDelete={isAdmin}
+                    forceDeleteNote="Unit yang dipilih beserta seluruh riwayat P2H terkait akan dihapus permanen."
+                    onClear={selection.clear}
+                />
+
                 <Card>
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
+                                        <TableHead className="w-10 pl-4">
+                                            <Checkbox
+                                                checked={
+                                                    selection.allSelected
+                                                        ? true
+                                                        : selection.someSelected
+                                                          ? 'indeterminate'
+                                                          : false
+                                                }
+                                                onCheckedChange={
+                                                    selection.toggleAll
+                                                }
+                                                aria-label="Pilih semua"
+                                                disabled={
+                                                    units.data.length === 0
+                                                }
+                                            />
+                                        </TableHead>
                                         <SortableHead column="no_unit">
                                             No. Unit
                                         </SortableHead>
@@ -310,7 +344,7 @@ export default function UnitsTrashed({ units, filters }: Props) {
                                 <TableBody>
                                     {units.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6}>
+                                            <TableCell colSpan={7}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Trash className="h-8 w-8 text-muted-foreground" />
@@ -329,7 +363,29 @@ export default function UnitsTrashed({ units, filters }: Props) {
                                         </TableRow>
                                     ) : (
                                         units.data.map((unit) => (
-                                            <TableRow key={unit.id}>
+                                            <TableRow
+                                                key={unit.id}
+                                                data-state={
+                                                    selection.isSelected(
+                                                        unit.id,
+                                                    )
+                                                        ? 'selected'
+                                                        : undefined
+                                                }
+                                            >
+                                                <TableCell className="pl-4">
+                                                    <Checkbox
+                                                        checked={selection.isSelected(
+                                                            unit.id,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            selection.toggle(
+                                                                unit.id,
+                                                            )
+                                                        }
+                                                        aria-label={`Pilih ${unit.no_unit}`}
+                                                    />
+                                                </TableCell>
                                                 <TableCell>
                                                     <span className="font-mono font-semibold">
                                                         {unit.no_unit}

@@ -160,8 +160,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
         Route::get('/app-settings', [AppSettingController::class, 'index'])->name('app-settings.index');
         Route::post('/app-settings', [AppSettingController::class, 'update'])->name('app-settings.update');
-        Route::delete('/units/{id}/force', [UnitController::class, 'forceDestroy'])->name('units.force-delete');
-        Route::delete('/sites/{id}/force', [SiteController::class, 'forceDestroy'])->name('sites.force-delete');
+        Route::delete('/units/{id}/force', [UnitController::class, 'forceDestroy'])->whereNumber('id')->name('units.force-delete');
+        Route::delete('/sites/{id}/force', [SiteController::class, 'forceDestroy'])->whereNumber('id')->name('sites.force-delete');
+        Route::delete('/units/trashed/force', [UnitController::class, 'forceDestroyBatch'])->name('units.batch-force-delete');
+        Route::delete('/sites/trashed/force', [SiteController::class, 'forceDestroyBatch'])->name('sites.batch-force-delete');
     });
 
     // Admin & Manager
@@ -171,13 +173,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/units/import', [UnitController::class, 'import'])->middleware('throttle:5,1')->name('units.import');
         Route::delete('/units/batch', [UnitController::class, 'destroyBatch'])->name('units.batch-destroy');
         Route::get('/units/trashed', [UnitController::class, 'trashed'])->name('units.trashed');
-        Route::post('/units/{id}/restore', [UnitController::class, 'restore'])->name('units.restore');
+        Route::post('/units/{id}/restore', [UnitController::class, 'restore'])->whereNumber('id')->name('units.restore');
+        Route::post('/units/trashed/restore', [UnitController::class, 'restoreBatch'])->name('units.batch-restore');
         Route::patch('/units/{unit}/status', [UnitController::class, 'updateStatus'])->name('units.status');
         Route::resource('units', UnitController::class)->except(['show']);
 
         Route::delete('/sites/batch', [SiteController::class, 'destroyBatch'])->name('sites.batch-destroy');
         Route::get('/sites/trashed', [SiteController::class, 'trashed'])->name('sites.trashed');
-        Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');
+        Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->whereNumber('id')->name('sites.restore');
+        Route::post('/sites/trashed/restore', [SiteController::class, 'restoreBatch'])->name('sites.batch-restore');
         Route::resource('sites', SiteController::class)->except(['show']);
 
         Route::delete('/users/batch', [UserController::class, 'destroyBatch'])->name('users.batch-destroy');

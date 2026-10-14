@@ -11,9 +11,14 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
 import { SortableHead, sortParams } from '@/components/sortable-head';
+import {
+    TrashBatchActions,
+    useRowSelection,
+} from '@/components/trash-batch-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -203,6 +208,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
         .props;
     const roles = auth?.user?.roles ?? [];
     const isAdmin = roles.includes('admin');
+    const selection = useRowSelection(sites.data.map((x) => x.id));
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [restoreSite, setRestoreSite] = useState<TrashedSite | null>(null);
@@ -270,12 +276,40 @@ export default function SitesTrashed({ sites, filters }: Props) {
                     </CardContent>
                 </Card>
 
+                <TrashBatchActions
+                    selected={selection.selected}
+                    noun="site"
+                    restoreUrl="/sites/trashed/restore"
+                    forceDeleteUrl="/sites/trashed/force"
+                    canForceDelete={isAdmin}
+                    forceDeleteNote="Site yang dipilih akan dihapus permanen. Site yang masih digunakan unit atau user akan dilewati."
+                    onClear={selection.clear}
+                />
+
                 <Card>
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
+                                        <TableHead className="w-10 pl-4">
+                                            <Checkbox
+                                                checked={
+                                                    selection.allSelected
+                                                        ? true
+                                                        : selection.someSelected
+                                                          ? 'indeterminate'
+                                                          : false
+                                                }
+                                                onCheckedChange={
+                                                    selection.toggleAll
+                                                }
+                                                aria-label="Pilih semua"
+                                                disabled={
+                                                    sites.data.length === 0
+                                                }
+                                            />
+                                        </TableHead>
                                         <SortableHead column="name">
                                             Nama Site
                                         </SortableHead>
@@ -293,7 +327,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
                                 <TableBody>
                                     {sites.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={3}>
+                                            <TableCell colSpan={4}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Trash className="h-8 w-8 text-muted-foreground" />
@@ -312,7 +346,29 @@ export default function SitesTrashed({ sites, filters }: Props) {
                                         </TableRow>
                                     ) : (
                                         sites.data.map((site) => (
-                                            <TableRow key={site.id}>
+                                            <TableRow
+                                                key={site.id}
+                                                data-state={
+                                                    selection.isSelected(
+                                                        site.id,
+                                                    )
+                                                        ? 'selected'
+                                                        : undefined
+                                                }
+                                            >
+                                                <TableCell className="pl-4">
+                                                    <Checkbox
+                                                        checked={selection.isSelected(
+                                                            site.id,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            selection.toggle(
+                                                                site.id,
+                                                            )
+                                                        }
+                                                        aria-label={`Pilih ${site.name}`}
+                                                    />
+                                                </TableCell>
                                                 <TableCell>
                                                     <span className="inline-flex items-center gap-1.5 font-medium">
                                                         <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
