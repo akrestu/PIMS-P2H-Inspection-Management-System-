@@ -96,8 +96,8 @@ test('daily report shows the final BD decision, system recommendation and reason
     ])->and($digest['units'][0]['kondisi'])->toBe('tidak_layak');
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('*1. LV-77*', '*Status:* ❌ *BREAKDOWN (BD)*')
-        ->toContain('*Alasan:* _Rem tidak pakem saat uji jalan_', '- Rem — _Kampas tipis_ ⛔ *AA*', '⛔ AA = bahaya kritis')
+        ->toContain('*BREAKDOWN (1)*', '1. *LV-77*')
+        ->toContain('_Alasan: Rem tidak pakem saat uji jalan_', '- Rem: _Kampas tipis_ (*AA*)', 'AA = bahaya kritis')
         ->not->toContain('rekomendasi sistem');
 });
 
@@ -107,61 +107,27 @@ test('daily report flags a Layak decision that overrides a BD recommendation', f
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
-    expect($text)->toContain('*Status:* ⚠️ *LAYAK PAKAI — ADA TEMUAN*', '⚠️ _Keputusan tidak sesuai rekomendasi sistem (BD)_', '*Alasan:* _Sudah diperbaiki di lokasi_');
+    expect($text)->toContain('*LAYAK, ADA TEMUAN (1)*', '_Keputusan tidak sesuai rekomendasi sistem (BD)_', '_Alasan: Sudah diperbaiki di lokasi_');
 });
 
-test('findings sharing the same PIC, action and status are listed once without repeated lines', function () {
+test('daily report lists one finding per line without PIC, progress, action or empty notes', function () {
     $pic = User::factory()->create(['name' => 'Zaki Muhammad']);
     $entry = integrityEntry('BD', 'Perlu perbaikan 4x4');
-    foreach (['Wipper' => 'Wipper kiri rusak', 'APAR*' => 'Tidak ada', 'Traffic cone*' => 'Tidak ada'] as $item => $ket) {
+    foreach (['Wipper' => 'Wipper kiri rusak', 'APAR*' => 'Tidak ada', 'Traffic cone*' => 'N/A'] as $item => $ket) {
         P2hChecklistAnswer::create(integrityAnswer($entry, $item, 'Tidak Layak', 'A', $ket));
     }
-    P2hFinding::query()->update(['pic_user_id' => $pic->id]);
+    P2hFinding::query()->update(['pic_user_id' => $pic->id, 'tindakan_perbaikan' => 'Ganti wiper']);
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
     expect($text)
-        ->toContain('*Temuan (3):*', '- APAR — _Tidak ada_', '- Traffic cone — _Tidak ada_', '*PIC:* Zaki Muhammad · *Progress:* 🔴 Open', '*Tindakan:* _Belum ditentukan_')
+        ->toContain('- Wipper: _Wipper kiri rusak_', "- APAR\n", '- Traffic cone')
         ->not->toContain('APAR*')
-        ->not->toContain('[A]')
-        ->and(substr_count($text, 'Zaki Muhammad'))->toBe(1)
-        ->and(substr_count($text, '🔴 Open'))->toBe(1);
-});
-
-test('findings with different PIC or status show those details per finding on one line', function () {
-    $entry = integrityEntry();
-    P2hChecklistAnswer::create(integrityAnswer($entry, 'Lampu', 'Tidak Layak', 'A', 'Mati'));
-    P2hChecklistAnswer::create(integrityAnswer($entry, 'Klakson', 'Tidak Layak', 'A', 'Lemah'));
-    P2hFinding::where('item_nama', 'Lampu')->update(['status' => 'progress', 'tindakan_perbaikan' => 'Ganti bohlam']);
-
-    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
-
-    expect($text)
-        ->toContain('- Lampu — _Mati_', '↳ *Progress:* 🟡 On Progress · *Tindakan:* _Ganti bohlam_')
-        ->toContain('*PIC:* _Belum ditunjuk_')->not->toContain('━');
-});
-
-test('findings with mixed PIC are grouped per PIC so a name is written once', function () {
-    $zaki = User::factory()->create(['name' => 'Zaki Muhammad']);
-    $entry = integrityEntry('BD');
-    foreach (['Wipper' => 'Rusak', 'APAR' => 'Tidak ada', 'Kebersihan Ruang Kabin' => 'Kotor', 'Traffic cone' => 'Tidak ada'] as $item => $ket) {
-        P2hChecklistAnswer::create(integrityAnswer($entry, $item, 'Tidak Layak', 'A', $ket));
-    }
-    P2hFinding::where('item_nama', '!=', 'Kebersihan Ruang Kabin')->update(['pic_user_id' => $zaki->id]);
-
-    $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
-
-    expect(substr_count($text, 'Zaki Muhammad'))->toBe(1)
-        ->and(substr_count($text, 'Belum ditunjuk'))->toBe(1)
-        // Kelompok PIC yang sudah ditunjuk di atas, belum ditunjuk di akhir
-        ->and($text)->toContain('*PIC:* Zaki Muhammad
-- Wipper — _Rusak_
-- APAR — _Tidak ada_
-- Traffic cone — _Tidak ada_
-*PIC:* _Belum ditunjuk_
-- Kebersihan Ruang Kabin — _Kotor_')
-        ->and($text)->toContain('*Progress:* 🔴 Open')
-        ->not->toContain('↳ *PIC:*');
+        ->not->toContain('Tidak ada')
+        ->not->toContain('N/A')
+        ->not->toContain('Zaki Muhammad')
+        ->not->toContain('Ganti wiper')
+        ->not->toContain('Open');
 });
 
 test('findings from rejected entries or deleted sessions are excluded from reports and reminders', function () {

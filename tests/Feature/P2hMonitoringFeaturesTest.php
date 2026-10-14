@@ -141,7 +141,7 @@ test('the same item failing 3 times in 30 days is flagged as recurring', functio
 
     expect($findings['Rem']['berulang'])->toBe(3)
         ->and($findings['Lampu']['berulang'])->toBeNull()
-        ->and(P2hDigestFormatter::toWhatsApp($digest))->toContain('- Rem _(berulang 3x)_', 'berulang = item yang sama bermasalah dalam 30 hari terakhir');
+        ->and(P2hDigestFormatter::toWhatsApp($digest))->toContain('- Rem (berulang 3x)', 'berulang = item yang sama bermasalah dalam 30 hari terakhir');
 });
 
 // ── #5 Analitik BBM ──────────────────────────────────────────────────────────

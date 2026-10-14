@@ -42,6 +42,21 @@ class AppSetting extends Model
         return (bool) static::cached('unit_analytics_enabled', false);
     }
 
+    /** Token link rekap P2H publik; null = link dinonaktifkan */
+    public static function publicReportToken(): ?string
+    {
+        $token = static::cached('public_report_token');
+
+        return is_string($token) && $token !== '' ? $token : null;
+    }
+
+    public static function publicReportUrl(): ?string
+    {
+        $token = static::publicReportToken();
+
+        return $token ? route('public.report', $token) : null;
+    }
+
     /** @return list<string> */
     public static function shifts(): array
     {

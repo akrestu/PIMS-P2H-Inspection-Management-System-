@@ -2,24 +2,24 @@
 
 namespace App\Support;
 
+use App\Models\AppSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
  * Mengubah hasil DailyP2hDigest menjadi teks Daily Report siap tempel di WhatsApp.
  *
- * Dirancang untuk grup WhatsApp di HP: tanpa garis pemisah dan indentasi
- * (WhatsApp tidak mempertahankannya saat baris terlipat), label *tebal*,
- * teks bebas dari lapangan _miring_, daftar "- " bawaan WhatsApp, dan unit
- * yang layak tanpa temuan diringkas menjadi satu baris.
+ * Dibuat ringkas untuk grup WhatsApp harian: angka utama di atas, unit
+ * dikelompokkan per kondisi (BD → ada temuan → layak → belum P2H), satu temuan
+ * satu baris. Detail tindak lanjut (PIC, progress, tindakan) ada di menu Temuan.
+ * Tanpa indentasi/garis pemisah karena WhatsApp tidak mempertahankannya.
  */
 class P2hDigestFormatter
 {
-    public const STATUS_LABEL = [
-        'open' => '🔴 Open',
-        'progress' => '🟡 On Progress',
-        'closed' => '🟢 Closed',
-    ];
+    /** Keterangan yang tidak menambah informasi (item jelas tidak ada/tidak berfungsi) */
+    private const EMPTY_NOTES = '/^(n\/?a|-+|\.+|x|kosong|nihil|tidak ada|tdk ada|gak ada|ga ada|tidak|rusak|ok)$/i';
+
+    private const JENIS_SINGKAT = ['Light Vehicle' => 'LV', 'Bus' => 'Bus'];
 
     public static function toWhatsApp(array $digest): string
     {
@@ -33,6 +33,14 @@ class P2hDigestFormatter
             "_{$scope} · {$digest['tanggal_label']}_",
         ];
 
+        $lines[] = '';
+        if (($digest['pa'] ?? []) !== []) {
+            $lines[] = 'PA: '.collect($digest['pa'])
+                ->map(fn ($g, $jenis) => (self::JENIS_SINGKAT[$jenis] ?? $jenis).' *'.self::percent($g['pa']).'*'
+                    .($g['bd'] > 0 ? " ({$g['bd']} unit tidak Ready)" : ''))
+                ->implode(' · ');
+        }
+
         $byDate = collect($digest['units'])->groupBy('tanggal');
         $belum = $digest['belum_p2h'] ?? [];
         $total = $digest['stats']['total_unit'] ?? null;
@@ -44,178 +52,102 @@ class P2hDigestFormatter
 
             if ($digest['multi_hari'] ?? false) {
                 $lines[] = '';
-                $lines[] = '🗓️ *'.strtoupper(Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d M Y')).'*';
+                $lines[] = '*'.strtoupper(Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d M Y')).'*';
             }
-
             if ($total !== null) {
-                $lines[] = '';
-                $lines[] = "📋 Sudah P2H: *{$units->count()}/{$total} unit*";
+                $lines[] = "Sudah P2H: *{$units->count()} dari {$total} unit*";
             }
 
             $lines = [...$lines, ...self::dayLines($units)];
 
             if ($missing !== []) {
                 $lines[] = '';
-                $lines[] = '⏳ *BELUM P2H ('.count($missing).' unit)*';
-                $lines[] = collect($missing)->map(fn ($u) => self::clean($u))->implode(', ');
-            }
-        }
-
-        if (($digest['pa'] ?? []) !== []) {
-            $lines[] = '';
-            $lines[] = '*PHYSICAL AVAILABILITY (PA)*';
-            foreach ($digest['pa'] as $jenis => $group) {
-                $lines[] = self::paLine($jenis, $group);
+                $lines[] = '*BELUM P2H ('.count($missing).')*';
+                $lines[] = self::unitList($missing);
             }
         }
 
         // Keterangan simbol cukup sekali di akhir, hanya bila simbolnya dipakai
         $findings = collect($digest['units'])->flatMap(fn ($u) => $u['findings']);
         $legend = collect([
-            $findings->contains(fn ($f) => $f['kode_bahaya'] === 'AA') ? '⛔ AA = bahaya kritis' : null,
+            $findings->contains(fn ($f) => $f['kode_bahaya'] === 'AA') ? 'AA = bahaya kritis' : null,
             $findings->contains(fn ($f) => $f['berulang'] ?? null) ? 'berulang = item yang sama bermasalah dalam '.config('p2h.findings.recurring_window_days').' hari terakhir' : null,
+            $findings->contains(fn ($f) => $f['overdue'] ?? false) ? null : null,
         ])->filter();
 
         $lines[] = '';
         if ($legend->isNotEmpty()) {
             $lines[] = '_Ket: '.$legend->implode(' · ').'_';
         }
-        $lines[] = '_Dikirim dari PIMS - P2H Management System_';
+        if ($url = AppSetting::publicReportUrl()) {
+            $lines[] = '';
+            $lines[] = 'Rekap bulanan: '.$url.'?bulan='.substr($digest['tanggal_selesai'] ?? now()->toDateString(), 0, 7);
+        }
+        $lines[] = '_Detail tindak lanjut: menu Temuan P2H di PIMS_';
 
         return implode("\n", $lines);
     }
 
-    /**
-     * Unit BD dan unit dengan temuan ditulis lengkap (BD lebih dulu);
-     * unit layak tanpa temuan cukup satu baris daftar nomor unit.
-     */
+    /** Satu hari: BD → ada temuan → layak tanpa temuan. */
     private static function dayLines(Collection $units): array
     {
-        $detailed = $units
-            ->filter(fn ($u) => $u['kondisi'] !== 'layak')
-            ->sortBy(fn ($u) => [$u['kondisi'] === 'tidak_layak' ? 0 : 1, $u['no_unit']])
-            ->values();
-        $clean = $units->where('kondisi', 'layak')->values();
+        $isBd = fn ($u) => (($u['keputusan']['final'] ?? null) ?? $u['kondisi_akhir']) === 'BD';
+        $bd = $units->filter($isBd)->sortBy('no_unit', SORT_NATURAL)->values();
+        $temuan = $units->reject($isBd)->filter(fn ($u) => $u['findings'] !== [])->sortBy('no_unit', SORT_NATURAL)->values();
+        $clean = $units->reject($isBd)->filter(fn ($u) => $u['findings'] === [])->values();
 
         $lines = [];
 
-        foreach ($detailed as $i => $unit) {
-            $lines = [...$lines, '', ...self::unitLines($i + 1, $unit)];
+        if ($bd->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = '*BREAKDOWN ('.$bd->count().')*';
+            foreach ($bd as $i => $unit) {
+                $lines = [...$lines, ...self::unitLines($i + 1, $unit, withReason: true)];
+            }
+        }
+
+        if ($temuan->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = '*LAYAK, ADA TEMUAN ('.$temuan->count().')*';
+            foreach ($temuan as $i => $unit) {
+                $lines = [...$lines, ...self::unitLines($i + 1, $unit)];
+            }
         }
 
         if ($clean->isNotEmpty()) {
-            $overrides = $clean->filter(fn ($u) => $u['keputusan']['berbeda_dari_rekomendasi'] ?? false);
-
             $lines[] = '';
-            $lines[] = "✅ *LAYAK TANPA TEMUAN ({$clean->count()} unit)*";
-            $lines[] = $clean->map(fn ($u) => self::clean($u['no_unit']))->implode(', ');
+            $lines[] = '*LAYAK TANPA TEMUAN ('.$clean->count().')*';
+            $lines[] = self::unitList($clean->pluck('no_unit')->all());
 
             // Keputusan yang menyimpang dari rekomendasi sistem tetap perlu terlihat
-            foreach ($overrides as $unit) {
-                $lines[] = '⚠️ *'.self::clean($unit['no_unit']).'* '.self::overrideNote($unit['keputusan']);
+            foreach ($clean->filter(fn ($u) => $u['keputusan']['berbeda_dari_rekomendasi'] ?? false) as $unit) {
+                $lines[] = '*'.self::clean($unit['no_unit']).'*: '.self::overrideNote($unit['keputusan']);
             }
         }
 
         return $lines;
     }
 
-    private static function unitLines(int $no, array $unit): array
+    /** Nomor unit + driver dalam satu baris, lalu satu baris per temuan. */
+    private static function unitLines(int $no, array $unit, bool $withReason = false): array
     {
         $keputusan = $unit['keputusan'] ?? [];
-        $status = ($keputusan['final'] ?? $unit['kondisi_akhir']) === 'BD'
-            ? '❌ *BREAKDOWN (BD)*'
-            : '⚠️ *LAYAK PAKAI — ADA TEMUAN*';
-        $lambung = $unit['no_lambung'] ? ' · '.self::clean($unit['no_lambung']) : '';
-        $drivers = collect($unit['entries'])
-            ->map(fn ($e) => self::clean($e['driver'] ?? '-').($e['shift'] ? " _({$e['shift']})_" : ''))
-            ->unique()
-            ->implode(', ');
+        $drivers = collect($unit['entries'])->pluck('driver')->filter()->map(fn ($d) => self::clean($d))->unique()->implode(', ');
 
-        $lines = [
-            "*{$no}. ".self::clean($unit['no_unit'])."*{$lambung}",
-            "*Status:* {$status}",
-        ];
+        $lines = ["{$no}. *".self::clean($unit['no_unit']).'*'.($drivers !== '' ? " — {$drivers}" : '')];
 
         if ($keputusan['berbeda_dari_rekomendasi'] ?? false) {
-            $lines[] = '⚠️ '.self::overrideNote($keputusan);
+            $lines[] = self::overrideNote($keputusan);
         }
 
-        $lines[] = "*Driver:* {$drivers}";
-
-        if ($keputusan['alasan'] ?? null) {
-            $lines[] = '*Alasan:* _'.self::clean($keputusan['alasan']).'_';
-        }
-
-        return [...$lines, ...self::findingsBlock($unit['findings'])];
-    }
-
-    private static function overrideNote(array $keputusan): string
-    {
-        return "_Keputusan tidak sesuai rekomendasi sistem ({$keputusan['rekomendasi_sistem']})_";
-    }
-
-    /**
-     * Daftar temuan satu unit. PIC, tindakan, dan status yang sama untuk semua
-     * temuan ditulis sekali. Bila PIC berbeda-beda, temuan dikelompokkan per PIC
-     * (nama PIC ditulis sekali per kelompok, "belum ditunjuk" paling akhir) agar
-     * nama yang sama tidak berulang di setiap baris. Tindakan/status yang berbeda
-     * ditulis di bawah baris temuannya.
-     */
-    private static function findingsBlock(array $findings): array
-    {
-        if ($findings === []) {
-            return [];
+        // Alasan ditulis untuk unit BD dan keputusan yang menyimpang dari rekomendasi
+        if (($withReason || ($keputusan['berbeda_dari_rekomendasi'] ?? false)) && ($keputusan['alasan'] ?? null)) {
+            $lines[] = '_Alasan: '.self::clean($keputusan['alasan']).'_';
         }
 
         // Kode bahaya AA (kritis) selalu di atas
-        $findings = collect($findings)->sortBy(fn ($f) => $f['kode_bahaya'] === 'AA' ? 0 : 1)->values();
-
-        $pic = fn ($f) => '*PIC:* '.($f['pic'] ? self::clean($f['pic']) : '_Belum ditunjuk_');
-        $fields = [
-            'status' => fn ($f) => '*Progress:* '.(self::STATUS_LABEL[$f['status']] ?? $f['status'])
-                .($f['target'] ? ' _(target '.Carbon::parse($f['target'])->format('d/m/Y').')_' : ''),
-            'tindakan' => fn ($f) => '*Tindakan:* _'.($f['tindakan'] ? self::clean($f['tindakan']) : 'Belum ditentukan').'_',
-        ];
-        $shared = collect($fields)->filter(fn ($render) => $findings->map($render)->unique()->count() === 1);
-        $varying = collect($fields)->diffKeys($shared);
-        $picShared = $findings->map($pic)->unique()->count() === 1;
-
-        $lines = ['', '*Temuan ('.$findings->count().'):*'];
-
-        // Urutan kelompok mengikuti temuan pertamanya (AA tetap di atas); belum ditunjuk di akhir
-        $groups = $picShared
-            ? collect([$findings])
-            : $findings->groupBy(fn ($f) => $pic($f))
-                ->sortBy(fn ($group) => $group->first()['pic'] ? 0 : 1);
-
-        foreach ($groups as $groupPic => $group) {
-            if (! $picShared) {
-                $lines[] = $groupPic;
-            }
-
-            foreach ($group as $f) {
-                $lines[] = self::findingLine($f);
-
-                if ($varying->isNotEmpty()) {
-                    $lines[] = '↳ '.$varying->map(fn ($render) => $render($f))->implode(' · ');
-                }
-            }
-        }
-
-        if ($picShared) {
-            $shared = collect(['pic' => $pic])->merge($shared);
-        }
-
-        if ($shared->isNotEmpty()) {
-            $lines[] = '';
-            // PIC & progress satu baris; tindakan (bisa panjang) di baris sendiri
-            $picStatus = $shared->only(['pic', 'status']);
-            if ($picStatus->isNotEmpty()) {
-                $lines[] = $picStatus->map(fn ($render) => $render($findings->first()))->implode(' · ');
-            }
-            if ($shared->has('tindakan')) {
-                $lines[] = $shared['tindakan']($findings->first());
-            }
+        foreach (collect($unit['findings'])->sortBy(fn ($f) => $f['kode_bahaya'] === 'AA' ? 0 : 1) as $f) {
+            $lines[] = self::findingLine($f);
         }
 
         return $lines;
@@ -223,16 +155,35 @@ class P2hDigestFormatter
 
     private static function findingLine(array $f): string
     {
-        // Penanda penting ditebalkan agar langsung tertangkap
-        $notes = collect([
-            $f['kode_bahaya'] === 'AA' ? '⛔ *AA*' : null,
-            ($f['berulang'] ?? null) ? "_(berulang {$f['berulang']}x)_" : null,
-            ($f['overdue'] ?? false) ? '⏰ *Lewat target*' : null,
+        $note = self::clean($f['keterangan'] ?? '');
+        $markers = collect([
+            $f['kode_bahaya'] === 'AA' ? '*AA*' : null,
+            ($f['berulang'] ?? null) ? "berulang {$f['berulang']}x" : null,
+            ($f['overdue'] ?? false) ? 'lewat target' : null,
         ])->filter();
 
         return '- '.self::clean($f['item'])
-            .($f['keterangan'] ? ' — _'.self::clean($f['keterangan']).'_' : '')
-            .($notes->isNotEmpty() ? ' '.$notes->implode(' ') : '');
+            .($note !== '' && ! preg_match(self::EMPTY_NOTES, $note) ? ": _{$note}_" : '')
+            .($markers->isNotEmpty() ? ' ('.$markers->implode(', ').')' : '');
+    }
+
+    private static function overrideNote(array $keputusan): string
+    {
+        return "_Keputusan tidak sesuai rekomendasi sistem ({$keputusan['rekomendasi_sistem']})_";
+    }
+
+    /** Daftar nomor unit dalam satu baris, urut alami ("WLV 8" sebelum "WLV 10"). */
+    private static function unitList(array $units): string
+    {
+        return collect($units)
+            ->map(fn ($u) => self::clean($u))
+            ->sortBy(fn ($u) => preg_replace('/\s+/', '', $u), SORT_NATURAL | SORT_FLAG_CASE)
+            ->implode(', ');
+    }
+
+    private static function percent(?float $value): string
+    {
+        return $value !== null ? str_replace('.', ',', (string) $value).'%' : '-';
     }
 
     /**
@@ -247,8 +198,6 @@ class P2hDigestFormatter
     /** @param  array{pa: ?float, total: int, bd: int}  $group */
     public static function paLine(string $jenis, array $group): string
     {
-        $pa = $group['pa'] !== null ? str_replace('.', ',', (string) $group['pa']).'%' : '-';
-
-        return "- {$jenis}: *{$pa}* ({$group['total']} unit, {$group['bd']} tidak Ready)";
+        return "- {$jenis}: *".self::percent($group['pa'])."* ({$group['total']} unit, {$group['bd']} tidak Ready)";
     }
 }

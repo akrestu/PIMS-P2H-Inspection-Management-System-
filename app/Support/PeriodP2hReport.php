@@ -237,8 +237,8 @@ class PeriodP2hReport
         $lines = [
             '*PERIODIC REPORT P2H*',
             '_Evaluasi Pemeriksaan Harian Kendaraan_',
-            "🗓️ {$r['periode']['label']} ({$r['periode']['jumlah_hari']} hari)",
-            "🚙 {$scope}",
+            "Periode : {$r['periode']['label']} ({$r['periode']['jumlah_hari']} hari)",
+            "Unit : {$scope}",
             '━━━━━━━━━━━━━━━',
             '',
             $section('KEPATUHAN P2H'),
@@ -247,7 +247,7 @@ class PeriodP2hReport
             '',
             $section('TEMUAN'),
             "• Total temuan : {$t['total']} (kode AA: {$t['kode_aa']})",
-            "• 🟢 Closed : {$t['closed']} | 🟡 On Progress : {$t['progress']} | 🔴 Open : {$t['open']}",
+            "• Closed : {$t['closed']} | On Progress : {$t['progress']} | Open : {$t['open']}",
             '• Rata-rata penyelesaian : '.($t['rata_rata_hari_penyelesaian'] !== null ? "{$t['rata_rata_hari_penyelesaian']} hari" : '-'),
             "• Belum ada PIC : {$t['tanpa_pic']}",
         ];
@@ -272,10 +272,10 @@ class PeriodP2hReport
             $lines[] = '';
             $lines[] = $section('PERLU PERHATIAN');
             foreach ($r['berulang'] as $row) {
-                $lines[] = "• 🔁 *{$row['no_unit']}* - {$row['item']} berulang {$row['jumlah']}x";
+                $lines[] = "• *{$row['no_unit']}* - {$row['item']} berulang {$row['jumlah']}x";
             }
             foreach ($r['overdue'] as $row) {
-                $lines[] = "• ⏰ *{$row['no_unit']}* - {$row['item']} lewat target {$row['hari_terlambat']} hari (PIC: ".($row['pic'] ?: 'Belum ditunjuk').')';
+                $lines[] = "• *{$row['no_unit']}* - {$row['item']} lewat target {$row['hari_terlambat']} hari (PIC: ".($row['pic'] ?: 'Belum ditunjuk').')';
             }
         }
 
@@ -291,16 +291,15 @@ class PeriodP2hReport
         $kurang = collect($r['checklist'])->filter(fn ($u) => $u['hari_p2h'] < $u['hari_periode']);
         $lines[] = '';
         $lines[] = $section('CHECKLIST P2H PER UNIT');
-        $lines[] = '• ✅ Lengkap setiap hari : '.(count($r['checklist']) - $kurang->count()).' unit';
+        $lines[] = '• Lengkap setiap hari : '.(count($r['checklist']) - $kurang->count()).' unit';
         foreach ($kurang as $u) {
-            $icon = $u['hari_p2h'] === 0 ? '❌' : '⚠️';
-            $lines[] = "• {$icon} *{$u['no_unit']}* - {$u['hari_p2h']}/{$u['hari_periode']} hari";
+            $lines[] = "• *{$u['no_unit']}* - {$u['hari_p2h']}/{$u['hari_periode']} hari".($u['hari_p2h'] === 0 ? ' (tidak P2H)' : '');
         }
 
         // Bagian analisis hanya ada bila ditulis oleh AI
         if ($analysis !== null && trim($analysis) !== '') {
             $lines[] = '';
-            $lines[] = $section('ANALISIS & REKOMENDASI').' 🤖';
+            $lines[] = $section('ANALISIS & REKOMENDASI');
             $lines[] = trim($analysis);
         }
 

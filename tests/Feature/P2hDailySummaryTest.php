@@ -102,8 +102,14 @@ test('digest lists only P2H and findings within the selected date, scoped by sit
 
     $text = P2hDigestFormatter::toWhatsApp($digest);
 
-    expect($text)->toContain('DAILY REPORT P2H', 'LV-01', 'Rem', 'Ganti kampas rem', 'Andi PIC', '🔴 Open')
-        ->toContain('Sudah P2H: *1/2 unit*', "BELUM P2H (1 unit)*\nLV-02")
+    expect($text)->toContain('DAILY REPORT P2H', 'LV-01', 'Rem')
+        ->toContain('Sudah P2H: *1 dari 2 unit*', "BELUM P2H (1)*\nLV-02")
+        // Format profesional tanpa emoji
+        ->not->toMatch('/[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]/u')
+        // PIC, progress, dan tindakan tidak ditulis di laporan harian (ada di menu Temuan)
+        ->not->toContain('Andi PIC')
+        ->not->toContain('Open')
+        ->not->toContain('Ganti kampas rem')
         ->not->toContain('LV-99')
         ->not->toContain('SEBELUMNYA');
 });
@@ -121,7 +127,7 @@ test('digest over a date range includes every P2H in the range grouped by date',
         ->and($digest['units'][0]['tanggal'])->toBe(today()->subDays(2)->toDateString());
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('🗓️ *'.strtoupper(today()->subDays(2)->locale('id')->translatedFormat('l, d M Y')).'*')
+        ->toContain('*'.strtoupper(today()->subDays(2)->locale('id')->translatedFormat('l, d M Y')).'*')
         ->not->toContain(today()->subDays(10)->locale('id')->translatedFormat('d F Y'));
 });
 
@@ -170,7 +176,7 @@ test('AI summary returns the agent text when configured', function () {
         ->postJson(route('p2h.daily-summary.ai'), ['start' => today()->toDateString(), 'end' => today()->toDateString()])
         ->assertOk()
         ->assertJson(['fallback' => false])
-        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem — _Kampas rem menipis_'));
+        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem: _Kampas rem menipis_'));
 
     P2hDailySummaryAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, '*DAILY REPORT P2H*'));
 });

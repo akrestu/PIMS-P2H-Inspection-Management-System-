@@ -15,6 +15,7 @@ use App\Http\Controllers\P2hFileController;
 use App\Http\Controllers\P2hFindingController;
 use App\Http\Controllers\P2hPeriodReportController;
 use App\Http\Controllers\P2hSessionController;
+use App\Http\Controllers\PublicReportController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\UnitAnalyticsController;
 use App\Http\Controllers\UnitController;
@@ -43,6 +44,16 @@ Route::get('/', function () {
         'nik' => 'Akun Anda belum memiliki role yang valid. Hubungi administrator.',
     ]);
 })->name('home');
+
+// Rekap P2H bulanan publik (read-only, tanpa login) lewat link bertoken
+Route::get('/laporan/{token}', [PublicReportController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('public.report');
+
+// Link rekap publik dikelola admin
+Route::middleware(['auth', 'role:admin'])
+    ->post('/app-settings/public-link', [AppSettingController::class, 'publicLink'])
+    ->name('app-settings.public-link');
 
 Route::middleware(['auth'])->group(function () {
     // Dashboard — admin & manager only; driver diarahkan ke /driver/dashboard

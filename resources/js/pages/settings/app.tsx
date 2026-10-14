@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { Plus, Trash2, Save, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,118 @@ interface Props {
     settings: {
         shifts: string[];
         unit_analytics: boolean;
+        public_report_url: string | null;
     };
+}
+
+function PublicLinkCard({ url }: { url: string | null }) {
+    const run = (action: 'enable' | 'regenerate' | 'disable') => {
+        if (
+            action !== 'enable' &&
+            !window.confirm(
+                action === 'regenerate'
+                    ? 'Link lama tidak akan bisa dibuka lagi. Lanjutkan?'
+                    : 'Nonaktifkan link rekap publik?',
+            )
+        ) {
+            return;
+        }
+
+        router.post(
+            '/app-settings/public-link',
+            { action },
+            { preserveScroll: true },
+        );
+    };
+
+    const copy = async () => {
+        if (!url) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success('Link disalin');
+        } catch {
+            toast.error('Gagal menyalin, salin manual dari kolom link');
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                    Link Rekap P2H Publik
+                </CardTitle>
+                <CardDescription>
+                    Kalender P2H bulanan yang bisa dibuka tanpa login (tanpa
+                    nama driver). Link ikut tercantum di Daily Report WhatsApp.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {url ? (
+                    <>
+                        <div className="flex gap-2">
+                            <Input
+                                value={url}
+                                readOnly
+                                aria-label="Link rekap publik"
+                                onFocus={(e) => e.target.select()}
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={copy}
+                            >
+                                Salin
+                            </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                asChild
+                            >
+                                <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Buka
+                                </a>
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => run('regenerate')}
+                            >
+                                Ganti link
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => run('disable')}
+                            >
+                                Nonaktifkan
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => run('enable')}
+                    >
+                        Aktifkan link publik
+                    </Button>
+                )}
+            </CardContent>
+        </Card>
+    );
 }
 
 export default function AppSettingsPage({ settings }: Props) {
@@ -60,6 +171,8 @@ export default function AppSettingsPage({ settings }: Props) {
                         </p>
                     </div>
                 </div>
+
+                <PublicLinkCard url={settings.public_report_url} />
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                     {/* Shifts */}
