@@ -101,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
     // Temuan P2H — driver hanya temuan yang ditugaskan kepadanya (P2hFindingPolicy)
     Route::middleware(['role:admin|manager|driver'])->group(function () {
         Route::get('/p2h/findings', [P2hFindingController::class, 'index'])->name('p2h.findings.index');
+        Route::post('/p2h/findings/batch', [P2hFindingController::class, 'batchUpdate'])->name('p2h.findings.batch-update');
         Route::patch('/p2h/findings/{finding}', [P2hFindingController::class, 'update'])->name('p2h.findings.update');
         Route::get('/p2h/findings/{finding}/photo', [P2hFindingController::class, 'photo'])->name('p2h.findings.photo');
         Route::post('/p2h/findings/{finding}/suggest', [P2hFindingController::class, 'suggest'])

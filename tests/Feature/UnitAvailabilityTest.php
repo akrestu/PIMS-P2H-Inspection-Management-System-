@@ -186,3 +186,18 @@ test('daily report lists units that are BD/PM/Servis separately instead of as mi
         ->toContain("*TIDAK READY (2)*\nLV-31 (BD), LV-32 (PM)")
         ->toContain("*BELUM P2H (1)*\nLV-33");
 });
+
+test('dashboard groups today fleet condition per vehicle type', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    availabilityEntry(availabilityUnit('LV-40'), '2026-10-10 07:00', 'Layak Pakai');
+    availabilityEntry(availabilityUnit('LV-41'), '2026-10-10 07:00', 'BD');
+    $pm = availabilityUnit('LV-42');
+    availabilityUnit('LV-43');
+    availabilityUnit('BUS-40', 'Bus');
+    $this->actingAs($admin)->patch(route('units.status', $pm), ['status' => 'PM', 'waktu' => '2026-10-10 06:00']);
+
+    $this->actingAs($admin)->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('fleetToday.Light Vehicle', ['layak' => 1, 'temuan' => 0, 'bd' => 1, 'tidak_ready' => 1, 'belum' => 1, 'total' => 4])
+            ->where('fleetToday.Bus', ['layak' => 0, 'temuan' => 0, 'bd' => 0, 'tidak_ready' => 0, 'belum' => 1, 'total' => 1]));
+});

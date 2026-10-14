@@ -15,6 +15,9 @@ interface Props {
     bulan: string;
     bulanLabel: string;
     jenis: 'LV' | 'Bus' | null;
+    site: number | null;
+    siteName: string | null;
+    sites: { id: number; name: string }[];
     dates: { date: string; day: number; sunday: boolean }[];
     rows: {
         no_unit: string;
@@ -76,6 +79,9 @@ export default function PublicP2hReport({
     bulan,
     bulanLabel,
     jenis,
+    site,
+    siteName,
+    sites,
     dates,
     rows,
     perDay,
@@ -85,11 +91,15 @@ export default function PublicP2hReport({
     months,
     updatedAt,
 }: Props) {
-    const go = (next: { bulan?: string; jenis?: string | null }) =>
+    const go = (next: {
+        bulan?: string;
+        jenis?: string | null;
+        site?: number | null;
+    }) =>
         router.get(
             `/laporan/${token}`,
             Object.fromEntries(
-                Object.entries({ bulan, jenis, ...next }).filter(
+                Object.entries({ bulan, jenis, site, ...next }).filter(
                     ([, v]) => v !== null && v !== undefined,
                 ),
             ),
@@ -116,9 +126,9 @@ export default function PublicP2hReport({
                             </h1>
                             <p className="text-sm text-muted-foreground">
                                 {JENIS_OPTIONS.find((o) => o.value === jenis)
-                                    ?.label ?? 'Semua unit'}{' '}
-                                · {totalUnit} unit aktif · diperbarui{' '}
-                                {updatedAt}
+                                    ?.label ?? 'Semua unit'}
+                                {siteName && ` · Site ${siteName}`} ·{' '}
+                                {totalUnit} unit aktif · diperbarui {updatedAt}
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -140,6 +150,37 @@ export default function PublicP2hReport({
                                     </button>
                                 ))}
                             </div>
+                            {sites.length > 1 && (
+                                <Select
+                                    value={site ? String(site) : 'all'}
+                                    onValueChange={(v) =>
+                                        go({
+                                            site:
+                                                v === 'all' ? null : Number(v),
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger
+                                        className="h-9 w-44"
+                                        aria-label="Pilih site"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            Semua site
+                                        </SelectItem>
+                                        {sites.map((s) => (
+                                            <SelectItem
+                                                key={s.id}
+                                                value={String(s.id)}
+                                            >
+                                                {s.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
                             <Select
                                 value={bulan}
                                 onValueChange={(v) => go({ bulan: v })}

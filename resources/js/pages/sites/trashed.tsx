@@ -11,10 +11,7 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
 import { SortableHead, sortParams } from '@/components/sortable-head';
-import {
-    TrashBatchActions,
-    useRowSelection,
-} from '@/components/trash-batch-actions';
+import { TrashBatchActions } from '@/components/trash-batch-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,6 +39,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useRowSelection } from '@/hooks/use-row-selection';
 import type { Site } from '@/types/pims';
 
 interface TrashedSite extends Site {

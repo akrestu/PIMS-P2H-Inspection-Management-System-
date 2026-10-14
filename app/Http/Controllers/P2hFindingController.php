@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Ai\Agents\P2hRepairSuggestionAgent;
 use App\Enums\FindingStatus;
 use App\Http\Controllers\Concerns\SortsTable;
+use App\Http\Requests\BatchUpdateP2hFindingRequest;
 use App\Http\Requests\UpdateP2hFindingRequest;
 use App\Models\P2hFinding;
 use App\Models\Site;
@@ -16,6 +17,7 @@ use App\Support\P2hFileStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -163,6 +165,81 @@ class P2hFindingController extends Controller
             'type' => 'success',
             'message' => 'Temuan diperbarui',
             'description' => "{$finding->item_nama} - status ".FindingStatus::from($data['status'])->label().'.',
+        ]);
+
+        return back();
+    }
+
+    /** Update/close beberapa temuan sekaligus dengan perubahan yang sama. */
+    public function batchUpdate(BatchUpdateP2hFindingRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+        $changes = collect($request->validated())
+            ->only(['status', 'pic_user_id', 'target_selesai', 'tindakan_perbaikan'])
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->all();
+        $isClosing = ($changes['status'] ?? null) === FindingStatus::Closed->value;
+
+        // Satu foto bukti untuk semua temuan; disalin per temuan agar penggantian foto
+        // pada satu temuan tidak menghapus bukti temuan lain
+        $sharedPhoto = $isClosing && $request->hasFile('foto_penutupan')
+            ? $request->file('foto_penutupan')->store('p2h-findings/batch', 'local')
+            : null;
+
+        $findings = P2hFinding::with('unit:id,no_unit')->whereIn('id', $request->validated('ids'))->get();
+
+        foreach ($findings as $finding) {
+            $previousPic = $finding->pic_user_id;
+            $data = $changes;
+
+            if ($isClosing) {
+                $data['catatan_penutupan'] = $request->validated('catatan_penutupan') ?? $finding->catatan_penutupan;
+                $data['closed_at'] = $finding->closed_at ?? now();
+                $data['closed_by'] = $finding->closed_by ?? $user->id;
+
+                if ($sharedPhoto && $finding->status !== FindingStatus::Closed) {
+                    $copy = "p2h-findings/{$finding->id}/".basename($sharedPhoto);
+                    Storage::disk('local')->copy($sharedPhoto, $copy);
+                    $oldPhoto = $finding->foto_penutupan;
+                    $data['foto_penutupan'] = $copy;
+                }
+            } elseif (isset($data['status'])) {
+                $data['closed_at'] = null;
+                $data['closed_by'] = null;
+            }
+
+            if (array_key_exists('target_selesai', $data) && $data['target_selesai'] !== $finding->target_selesai?->toDateString()) {
+                $data['overdue_notified_at'] = null;
+            }
+
+            $finding->update($data);
+
+            if (isset($oldPhoto)) {
+                P2hFileStorage::delete($oldPhoto);
+                unset($oldPhoto);
+            }
+
+            if ($finding->pic_user_id && $finding->pic_user_id !== $previousPic && $finding->pic_user_id !== $user->id) {
+                $finding->load('pic');
+                $finding->pic->notify(new FindingAssigned($finding, $user->name));
+            }
+        }
+
+        if ($sharedPhoto) {
+            Storage::disk('local')->delete($sharedPhoto);
+        }
+
+        activity('p2h')
+            ->causedBy($user)
+            ->withProperties(['finding_ids' => $findings->pluck('id'), 'changes' => array_keys($changes)])
+            ->log("Update massal {$findings->count()} temuan P2H");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$findings->count()} temuan diperbarui",
+            'description' => isset($changes['status'])
+                ? 'Status diubah menjadi '.FindingStatus::from($changes['status'])->label().'.'
+                : 'Perubahan diterapkan ke semua temuan yang dipilih.',
         ]);
 
         return back();

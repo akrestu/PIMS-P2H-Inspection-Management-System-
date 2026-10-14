@@ -10,9 +10,9 @@ import { useState } from 'react';
 import { ChartAreaInteractive } from '@/components/dashboard/chart-area-interactive';
 import type { RecentP2h } from '@/components/dashboard/data-table';
 import { DataTable } from '@/components/dashboard/data-table';
-import { FleetStatusChart } from '@/components/dashboard/fleet-status-chart';
+import { FleetTodayChart } from '@/components/dashboard/fleet-today-chart';
+import type { FleetCounts } from '@/components/dashboard/fleet-today-chart';
 import { PAWeeklyTrend } from '@/components/dashboard/pa-weekly-trend';
-import { SectionCards } from '@/components/dashboard/section-cards';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,7 @@ interface PaPoint {
 }
 
 interface Props {
+    fleetToday: Record<string, FleetCounts>;
     metrics: Metrics;
     chartData: ChartPoint[];
     paWeeklyTrend: PaPoint[];
@@ -103,6 +104,7 @@ function formatDateId() {
 const CRITICAL_ALERT_KEY = `critical_alert_dismissed_${new Date().toISOString().slice(0, 10)}`;
 
 export default function DashboardIndex({
+    fleetToday,
     metrics,
     chartData,
     paWeeklyTrend,
@@ -239,12 +241,14 @@ export default function DashboardIndex({
                         </div>
                     )}
 
-                    {/* ── Metric Cards ── */}
-                    <ErrorBoundary label="kartu metrik">
-                        <SectionCards metrics={metrics} />
-                    </ErrorBoundary>
+                    {/* ── Kondisi armada hari ini ── */}
+                    <div className="px-4 lg:px-6">
+                        <ErrorBoundary label="kondisi armada">
+                            <FleetTodayChart data={fleetToday} />
+                        </ErrorBoundary>
+                    </div>
 
-                    {/* ── Charts Row ── */}
+                    {/* ── Tren P2H harian & PA mingguan ── */}
                     <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-3 lg:px-6">
                         <div className="lg:col-span-2">
                             <ErrorBoundary label="grafik tren P2H">
@@ -252,17 +256,10 @@ export default function DashboardIndex({
                             </ErrorBoundary>
                         </div>
                         <div className="lg:col-span-1">
-                            <ErrorBoundary label="grafik status armada">
-                                <FleetStatusChart metrics={metrics} />
+                            <ErrorBoundary label="trend PA mingguan">
+                                <PAWeeklyTrend data={paWeeklyTrend} />
                             </ErrorBoundary>
                         </div>
-                    </div>
-
-                    {/* ── PA Weekly Trend ── */}
-                    <div className="px-4 lg:px-6">
-                        <ErrorBoundary label="trend PA mingguan">
-                            <PAWeeklyTrend data={paWeeklyTrend} />
-                        </ErrorBoundary>
                     </div>
 
                     <Separator className="mx-4 w-auto lg:mx-6" />

@@ -21,6 +21,7 @@ import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -39,6 +40,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useRowSelection } from '@/hooks/use-row-selection';
 import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -472,6 +474,260 @@ function FindingDialog({
     );
 }
 
+// ── Update massal ─────────────────────────────────────────────────────────────
+
+const KEEP = 'keep';
+
+interface BatchForm {
+    ids: number[];
+    status: Status | '';
+    pic_user_id: number | null;
+    target_selesai: string;
+    tindakan_perbaikan: string;
+    catatan_penutupan: string;
+    foto_penutupan: File | null;
+}
+
+function BatchFindingDialog({
+    findings,
+    picOptions,
+    open,
+    onClose,
+    onDone,
+}: {
+    findings: Finding[];
+    picOptions: Props['picOptions'];
+    open: boolean;
+    onClose: () => void;
+    onDone: () => void;
+}) {
+    const form = useForm<BatchForm>({
+        ids: [],
+        status: '',
+        pic_user_id: null,
+        target_selesai: '',
+        tindakan_perbaikan: '',
+        catatan_penutupan: '',
+        foto_penutupan: null,
+    });
+    const { setData, clearErrors, reset } = form;
+
+    useEffect(() => {
+        if (open) {
+            reset();
+            setData(
+                'ids',
+                findings.map((f) => f.id),
+            );
+            clearErrors();
+        }
+    }, [open, findings, reset, setData, clearErrors]);
+
+    const closing = form.data.status === 'closed';
+    const needsPhoto = closing && findings.some((f) => f.status !== 'closed');
+    const units = [...new Set(findings.map((f) => f.no_unit))].join(', ');
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Field kosong = tidak diubah, tidak dikirim
+        form.transform((data) =>
+            Object.fromEntries(
+                Object.entries(data).filter(([, v]) => v !== '' && v !== null),
+            ),
+        );
+        form.post('/p2h/findings/batch', {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                onDone();
+                onClose();
+            },
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+            <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>
+                        Update {findings.length} Temuan Sekaligus
+                    </DialogTitle>
+                    <DialogDescription>
+                        Unit: {units}. Field yang dibiarkan kosong atau
+                        &quot;Tidak diubah&quot; tidak akan mengubah temuan.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={submit} className="space-y-4">
+                    <div className="space-y-1.5">
+                        <Label>Status</Label>
+                        <Select
+                            value={form.data.status || KEEP}
+                            onValueChange={(v) =>
+                                form.setData(
+                                    'status',
+                                    v === KEEP ? '' : (v as Status),
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={KEEP}>
+                                    — Tidak diubah —
+                                </SelectItem>
+                                {(Object.keys(STATUS_CONFIG) as Status[]).map(
+                                    (s) => (
+                                        <SelectItem key={s} value={s}>
+                                            {STATUS_CONFIG[s].label}
+                                        </SelectItem>
+                                    ),
+                                )}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={form.errors.status} />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                            <Label>PIC</Label>
+                            <Select
+                                value={
+                                    form.data.pic_user_id
+                                        ? String(form.data.pic_user_id)
+                                        : KEEP
+                                }
+                                onValueChange={(v) =>
+                                    form.setData(
+                                        'pic_user_id',
+                                        v === KEEP ? null : Number(v),
+                                    )
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={KEEP}>
+                                        — Tidak diubah —
+                                    </SelectItem>
+                                    {picOptions.map((u) => (
+                                        <SelectItem
+                                            key={u.id}
+                                            value={String(u.id)}
+                                        >
+                                            {u.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError message={form.errors.pic_user_id} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="batch-target">Target selesai</Label>
+                            <Input
+                                id="batch-target"
+                                type="date"
+                                value={form.data.target_selesai}
+                                onChange={(e) =>
+                                    form.setData(
+                                        'target_selesai',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError message={form.errors.target_selesai} />
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="batch-tindakan">
+                            Tindakan perbaikan
+                        </Label>
+                        <Textarea
+                            id="batch-tindakan"
+                            value={form.data.tindakan_perbaikan}
+                            onChange={(e) =>
+                                form.setData(
+                                    'tindakan_perbaikan',
+                                    e.target.value,
+                                )
+                            }
+                            placeholder="Kosongkan bila tidak diubah"
+                        />
+                        <InputError message={form.errors.tindakan_perbaikan} />
+                    </div>
+                    {closing && (
+                        <>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="batch-catatan">
+                                    Catatan penutupan
+                                </Label>
+                                <Textarea
+                                    id="batch-catatan"
+                                    value={form.data.catatan_penutupan}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'catatan_penutupan',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Hasil perbaikan / verifikasi"
+                                />
+                                <InputError
+                                    message={form.errors.catatan_penutupan}
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="batch-foto">
+                                    Foto bukti perbaikan
+                                    {needsPhoto && (
+                                        <span className="text-destructive">
+                                            {' '}
+                                            *
+                                        </span>
+                                    )}
+                                </Label>
+                                <Input
+                                    id="batch-foto"
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'foto_penutupan',
+                                            e.target.files?.[0] ?? null,
+                                        )
+                                    }
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Satu foto dipakai untuk semua temuan yang
+                                    dipilih. Maks 5 MB.
+                                </p>
+                                <InputError
+                                    message={form.errors.foto_penutupan}
+                                />
+                            </div>
+                        </>
+                    )}
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
+                            Batal
+                        </Button>
+                        <Button type="submit" disabled={form.processing}>
+                            {form.processing
+                                ? 'Menyimpan...'
+                                : `Terapkan ke ${findings.length} temuan`}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function P2hFindings({
@@ -485,6 +741,11 @@ export default function P2hFindings({
     recurringWindowDays,
 }: Props) {
     const [editing, setEditing] = useState<Finding | null>(null);
+    const [batchOpen, setBatchOpen] = useState(false);
+    const selection = useRowSelection(findings.data.map((f) => f.id));
+    const selectedFindings = findings.data.filter((f) =>
+        selection.isSelected(f.id),
+    );
     const title = canManage ? 'Temuan P2H' : 'Temuan Saya';
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -609,6 +870,35 @@ export default function P2hFindings({
                     </Select>
                 </div>
 
+                {/* ── Aksi massal (admin/manager) ── */}
+                {canManage && selection.selected.length > 0 && (
+                    <div
+                        role="region"
+                        aria-label="Aksi massal"
+                        className="hidden flex-wrap items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 md:flex"
+                    >
+                        <span className="text-sm font-medium">
+                            {selection.selected.length} temuan dipilih
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-muted-foreground"
+                            onClick={selection.clear}
+                        >
+                            Batal pilih
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="ml-auto h-8 gap-1.5"
+                            onClick={() => setBatchOpen(true)}
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Update massal
+                        </Button>
+                    </div>
+                )}
+
                 {/* ── List: kartu di HP ── */}
                 <div className="flex flex-col gap-3 md:hidden">
                     {findings.data.length === 0 && (
@@ -633,6 +923,27 @@ export default function P2hFindings({
                             <table className="w-full text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                                     <tr>
+                                        {canManage && (
+                                            <th className="w-10 py-3 pl-4">
+                                                <Checkbox
+                                                    checked={
+                                                        selection.allSelected
+                                                            ? true
+                                                            : selection.someSelected
+                                                              ? 'indeterminate'
+                                                              : false
+                                                    }
+                                                    onCheckedChange={
+                                                        selection.toggleAll
+                                                    }
+                                                    aria-label="Pilih semua temuan"
+                                                    disabled={
+                                                        findings.data.length ===
+                                                        0
+                                                    }
+                                                />
+                                            </th>
+                                        )}
                                         <SortableHead
                                             column="tanggal_temuan"
                                             descFirst
@@ -690,7 +1001,7 @@ export default function P2hFindings({
                                     {findings.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={8}
+                                                colSpan={canManage ? 9 : 8}
                                                 className="px-4 py-10 text-center text-muted-foreground"
                                             >
                                                 Tidak ada temuan.
@@ -698,7 +1009,29 @@ export default function P2hFindings({
                                         </tr>
                                     )}
                                     {findings.data.map((f) => (
-                                        <tr key={f.id} className="align-top">
+                                        <tr
+                                            key={f.id}
+                                            className={cn(
+                                                'align-top',
+                                                selection.isSelected(f.id) &&
+                                                    'bg-muted/50',
+                                            )}
+                                        >
+                                            {canManage && (
+                                                <td className="py-3 pl-4">
+                                                    <Checkbox
+                                                        checked={selection.isSelected(
+                                                            f.id,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            selection.toggle(
+                                                                f.id,
+                                                            )
+                                                        }
+                                                        aria-label={`Pilih temuan ${f.no_unit} ${f.item_nama}`}
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 {formatDate(f.tanggal_temuan)}
                                             </td>
@@ -852,6 +1185,13 @@ export default function P2hFindings({
                 )}
             </div>
 
+            <BatchFindingDialog
+                findings={selectedFindings}
+                picOptions={picOptions}
+                open={batchOpen}
+                onClose={() => setBatchOpen(false)}
+                onDone={selection.clear}
+            />
             <FindingDialog
                 finding={editing}
                 picOptions={picOptions}

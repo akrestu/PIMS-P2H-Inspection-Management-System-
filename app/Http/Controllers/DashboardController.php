@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\P2hChecklistAnswer;
 use App\Models\P2hSession;
 use App\Models\Unit;
+use App\Models\UnitDowntimeLog;
 use App\Support\FleetAvailability;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -89,6 +90,7 @@ class DashboardController extends Controller
         });
 
         return Inertia::render('dashboard/index', [
+            'fleetToday' => $this->fleetToday(),
             'metrics' => [
                 'total_unit_aktif' => $totalUnitAktif,
                 'total_p2h_hari_ini' => $totalP2hHariIni,
@@ -99,5 +101,45 @@ class DashboardController extends Controller
             'paWeeklyTrend' => $paWeeklyTrend,
             'recentP2h' => $recentP2h,
         ]);
+    }
+
+    /**
+     * Kondisi armada hari ini per jenis unit, sama dengan pengelompokan Daily Report:
+     * P2H layak / ada temuan / BD, tidak Ready (BD/PM/Servis tanpa P2H), belum P2H.
+     *
+     * @return array<string, array{layak: int, temuan: int, bd: int, tidak_ready: int, belum: int, total: int}>
+     */
+    private function fleetToday(): array
+    {
+        $units = Unit::active()->get(['id', 'jenis_unit']);
+
+        $p2h = P2hSession::query()
+            ->whereDate('tanggal', today())
+            ->whereIn('unit_id', $units->pluck('id'))
+            ->whereHas('userEntries', fn ($q) => $q->notRejected())
+            ->with(['userEntries' => fn ($q) => $q->notRejected()->select('id', 'p2h_session_id', 'kondisi_akhir')
+                ->withCount(['answers as tidak_layak' => fn ($a) => $a->where('kondisi', 'Tidak Layak')])])
+            ->get(['id', 'unit_id'])
+            ->mapWithKeys(fn (P2hSession $s) => [$s->unit_id => $s->userEntries->contains('kondisi_akhir', 'BD') ? 'bd'
+                : ($s->userEntries->sum('tidak_layak') > 0 ? 'temuan' : 'layak')]);
+
+        $notReady = UnitDowntimeLog::whereIn('unit_id', $units->pluck('id'))
+            ->where('jam_mulai', '<=', now())
+            ->where(fn ($q) => $q->whereNull('jam_selesai')->orWhere('jam_selesai', '>', today()))
+            ->pluck('unit_id')
+            ->flip();
+
+        return $units->groupBy('jenis_unit')
+            ->sortKeysDesc() // Light Vehicle di atas Bus
+            ->map(function ($group) use ($p2h, $notReady) {
+                $counts = ['layak' => 0, 'temuan' => 0, 'bd' => 0, 'tidak_ready' => 0, 'belum' => 0];
+                foreach ($group as $unit) {
+                    $status = $p2h[$unit->id] ?? ($notReady->has($unit->id) ? 'tidak_ready' : 'belum');
+                    $counts[$status]++;
+                }
+
+                return [...$counts, 'total' => $group->count()];
+            })
+            ->all();
     }
 }

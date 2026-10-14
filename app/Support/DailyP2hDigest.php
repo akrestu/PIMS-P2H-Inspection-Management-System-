@@ -145,6 +145,7 @@ class DailyP2hDigest
                 : $start->copy()->locale('id')->translatedFormat('d M Y').' – '.$end->copy()->locale('id')->translatedFormat('d M Y'),
             'multi_hari' => ! $start->isSameDay($end),
             'site' => $siteId ? Site::find($siteId)?->name : null,
+            'site_id' => $siteId,
             'jenis_unit' => $jenisUnit,
             'stats' => [
                 'sudah_p2h' => $units->count(),

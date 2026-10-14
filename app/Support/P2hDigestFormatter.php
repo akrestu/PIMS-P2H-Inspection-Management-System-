@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Http\Controllers\PublicReportController;
 use App\Models\AppSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -94,7 +95,13 @@ class P2hDigestFormatter
         }
         if ($url = AppSetting::publicReportUrl()) {
             $lines[] = '';
-            $lines[] = 'Rekap bulanan: '.$url.'?bulan='.substr($digest['tanggal_selesai'] ?? now()->toDateString(), 0, 7);
+            // Link membawa filter laporan yang sama (bulan, jenis unit, site)
+            $query = array_filter([
+                'bulan' => substr($digest['tanggal_selesai'] ?? now()->toDateString(), 0, 7),
+                'jenis' => array_search($digest['jenis_unit'] ?? null, PublicReportController::JENIS, true) ?: null,
+                'site' => $digest['site_id'] ?? null,
+            ]);
+            $lines[] = 'Rekap bulanan: '.$url.'?'.http_build_query($query);
         }
         $lines[] = '_Detail tindak lanjut: menu Temuan P2H di PIMS_';
 

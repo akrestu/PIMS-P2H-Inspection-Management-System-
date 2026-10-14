@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
 use App\Models\P2hSession;
+use App\Models\Site;
 use App\Models\Unit;
 use App\Models\UnitDowntimeLog;
 use App\Support\FleetAvailability;
@@ -21,7 +22,7 @@ use Inertia\Response;
  */
 class PublicReportController extends Controller
 {
-    private const JENIS = ['LV' => 'Light Vehicle', 'Bus' => 'Bus'];
+    public const JENIS = ['LV' => 'Light Vehicle', 'Bus' => 'Bus'];
 
     public function show(Request $request, string $token): Response
     {
@@ -31,6 +32,7 @@ class PublicReportController extends Controller
         $validated = $request->validate([
             'bulan' => ['nullable', 'date_format:Y-m'],
             'jenis' => ['nullable', 'in:LV,Bus'],
+            'site' => ['nullable', 'integer'],
         ]);
 
         $start = isset($validated['bulan'])
@@ -44,9 +46,12 @@ class PublicReportController extends Controller
         $end = $start->copy()->endOfMonth();
         $lastDay = $end->copy()->min(today());
         $jenis = isset($validated['jenis']) ? self::JENIS[$validated['jenis']] : null;
+        $sites = Site::active()->orderBy('name')->get(['id', 'name']);
+        $site = isset($validated['site']) ? $sites->firstWhere('id', (int) $validated['site']) : null;
 
         $units = Unit::active()
             ->when($jenis, fn ($q) => $q->where('jenis_unit', $jenis))
+            ->when($site, fn ($q) => $q->where('site_id', $site->id))
             ->get(['id', 'no_unit', 'jenis_unit'])
             ->sortBy(fn (Unit $u) => preg_replace('/\s+/', '', $u->no_unit), SORT_NATURAL | SORT_FLAG_CASE)
             ->values();
@@ -116,12 +121,15 @@ class PublicReportController extends Controller
             'bulan' => $start->format('Y-m'),
             'bulanLabel' => $start->locale('id')->translatedFormat('F Y'),
             'jenis' => $validated['jenis'] ?? null,
+            'site' => $site?->id,
+            'siteName' => $site?->name,
+            'sites' => $sites,
             'dates' => $dates->map(fn ($d) => ['date' => $d, 'day' => (int) substr($d, 8), 'sunday' => Carbon::parse($d)->isSunday()])->values(),
             'rows' => $rows,
             'perDay' => $perDay,
             'totalUnit' => $units->count(),
             'hariBerjalan' => $dates->filter(fn ($d) => $d <= $lastDate)->count(),
-            'pa' => FleetAvailability::build($start, $lastDay, ['jenis_unit' => $jenis])['summary']['pa_by_jenis'],
+            'pa' => FleetAvailability::build($start, $lastDay, ['jenis_unit' => $jenis, 'site_id' => $site?->id])['summary']['pa_by_jenis'],
             'months' => $months,
             'updatedAt' => now()->locale('id')->translatedFormat('d F Y H:i'),
         ]);
