@@ -26,21 +26,21 @@ type Segment = Exclude<keyof FleetCounts, 'total'>;
 // Warna status (tetap, tidak ikut tema) — selalu disertai label & angka, tidak warna saja
 const SEGMENTS: { key: Segment; label: string; color: string; ink: string }[] =
     [
-        { key: 'layak', label: 'Layak', color: '#0ca30c', ink: '#ffffff' },
+        { key: 'layak', label: 'Layak', color: 'var(--success)', ink: 'var(--background)' },
         {
             key: 'temuan',
             label: 'Ada temuan',
-            color: '#fab219',
-            ink: '#3d2c00',
+            color: 'var(--warning)',
+            ink: 'var(--background)',
         },
-        { key: 'bd', label: 'BD (P2H)', color: '#d03b3b', ink: '#ffffff' },
+        { key: 'bd', label: 'BD (P2H)', color: 'var(--danger)', ink: 'var(--background)' },
         {
             key: 'tidak_ready',
             label: 'Tidak Ready (BD/PM/Servis)',
-            color: '#8b8a84',
-            ink: '#ffffff',
+            color: 'var(--muted-foreground)',
+            ink: 'var(--background)',
         },
-        { key: 'belum', label: 'Belum P2H', color: '#ec835a', ink: '#3b1607' },
+        { key: 'belum', label: 'Belum P2H', color: 'var(--muted)', ink: 'var(--foreground)' },
     ];
 
 function FleetBar({ jenis, counts }: { jenis: string; counts: FleetCounts }) {

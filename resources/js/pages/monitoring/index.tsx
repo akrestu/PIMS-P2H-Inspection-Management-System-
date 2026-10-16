@@ -123,14 +123,14 @@ function paColor(pa: number | null): string {
     }
 
     if (pa >= 90) {
-        return 'text-emerald-600 dark:text-emerald-400';
+        return 'text-success ';
     }
 
     if (pa >= 75) {
-        return 'text-yellow-600 dark:text-yellow-400';
+        return 'text-warning ';
     }
 
-    return 'text-red-600 dark:text-red-400';
+    return 'text-danger ';
 }
 
 function progressColor(pa: number | null): string {
@@ -139,14 +139,14 @@ function progressColor(pa: number | null): string {
     }
 
     if (pa >= 90) {
-        return '[&>div]:bg-emerald-500';
+        return '[&>div]:bg-success';
     }
 
     if (pa >= 75) {
-        return '[&>div]:bg-yellow-500';
+        return '[&>div]:bg-warning';
     }
 
-    return '[&>div]:bg-red-500';
+    return '[&>div]:bg-danger';
 }
 
 function statusConfig(status: UnitPA['current_status']) {
@@ -155,17 +155,15 @@ function statusConfig(status: UnitPA['current_status']) {
             return {
                 label: 'Ready',
                 icon: CheckCircle2,
-                badgeClass:
-                    'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-                dotClass: 'bg-emerald-500',
+                badgeClass: 'bg-success-soft text-success border-success/40   ',
+                dotClass: 'bg-success',
             };
         case 'bd':
             return {
                 label: 'Breakdown',
                 icon: WrenchIcon,
-                badgeClass:
-                    'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-                dotClass: 'bg-red-500',
+                badgeClass: 'bg-danger-soft text-danger border-danger/40   ',
+                dotClass: 'bg-danger',
             };
         default:
             return {
@@ -207,15 +205,15 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                         day.status === 'bd' && day.downtime_tipe != null;
                     const colorClass =
                         day.status === 'operation'
-                            ? 'bg-emerald-500'
+                            ? 'bg-success'
                             : day.status === 'bd'
                               ? isDowntimeOnly
                                   ? day.downtime_tipe === 'PM'
-                                      ? 'bg-blue-400'
+                                      ? 'bg-info'
                                       : day.downtime_tipe === 'Servis Berkala'
-                                        ? 'bg-purple-400'
-                                        : 'bg-orange-500' // BD downtime
-                                  : 'bg-red-500' // BD dari P2H
+                                        ? 'bg-info'
+                                        : 'bg-warning' // BD downtime
+                                  : 'bg-danger' // BD dari P2H
                               : 'bg-muted';
 
                     return (
@@ -226,11 +224,11 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                         'relative h-5 w-2 cursor-default rounded-sm transition-opacity hover:opacity-80',
                                         colorClass,
                                         day.has_override &&
-                                            'ring-1 ring-amber-400 ring-offset-0',
+                                            'ring-1 ring-warning ring-offset-0',
                                     )}
                                 >
                                     {day.has_override && (
-                                        <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                        <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-warning" />
                                     )}
                                 </div>
                             </TooltipTrigger>
@@ -239,7 +237,7 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                     {formatDateShort(day.date)}
                                 </p>
                                 {day.downtime_tipe != null ? (
-                                    <p className="text-orange-400">
+                                    <p className="text-warning">
                                         Downtime: {day.downtime_tipe}
                                     </p>
                                 ) : day.score !== null ? (
@@ -249,8 +247,8 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                             <span
                                                 className={
                                                     day.score >= 80
-                                                        ? 'text-emerald-400'
-                                                        : 'text-red-400'
+                                                        ? 'text-success'
+                                                        : 'text-danger'
                                                 }
                                             >
                                                 {day.score}%
@@ -261,8 +259,8 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                             <span
                                                 className={
                                                     day.status === 'operation'
-                                                        ? 'text-emerald-400'
-                                                        : 'text-red-400'
+                                                        ? 'text-success'
+                                                        : 'text-danger'
                                                 }
                                             >
                                                 {day.status === 'operation'
@@ -270,7 +268,7 @@ function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
                                                     : 'Breakdown'}
                                             </span>
                                             {day.has_override && (
-                                                <span className="ml-1 text-amber-400">
+                                                <span className="ml-1 text-warning">
                                                     (Override)
                                                 </span>
                                             )}
@@ -301,10 +299,8 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
         <Card
             className={cn(
                 'border-2 transition-all duration-150 hover:shadow-md',
-                unit.current_status === 'bd' &&
-                    'border-red-200 dark:border-red-900',
-                unit.current_status === 'operation' &&
-                    'border-emerald-100 dark:border-emerald-900/50',
+                unit.current_status === 'bd' && 'border-danger/40',
+                unit.current_status === 'operation' && 'border-success/40',
             )}
         >
             <CardContent className="space-y-4 p-4">
@@ -314,15 +310,13 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
                         <div
                             className={cn(
                                 'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-                                isLV
-                                    ? 'bg-blue-100 dark:bg-blue-950/40'
-                                    : 'bg-purple-100 dark:bg-purple-950/40',
+                                isLV ? 'bg-info-soft' : 'bg-info-soft',
                             )}
                         >
                             {isLV ? (
-                                <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <Car className="h-5 w-5 text-info" />
                             ) : (
-                                <Bus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                <Bus className="h-5 w-5 text-info" />
                             )}
                         </div>
                         <div>
@@ -398,8 +392,8 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
 
                 {/* ── Downtime berjalan (sumber status unit) ── */}
                 {unit.downtime_tipe && (
-                    <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 text-xs dark:bg-red-950/30">
-                        <span className="font-medium text-red-700 dark:text-red-400">
+                    <div className="flex items-center justify-between rounded-lg bg-danger-soft px-3 py-2 text-xs">
+                        <span className="font-medium text-danger">
                             {unit.downtime_tipe} berjalan
                         </span>
                         {unit.downtime_since && (
@@ -428,7 +422,7 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
                 <div className="flex items-center justify-between border-t pt-3">
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         {unit.total_tl > 0 && (
-                            <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                            <span className="flex items-center gap-1 text-danger">
                                 <AlertTriangle className="h-3.5 w-3.5" />
                                 {unit.total_tl} item TL
                             </span>
@@ -458,23 +452,23 @@ function Legend({ threshold }: { threshold: number }) {
                 Legenda:
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-emerald-500" />
+                <div className="h-3 w-3 rounded-sm bg-success" />
                 Operation
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-red-500" />
+                <div className="h-3 w-3 rounded-sm bg-danger" />
                 BD (P2H)
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-orange-500" />
+                <div className="h-3 w-3 rounded-sm bg-warning" />
                 BD (Downtime)
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-blue-400" />
+                <div className="h-3 w-3 rounded-sm bg-info" />
                 PM (Downtime)
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-purple-400" />
+                <div className="h-3 w-3 rounded-sm bg-info" />
                 Servis Berkala
             </span>
             <span className="flex items-center gap-1.5">
@@ -482,7 +476,7 @@ function Legend({ threshold }: { threshold: number }) {
                 Tidak ada P2H
             </span>
             <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-emerald-500 ring-1 ring-amber-400" />
+                <div className="h-3 w-3 rounded-sm bg-success ring-1 ring-warning" />
                 Override keputusan operator
             </span>
             <Separator orientation="vertical" className="h-4" />
@@ -666,7 +660,7 @@ export default function MonitoringIndex({
                                             rel="noopener noreferrer"
                                             className="flex cursor-pointer items-center gap-2"
                                         >
-                                            <FileText className="h-4 w-4 text-red-500" />
+                                            <FileText className="h-4 w-4 text-danger" />
                                             Export PDF
                                         </a>
                                     </DropdownMenuItem>
@@ -675,7 +669,7 @@ export default function MonitoringIndex({
                                             href={`/export/monitoring-pa/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
                                             className="flex cursor-pointer items-center gap-2"
                                         >
-                                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                            <FileSpreadsheet className="h-4 w-4 text-success" />
                                             Export Excel
                                         </a>
                                     </DropdownMenuItem>

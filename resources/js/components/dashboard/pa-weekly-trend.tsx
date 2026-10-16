@@ -41,10 +41,10 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
             <p
                 className={
                     pa >= 80
-                        ? 'text-emerald-600'
+                        ? 'text-success'
                         : pa >= 60
-                          ? 'text-amber-600'
-                          : 'text-red-600'
+                          ? 'text-warning'
+                          : 'text-danger'
                 }
             >
                 PA: <strong>{pa}%</strong>
@@ -69,7 +69,7 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
                     <span>Physical Availability 4 minggu terakhir</span>
                     {trend !== 0 && (
                         <span
-                            className={`font-semibold ${trend > 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                            className={`font-semibold ${trend > 0 ? 'text-success' : 'text-danger'}`}
                         >
                             {trend > 0 ? '▲' : '▼'} {Math.abs(trend).toFixed(1)}
                             %
@@ -105,7 +105,7 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
                         />
                         <Tooltip
                             content={<CustomTooltip />}
-                            cursor={{ fill: 'hsl(var(--muted))' }}
+                            cursor={{ fill: 'var(--muted)' }}
                         />
                         <Bar dataKey="pa" radius={[4, 4, 0, 0]} maxBarSize={48}>
                             {data.map((entry, idx) => (

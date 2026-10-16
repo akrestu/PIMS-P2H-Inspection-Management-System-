@@ -128,23 +128,23 @@ function cellClasses(
 ): string {
     if (cell === null) {
         return highlightMissing
-            ? 'bg-red-50 text-red-400 dark:bg-red-950/20 ring-1 ring-inset ring-red-200 dark:ring-red-800'
+            ? 'bg-danger-soft text-danger  ring-1 ring-inset ring-danger/40 '
             : 'bg-muted/40 text-muted-foreground/40';
     }
 
     switch (cell.status) {
         case 'layak':
-            return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/60 cursor-pointer';
+            return 'bg-success-soft text-success hover:bg-success-soft    cursor-pointer';
         case 'bd':
-            return 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/60 cursor-pointer';
+            return 'bg-danger-soft text-danger hover:bg-danger-soft    cursor-pointer';
         case 'downtime':
             switch (cell.downtime_tipe) {
                 case 'BD':
-                    return 'bg-rose-800 text-rose-100 dark:bg-rose-950 dark:text-rose-200';
+                    return 'bg-danger text-danger  ';
                 case 'PM':
-                    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300';
+                    return 'bg-warning-soft text-warning  ';
                 case 'Servis Berkala':
-                    return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300';
+                    return 'bg-info-soft text-info  ';
                 default:
                     return 'bg-muted/40 text-muted-foreground/40';
             }
@@ -165,14 +165,14 @@ function statusLabel(cell: MatrixCell): string {
 
 function complianceColor(pct: number): string {
     if (pct >= 90) {
-        return 'text-emerald-600 dark:text-emerald-400';
+        return 'text-success ';
     }
 
     if (pct >= 70) {
-        return 'text-yellow-600 dark:text-yellow-400';
+        return 'text-warning ';
     }
 
-    return 'text-red-600 dark:text-red-400';
+    return 'text-danger ';
 }
 
 // ── Filter Bar ─────────────────────────────────────────────────────────────────
@@ -305,7 +305,7 @@ function FilterBar({
                                         rel="noopener noreferrer"
                                         className="flex cursor-pointer items-center gap-2"
                                     >
-                                        <FileText className="h-4 w-4 text-red-500" />
+                                        <FileText className="h-4 w-4 text-danger" />
                                         Export PDF
                                     </a>
                                 </DropdownMenuItem>
@@ -314,7 +314,7 @@ function FilterBar({
                                         href={`/export/monitoring-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
                                         className="flex cursor-pointer items-center gap-2"
                                     >
-                                        <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                        <FileSpreadsheet className="h-4 w-4 text-success" />
                                         Export Excel
                                     </a>
                                 </DropdownMenuItem>
@@ -478,8 +478,8 @@ function MatrixCellComponent({
                             className={cn(
                                 'font-bold',
                                 (cell.total_tl ?? 0) > 0
-                                    ? 'text-red-400'
-                                    : 'text-emerald-400',
+                                    ? 'text-danger'
+                                    : 'text-success',
                             )}
                         >
                             {cell.total_tl}
@@ -491,8 +491,8 @@ function MatrixCellComponent({
                             className={cn(
                                 'font-bold',
                                 cell.status === 'layak'
-                                    ? 'text-emerald-400'
-                                    : 'text-red-400',
+                                    ? 'text-success'
+                                    : 'text-danger',
                             )}
                         >
                             {statusLabel(cell)}
@@ -510,23 +510,23 @@ function MatrixLegend() {
     const items = [
         {
             label: 'Layak Pakai',
-            cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
+            cls: 'bg-success-soft text-success  ',
         },
         {
             label: 'BD (P2H)',
-            cls: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+            cls: 'bg-danger-soft text-danger  ',
         },
         {
             label: 'BD (Downtime)',
-            cls: 'bg-rose-800 text-rose-100 dark:bg-rose-950 dark:text-rose-200',
+            cls: 'bg-danger text-danger  ',
         },
         {
             label: 'PM (Downtime)',
-            cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+            cls: 'bg-warning-soft text-warning  ',
         },
         {
             label: 'Servis Berkala',
-            cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+            cls: 'bg-info-soft text-info  ',
         },
         { label: 'Tidak ada P2H', cls: 'bg-muted/40 text-muted-foreground/40' },
     ];
@@ -693,8 +693,8 @@ export default function P2hCompliancePage({
                                                                 'h-4 px-1 text-[9px]',
                                                                 row.jenis_unit ===
                                                                     'Bus'
-                                                                    ? 'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400'
-                                                                    : 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
+                                                                    ? 'border-info/40 bg-info-soft text-info'
+                                                                    : 'border-info/40 bg-info-soft text-info',
                                                             )}
                                                         >
                                                             {row.jenis_unit ===
@@ -816,15 +816,11 @@ export default function P2hCompliancePage({
                     </p>
                     <p>
                         Status{' '}
-                        <strong className="text-emerald-600 dark:text-emerald-400">
-                            Layak Pakai
-                        </strong>{' '}
-                        = semua slot dengan kondisi_akhir Layak Pakai atau score
-                        ≥ 80%. Status{' '}
-                        <strong className="text-red-600 dark:text-red-400">
-                            Breakdown
-                        </strong>{' '}
-                        = ada satu atau lebih slot kondisi BD. Range maksimal{' '}
+                        <strong className="text-success">Layak Pakai</strong> =
+                        semua slot dengan kondisi_akhir Layak Pakai atau score ≥
+                        80%. Status{' '}
+                        <strong className="text-danger">Breakdown</strong> = ada
+                        satu atau lebih slot kondisi BD. Range maksimal{' '}
                         <strong className="text-foreground">31 hari</strong>.
                     </p>
                 </div>

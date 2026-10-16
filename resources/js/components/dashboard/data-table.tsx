@@ -92,7 +92,7 @@ const columns: ColumnDef<RecentP2h>[] = [
                     {Array.from({ length: val }).map((_, i) => (
                         <span
                             key={i}
-                            className="h-2 w-2 rounded-full bg-blue-500"
+                            className="h-2 w-2 rounded-full bg-info"
                         />
                     ))}
                     <span className="ml-1 text-xs text-muted-foreground">
@@ -115,7 +115,7 @@ const columns: ColumnDef<RecentP2h>[] = [
             ) : (
                 <Badge
                     variant="outline"
-                    className="border-emerald-200 font-medium text-emerald-600 dark:border-emerald-800 dark:text-emerald-400"
+                    className="border-success/40 font-medium text-success"
                 >
                     Layak
                 </Badge>
@@ -133,7 +133,7 @@ const columns: ColumnDef<RecentP2h>[] = [
                     variant={status === 'completed' ? 'default' : 'secondary'}
                     className={
                         status === 'completed'
-                            ? 'bg-emerald-600 hover:bg-emerald-700'
+                            ? 'bg-success hover:bg-success'
                             : ''
                     }
                 >
@@ -256,7 +256,7 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                         <TabsTrigger value="ada_tl" className="px-3 text-xs">
                             Ada TL
                             {counts.ada_tl > 0 && (
-                                <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-600 dark:bg-red-900/40 dark:text-red-400">
+                                <span className="ml-1.5 rounded-full bg-danger-soft px-1.5 py-0.5 text-xs font-semibold text-danger">
                                     {counts.ada_tl}
                                 </span>
                             )}

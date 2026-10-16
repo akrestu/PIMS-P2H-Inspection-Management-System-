@@ -44,7 +44,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
                 {label}
             </p>
             <p className="text-sm font-semibold">
-                <span className="text-blue-500">{payload[0].value}</span>
+                <span className="text-info">{payload[0].value}</span>
                 <span className="ml-1 font-normal text-muted-foreground">
                     sesi P2H
                 </span>
@@ -62,7 +62,7 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
 
     const axisStyle = {
         fontSize: 11,
-        fill: 'hsl(var(--muted-foreground))',
+        fill: 'var(--muted-foreground)',
         fontFamily: 'inherit',
     };
 
@@ -72,7 +72,7 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
                         <CardTitle className="flex items-center gap-2 text-base">
-                            <TrendingUp className="h-4 w-4 text-blue-500" />
+                            <TrendingUp className="h-4 w-4 text-info" />
                             Tren P2H 7 Hari Terakhir
                         </CardTitle>
                         <CardDescription>
@@ -153,12 +153,12 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                                 >
                                     <stop
                                         offset="5%"
-                                        stopColor="#3b82f6"
+                                        stopColor="var(--chart-1)"
                                         stopOpacity={0.25}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="#3b82f6"
+                                        stopColor="var(--chart-1)"
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
@@ -166,7 +166,7 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                             <CartesianGrid
                                 strokeDasharray="3 3"
                                 vertical={false}
-                                stroke="hsl(var(--border))"
+                                stroke="var(--border)"
                                 strokeOpacity={0.6}
                             />
                             <XAxis
@@ -184,7 +184,7 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                             <Tooltip
                                 content={<CustomTooltip />}
                                 cursor={{
-                                    stroke: '#3b82f6',
+                                    stroke: 'var(--chart-1)',
                                     strokeWidth: 1,
                                     strokeDasharray: '4 2',
                                 }}
@@ -192,17 +192,17 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                             <Area
                                 type="monotone"
                                 dataKey="total"
-                                stroke="#3b82f6"
+                                stroke="var(--chart-1)"
                                 strokeWidth={2}
                                 fill="url(#gradP2H)"
                                 dot={{
                                     r: 3.5,
-                                    fill: '#3b82f6',
+                                    fill: 'var(--chart-1)',
                                     strokeWidth: 0,
                                 }}
                                 activeDot={{
                                     r: 5.5,
-                                    fill: '#3b82f6',
+                                    fill: 'var(--chart-1)',
                                     stroke: '#fff',
                                     strokeWidth: 2,
                                 }}
@@ -216,7 +216,7 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                             <CartesianGrid
                                 strokeDasharray="3 3"
                                 vertical={false}
-                                stroke="hsl(var(--border))"
+                                stroke="var(--border)"
                                 strokeOpacity={0.6}
                             />
                             <XAxis
@@ -233,11 +233,11 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                             />
                             <Tooltip
                                 content={<CustomTooltip />}
-                                cursor={{ fill: '#3b82f6', fillOpacity: 0.06 }}
+                                cursor={{ fill: 'var(--chart-1)', fillOpacity: 0.06 }}
                             />
                             <Bar
                                 dataKey="total"
-                                fill="#3b82f6"
+                                fill="var(--chart-1)"
                                 radius={[4, 4, 0, 0]}
                                 maxBarSize={48}
                             />

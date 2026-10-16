@@ -138,14 +138,13 @@ function getTypeConfig(data: PimsNotification['data']) {
     if (type === 'finding_assigned') {
         return {
             icon: Wrench,
-            iconClass:
-                'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+            iconClass: 'bg-info-soft text-info  ',
             borderColor: 'border-l-blue-400',
-            bgUnread: 'bg-blue-50/40 dark:bg-blue-950/15',
+            bgUnread: 'bg-info-soft ',
             badge: (
                 <Badge
                     variant="secondary"
-                    className="gap-1 border-blue-200 bg-blue-100 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                    className="gap-1 border-info/40 bg-info-soft text-xs font-medium text-info"
                 >
                     <Wrench className="h-3 w-3" />
                     Tugas Perbaikan
@@ -158,14 +157,13 @@ function getTypeConfig(data: PimsNotification['data']) {
     if (type === 'p2h_missing') {
         return {
             icon: ClipboardX,
-            iconClass:
-                'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+            iconClass: 'bg-warning-soft text-warning  ',
             borderColor: 'border-l-amber-500',
-            bgUnread: 'bg-amber-50/40 dark:bg-amber-950/15',
+            bgUnread: 'bg-warning-soft ',
             badge: (
                 <Badge
                     variant="secondary"
-                    className="gap-1 border-amber-200 bg-amber-100 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                    className="gap-1 border-warning/40 bg-warning-soft text-xs font-medium text-warning"
                 >
                     <ClipboardX className="h-3 w-3" />
                     Belum P2H ({data.jumlah ?? 0} unit)
@@ -178,10 +176,9 @@ function getTypeConfig(data: PimsNotification['data']) {
     if (type === 'finding_overdue') {
         return {
             icon: AlarmClock,
-            iconClass:
-                'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+            iconClass: 'bg-danger-soft text-danger  ',
             borderColor: 'border-l-red-500',
-            bgUnread: 'bg-red-50/40 dark:bg-red-950/15',
+            bgUnread: 'bg-danger-soft ',
             badge: (
                 <Badge
                     variant="destructive"
@@ -198,14 +195,13 @@ function getTypeConfig(data: PimsNotification['data']) {
     if (type === 'lv_approval_escalation') {
         return {
             icon: Timer,
-            iconClass:
-                'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400',
+            iconClass: 'bg-warning-soft text-warning  ',
             borderColor: 'border-l-orange-500',
-            bgUnread: 'bg-orange-50/40 dark:bg-orange-950/15',
+            bgUnread: 'bg-warning-soft ',
             badge: (
                 <Badge
                     variant="secondary"
-                    className="gap-1 border-orange-200 bg-orange-100 text-xs font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+                    className="gap-1 border-warning/40 bg-warning-soft text-xs font-medium text-warning"
                 >
                     <Timer className="h-3 w-3" />
                     Eskalasi Persetujuan
@@ -218,14 +214,13 @@ function getTypeConfig(data: PimsNotification['data']) {
     if (type === 'lv_approval_request') {
         return {
             icon: ClipboardCheck,
-            iconClass:
-                'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+            iconClass: 'bg-warning-soft text-warning  ',
             borderColor: 'border-l-amber-400',
-            bgUnread: 'bg-amber-50/40 dark:bg-amber-950/15',
+            bgUnread: 'bg-warning-soft ',
             badge: (
                 <Badge
                     variant="secondary"
-                    className="gap-1 border-amber-200 bg-amber-100 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                    className="gap-1 border-warning/40 bg-warning-soft text-xs font-medium text-warning"
                 >
                     <ClipboardCheck className="h-3 w-3" />
                     Permintaan Persetujuan
@@ -241,16 +236,14 @@ function getTypeConfig(data: PimsNotification['data']) {
         return {
             icon: approved ? CheckCircle : XCircle,
             iconClass: approved
-                ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
-                : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+                ? 'bg-success-soft text-success  '
+                : 'bg-danger-soft text-danger  ',
             borderColor: approved ? 'border-l-green-400' : 'border-l-red-400',
-            bgUnread: approved
-                ? 'bg-green-50/40 dark:bg-green-950/15'
-                : 'bg-red-50/40 dark:bg-red-950/15',
+            bgUnread: approved ? 'bg-success-soft ' : 'bg-danger-soft ',
             badge: approved ? (
                 <Badge
                     variant="secondary"
-                    className="gap-1 border-green-200 bg-green-100 text-xs font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+                    className="gap-1 border-success/40 bg-success-soft text-xs font-medium text-success"
                 >
                     <CheckCircle className="h-3 w-3" />
                     Disetujui
@@ -270,10 +263,9 @@ function getTypeConfig(data: PimsNotification['data']) {
 
     return {
         icon: AlertTriangle,
-        iconClass:
-            'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+        iconClass: 'bg-danger-soft text-danger  ',
         borderColor: 'border-l-red-500',
-        bgUnread: 'bg-red-50/40 dark:bg-red-950/15',
+        bgUnread: 'bg-danger-soft ',
         badge: (
             <Badge variant="destructive" className="gap-1 text-xs font-medium">
                 <AlertTriangle className="h-3 w-3" />
@@ -365,8 +357,8 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                 <div className="flex flex-wrap items-center gap-1.5">
                     {config.badge}
                     {isUnread && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        <span className="inline-flex items-center gap-1 rounded-full border border-info/40 bg-info-soft px-2 py-0.5 text-xs font-medium text-info">
+                            <span className="h-1.5 w-1.5 rounded-full bg-info" />
                             Belum dibaca
                         </span>
                     )}
@@ -461,15 +453,15 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                         {notif.data.critical_items!.map((item, idx) => (
                             <div
                                 key={idx}
-                                className="inline-flex items-start gap-1.5 rounded-md border border-red-200 bg-red-50 px-2 py-1 dark:border-red-900/50 dark:bg-red-950/30"
+                                className="inline-flex items-start gap-1.5 rounded-md border border-danger/40 bg-danger-soft px-2 py-1"
                             >
-                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />
-                                <span className="text-xs text-red-700 dark:text-red-400">
+                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
+                                <span className="text-xs text-danger">
                                     <span className="font-medium">
                                         {item.nama_item}
                                     </span>
                                     {item.keterangan && (
-                                        <span className="text-red-500">
+                                        <span className="text-danger">
                                             {' '}
                                             — {item.keterangan}
                                         </span>
@@ -502,7 +494,7 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
             {/* Right column: unread dot + actions (visible on hover) */}
             <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
                 {isUnread && (
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-background" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-info ring-2 ring-background" />
                 )}
                 <div
                     className={cn(
@@ -652,7 +644,7 @@ function FilterTab({
                     className={cn(
                         'rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums',
                         accent === 'red'
-                            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-danger-soft text-danger'
                             : 'bg-muted text-muted-foreground',
                     )}
                 >

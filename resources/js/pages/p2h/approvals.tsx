@@ -136,17 +136,17 @@ function ApprovalStatusBadge({ status }: { status: ApprovalStatus | null }) {
         pending: {
             label: 'Menunggu',
             icon: Clock,
-            cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+            cls: 'bg-warning-soft text-warning border-warning/40   ',
         },
         approved: {
             label: 'Disetujui',
             icon: CheckCircle2,
-            cls: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+            cls: 'bg-success-soft text-success border-success/40   ',
         },
         rejected: {
             label: 'Ditolak',
             icon: XCircle,
-            cls: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+            cls: 'bg-danger-soft text-danger border-danger/40   ',
         },
     };
     const { label, icon: Icon, cls } = config[status];
@@ -204,8 +204,8 @@ function RejectDialog({
         >
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
-                        <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-danger-soft">
+                        <XCircle className="h-6 w-6 text-danger" />
                     </div>
                     <DialogTitle className="text-center">
                         Tolak P2H?
@@ -380,7 +380,7 @@ function ReviewApproveSheet({
                             </p>
                         </div>
                         {hasCritical && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-danger/40 bg-danger-soft px-2 py-0.5 text-xs font-bold text-danger">
                                 <AlertCircle className="h-3 w-3" /> CRITICAL
                             </span>
                         )}
@@ -400,10 +400,10 @@ function ReviewApproveSheet({
                             {/* Stats mini: skor + TL + kondisi */}
                             <div className="grid grid-cols-3 gap-3">
                                 <div
-                                    className={`rounded-xl border p-3 text-center ${detail.score < 80 ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20' : 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'}`}
+                                    className={`rounded-xl border p-3 text-center ${detail.score < 80 ? 'border-danger/40 bg-danger-soft' : 'border-success/40 bg-success-soft'}`}
                                 >
                                     <p
-                                        className={`text-2xl font-bold ${detail.score < 80 ? 'text-red-600' : 'text-emerald-600'}`}
+                                        className={`text-2xl font-bold ${detail.score < 80 ? 'text-danger' : 'text-success'}`}
                                     >
                                         {detail.score}%
                                     </p>
@@ -412,10 +412,10 @@ function ReviewApproveSheet({
                                     </p>
                                 </div>
                                 <div
-                                    className={`rounded-xl border p-3 text-center ${detail.tl_count > 0 ? 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20' : 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'}`}
+                                    className={`rounded-xl border p-3 text-center ${detail.tl_count > 0 ? 'border-warning/40 bg-warning-soft' : 'border-success/40 bg-success-soft'}`}
                                 >
                                     <p
-                                        className={`text-2xl font-bold ${detail.tl_count > 0 ? 'text-orange-600' : 'text-emerald-600'}`}
+                                        className={`text-2xl font-bold ${detail.tl_count > 0 ? 'text-warning' : 'text-success'}`}
                                     >
                                         {detail.tl_count}
                                     </p>
@@ -424,10 +424,10 @@ function ReviewApproveSheet({
                                     </p>
                                 </div>
                                 <div
-                                    className={`rounded-xl border p-3 text-center ${detail.kondisi_akhir === 'BD' ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20' : 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'}`}
+                                    className={`rounded-xl border p-3 text-center ${detail.kondisi_akhir === 'BD' ? 'border-danger/40 bg-danger-soft' : 'border-success/40 bg-success-soft'}`}
                                 >
                                     <p
-                                        className={`text-2xl font-bold ${detail.kondisi_akhir === 'BD' ? 'text-red-600' : 'text-emerald-600'}`}
+                                        className={`text-2xl font-bold ${detail.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
                                     >
                                         {detail.kondisi_akhir === 'BD'
                                             ? 'BD'
@@ -487,11 +487,11 @@ function ReviewApproveSheet({
 
                             {/* Justifikasi kondisi */}
                             {detail.justifikasi_kondisi && (
-                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-                                    <p className="mb-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                <div className="rounded-lg border border-warning/40 bg-warning-soft p-3">
+                                    <p className="mb-1 text-xs font-semibold text-warning">
                                         Justifikasi Kondisi Driver:
                                     </p>
-                                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                                    <p className="text-sm text-warning">
                                         {detail.justifikasi_kondisi}
                                     </p>
                                 </div>
@@ -537,7 +537,7 @@ function ReviewApproveSheet({
                                                         `Seksi ${section}`}
                                                 </p>
                                                 {hasAA && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-danger/40 bg-danger-soft px-2 py-0.5 text-xs font-bold text-danger">
                                                         <AlertCircle className="h-3 w-3" />{' '}
                                                         STOP
                                                     </span>
@@ -554,19 +554,19 @@ function ReviewApproveSheet({
                                                             key={
                                                                 item.inspection_item_id
                                                             }
-                                                            className={`px-3 py-2.5 text-sm ${isTL ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
+                                                            className={`px-3 py-2.5 text-sm ${isTL ? 'bg-danger-soft' : ''}`}
                                                         >
                                                             <div className="flex items-start justify-between gap-2">
                                                                 <div className="flex min-w-0 items-start gap-2">
                                                                     {item.kode_bahaya ===
                                                                         'AA' &&
                                                                         isTL && (
-                                                                            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600" />
+                                                                            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
                                                                         )}
                                                                     <span
                                                                         className={
                                                                             isTL
-                                                                                ? 'font-medium text-red-800 dark:text-red-300'
+                                                                                ? 'font-medium text-danger'
                                                                                 : 'text-foreground'
                                                                         }
                                                                     >
@@ -578,8 +578,8 @@ function ReviewApproveSheet({
                                                                 <span
                                                                     className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold ${
                                                                         isTL
-                                                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-                                                                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                                                            ? 'bg-danger-soft text-danger'
+                                                                            : 'bg-success-soft text-success'
                                                                     }`}
                                                                 >
                                                                     {item.kondisi ??
@@ -588,7 +588,7 @@ function ReviewApproveSheet({
                                                             </div>
                                                             {isTL &&
                                                                 item.keterangan && (
-                                                                    <p className="mt-1 pl-5 text-xs text-red-700 dark:text-red-400">
+                                                                    <p className="mt-1 pl-5 text-xs text-danger">
                                                                         Ket:{' '}
                                                                         {
                                                                             item.keterangan
@@ -696,7 +696,7 @@ function ReviewApproveSheet({
                             <div className="flex gap-3">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
+                                    className="flex-1 border-danger/40 text-danger hover:border-danger/40 hover:bg-danger-soft"
                                     onClick={() => {
                                         onClose();
                                         onReject();
@@ -706,7 +706,7 @@ function ReviewApproveSheet({
                                     Tolak P2H
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                                    className="flex-1 bg-success text-white hover:bg-success"
                                     disabled={sigEmpty || processing}
                                     onClick={handleApprove}
                                 >
@@ -797,8 +797,8 @@ function BulkApproveDialog({
         >
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-                        <ListChecks className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-success-soft">
+                        <ListChecks className="h-6 w-6 text-success" />
                     </div>
                     <DialogTitle className="text-center">
                         Setujui {approvable} P2H sekaligus?
@@ -811,7 +811,7 @@ function BulkApproveDialog({
                 </DialogHeader>
 
                 {skipped > 0 && (
-                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                    <div className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-xs text-warning">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         <span>
                             {skipped} P2H tidak ikut disetujui karena memiliki
@@ -876,7 +876,7 @@ function BulkApproveDialog({
                     <Button
                         onClick={submit}
                         disabled={sigEmpty || processing}
-                        className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                        className="flex-1 bg-success text-white hover:bg-success"
                     >
                         {processing ? (
                             <>
@@ -907,14 +907,12 @@ function EntryCard({
     return (
         <div
             className={`flex flex-col gap-3 rounded-xl border p-4 transition-shadow hover:shadow-sm ${
-                entry.has_critical
-                    ? 'border-red-300 dark:border-red-800'
-                    : 'border-border'
+                entry.has_critical ? 'border-danger/40' : 'border-border'
             }`}
         >
             {/* Critical banner */}
             {entry.has_critical && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+                <div className="flex items-center gap-1.5 rounded-lg border border-danger/40 bg-danger-soft px-3 py-1.5 text-xs font-medium text-danger">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     Ada item Critical (AA) Tidak Layak — perlu perhatian khusus
                 </div>
@@ -922,7 +920,7 @@ function EntryCard({
 
             {/* Escalation banner */}
             {entry.escalated && entry.approval_status === 'pending' && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400">
+                <div className="flex items-center gap-1.5 rounded-lg border border-warning/40 bg-warning-soft px-3 py-1.5 text-xs font-medium text-warning">
                     <Clock className="h-3.5 w-3.5 shrink-0" />
                     Dieskalasi ke admin — PIC belum merespons sampai akhir shift
                 </div>
@@ -965,7 +963,7 @@ function EntryCard({
             <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2">
                 <div className="flex-1 text-center">
                     <p
-                        className={`text-lg font-bold tabular-nums ${entry.score < 80 ? 'text-red-600' : 'text-emerald-600'}`}
+                        className={`text-lg font-bold tabular-nums ${entry.score < 80 ? 'text-danger' : 'text-success'}`}
                     >
                         {entry.score}%
                     </p>
@@ -974,7 +972,7 @@ function EntryCard({
                 <div className="h-8 w-px bg-border" />
                 <div className="flex-1 text-center">
                     <p
-                        className={`text-lg font-bold tabular-nums ${entry.tl_count > 0 ? 'text-orange-600' : 'text-emerald-600'}`}
+                        className={`text-lg font-bold tabular-nums ${entry.tl_count > 0 ? 'text-warning' : 'text-success'}`}
                     >
                         {entry.tl_count}
                     </p>
@@ -983,7 +981,7 @@ function EntryCard({
                 <div className="h-8 w-px bg-border" />
                 <div className="flex-1 text-center">
                     <p
-                        className={`text-sm font-bold ${entry.kondisi_akhir === 'BD' ? 'text-red-600' : 'text-emerald-600'}`}
+                        className={`text-sm font-bold ${entry.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
                     >
                         {entry.kondisi_akhir ?? '-'}
                     </p>
@@ -996,12 +994,12 @@ function EntryCard({
                 <div
                     className={`rounded-lg border p-2.5 ${
                         entry.approval_status === 'rejected'
-                            ? 'border-red-100 bg-red-50 dark:border-red-900 dark:bg-red-950/20'
-                            : 'border-emerald-100 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'
+                            ? 'border-danger/40 bg-danger-soft'
+                            : 'border-success/40 bg-success-soft'
                     }`}
                 >
                     <p
-                        className={`text-xs ${entry.approval_status === 'rejected' ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}
+                        className={`text-xs ${entry.approval_status === 'rejected' ? 'text-danger' : 'text-success'}`}
                     >
                         <span className="font-semibold">Catatan:</span>{' '}
                         {entry.catatan_approval}
@@ -1014,9 +1012,9 @@ function EntryCard({
                 <div className="flex items-center gap-2">
                     <div className="flex-1 text-xs text-muted-foreground">
                         {entry.approval_status === 'approved' ? (
-                            <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-emerald-600" />
+                            <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-success" />
                         ) : (
-                            <XCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-red-600" />
+                            <XCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-danger" />
                         )}
                         {entry.approval_status === 'approved'
                             ? 'Disetujui'
@@ -1165,7 +1163,7 @@ export default function P2hApprovals({
                         activeStatus === 'pending' &&
                         bulkApprovable > 0 && (
                             <Button
-                                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                                className="bg-success text-white hover:bg-success"
                                 onClick={() => setBulkOpen(true)}
                             >
                                 <ListChecks className="mr-1.5 h-4 w-4" />

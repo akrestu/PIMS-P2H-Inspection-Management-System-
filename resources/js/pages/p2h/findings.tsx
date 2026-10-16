@@ -100,18 +100,15 @@ interface FindingForm {
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
     open: {
         label: 'Open',
-        className:
-            'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+        className: 'bg-danger-soft text-danger border-danger/40   ',
     },
     progress: {
         label: 'On Progress',
-        className:
-            'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+        className: 'bg-warning-soft text-warning border-warning/40   ',
     },
     closed: {
         label: 'Closed',
-        className:
-            'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+        className: 'bg-success-soft text-success border-success/40   ',
     },
 };
 
@@ -145,7 +142,7 @@ function FindingFlags({
             {overdue && (
                 <Badge
                     variant="outline"
-                    className="gap-1 border-red-300 text-red-700 dark:border-red-800 dark:text-red-400"
+                    className="gap-1 border-danger/40 text-danger"
                 >
                     <AlarmClock className="h-3 w-3" /> Lewat target
                 </Badge>
@@ -153,7 +150,7 @@ function FindingFlags({
             {berulang && (
                 <Badge
                     variant="outline"
-                    className="gap-1 border-purple-300 text-purple-700 dark:border-purple-800 dark:text-purple-400"
+                    className="gap-1 border-info/40 text-info"
                 >
                     <Repeat className="h-3 w-3" /> Berulang {berulang}x/
                     {windowDays} hari
@@ -774,11 +771,11 @@ export default function P2hFindings({
                                 ? 'Pantau tindakan perbaikan dan PIC setiap temuan'
                                 : 'Temuan yang ditugaskan kepada Anda — perbarui progress perbaikannya'}{' '}
                             ·{' '}
-                            <span className="font-medium text-red-600">
+                            <span className="font-medium text-danger">
                                 {counts.open} open
                             </span>{' '}
                             ·{' '}
-                            <span className="font-medium text-amber-600">
+                            <span className="font-medium text-warning">
                                 {counts.progress} on progress
                             </span>
                         </p>
@@ -792,10 +789,10 @@ export default function P2hFindings({
                         onClick={() =>
                             applyFilter({ status: 'overdue', page: 1 })
                         }
-                        className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-left dark:border-red-900 dark:bg-red-950/20"
+                        className="flex items-center gap-3 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3 text-left"
                     >
-                        <AlarmClock className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                        <p className="text-sm text-red-700 dark:text-red-300">
+                        <AlarmClock className="h-5 w-5 shrink-0 text-danger" />
+                        <p className="text-sm text-danger">
                             <strong>{counts.overdue} temuan</strong> melewati
                             target selesai. Klik untuk melihat.
                         </p>
@@ -1049,8 +1046,8 @@ export default function P2hFindings({
                                                             'mt-1',
                                                             f.keputusan_unit ===
                                                                 'BD'
-                                                                ? 'border-red-300 text-red-700 dark:border-red-800 dark:text-red-400'
-                                                                : 'border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400',
+                                                                ? 'border-danger/40 text-danger'
+                                                                : 'border-success/40 text-success',
                                                         )}
                                                         title={
                                                             f.alasan_keputusan ??
@@ -1073,7 +1070,7 @@ export default function P2hFindings({
                                                 <p className="font-medium">
                                                     {f.item_nama}
                                                     {f.kode_bahaya === 'AA' && (
-                                                        <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
+                                                        <Badge className="ml-2 bg-danger text-white hover:bg-danger">
                                                             AA
                                                         </Badge>
                                                     )}
@@ -1110,7 +1107,7 @@ export default function P2hFindings({
                                                 className={cn(
                                                     'px-4 py-3 whitespace-nowrap',
                                                     f.overdue &&
-                                                        'font-medium text-red-600',
+                                                        'font-medium text-danger',
                                                 )}
                                             >
                                                 {formatDate(f.target_selesai)}
@@ -1231,7 +1228,7 @@ function FindingCard({
     onEdit: () => void;
 }) {
     return (
-        <Card className={cn(f.overdue && 'border-red-300 dark:border-red-900')}>
+        <Card className={cn(f.overdue && 'border-danger/40')}>
             <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -1240,7 +1237,7 @@ function FindingCard({
                             {f.keputusan_unit === 'BD' && (
                                 <Badge
                                     variant="outline"
-                                    className="ml-2 border-red-300 text-red-700 dark:border-red-800 dark:text-red-400"
+                                    className="ml-2 border-danger/40 text-danger"
                                 >
                                     BD
                                 </Badge>
@@ -1265,7 +1262,7 @@ function FindingCard({
                     <p className="font-medium">
                         {f.item_nama}
                         {f.kode_bahaya === 'AA' && (
-                            <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
+                            <Badge className="ml-2 bg-danger text-white hover:bg-danger">
                                 AA
                             </Badge>
                         )}
@@ -1301,7 +1298,7 @@ function FindingCard({
                         )}
                     </dd>
                     <dt className="text-muted-foreground">Target</dt>
-                    <dd className={cn(f.overdue && 'font-medium text-red-600')}>
+                    <dd className={cn(f.overdue && 'font-medium text-danger')}>
                         {formatDate(f.target_selesai)}
                     </dd>
                 </dl>
