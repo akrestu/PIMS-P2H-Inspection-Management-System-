@@ -57,6 +57,9 @@ class DemoSeeder extends Seeder
             ]));
         }
 
+        // Unit sudah terdaftar sejak lama agar PA & kepatuhan historis terhitung
+        Unit::whereIn('id', $units->pluck('id'))->update(['created_at' => now()->subDays(60)]);
+
         // Budi ditugaskan ke unit pertama (kartu "Unit hari ini").
         $drivers[0]->units()->syncWithoutDetaching([$units[0]->id]);
 

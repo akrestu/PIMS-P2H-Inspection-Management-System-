@@ -184,6 +184,17 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
+  /* Skala kuning brand (docs/01-design-tokens.md) — dipakai ramp heatmap PA */
+  --color-brand-50: #FEFBE8;
+  --color-brand-100: #FDF5C3;
+  --color-brand-200: #FBEA8A;
+  --color-brand-300: #F8DC52;
+  --color-brand-400: #F4D435;
+  --color-brand-500: #DDB80F;
+  --color-brand-600: #B98F0A;
+  --color-brand-700: #94690D;
+  --color-brand-800: #7A5312;
+  --color-brand-900: #684415;
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-chart-1: var(--chart-1);
