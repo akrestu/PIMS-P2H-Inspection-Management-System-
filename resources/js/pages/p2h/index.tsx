@@ -16,6 +16,7 @@ import { PageButtons } from '@/components/pagination-bar';
 import { FilterChips } from '@/components/pims/filter-chips';
 import { ListCard } from '@/components/pims/list-card';
 import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
 import { EmptyState } from '@/components/pims/states';
 import { StatusPill } from '@/components/pims/status-pill';
 import { Button } from '@/components/ui/button';
@@ -97,6 +98,7 @@ interface Filters {
     no_unit?: string;
     jenis_unit?: string;
     hasil?: string;
+    approval?: string;
     user_id?: string;
     [key: string]: string | undefined;
 }
@@ -119,26 +121,38 @@ function parseDateLocal(s: string): Date {
     return new Date(y, m - 1, d);
 }
 
-// ── Quick filter chips ────────────────────────────────────────────────────────
-const today = new Date().toISOString().split('T')[0];
-const weekStart = (() => {
+// ── Rentang & filter status (RiwayatP2H.png) ─────────────────────────────────
+const isoDaysAgo = (days: number) => {
     const d = new Date();
-    d.setDate(d.getDate() - d.getDay() + 1);
+    d.setDate(d.getDate() - days);
 
-    return d.toISOString().split('T')[0];
-})();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
-const QUICK_FILTERS = [
-    { label: 'Hari Ini', value: { date_from: today, date_to: today } },
-    { label: 'Minggu Ini', value: { date_from: weekStart, date_to: today } },
-    { label: 'Ada TL', value: { hasil: 'ada_tl' } },
-    { label: 'Semua Layak', value: { hasil: 'semua_layak' } },
-    { label: 'Bus', value: { jenis_unit: 'Bus' } },
-    { label: 'LV', value: { jenis_unit: 'Light Vehicle' } },
-];
+type RangeKey = '7' | '30' | '90' | 'semua';
 
-function isQuickActive(qf: (typeof QUICK_FILTERS)[0], form: Filters) {
-    return Object.entries(qf.value).every(([k, v]) => form[k] === v);
+function rangeOf(filters: Filters): RangeKey {
+    if (!filters.date_from || filters.date_to) {
+        return 'semua';
+    }
+
+    const match = (['7', '30', '90'] as const).find(
+        (r) => filters.date_from === isoDaysAgo(Number(r) - 1),
+    );
+
+    return match ?? 'semua';
+}
+
+type StatusKeyFilter = 'semua' | 'layak' | 'tidak_layak' | 'pending';
+
+function statusOf(filters: Filters): StatusKeyFilter {
+    if (filters.approval === 'pending') {
+        return 'pending';
+    }
+
+    return filters.hasil === 'layak' || filters.hasil === 'tidak_layak'
+        ? filters.hasil
+        : 'semua';
 }
 
 // ── Delete Confirmation Dialog ────────────────────────────────────────────────
@@ -285,20 +299,17 @@ function ResultPill({ row }: { row: P2hRow }) {
     );
 }
 
-function ApprovalPill({ row }: { row: P2hRow }) {
+/** Persetujuan di tabel desktop: teks berwarna, bukan pill (RiwayatP2H-Desktop.png). */
+function ApprovalText({ row }: { row: P2hRow }) {
     switch (row.approval) {
         case 'pending':
-            return <StatusPill status="menunggu" />;
+            return <span className="font-medium text-warning">Menunggu</span>;
         case 'rejected':
-            return <StatusPill status="ditolak" />;
+            return <span className="font-medium text-danger">Ditolak</span>;
         case 'approved':
-            return <StatusPill status="disetujui" />;
+            return <span className="text-muted-foreground">Disetujui</span>;
         default:
-            return (
-                <span className="text-sm text-muted-foreground">
-                    Tidak perlu
-                </span>
-            );
+            return <span className="text-muted-foreground">Tidak perlu</span>;
     }
 }
 
@@ -328,7 +339,7 @@ function DriversCell({ row }: { row: P2hRow }) {
 }
 
 const checklistText = (row: P2hRow) =>
-    row.total_tl > 0 ? `${row.total_tl} item Tidak Layak` : 'Semua layak';
+    row.total_tl > 0 ? `${row.total_tl} rusak` : 'Semua baik';
 
 export default function P2hIndex({ sessions, filters, allUsers }: Props) {
     const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
@@ -361,13 +372,31 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
         router.get('/p2h', {});
     };
 
-    const applyQuickFilter = (qf: (typeof QUICK_FILTERS)[0]) => {
-        const newForm = isQuickActive(qf, form)
-            ? {}
-            : ({ ...qf.value } as Filters);
-        setForm(newForm);
-        router.get('/p2h', newForm, { preserveState: true });
+    const apply = (next: Filters) => {
+        const merged = Object.fromEntries(
+            Object.entries({ ...form, ...next }).filter(
+                ([, v]) => v != null && v !== '',
+            ),
+        ) as Filters;
+        setForm(merged);
+        router.get('/p2h', merged, { preserveState: true, replace: true });
     };
+
+    const setRange = (r: RangeKey) =>
+        apply({
+            date_from: r === 'semua' ? undefined : isoDaysAgo(Number(r) - 1),
+            date_to: undefined,
+        });
+
+    const setStatusFilter = (v: StatusKeyFilter) =>
+        apply({
+            hasil: v === 'layak' || v === 'tidak_layak' ? v : undefined,
+            approval: v === 'pending' ? 'pending' : undefined,
+        });
+
+    const range = rangeOf(filters);
+    const rangeText =
+        range === 'semua' ? null : `${range} hari terakhir`;
 
     const goToPage = (page: number) => {
         router.get('/p2h', { ...filters, page }, { preserveState: true });
@@ -398,11 +427,30 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                     title="Riwayat P2H"
                     description={
                         sessions.total > 0
-                            ? `${sessions.total} sesi${hasActiveFilters ? ' sesuai filter' : ''}`
+                            ? [
+                                  `${sessions.total} sesi`,
+                                  rangeText,
+                                  hasActiveFilters && !rangeText
+                                      ? 'sesuai filter'
+                                      : null,
+                              ]
+                                  .filter(Boolean)
+                                  .join(' · ')
                             : 'Belum ada data'
                     }
                     actions={
                         <>
+                            <Segmented
+                                label="Rentang"
+                                value={range}
+                                onChange={setRange}
+                                options={[
+                                    { value: '7', label: '7 hari' },
+                                    { value: '30', label: '30 hari' },
+                                    { value: '90', label: '90 hari' },
+                                    { value: 'semua', label: 'Semua' },
+                                ]}
+                            />
                             <Button
                                 variant={showFilter ? 'default' : 'outline'}
                                 onClick={() => setShowFilter((v) => !v)}
@@ -454,23 +502,35 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                     }
                 />
 
-                <FilterChips
-                    label="Filter cepat"
-                    options={QUICK_FILTERS.map((qf) => ({
-                        value: qf.label,
-                        label: qf.label,
-                    }))}
-                    value={QUICK_FILTERS.filter((qf) =>
-                        isQuickActive(qf, form),
-                    ).map((qf) => qf.label)}
-                    onChange={(label) => {
-                        const qf = QUICK_FILTERS.find((q) => q.label === label);
-
-                        if (qf) {
-                            applyQuickFilter(qf);
-                        }
-                    }}
-                />
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                    <form
+                        onSubmit={handleSearch}
+                        className="relative w-full lg:w-72"
+                    >
+                        <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={form.no_unit ?? ''}
+                            onChange={(e) =>
+                                setForm({ ...form, no_unit: e.target.value })
+                            }
+                            placeholder="Cari kode unit"
+                            aria-label="Cari unit"
+                            className="h-12 w-full pl-10 lg:h-10"
+                        />
+                    </form>
+                    <FilterChips
+                        label="Filter hasil"
+                        className="-mx-4 px-4 lg:mx-0 lg:px-0"
+                        value={statusOf(filters)}
+                        onChange={setStatusFilter}
+                        options={[
+                            { value: 'semua', label: 'Semua' },
+                            { value: 'layak', label: 'Layak' },
+                            { value: 'tidak_layak', label: 'Tidak layak' },
+                            { value: 'pending', label: 'Belum disetujui' },
+                        ]}
+                    />
+                </div>
 
                 {/* ── Advanced Filter Panel ── */}
                 {showFilter && (
@@ -753,11 +813,11 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                                     </span>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
-                                                <span className="block font-semibold whitespace-nowrap">
+                                            <TableCell className="whitespace-nowrap">
+                                                <span className="font-semibold tnum">
                                                     {row.no_unit}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground">
+                                                </span>{' '}
+                                                <span className="text-[13px] text-muted-foreground">
                                                     {row.jenis_unit}
                                                 </span>
                                             </TableCell>
@@ -787,7 +847,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                                 <ResultPill row={row} />
                                             </TableCell>
                                             <TableCell>
-                                                <ApprovalPill row={row} />
+                                                <ApprovalText row={row} />
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex justify-end gap-1.5">

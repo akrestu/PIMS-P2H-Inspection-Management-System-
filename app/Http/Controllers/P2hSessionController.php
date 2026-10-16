@@ -38,7 +38,8 @@ class P2hSessionController extends Controller
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => 'nullable|date_format:Y-m-d',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
-            'hasil' => 'nullable|in:ada_tl,semua_layak',
+            'hasil' => 'nullable|in:ada_tl,semua_layak,layak,tidak_layak',
+            'approval' => 'nullable|in:pending',
             'user_id' => 'nullable|integer|exists:users,id',
         ]);
 
@@ -51,6 +52,10 @@ class P2hSessionController extends Controller
             ->when($request->jenis_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $request->jenis_unit)))
             ->when($request->hasil === 'ada_tl', fn ($q) => $q->whereHas('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
             ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
+            // Hasil P2H (RiwayatP2H.png): Tidak layak = ada entry BD, Layak = tidak ada entry BD
+            ->when($request->hasil === 'tidak_layak', fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('kondisi_akhir', 'BD')))
+            ->when($request->hasil === 'layak', fn ($q) => $q->whereDoesntHave('userEntries', fn ($e) => $e->where('kondisi_akhir', 'BD')))
+            ->when($request->approval === 'pending', fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('approval_status', 'pending')))
             ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
         if ($user->isStaffOnly()) {
@@ -61,7 +66,8 @@ class P2hSessionController extends Controller
         }
         // Admin/manager: tidak ada filter tambahan → lihat semua
 
-        $sessions = $query->latest()->paginate(15)->withQueryString();
+        // Terbaru di atas: tanggal sesi, lalu waktu dibuat
+        $sessions = $query->orderByDesc('tanggal')->latest()->latest('id')->paginate(15)->withQueryString();
 
         $mapped = $sessions->through(function ($session) {
             $entries = $session->userEntries->sortBy('submitted_at')->values();
@@ -99,7 +105,7 @@ class P2hSessionController extends Controller
 
         return Inertia::render('p2h/index', [
             'sessions' => $mapped,
-            'filters' => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'user_id']),
+            'filters' => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'approval', 'user_id']),
             'allUsers' => $allUsers,
         ]);
     }
