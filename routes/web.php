@@ -206,3 +206,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+// Halaman cek visual komponen design system (hanya environment local)
+if (app()->isLocal()) {
+    Route::inertia('/_dev/komponen', 'dev/komponen')->name('dev.components');
+}

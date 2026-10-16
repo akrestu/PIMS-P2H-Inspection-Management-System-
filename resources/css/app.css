@@ -158,6 +158,10 @@
   --radius-sm: 10px;        /* control */
   --radius-lg: 20px;        /* sheet */
   --radius-full: 999px;
+  /* Permukaan gelap tetap (toast, bulk bar) — sama di semua tema */
+  --ink: #0A0A0A;
+  --ink-foreground: #FAFAFA;
+  --ink-danger: #FCA5A5;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
   --tap: 48px;              /* minimum touch target */
@@ -193,6 +197,9 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-danger: var(--ink-danger);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-input: var(--input);
