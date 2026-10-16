@@ -89,6 +89,8 @@ class TodayP2hStatus
                 'unit_status' => $unitStatus,
                 'unit_note' => $downtime?->keterangan,
                 'unit_since' => $downtime?->jam_mulai?->toIso8601String(),
+                // Driver yang ditugaskan ke unit (penerima tombol "Ingatkan")
+                'assigned' => $unit->users->pluck('name')->values(),
                 'session_id' => $sessions->get($unit->id)?->id,
                 'pending_entry_id' => $pending?->id,
             ];

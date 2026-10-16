@@ -98,7 +98,12 @@ function fullDateTime(dateStr: string): string {
 /* ─────────────────── Isi baris (Notifikasi-Desktop.png) ─────── */
 type Group = 'Butuh tindakan' | 'Temuan' | 'Info';
 
-const ACTION_TYPES = ['critical_alert', 'lv_approval_escalation', 'lv_approval_request'];
+const ACTION_TYPES = [
+    'critical_alert',
+    'lv_approval_escalation',
+    'lv_approval_request',
+    'p2h_reminder',
+];
 
 function groupOf(data: PimsNotification['data']): Group {
     const type = data.type ?? 'critical_alert';
@@ -165,6 +170,14 @@ function describe(data: PimsNotification['data']): {
                 icon: Clock,
                 tone: 'warning',
             };
+        case 'p2h_reminder':
+            return {
+                kind: 'Pengingat P2H',
+                title: `Unit ${unit} belum P2H hari ini`,
+                body: `Diingatkan oleh ${data.sender ?? 'pengawas'} · isi P2H sebelum unit dipakai`,
+                icon: Bell,
+                tone: 'warning',
+            };
         case 'p2h_missing':
             return {
                 kind: 'Pengingat belum P2H',
@@ -213,7 +226,7 @@ function NotificationRow({ notif }: { notif: PimsNotification }) {
             <button
                 type="button"
                 onClick={open}
-                className="flex w-full gap-3 px-4 py-4 text-left hover:bg-muted/50 focus-visible:bg-muted/50"
+                className="flex w-full gap-3 px-4 py-4 text-left hover:bg-muted/50 focus-visible:bg-muted/50 max-md:pb-12"
             >
                 <span
                     className={cn(

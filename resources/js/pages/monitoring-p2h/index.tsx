@@ -1,10 +1,12 @@
 import { Head, router } from '@inertiajs/react';
-import { RefreshCw, Search, X } from 'lucide-react';
+import { Bell, RefreshCw, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
     TodayListCard,
     TodayTable,
+    canRemind,
     filterRows,
+    sendReminder,
 } from '@/components/dashboard/today-status';
 import type {
     TodayFilter,
@@ -17,6 +19,7 @@ import { FilterChips } from '@/components/pims/filter-chips';
 import { KpiCard, KpiStrip } from '@/components/pims/kpi';
 import { PageHeader } from '@/components/pims/page-header';
 import { EmptyState } from '@/components/pims/states';
+import { Button } from '@/components/ui/button';
 import { formatDate, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +77,7 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
     const [refreshing, setRefreshing] = useState(false);
+    const [reminding, setReminding] = useState(false);
     const ago = useAgo(updatedAt);
 
     const refresh = () =>
@@ -110,6 +114,15 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
     const pageRows = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
     const pct =
         summary.required > 0 ? (summary.submitted / summary.required) * 100 : 0;
+    // Unit belum P2H yang punya driver ditugaskan → target "Ingatkan semua"
+    const remindable = rows.filter(canRemind);
+    const remindAll = () => {
+        setReminding(true);
+        sendReminder(
+            remindable.map((r) => r.unit_id),
+            () => setReminding(false),
+        );
+    };
     const pickFilter = (f: TodayFilter) => {
         setFilter((cur) => (cur === f ? 'semua' : f));
         setPage(1);
@@ -211,6 +224,17 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
                                     {FILTER_LABEL[filter]}
                                     <X className="size-3.5" aria-label="Hapus filter" />
                                 </button>
+                            )}
+                            {remindable.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    className="self-start lg:ml-auto lg:self-auto"
+                                    disabled={reminding}
+                                    onClick={remindAll}
+                                >
+                                    <Bell />
+                                    Ingatkan {remindable.length} unit belum P2H
+                                </Button>
                             )}
                             <FilterChips
                                 label="Filter status"

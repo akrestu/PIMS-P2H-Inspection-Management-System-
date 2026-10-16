@@ -1,5 +1,12 @@
-import { Link } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Bell,
+    Check,
+    ChevronRight,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { StatusPill } from '@/components/pims/status-pill';
 import type { StatusKey } from '@/components/pims/status-pill';
@@ -28,6 +35,8 @@ export type TodayRow = {
     unit_status: 'ready' | 'bd' | 'pm' | 'servis';
     unit_note: string | null;
     unit_since: string | null;
+    /** Nama driver yang ditugaskan ke unit (penerima "Ingatkan"). */
+    assigned: string[];
     session_id: number | null;
     pending_entry_id: number | null;
 };
@@ -167,7 +176,78 @@ export function UnitStatusPill({
     return <StatusPill status={UNIT_STATUS[status]} size={size} />;
 }
 
-/** Aksi kontekstual baris: Tinjau (menunggu) · Lihat (sudah P2H). */
+/** Unit belum P2H yang punya driver ditugaskan → bisa diingatkan. */
+export const canRemind = (r: TodayRow) =>
+    r.p2h === 'belum' && r.unit_status === 'ready' && r.assigned.length > 0;
+
+/**
+ * Kirim notifikasi aplikasi "belum P2H" ke driver yang ditugaskan
+ * (LiveMonitoringController::remind). Hasil ditampilkan lewat flash toast.
+ */
+export function sendReminder(unitIds: number[], onDone?: () => void) {
+    router.post(
+        '/monitoring-p2h/ingatkan',
+        { unit_ids: unitIds },
+        { preserveScroll: true, onFinish: () => onDone?.() },
+    );
+}
+
+/** Tombol "Ingatkan" per unit; berubah jadi "Terkirim" setelah berhasil. */
+export function RemindButton({ row }: { row: TodayRow }) {
+    const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+    if (row.assigned.length === 0) {
+        return (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    {/* span agar tooltip tetap muncul pada tombol nonaktif */}
+                    <span tabIndex={0}>
+                        <Button size="sm" variant="outline" disabled>
+                            <Bell />
+                            Ingatkan
+                        </Button>
+                    </span>
+                </TooltipTrigger>
+                <TooltipContent>Belum ada driver ditugaskan</TooltipContent>
+            </Tooltip>
+        );
+    }
+
+    if (state === 'sent') {
+        return (
+            <span className="inline-flex h-8 items-center gap-1 px-2 text-[13px] font-medium text-success">
+                <Check className="size-4" />
+                Terkirim
+            </span>
+        );
+    }
+
+    return (
+        <Button
+            size="sm"
+            variant="outline"
+            disabled={state === 'sending'}
+            title={`Ingatkan ${row.assigned.join(', ')}`}
+            onClick={() => {
+                setState('sending');
+                router.post(
+                    '/monitoring-p2h/ingatkan',
+                    { unit_ids: [row.unit_id] },
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => setState('sent'),
+                        onError: () => setState('idle'),
+                    },
+                );
+            }}
+        >
+            <Bell />
+            Ingatkan
+        </Button>
+    );
+}
+
+/** Aksi kontekstual baris: Tinjau (menunggu) · Lihat (sudah P2H) · Ingatkan (belum). */
 export function RowAction({ row }: { row: TodayRow }) {
     if (isWaiting(row)) {
         return (
@@ -183,6 +263,10 @@ export function RowAction({ row }: { row: TodayRow }) {
                 <Link href={`/p2h/${row.session_id}`}>Lihat</Link>
             </Button>
         );
+    }
+
+    if (row.p2h === 'belum' && row.unit_status === 'ready') {
+        return <RemindButton row={row} />;
     }
 
     return null;
@@ -329,7 +413,7 @@ export function TodayTable({
                                 row.p2h === 'tidak-wajib' && 'opacity-60',
                             )}
                         >
-                            <td className="px-4 font-semibold tnum">
+                            <td className="px-4 font-semibold whitespace-nowrap tnum">
                                 {row.no_unit}
                             </td>
                             {showJenis && (
@@ -415,7 +499,14 @@ export function TodayListCard({ row }: { row: TodayRow }) {
                     )}
                 </div>
             </div>
-            <P2hResultPill row={row} size="sm" />
+            {canRemind(row) ? (
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <P2hResultPill row={row} size="sm" />
+                    <RemindButton row={row} />
+                </div>
+            ) : (
+                <P2hResultPill row={row} size="sm" />
+            )}
             {href && (
                 <ChevronRight
                     className="size-4 shrink-0 text-muted-foreground"

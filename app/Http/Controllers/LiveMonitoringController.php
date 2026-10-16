@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Unit;
+use App\Notifications\P2hDriverReminder;
 use App\Support\TodayP2hStatus;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -32,6 +35,68 @@ class LiveMonitoringController extends Controller
             'feed' => $this->feed($units->pluck('id')),
             'updatedAt' => now()->toIso8601String(),
         ]);
+    }
+
+    /**
+     * Tombol "Ingatkan" (Dashboard / Monitoring P2H): kirim notifikasi aplikasi ke
+     * driver yang DITUGASKAN ke unit yang belum P2H hari ini. Driver yang sudah
+     * diingatkan untuk unit yang sama dalam 30 menit terakhir dilewati.
+     */
+    public function remind(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->canViewMonitoring(), 403);
+
+        $data = $request->validate([
+            'unit_ids' => ['required', 'array', 'min:1', 'max:200'],
+            'unit_ids.*' => ['integer'],
+        ]);
+
+        $units = Unit::active()
+            ->when($user->isStaffOnly(), fn ($q) => $q->monitorableBy($user))
+            ->whereIn('id', $data['unit_ids'])
+            ->with('users:id,name')
+            ->get();
+
+        // Hanya unit yang memang belum P2H hari ini
+        $done = P2hSession::whereDate('tanggal', today())
+            ->whereIn('unit_id', $units->pluck('id'))
+            ->whereHas('userEntries', fn ($q) => $q->notRejected())
+            ->pluck('unit_id');
+
+        $sent = 0;
+        $reminded = [];
+        foreach ($units->whereNotIn('id', $done) as $unit) {
+            foreach ($unit->users as $driver) {
+                $recent = $driver->notifications()
+                    ->where('created_at', '>=', now()->subMinutes(30))
+                    ->where('data', 'like', '%"type":"p2h_reminder"%')
+                    ->where('data', 'like', '%"unit_id":'.$unit->id.',%')
+                    ->exists();
+
+                if ($recent) {
+                    continue;
+                }
+
+                $driver->notify(new P2hDriverReminder($unit, $user->name));
+                $sent++;
+                $reminded[] = $unit->no_unit;
+            }
+        }
+
+        $reminded = array_values(array_unique($reminded));
+
+        if ($sent > 0) {
+            activity('p2h')->causedBy($user)
+                ->withProperties(['units' => $reminded, 'driver' => $sent])
+                ->log('Mengingatkan driver belum P2H: '.implode(', ', $reminded));
+        }
+
+        Inertia::flash('toast', $sent > 0
+            ? ['type' => 'success', 'message' => "Pengingat terkirim ke {$sent} driver", 'description' => implode(', ', $reminded)]
+            : ['type' => 'info', 'message' => 'Tidak ada pengingat baru', 'description' => 'Unit sudah P2H, belum punya driver ditugaskan, atau baru saja diingatkan.']);
+
+        return back();
     }
 
     /**

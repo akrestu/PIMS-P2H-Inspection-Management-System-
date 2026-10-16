@@ -142,6 +142,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/monitoring-p2h', [LiveMonitoringController::class, 'index'])
         ->middleware(['role:admin|manager|driver'])
         ->name('monitoring-p2h.index');
+    Route::post('/monitoring-p2h/ingatkan', [LiveMonitoringController::class, 'remind'])
+        ->middleware(['role:admin|manager|driver', 'throttle:20,1'])
+        ->name('monitoring-p2h.remind');
 
     // Monitoring P2H — admin, manager, dan driver dengan jabatan Approval/User LV 2
     Route::get('/p2h-compliance', [P2hComplianceController::class, 'index'])

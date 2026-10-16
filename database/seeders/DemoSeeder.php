@@ -63,6 +63,10 @@ class DemoSeeder extends Seeder
 
         // Budi ditugaskan ke unit pertama (kartu "Unit hari ini").
         $drivers[0]->units()->syncWithoutDetaching([$units[0]->id]);
+        // Bus yang belum P2H hari ini punya driver tetap → bisa di-"Ingatkan";
+        // LV-040 sengaja tanpa driver ditugaskan (tombol nonaktif).
+        $drivers[9]->units()->syncWithoutDetaching([$units[10]->id]);
+        $drivers[8]->units()->syncWithoutDetaching([$units[11]->id]);
 
         $items = P2hInspectionItem::active()->ordered()->get();
         $today = Carbon::today();

@@ -10,7 +10,7 @@ use Inertia\Response;
 class NotificationController extends Controller
 {
     /** Jenis notifikasi yang meminta tindakan (Notifikasi.png · "Butuh tindakan"). */
-    public const ACTION_TYPES = ['critical_alert', 'lv_approval_escalation', 'lv_approval_request'];
+    public const ACTION_TYPES = ['critical_alert', 'lv_approval_escalation', 'lv_approval_request', 'p2h_reminder'];
 
     public function index(Request $request): Response
     {
@@ -54,6 +54,11 @@ class NotificationController extends Controller
         // Approval request / eskalasi → arahkan ke halaman persetujuan P2H
         if (in_array($type, ['lv_approval_request', 'lv_approval_escalation'], true)) {
             return redirect()->route('p2h.approvals');
+        }
+
+        // Pengingat dari pengawas → langsung ke Form P2H
+        if ($type === 'p2h_reminder') {
+            return redirect()->route('p2h.create');
         }
 
         // Pengingat unit belum P2H → Monitoring Harian Unit, difilter unit yang kosong hari itu

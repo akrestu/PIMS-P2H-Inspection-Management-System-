@@ -171,6 +171,9 @@ export interface PimsNotification {
         hari_terlambat?: number;
         // MissingP2hReminder
         jumlah?: number;
+        // P2hDriverReminder
+        unit_id?: number;
+        sender?: string;
     };
     read_at: string | null;
     created_at: string;
