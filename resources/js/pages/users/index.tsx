@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { Segmented } from '@/components/pims/segmented';
 import { SiteSelect } from '@/components/site-select';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -68,6 +69,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import type { Site } from '@/types/pims';
 // UserCheck masih dipakai untuk role badge driver
 
@@ -107,6 +109,7 @@ interface PaginatedData {
 }
 
 interface Props {
+    roleCounts: { semua: number; admin: number; manager: number; driver: number };
     users: PaginatedData;
     filters: {
         search?: string;
@@ -157,13 +160,18 @@ function RoleBadge({ role }: { role: Role | null }) {
         return <span className="text-xs text-muted-foreground">—</span>;
     }
 
-    const { label, icon: Icon, badgeClass } = ROLE_META[role];
+    const { label } = ROLE_META[role];
 
+    // Pengguna-Desktop.png: Admin = pill hitam, peran lain pill bergaris netral
     return (
         <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${badgeClass}`}
+            className={cn(
+                'inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold',
+                role === 'admin'
+                    ? 'bg-foreground text-background'
+                    : 'border-(length:--bw) text-foreground',
+            )}
         >
-            <Icon className="h-3 w-3" />
             {label}
         </span>
     );
@@ -1147,7 +1155,13 @@ function ImportSheet({
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UsersIndex({ users, filters, units, sites }: Props) {
+export default function UsersIndex({
+    users,
+    filters,
+    units,
+    sites,
+    roleCounts,
+}: Props) {
     const { auth } = usePage<{ auth: { user: { id: number } } }>().props;
     const currentUserId = auth.user.id;
 
@@ -1245,16 +1259,17 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
 
     return (
         <TooltipProvider>
-            <Head title="Manajemen User" />
+            <Head title="Pengguna & driver" />
             <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
-                            Manajemen User
+                            Pengguna & driver
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            Kelola seluruh akun pengguna sistem.
+                            {roleCounts.driver} driver · {roleCounts.manager}{' '}
+                            manager · {roleCounts.admin} admin
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1338,14 +1353,29 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                 )}
 
                 {/* ── Filter Bar ── */}
-                <Card>
-                    <CardContent className="flex flex-wrap items-center gap-3 py-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    <Segmented
+                        label="Peran"
+                        value={roleFilter || 'semua'}
+                        onChange={(v) =>
+                            v === 'semua'
+                                ? roleFilter && handleRole(roleFilter)
+                                : handleRole(v)
+                        }
+                        options={[
+                            { value: 'semua', label: `Semua · ${roleCounts.semua}` },
+                            { value: 'admin', label: `Admin · ${roleCounts.admin}` },
+                            { value: 'manager', label: `Manager · ${roleCounts.manager}` },
+                            { value: 'driver', label: `Driver · ${roleCounts.driver}` },
+                        ]}
+                    />
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
                         <div className="relative min-w-[200px] flex-1">
                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                placeholder="Cari nama, NIK, atau email..."
+                                placeholder="Cari nama, NRP, email"
                                 className="pr-8 pl-9"
                             />
                             {search && (
@@ -1356,32 +1386,6 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                 >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
-                            )}
-                        </div>
-
-                        <Separator
-                            orientation="vertical"
-                            className="hidden h-7 sm:block"
-                        />
-
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                Role:
-                            </span>
-                            {(['admin', 'manager', 'driver'] as Role[]).map(
-                                (r) => (
-                                    <button
-                                        key={r}
-                                        onClick={() => handleRole(r)}
-                                        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                                            roleFilter === r
-                                                ? 'border-primary bg-primary text-primary-foreground'
-                                                : 'border-border hover:border-foreground/30'
-                                        }`}
-                                    >
-                                        {ROLE_META[r].label}
-                                    </button>
-                                ),
                             )}
                         </div>
 
@@ -1433,8 +1437,8 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                 </Tooltip>
                             </>
                         )}
-                    </CardContent>
-                </Card>
+                </div>
+                </div>
 
                 {/* ── Table ── */}
                 <Card>
@@ -1461,20 +1465,11 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                                 }
                                             />
                                         </TableHead>
-                                        <TableHead className="hidden w-10 text-center sm:table-cell">
-                                            #
-                                        </TableHead>
                                         <SortableHead column="name">
                                             Nama
                                         </SortableHead>
-                                        <SortableHead
-                                            column="nik"
-                                            className="hidden sm:table-cell"
-                                        >
-                                            NIK / NRPP
-                                        </SortableHead>
                                         <SortableHead column="role">
-                                            Role
+                                            Peran
                                         </SortableHead>
                                         <SortableHead
                                             column="jabatan"
@@ -1502,7 +1497,7 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                 <TableBody>
                                     {users.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7}>
+                                            <TableCell colSpan={6}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Users className="h-8 w-8 text-muted-foreground" />
@@ -1546,7 +1541,7 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        users.data.map((u, idx) => (
+                                        users.data.map((u) => (
                                             <TableRow
                                                 key={u.id}
                                                 className={`group ${selectedIds.includes(u.id) ? 'bg-destructive/5' : ''}`}
@@ -1566,9 +1561,6 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                                         <span className="block w-4" />
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="hidden text-center text-sm text-muted-foreground sm:table-cell">
-                                                    {(users.from ?? 1) + idx}
-                                                </TableCell>
 
                                                 <TableCell>
                                                     <div className="flex min-w-0 items-center gap-2.5">
@@ -1587,8 +1579,11 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                                             <p className="truncate text-sm leading-tight font-medium">
                                                                 {u.name}
                                                             </p>
-                                                            <p className="truncate font-mono text-xs text-muted-foreground sm:hidden">
-                                                                {u.nik ?? '—'}
+                                                            <p className="truncate text-xs text-muted-foreground tnum">
+                                                                {u.nik
+                                                                    ? `NRP ${u.nik}`
+                                                                    : (u.email ??
+                                                                      '—')}
                                                             </p>
                                                             {u.id ===
                                                                 currentUserId && (
@@ -1598,12 +1593,6 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                                             )}
                                                         </div>
                                                     </div>
-                                                </TableCell>
-
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <span className="font-mono text-sm">
-                                                        {u.nik ?? '—'}
-                                                    </span>
                                                 </TableCell>
 
                                                 <TableCell>
@@ -1833,5 +1822,5 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
 }
 
 UsersIndex.layout = {
-    breadcrumbs: [{ title: 'Manajemen User', href: '/users' }],
+    breadcrumbs: [{ title: 'Pengguna & driver', href: '/users' }],
 };
