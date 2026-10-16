@@ -60,7 +60,8 @@ test('beranda shows the assigned unit with its status, last HM and open findings
         );
 });
 
-test('beranda falls back to the last inspected unit and reports this shift entry', function () {
+test('category assignment shows the last inspected unit in scope and this shift entry', function () {
+    $this->driver->update(['jenis_unit' => 'Light Vehicle']);
     $unit = Unit::create(['no_unit' => 'LV-034', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']);
     $session = P2hSession::create(['unit_id' => $unit->id, 'tanggal' => '2026-10-16', 'status' => 'open', 'created_by' => $this->driver->id]);
     P2hUserEntry::create([
@@ -71,6 +72,8 @@ test('beranda falls back to the last inspected unit and reports this shift entry
     $this->actingAs($this->driver)
         ->get('/driver/dashboard')
         ->assertInertia(fn (Assert $page) => $page
+            ->where('assignment.mode', 'kategori')
+            ->where('assignment.jenis_unit', 'Light Vehicle')
             ->where('todayUnit.no_unit', 'LV-034')
             ->where('todayUnit.assigned', false)
             ->where('todayUnit.status', 'Ready')
@@ -106,10 +109,42 @@ test('riwayat rows summarise drivers, result, approval and last HM', function ()
         );
 });
 
-test('beranda without any unit returns empty unit data', function () {
+test('direct assignment lists every assigned unit', function () {
+    $a = Unit::create(['no_unit' => 'DT-1001', 'jenis_unit' => 'Bus', 'status' => 'active']);
+    $b = Unit::create(['no_unit' => 'DT-1002', 'jenis_unit' => 'Bus', 'status' => 'active']);
+    $this->driver->units()->attach([$a->id, $b->id]);
+
     $this->actingAs($this->driver)
         ->get('/driver/dashboard')
         ->assertInertia(fn (Assert $page) => $page
+            ->where('assignment.mode', 'unit')
+            ->has('assignment.units', 2)
+            ->where('todayUnit.no_unit', 'DT-1001')
+        );
+});
+
+test('a unit inspected before but outside the current assignment is not shown', function () {
+    $this->driver->update(['jenis_unit' => 'Bus']);
+    $lv = Unit::create(['no_unit' => 'LV-099', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']);
+    $session = P2hSession::create(['unit_id' => $lv->id, 'tanggal' => '2026-10-15', 'status' => 'open', 'created_by' => $this->driver->id]);
+    P2hUserEntry::create([
+        'p2h_session_id' => $session->id, 'user_id' => $this->driver->id, 'user_slot' => 1,
+        'shift' => 'Shift I', 'submitted_at' => '2026-10-15 06:00', 'kondisi_akhir' => 'Layak Pakai',
+    ]);
+
+    $this->actingAs($this->driver)
+        ->get('/driver/dashboard')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('assignment.mode', 'kategori')
+            ->where('todayUnit', null)
+        );
+});
+
+test('beranda without any assignment returns empty unit data', function () {
+    $this->actingAs($this->driver)
+        ->get('/driver/dashboard')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('assignment.mode', 'none')
             ->where('todayUnit', null)
             ->where('unitFindings.count', 0)
         );

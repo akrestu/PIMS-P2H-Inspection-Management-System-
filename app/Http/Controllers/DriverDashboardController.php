@@ -8,6 +8,7 @@ use App\Models\P2hFinding;
 use App\Models\P2hUserEntry;
 use App\Models\Unit;
 use App\Models\UnitDowntimeLog;
+use App\Models\User;
 use App\Support\UnitStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -80,16 +81,14 @@ class DriverDashboardController extends Controller
                 ];
             });
 
-        // Unit hari ini (read-only): unit yang ditugaskan ke driver, atau unit P2H terakhirnya
-        $assignedUnit = $user->units()->with('site:id,name')->orderBy('no_unit')->first();
-        $unit = $assignedUnit ?? P2hUserEntry::where('user_id', $user->id)
-            ->whereHas('session.unit')
-            ->with('session.unit.site:id,name')
-            ->latest('submitted_at')
-            ->first()?->session?->unit;
+        // Penugasan unit bersifat opsional & fleksibel (aturan sama dengan User::canAccessP2hUnit):
+        // langsung per unit, per kategori (jenis unit / site), atau belum ada.
+        $assignment = $this->assignment($user);
+        $unit = $this->todayUnit($user, $assignment);
 
         return Inertia::render('driver-dashboard/index', [
-            'todayUnit' => $unit ? $this->unitSummary($unit, $assignedUnit !== null) : null,
+            'assignment' => $assignment,
+            'todayUnit' => $unit ? $this->unitSummary($unit, $assignment['mode'] === 'unit') : null,
             'currentEntry' => $entryShiftIni ? [
                 'session_id' => $entryShiftIni->p2h_session_id,
                 'no_unit' => $entryShiftIni->session?->unit?->no_unit,
@@ -110,6 +109,67 @@ class DriverDashboardController extends Controller
             ],
             'history' => $history,
         ]);
+    }
+
+    /**
+     * Mode penugasan unit driver (read-only, untuk tampilan Beranda).
+     *
+     * @return array{mode: 'semua'|'unit'|'kategori'|'none', units: list<array<string, mixed>>, jenis_unit: ?string, site: ?string}
+     */
+    private function assignment(User $user): array
+    {
+        $base = ['units' => [], 'jenis_unit' => null, 'site' => null];
+
+        if ($user->isPrivileged()) {
+            return ['mode' => 'semua'] + $base;
+        }
+
+        $units = $user->units()->active()->orderBy('no_unit')->get(['units.id', 'no_unit', 'jenis_unit']);
+
+        if ($units->isNotEmpty()) {
+            return ['mode' => 'unit'] + array_merge($base, [
+                'units' => $units->map(fn (Unit $u) => ['id' => $u->id, 'no_unit' => $u->no_unit, 'jenis_unit' => $u->jenis_unit])->all(),
+            ]);
+        }
+
+        if ($user->site_id !== null || $user->jenis_unit !== null) {
+            return ['mode' => 'kategori'] + array_merge($base, [
+                'jenis_unit' => $user->jenis_unit,
+                'site' => $user->site?->name,
+            ]);
+        }
+
+        return ['mode' => 'none'] + $base;
+    }
+
+    /**
+     * Unit yang ditonjolkan di kartu "Unit hari ini": unit yang terakhir di-P2H driver
+     * selama masih dalam cakupan penugasannya; bila penugasan langsung, unit pertama.
+     *
+     * @param  array{mode: string, units: list<array<string, mixed>>}  $assignment
+     */
+    private function todayUnit(User $user, array $assignment): ?Unit
+    {
+        if ($assignment['mode'] === 'none') {
+            return null;
+        }
+
+        $recent = P2hUserEntry::where('user_id', $user->id)
+            ->whereHas('session.unit')
+            ->with('session.unit.site:id,name')
+            ->latest('submitted_at')
+            ->take(10)
+            ->get()
+            ->map(fn (P2hUserEntry $e) => $e->session->unit)
+            ->first(fn (Unit $u) => $user->canAccessP2hUnit($u));
+
+        if ($recent) {
+            return $recent;
+        }
+
+        return $assignment['mode'] === 'unit'
+            ? Unit::with('site:id,name')->find($assignment['units'][0]['id'])
+            : null;
     }
 
     /** @return array<string, mixed> */

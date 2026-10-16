@@ -65,7 +65,19 @@ interface UnitFindings {
     }[];
 }
 
+/**
+ * Penugasan unit (opsional & fleksibel, sama dengan aturan Form P2H):
+ * semua (admin/manager) · unit (ditugaskan langsung) · kategori (jenis unit / site) · none.
+ */
+interface Assignment {
+    mode: 'semua' | 'unit' | 'kategori' | 'none';
+    units: { id: number; no_unit: string; jenis_unit: string }[];
+    jenis_unit: string | null;
+    site: string | null;
+}
+
 interface Props {
+    assignment: Assignment;
     shiftAktif: 'Shift I' | 'Shift II';
     sudahP2hShiftIni: boolean;
     stats: {
@@ -107,29 +119,50 @@ const parseDmy = (value: string): Date | null => {
     return d && m && y ? new Date(y, m - 1, d) : null;
 };
 
-function UnitCard({
-    unit,
+/** Teks cakupan kategori, mis. "Light Vehicle · PT. WBK Site BAU". */
+const scopeText = (a: Assignment) =>
+    [a.jenis_unit ?? 'Semua jenis unit', a.site].filter(Boolean).join(' · ');
+
+/** Kartu saat belum ada unit yang bisa ditonjolkan — isi mengikuti mode penugasan. */
+function NoUnitCard({
+    assignment,
     shift,
     entry,
 }: {
-    unit: TodayUnit | null;
+    assignment: Assignment;
     shift: Props['shiftAktif'];
     entry: CurrentEntry | null;
 }) {
-    if (!unit) {
-        return (
-            <section className="rounded-[20px] border-(length:--bw) bg-card p-5 shadow-md">
-                <p className="text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
-                    Unit hari ini
-                </p>
-                <h2 className="mt-3 text-xl font-semibold">
-                    Belum ada unit untuk Anda
-                </h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                    Pengawas belum menugaskan unit untuk {shiftLabel(shift)}.
-                    Anda tetap bisa mengisi P2H dengan memilih unit sendiri.
-                </p>
-                {!entry && (
+    const canFill = assignment.mode !== 'none';
+    const copy =
+        assignment.mode === 'none'
+            ? {
+                  title: 'Belum ada unit untuk akun Anda',
+                  body: 'Akun Anda belum ditugaskan ke unit maupun kategori unit. Hubungi admin site untuk penugasan.',
+              }
+            : assignment.mode === 'kategori'
+              ? {
+                    title: 'Pilih unit saat mengisi P2H',
+                    body: `Anda ditugaskan per kategori: ${scopeText(assignment)}. Semua unit dalam kategori ini bisa dipilih untuk ${shiftLabel(shift)}.`,
+                }
+              : {
+                    title: 'Pilih unit saat mengisi P2H',
+                    body: `Semua unit aktif bisa dipilih untuk ${shiftLabel(shift)}.`,
+                };
+
+    return (
+        <section className="rounded-[20px] border-(length:--bw) bg-card p-5 shadow-md">
+            <p className="text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                Unit hari ini
+            </p>
+            <h2 className="mt-3 text-xl font-semibold">{copy.title}</h2>
+            <p className="mt-1.5 text-sm text-muted-foreground">{copy.body}</p>
+            {entry ? (
+                <div className="mt-5 border-t pt-4">
+                    <EntryStatus entry={entry} />
+                </div>
+            ) : (
+                canFill && (
                     <Button
                         asChild
                         variant="brand"
@@ -140,10 +173,38 @@ function UnitCard({
                             <ClipboardCheck /> Isi P2H &amp; pilih unit
                         </Link>
                     </Button>
-                )}
-            </section>
+                )
+            )}
+        </section>
+    );
+}
+
+function UnitCard({
+    unit,
+    assignment,
+    shift,
+    entry,
+}: {
+    unit: TodayUnit | null;
+    assignment: Assignment;
+    shift: Props['shiftAktif'];
+    entry: CurrentEntry | null;
+}) {
+    if (!unit) {
+        return (
+            <NoUnitCard assignment={assignment} shift={shift} entry={entry} />
         );
     }
+
+    const otherUnits = assignment.units.filter((u) => u.id !== unit.id);
+    const context =
+        assignment.mode === 'unit'
+            ? 'Ditugaskan'
+            : assignment.mode === 'kategori'
+              ? 'Terakhir diperiksa'
+              : assignment.mode === 'semua'
+                ? 'Terakhir diperiksa'
+                : null;
 
     return (
         <section
@@ -153,9 +214,9 @@ function UnitCard({
             <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
                     Unit hari ini
-                    {unit.assigned && (
+                    {context && (
                         <span className="ml-2 tracking-normal normal-case">
-                            · Ditugaskan
+                            · {context}
                         </span>
                     )}
                 </p>
@@ -173,6 +234,20 @@ function UnitCard({
             <p className="mt-1.5 text-[15px] text-muted-foreground">
                 {[unit.jenis_unit, unit.site].filter(Boolean).join(' · ')}
             </p>
+            {assignment.mode === 'kategori' && (
+                <p className="mt-2 text-[13px] text-muted-foreground">
+                    Kategori Anda: {scopeText(assignment)} — unit lain dalam
+                    kategori ini juga bisa dipilih.
+                </p>
+            )}
+            {otherUnits.length > 0 && (
+                <p className="mt-2 text-[13px] text-muted-foreground">
+                    Unit Anda lainnya:{' '}
+                    <span className="font-medium text-foreground">
+                        {otherUnits.map((u) => u.no_unit).join(', ')}
+                    </span>
+                </p>
+            )}
 
             <dl className="mt-5 grid grid-cols-2 gap-4">
                 <div>
@@ -336,6 +411,7 @@ function FindingRow({ finding }: { finding: UnitFindings['items'][number] }) {
 }
 
 export default function DriverDashboardIndex({
+    assignment,
     shiftAktif,
     stats,
     history,
@@ -362,6 +438,7 @@ export default function DriverDashboardIndex({
 
                 <UnitCard
                     unit={todayUnit}
+                    assignment={assignment}
                     shift={shiftAktif}
                     entry={currentEntry}
                 />
