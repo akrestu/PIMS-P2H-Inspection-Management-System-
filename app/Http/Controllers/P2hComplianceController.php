@@ -71,16 +71,25 @@ class P2hComplianceController extends Controller
 
         // ── 3. Load sessions + entries + answers — 3 queries total (no N+1) ───
         $sessionMap = [];
+        $lastDriver = [];
         P2hSession::with([
             'userEntries' => fn ($query) => $query->operational(),
             'userEntries.answers',
+            'userEntries.user:id,name',
         ])
             ->whereHas('userEntries', fn ($query) => $query->operational())
-            ->whereBetween('tanggal', [$dateFrom, $dateTo])
+            ->whereDate('tanggal', '>=', $dateFrom)->whereDate('tanggal', '<=', $dateTo)
             ->whereIn('unit_id', $units->pluck('id'))
             ->get()
-            ->each(function ($session) use (&$sessionMap) {
-                $sessionMap[$session->unit_id][$session->tanggal->toDateString()] = $session;
+            ->each(function ($session) use (&$sessionMap, &$lastDriver) {
+                $date = $session->tanggal->toDateString();
+                $sessionMap[$session->unit_id][$date] = $session;
+
+                // Driver terakhir di rentang ini, untuk label "Unit · driver"
+                $driver = $session->userEntries->sortByDesc('submitted_at')->first()?->user?->name;
+                if ($driver && ($lastDriver[$session->unit_id]['date'] ?? '') <= $date) {
+                    $lastDriver[$session->unit_id] = ['date' => $date, 'name' => $driver];
+                }
             });
 
         // ── 3b. Load downtime logs dan buat map [unit_id][date] => tipe ──────
@@ -115,6 +124,7 @@ class P2hComplianceController extends Controller
                 'jenis_unit' => $unit->jenis_unit,
                 'no_lambung' => $unit->no_lambung,
                 'department' => $unit->department,
+                'driver' => $lastDriver[$unit->id]['name'] ?? null,
                 'cells' => [],
             ];
             $unitFilled = 0;

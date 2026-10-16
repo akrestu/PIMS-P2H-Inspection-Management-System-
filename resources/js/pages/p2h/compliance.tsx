@@ -1,67 +1,33 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    CalendarCheck,
-    Download,
-    FileSpreadsheet,
-    FileText,
-    Filter,
-    RefreshCw,
-    X,
-} from 'lucide-react';
-import { useState } from 'react';
-import { PageTabs } from '@/components/page-tabs';
-import { SortableHead, useClientSort } from '@/components/sortable-head';
-import { Badge } from '@/components/ui/badge';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, Download, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { KpiCard, KpiStrip } from '@/components/pims/kpi';
+import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
+import { EmptyState } from '@/components/pims/states';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import {
     Tooltip,
     TooltipContent,
-    TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatDate, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+/*
+ * Kepatuhan P2H (design/screens/Kepatuhan-Desktop.png, docs/screens/manager-ops.md).
+ * Heatmap unit × hari: sel hitam = P2H masuk, × merah = tidak P2H,
+ * arsir = BD/PM/Servis (tidak wajib). Data dari P2hComplianceController.
+ */
 
 type CellStatus = 'layak' | 'bd' | 'downtime';
 type DowntimeTipe = 'BD' | 'PM' | 'Servis Berkala';
 
 interface MatrixCell {
-    // P2H fields (present when status is 'layak' or 'bd')
     session_id?: number;
     slots_filled?: number;
     total_tl?: number;
-    // Downtime fields (present when status is 'downtime')
     downtime_tipe?: DowntimeTipe;
-    // Always present
     status: CellStatus;
 }
 
@@ -71,6 +37,7 @@ interface MatrixRow {
     jenis_unit: 'Bus' | 'Light Vehicle';
     no_lambung: string | null;
     department: string | null;
+    driver: string | null;
     cells: Record<string, MatrixCell | null>;
     filled_days: number;
     total_days: number;
@@ -100,735 +67,460 @@ interface Props {
     filters: Filters;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+const TARGET = 95;
 
-function fmtShort(d: string): string {
-    const [y, m, day] = d.split('-').map(Number);
+const isoDaysAgo = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
 
-    return new Date(y, m - 1, day).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-    });
-}
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
-function fmtLong(d: string): string {
-    const [y, m, day] = d.split('-').map(Number);
+const TODAY = isoDaysAgo(0);
 
-    return new Date(y, m - 1, day).toLocaleDateString('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-}
+const parseLocal = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number);
 
-function cellClasses(
-    cell: MatrixCell | null,
-    highlightMissing: boolean,
-): string {
-    if (cell === null) {
-        return highlightMissing
-            ? 'bg-danger-soft text-danger  ring-1 ring-inset ring-danger/40 '
-            : 'bg-muted/40 text-muted-foreground/40';
+    return new Date(y, m - 1, d);
+};
+
+const DAY_INITIAL = ['M', 'S', 'S', 'R', 'K', 'J', 'S'];
+
+function pctTone(pct: number) {
+    if (pct < 80) {
+        return 'text-danger';
     }
 
-    switch (cell.status) {
-        case 'layak':
-            return 'bg-success-soft text-success hover:bg-success-soft    cursor-pointer';
-        case 'bd':
-            return 'bg-danger-soft text-danger hover:bg-danger-soft    cursor-pointer';
-        case 'downtime':
-            switch (cell.downtime_tipe) {
-                case 'BD':
-                    return 'bg-danger text-danger  ';
-                case 'PM':
-                    return 'bg-warning-soft text-warning  ';
-                case 'Servis Berkala':
-                    return 'bg-info-soft text-info  ';
-                default:
-                    return 'bg-muted/40 text-muted-foreground/40';
-            }
-    }
+    return pct < TARGET ? 'text-warning' : 'text-foreground';
 }
 
-function statusLabel(cell: MatrixCell): string {
-    if (cell.status === 'layak') {
-        return 'Layak Pakai';
+function cellLabel(row: MatrixRow, date: string, cell: MatrixCell | null) {
+    const day = formatDate(parseLocal(date), { withDay: true, withYear: false });
+
+    if (!cell) {
+        return date > TODAY
+            ? `${row.no_unit} · ${day} — belum berjalan`
+            : `${row.no_unit} · ${day} — Tidak P2H`;
     }
+
+    if (cell.status === 'downtime') {
+        return `${row.no_unit} · ${day} — ${cell.downtime_tipe} (tidak wajib P2H)`;
+    }
+
+    const parts = [`${cell.slots_filled ?? 1}× P2H`];
 
     if (cell.status === 'bd') {
-        return 'Breakdown (P2H)';
+        parts.push('hasil Tidak Layak/BD');
     }
 
-    return `Downtime: ${cell.downtime_tipe}`;
+    if (cell.total_tl) {
+        parts.push(`${cell.total_tl} item rusak`);
+    }
+
+    return `${row.no_unit} · ${day} — ${parts.join(' · ')}`;
 }
 
-function complianceColor(pct: number): string {
-    if (pct >= 90) {
-        return 'text-success ';
-    }
-
-    if (pct >= 70) {
-        return 'text-warning ';
-    }
-
-    return 'text-danger ';
-}
-
-// ── Filter Bar ─────────────────────────────────────────────────────────────────
-
-function FilterBar({
-    filters,
-    highlightMissing,
-    onToggleHighlight,
-    canExport,
+function HeatCell({
+    row,
+    date,
 }: {
-    filters: Filters;
-    highlightMissing: boolean;
-    onToggleHighlight: () => void;
-    canExport: boolean;
+    row: MatrixRow;
+    date: string;
 }) {
-    const [form, setForm] = useState<Filters>(filters);
-    const [showPanel, setShowPanel] = useState(false);
+    const cell = row.cells[date] ?? null;
+    const label = cellLabel(row, date, cell);
+    const base =
+        'grid size-[26px] place-items-center rounded-[5px] transition-transform';
 
-    const applyPreset = (preset: 7 | 14 | 'month') => {
-        const today = new Date();
-        let from: Date;
+    let body;
 
-        if (preset === 'month') {
-            from = new Date(today.getFullYear(), today.getMonth(), 1);
-        } else {
-            from = new Date(today);
-            from.setDate(today.getDate() - (preset - 1));
-        }
+    if (!cell) {
+        body =
+            date > TODAY || date === TODAY ? (
+                <span
+                    className={cn(base, 'border-(length:--bw) border-dashed')}
+                />
+            ) : (
+                <span
+                    className={cn(
+                        base,
+                        'border-(length:--bw) border-danger/50 bg-danger-soft text-danger',
+                    )}
+                >
+                    <X className="size-3.5" strokeWidth={2.5} aria-hidden />
+                </span>
+            );
+    } else if (cell.status === 'downtime') {
+        body = (
+            <span
+                className={cn(
+                    base,
+                    'bg-[repeating-linear-gradient(135deg,var(--muted)_0_3px,transparent_3px_6px)] ring-1 ring-border ring-inset',
+                )}
+            />
+        );
+    } else {
+        body = (
+            <span className={cn(base, 'bg-foreground')}>
+                {cell.status === 'bd' && (
+                    <span
+                        className="size-2 rounded-full bg-danger ring-2 ring-foreground"
+                        aria-hidden
+                    />
+                )}
+            </span>
+        );
+    }
 
-        const newFilters: Filters = {
-            ...form,
-            date_from: from.toISOString().split('T')[0],
-            date_to: today.toISOString().split('T')[0],
-        };
-        setForm(newFilters);
+    const content = cell?.session_id ? (
+        <Link
+            href={`/p2h/${cell.session_id}`}
+            aria-label={label}
+            className="rounded-[5px] hover:scale-110"
+        >
+            {body}
+        </Link>
+    ) : (
+        <span tabIndex={0} aria-label={label} className="rounded-[5px]">
+            {body}
+        </span>
+    );
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{content}</TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+    );
+}
+
+function Legend() {
+    const item = 'flex items-center gap-1.5';
+    const sw = 'inline-block size-3 rounded-[3px]';
+
+    return (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <li className={item}>
+                <span className={cn(sw, 'bg-foreground')} /> P2H masuk
+            </li>
+            <li className={item}>
+                <span className={cn(sw, 'relative bg-foreground')}>
+                    <span className="absolute inset-[3px] rounded-full bg-danger" />
+                </span>
+                Hasil Tidak Layak
+            </li>
+            <li className={item}>
+                <span
+                    className={cn(
+                        sw,
+                        'border border-danger/50 bg-danger-soft',
+                    )}
+                />
+                Tidak P2H
+            </li>
+            <li className={item}>
+                <span
+                    className={cn(
+                        sw,
+                        'bg-[repeating-linear-gradient(135deg,var(--muted)_0_2px,transparent_2px_4px)] ring-1 ring-border',
+                    )}
+                />
+                BD/PM (tidak wajib)
+            </li>
+        </ul>
+    );
+}
+
+export default function P2hCompliance({ matrix, dates, summary, filters }: Props) {
+    const [sortAsc, setSortAsc] = useState(true);
+
+    const rangeDays = dates.length;
+    const range = (['7', '14', '30'] as const).find(
+        (r) => Number(r) === rangeDays && filters.date_to === TODAY,
+    );
+
+    const setRange = (r: '7' | '14' | '30') =>
         router.get(
             '/p2h-compliance',
-            { ...newFilters },
-            { preserveState: true },
+            {
+                date_from: isoDaysAgo(Number(r) - 1),
+                date_to: TODAY,
+                jenis_unit: filters.jenis_unit ?? undefined,
+            },
+            { preserveScroll: true, replace: true },
         );
-    };
 
-    const handleApply = () => {
-        router.get('/p2h-compliance', { ...form }, { preserveState: true });
-    };
-
-    const handleReset = () => {
-        const today = new Date();
-        const from = new Date(today);
-        from.setDate(today.getDate() - 13);
-        const defaults: Filters = {
-            date_from: from.toISOString().split('T')[0],
-            date_to: today.toISOString().split('T')[0],
-        };
-        setForm(defaults);
-        router.get('/p2h-compliance', { ...defaults });
-    };
-
-    return (
-        <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                    Periode:
-                </span>
-                {([7, 14, 'month'] as const).map((v) => (
-                    <button
-                        key={String(v)}
-                        type="button"
-                        onClick={() => applyPreset(v)}
-                        className="flex h-7 items-center rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-all hover:border-foreground/30 hover:text-foreground"
-                    >
-                        {v === 7
-                            ? '7 Hari'
-                            : v === 14
-                              ? '14 Hari'
-                              : 'Bulan Ini'}
-                    </button>
-                ))}
-
-                <div className="ml-auto flex items-center gap-2">
-                    <Button
-                        size="sm"
-                        variant={highlightMissing ? 'default' : 'outline'}
-                        className="h-8 gap-1.5 text-xs"
-                        onClick={onToggleHighlight}
-                    >
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        Sorot Hari Kosong
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant={showPanel ? 'default' : 'outline'}
-                        className="h-8 gap-1.5 text-xs"
-                        onClick={() => setShowPanel((v) => !v)}
-                    >
-                        <Filter className="h-3.5 w-3.5" />
-                        Filter
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 gap-1.5 text-xs"
-                        onClick={handleReset}
-                    >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        Reset
-                    </Button>
-                    {/* Export hanya untuk admin/manager (route dibatasi) */}
-                    {canExport && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 gap-1.5 text-xs"
-                                >
-                                    <Download className="h-3.5 w-3.5" />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                                    Unduh Laporan
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={`/export/monitoring-p2h/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex cursor-pointer items-center gap-2"
-                                    >
-                                        <FileText className="h-4 w-4 text-danger" />
-                                        Export PDF
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={`/export/monitoring-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                        className="flex cursor-pointer items-center gap-2"
-                                    >
-                                        <FileSpreadsheet className="h-4 w-4 text-success" />
-                                        Export Excel
-                                    </a>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </div>
-            </div>
-
-            {showPanel && (
-                <Card className="border-border">
-                    <CardHeader className="pt-4 pb-3">
-                        <CardTitle className="flex items-center gap-2 text-sm">
-                            <Filter className="h-4 w-4" />
-                            Filter Data
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">
-                                    Dari Tanggal
-                                </Label>
-                                <Input
-                                    type="date"
-                                    value={form.date_from}
-                                    onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            date_from: e.target.value,
-                                        })
-                                    }
-                                    className="h-10"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">
-                                    Sampai Tanggal
-                                </Label>
-                                <Input
-                                    type="date"
-                                    value={form.date_to}
-                                    onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            date_to: e.target.value,
-                                        })
-                                    }
-                                    className="h-10"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">
-                                    Jenis Unit
-                                </Label>
-                                <Select
-                                    value={form.jenis_unit ?? 'all'}
-                                    onValueChange={(v) =>
-                                        setForm({
-                                            ...form,
-                                            jenis_unit:
-                                                v === 'all' ? undefined : v,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger className="h-10 w-full">
-                                        <SelectValue placeholder="Semua jenis" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">
-                                            Semua jenis
-                                        </SelectItem>
-                                        <SelectItem value="Bus">Bus</SelectItem>
-                                        <SelectItem value="Light Vehicle">
-                                            Light Vehicle
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="mt-3 flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-2"
-                                onClick={handleReset}
-                            >
-                                <X className="h-4 w-4" />
-                                Reset
-                            </Button>
-                            <Button size="sm" onClick={handleApply}>
-                                Terapkan Filter
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-        </div>
-    );
-}
-
-// ── Matrix Cell ────────────────────────────────────────────────────────────────
-
-function MatrixCellComponent({
-    date,
-    cell,
-    highlightMissing,
-}: {
-    date: string;
-    cell: MatrixCell | null;
-    highlightMissing: boolean;
-}) {
-    const cellLabel =
-        cell === null
-            ? highlightMissing
-                ? '!'
-                : '–'
-            : cell.status === 'downtime'
-              ? cell.downtime_tipe === 'BD'
-                  ? 'BD'
-                  : cell.downtime_tipe === 'PM'
-                    ? 'PM'
-                    : 'SB'
-              : `${cell.slots_filled}x`;
-
-    const inner = (
-        <div
-            className={cn(
-                'flex h-10 w-full items-center justify-center rounded text-xs font-semibold transition-colors select-none',
-                cellClasses(cell, highlightMissing),
-            )}
-        >
-            {cellLabel}
-        </div>
+    const rows = useMemo(
+        () =>
+            [...matrix].sort((a, b) =>
+                sortAsc
+                    ? a.compliance_pct - b.compliance_pct
+                    : b.compliance_pct - a.compliance_pct,
+            ),
+        [matrix, sortAsc],
     );
 
-    if (!cell || cell.status === 'downtime') {
-        return inner;
-    }
+    const totalCells = summary.total_units * summary.total_days;
+    const filled = totalCells - summary.total_missed - countDowntime(matrix);
+    const attention = [...matrix]
+        .filter((r) => r.compliance_pct < TARGET)
+        .sort((a, b) => a.compliance_pct - b.compliance_pct)
+        .slice(0, 3);
 
-    return (
-        <TooltipProvider delayDuration={100}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Link
-                        href={`/p2h/${cell.session_id}`}
-                        className="block w-full"
-                    >
-                        {inner}
-                    </Link>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="space-y-1 text-xs">
-                    <p className="font-semibold">{fmtLong(date)}</p>
-                    <p>
-                        Jumlah P2H:{' '}
-                        <span className="font-bold">{cell.slots_filled}x</span>
-                    </p>
-                    <p>
-                        Item TL:{' '}
-                        <span
-                            className={cn(
-                                'font-bold',
-                                (cell.total_tl ?? 0) > 0
-                                    ? 'text-danger'
-                                    : 'text-success',
-                            )}
-                        >
-                            {cell.total_tl}
-                        </span>
-                    </p>
-                    <p>
-                        Status:{' '}
-                        <span
-                            className={cn(
-                                'font-bold',
-                                cell.status === 'layak'
-                                    ? 'text-success'
-                                    : 'text-danger',
-                            )}
-                        >
-                            {statusLabel(cell)}
-                        </span>
-                    </p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-}
-
-// ── Legend ─────────────────────────────────────────────────────────────────────
-
-function MatrixLegend() {
-    const items = [
-        {
-            label: 'Layak Pakai',
-            cls: 'bg-success-soft text-success  ',
-        },
-        {
-            label: 'BD (P2H)',
-            cls: 'bg-danger-soft text-danger  ',
-        },
-        {
-            label: 'BD (Downtime)',
-            cls: 'bg-danger text-danger  ',
-        },
-        {
-            label: 'PM (Downtime)',
-            cls: 'bg-warning-soft text-warning  ',
-        },
-        {
-            label: 'Servis Berkala',
-            cls: 'bg-info-soft text-info  ',
-        },
-        { label: 'Tidak ada P2H', cls: 'bg-muted text-muted-foreground' },
-    ];
-
-    return (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground">
-            <span className="text-sm font-semibold text-foreground">
-                Legenda:
-            </span>
-            {items.map((item) => (
-                <span key={item.label} className="flex items-center gap-1.5">
-                    <span
-                        aria-hidden
-                        className={cn(
-                            'flex h-5 w-7 items-center justify-center rounded text-[9px] font-bold',
-                            item.cls,
-                        )}
-                    >
-                        3x
-                    </span>
-                    {item.label}
-                </span>
-            ))}
-        </div>
-    );
-}
-
-// ── Main Page ──────────────────────────────────────────────────────────────────
-
-export default function P2hCompliancePage({
-    matrix,
-    dates,
-    columnSummary,
-    summary,
-    filters,
-}: Props) {
-    const [highlightMissing, setHighlightMissing] = useState(false);
-    const {
-        rows: sortedMatrix,
-        sort: matrixSort,
-        onSort: onMatrixSort,
-    } = useClientSort(
-        matrix,
-        {
-            unit: (r) => r.no_unit,
-            compliance: (r) => r.compliance_pct,
-        },
-        { by: 'unit', dir: 'asc' },
-    );
-    const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
-        .props;
-    const canExport = (auth?.user?.roles ?? []).some((r) =>
-        ['admin', 'manager'].includes(r),
-    );
+    const exportQuery = new URLSearchParams({
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+        ...(filters.jenis_unit ? { jenis_unit: filters.jenis_unit } : {}),
+    }).toString();
 
     return (
         <>
-            <Head title="Monitoring P2H — Compliance Matrix" />
-            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
-                <PageTabs group="p2hMonitoring" />
-                {/* ── Page Header ── */}
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
-                        Monitoring P2H
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Compliance matrix pengisian P2H per unit per hari ·{' '}
-                        {fmtShort(filters.date_from)} –{' '}
-                        {fmtShort(filters.date_to)}
-                        {filters.jenis_unit ? ` · ${filters.jenis_unit}` : ''}
-                    </p>
-                </div>
-
-                {/* ── Filter Bar ── */}
-                <FilterBar
-                    filters={filters}
-                    highlightMissing={highlightMissing}
-                    onToggleHighlight={() => setHighlightMissing((v) => !v)}
-                    canExport={canExport}
+            <Head title="Kepatuhan P2H" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
+                <PageHeader
+                    title="Kepatuhan P2H"
+                    description={`${formatDate(parseLocal(filters.date_from), { withYear: false })} – ${formatDate(parseLocal(filters.date_to))} · ${summary.total_units} unit${filters.jenis_unit ? ` · ${filters.jenis_unit}` : ''}`}
+                    actions={
+                        <>
+                            <Segmented
+                                label="Rentang"
+                                value={range ?? ('' as '7')}
+                                onChange={setRange}
+                                options={[
+                                    { value: '7', label: '7 hari' },
+                                    { value: '14', label: '14 hari' },
+                                    { value: '30', label: '30 hari' },
+                                ]}
+                            />
+                            <Button asChild variant="outline">
+                                <Link href="/unit-monitoring">Harian unit</Link>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <a href={`/export/monitoring-p2h/excel?${exportQuery}`}>
+                                    <Download />
+                                    Export
+                                </a>
+                            </Button>
+                        </>
+                    }
                 />
 
-                {/* ── Legend ── */}
-                <MatrixLegend />
+                <KpiStrip cols={4}>
+                    <KpiCard
+                        label="Kepatuhan armada"
+                        value={formatPercent(summary.fleet_compliance)}
+                        tone={
+                            summary.fleet_compliance < 80
+                                ? 'danger'
+                                : summary.fleet_compliance < TARGET
+                                  ? 'warning'
+                                  : 'default'
+                        }
+                        sub={`target ≥ ${TARGET}%`}
+                    />
+                    <KpiCard
+                        label="P2H tercatat"
+                        value={filled}
+                        sub={`dari ${totalCells} unit-hari`}
+                    />
+                    <KpiCard
+                        label="Tidak P2H"
+                        value={summary.total_missed}
+                        tone={summary.total_missed > 0 ? 'danger' : 'default'}
+                        sub={
+                            totalCells > 0
+                                ? `${formatPercent((summary.total_missed / totalCells) * 100)} dari unit-hari`
+                                : '—'
+                        }
+                    />
+                    <KpiCard
+                        label="Unit 100% patuh"
+                        value={summary.perfect_units}
+                        sub={`dari ${summary.total_units} unit`}
+                    />
+                </KpiStrip>
 
-                {/* ── Matrix Table ── */}
                 {matrix.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted py-16 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                            <CalendarCheck className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-base font-semibold">
-                                Tidak ada unit aktif
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Coba ubah filter jenis unit.
-                            </p>
-                        </div>
-                    </div>
+                    <EmptyState
+                        title="Belum ada unit aktif"
+                        description="Kepatuhan dihitung dari unit aktif di Data master."
+                    />
                 ) : (
-                    <Card>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <colgroup>
-                                        <col style={{ minWidth: '160px' }} />
-                                        {dates.map((d) => (
-                                            <col
-                                                key={d}
-                                                style={{
-                                                    width: '52px',
-                                                    minWidth: '52px',
-                                                }}
-                                            />
-                                        ))}
-                                        <col style={{ minWidth: '108px' }} />
-                                    </colgroup>
+                    <section
+                        aria-labelledby="heatmap-title"
+                        className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5"
+                    >
+                        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                            <h2
+                                id="heatmap-title"
+                                className="text-[15px] font-semibold"
+                            >
+                                Per unit per hari
+                            </h2>
+                            <Legend />
+                        </div>
 
-                                    <TableHeader>
-                                        <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                            <SortableHead
-                                                column="unit"
-                                                sort={matrixSort}
-                                                onSort={onMatrixSort}
-                                                className="sticky left-0 z-20 border-r bg-muted/40"
-                                            >
-                                                Unit
-                                            </SortableHead>
-                                            {dates.map((d) => (
-                                                <TableHead
+                        <div className="mt-4 overflow-x-auto">
+                            <table className="border-separate border-spacing-x-[2px] border-spacing-y-[6px]">
+                                <thead>
+                                    <tr className="text-[11px] text-muted-foreground">
+                                        <th className="sticky left-0 z-10 bg-card pr-3 text-left text-xs font-semibold">
+                                            Unit · driver
+                                        </th>
+                                        {dates.map((d) => {
+                                            const date = parseLocal(d);
+                                            const isToday = d === TODAY;
+
+                                            return (
+                                                <th
                                                     key={d}
-                                                    className="px-1 py-2 text-center text-xs font-medium whitespace-nowrap text-muted-foreground"
-                                                >
-                                                    {fmtShort(d)}
-                                                </TableHead>
-                                            ))}
-                                            <SortableHead
-                                                column="compliance"
-                                                descFirst
-                                                sort={matrixSort}
-                                                onSort={onMatrixSort}
-                                                className="sticky right-0 z-20 border-l bg-muted/40 text-center"
-                                            >
-                                                Compliance
-                                            </SortableHead>
-                                        </TableRow>
-                                    </TableHeader>
-
-                                    <TableBody>
-                                        {sortedMatrix.map((row) => (
-                                            <TableRow
-                                                key={row.id}
-                                                className="hover:bg-muted/10"
-                                            >
-                                                {/* Unit cell — frozen left */}
-                                                <TableCell className="sticky left-0 z-10 border-r bg-background px-3 py-2">
-                                                    <p className="text-sm leading-tight font-semibold">
-                                                        {row.no_unit}
-                                                    </p>
-                                                    <div className="mt-0.5 flex items-center gap-1">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={cn(
-                                                                'h-4 px-1 text-[9px]',
-                                                                row.jenis_unit ===
-                                                                    'Bus'
-                                                                    ? 'border-info/40 bg-info-soft text-info'
-                                                                    : 'border-info/40 bg-info-soft text-info',
-                                                            )}
-                                                        >
-                                                            {row.jenis_unit ===
-                                                            'Bus'
-                                                                ? 'Bus'
-                                                                : 'LV'}
-                                                        </Badge>
-                                                        {row.no_lambung && (
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {row.no_lambung}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-
-                                                {/* Date cells */}
-                                                {dates.map((d) => (
-                                                    <TableCell
-                                                        key={d}
-                                                        className="px-1 py-1"
-                                                    >
-                                                        <MatrixCellComponent
-                                                            date={d}
-                                                            cell={
-                                                                row.cells[d] ??
-                                                                null
-                                                            }
-                                                            highlightMissing={
-                                                                highlightMissing
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                ))}
-
-                                                {/* Compliance summary — frozen right */}
-                                                <TableCell className="sticky right-0 z-10 border-l bg-background px-3 text-center">
-                                                    <p
-                                                        className={cn(
-                                                            'text-sm font-bold tabular-nums',
-                                                            complianceColor(
-                                                                row.compliance_pct,
-                                                            ),
-                                                        )}
-                                                    >
-                                                        {row.compliance_pct}%
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {row.filled_days}/
-                                                        {row.total_days}
-                                                    </p>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-
-                                    <TableFooter>
-                                        <TableRow className="bg-muted/20 hover:bg-muted/20">
-                                            <TableCell className="sticky left-0 z-10 border-r bg-muted/20 px-3 text-xs font-semibold text-muted-foreground">
-                                                Total
-                                            </TableCell>
-                                            {dates.map((d) => {
-                                                const col = columnSummary[d];
-                                                const pct =
-                                                    col.total > 0
-                                                        ? Math.round(
-                                                              (col.filled /
-                                                                  col.total) *
-                                                                  100,
-                                                          )
-                                                        : 0;
-
-                                                return (
-                                                    <TableCell
-                                                        key={d}
-                                                        className="px-1 py-2 text-center"
-                                                    >
-                                                        <p
-                                                            className={cn(
-                                                                'text-xs font-bold tabular-nums',
-                                                                complianceColor(
-                                                                    pct,
-                                                                ),
-                                                            )}
-                                                        >
-                                                            {col.filled}/
-                                                            {col.total}
-                                                        </p>
-                                                    </TableCell>
-                                                );
-                                            })}
-                                            <TableCell className="sticky right-0 z-10 border-l bg-muted/20 px-3 text-center">
-                                                <p
                                                     className={cn(
-                                                        'text-sm font-bold tabular-nums',
-                                                        complianceColor(
-                                                            summary.fleet_compliance,
-                                                        ),
+                                                        'w-[28px] text-center leading-tight font-normal',
+                                                        isToday &&
+                                                            'font-bold text-foreground',
                                                     )}
                                                 >
-                                                    {summary.fleet_compliance}%
-                                                </p>
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableFooter>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                                    <span className="block">
+                                                        {DAY_INITIAL[date.getDay()]}
+                                                    </span>
+                                                    <span className="block tnum">
+                                                        {date.getDate()}
+                                                    </span>
+                                                </th>
+                                            );
+                                        })}
+                                        <th
+                                            className="pl-4 text-right text-xs font-semibold"
+                                            aria-sort={sortAsc ? 'ascending' : 'descending'}
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() => setSortAsc((v) => !v)}
+                                                className="inline-flex items-center gap-1 hover:text-foreground"
+                                            >
+                                                Patuh
+                                                {sortAsc ? (
+                                                    <ArrowUp className="size-3" />
+                                                ) : (
+                                                    <ArrowDown className="size-3" />
+                                                )}
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.map((row) => (
+                                        <tr key={row.id}>
+                                            <th
+                                                scope="row"
+                                                className="sticky left-0 z-10 min-w-[120px] bg-card pr-3 text-left font-normal"
+                                            >
+                                                <span className="block text-sm leading-tight font-semibold tnum">
+                                                    {row.no_unit}
+                                                </span>
+                                                <span className="block truncate text-xs text-muted-foreground">
+                                                    {row.driver ?? '—'}
+                                                </span>
+                                            </th>
+                                            {dates.map((d) => (
+                                                <td key={d} className="p-0">
+                                                    <HeatCell row={row} date={d} />
+                                                </td>
+                                            ))}
+                                            <td
+                                                className={cn(
+                                                    'pl-4 text-right text-sm font-semibold tnum',
+                                                    pctTone(row.compliance_pct),
+                                                )}
+                                            >
+                                                {Math.round(row.compliance_pct)}%
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 )}
 
-                {/* ── Info Footer ── */}
-                <div className="space-y-1 rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-                    <p>
-                        <strong className="text-foreground">Cara baca:</strong>{' '}
-                        Setiap sel menunjukkan apakah unit mengisi P2H pada
-                        tanggal tersebut. Angka dalam sel adalah jumlah
-                        pengisian P2H pada hari tersebut. Klik sel untuk melihat
-                        detail sesi P2H.
-                    </p>
-                    <p>
-                        Status{' '}
-                        <strong className="text-success">Layak Pakai</strong> =
-                        semua slot dengan kondisi_akhir Layak Pakai atau score ≥
-                        80%. Status{' '}
-                        <strong className="text-danger">Breakdown</strong> = ada
-                        satu atau lebih slot kondisi BD. Range maksimal{' '}
-                        <strong className="text-foreground">31 hari</strong>.
-                    </p>
-                </div>
+                {attention.length > 0 && (
+                    <section aria-labelledby="perhatian-title">
+                        <h2
+                            id="perhatian-title"
+                            className="text-[15px] font-semibold"
+                        >
+                            Perlu perhatian
+                        </h2>
+                        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                            {attention.map((row) => {
+                                const missed = dates.filter(
+                                    (d) => d < TODAY && !row.cells[d],
+                                ).length;
+                                const bd = dates.filter(
+                                    (d) => row.cells[d]?.status === 'bd',
+                                ).length;
+
+                                return (
+                                    <div
+                                        key={row.id}
+                                        className="rounded-[14px] border-(length:--bw) bg-card p-4"
+                                    >
+                                        <div className="flex items-baseline justify-between gap-2">
+                                            <p className="min-w-0 truncate">
+                                                <span className="font-semibold tnum">
+                                                    {row.no_unit}
+                                                </span>{' '}
+                                                <span className="text-[13px] text-muted-foreground">
+                                                    {row.driver ?? ''}
+                                                </span>
+                                            </p>
+                                            <span
+                                                className={cn(
+                                                    'text-sm font-semibold tnum',
+                                                    pctTone(row.compliance_pct),
+                                                )}
+                                            >
+                                                {Math.round(row.compliance_pct)}%
+                                            </span>
+                                        </div>
+                                        <p className="mt-1.5 text-[13px] text-muted-foreground">
+                                            {missed}× tidak P2H
+                                            {bd > 0 && ` · ${bd}× hasil Tidak Layak`}{' '}
+                                            dalam {rangeDays} hari
+                                        </p>
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            variant="outline"
+                                            className="mt-3"
+                                        >
+                                            <Link
+                                                href={`/p2h?no_unit=${encodeURIComponent(row.no_unit)}`}
+                                            >
+                                                Lihat riwayat {row.no_unit}
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
             </div>
         </>
     );
 }
 
-P2hCompliancePage.layout = {
-    breadcrumbs: [{ title: 'Monitoring P2H', href: '/p2h-compliance' }],
+function countDowntime(matrix: MatrixRow[]) {
+    return matrix.reduce(
+        (n, r) =>
+            n +
+            Object.values(r.cells).filter((c) => c?.status === 'downtime')
+                .length,
+        0,
+    );
+}
+
+P2hCompliance.layout = {
+    breadcrumbs: [{ title: 'Kepatuhan', href: '/p2h-compliance' }],
 };
