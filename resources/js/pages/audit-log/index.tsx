@@ -1,25 +1,30 @@
 import { Head, router } from '@inertiajs/react';
-import { ClipboardList, Search, Shield, Trash2, User } from 'lucide-react';
-import { useRef } from 'react';
+import { Copy, Search } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { PageButtons } from '@/components/pagination-bar';
+import { FilterChips } from '@/components/pims/filter-chips';
+import { PageHeader } from '@/components/pims/page-header';
+import { ResponsiveDrawer } from '@/components/pims/responsive-drawer';
+import { Segmented } from '@/components/pims/segmented';
+import { EmptyState } from '@/components/pims/states';
 import { SortableHead } from '@/components/sortable-head';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useClipboard } from '@/hooks/use-clipboard';
+import { useInitials } from '@/hooks/use-initials';
+import { formatDate, formatTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
+
+/*
+ * Audit log (design/screens/AuditLog-Desktop.png, docs/screens/admin.md).
+ * Data dari spatie/activitylog; tag aksi diturunkan dari kata kerja deskripsi.
+ */
 
 interface LogEntry {
     id: number;
@@ -29,6 +34,7 @@ interface LogEntry {
     causer_role: string;
     properties: Record<string, unknown>;
     created_at: string;
+    created_at_iso: string;
 }
 
 interface PaginatedLogs {
@@ -50,243 +56,394 @@ interface Props {
     };
 }
 
-const LOG_BADGE: Record<
-    string,
-    { label: string; className: string; icon: React.ElementType }
-> = {
-    user: {
-        label: 'User',
-        className: 'border-info/40 bg-info-soft text-info   ',
-        icon: User,
-    },
-    unit: {
-        label: 'Unit',
-        className: 'border-success/40 bg-success-soft text-success   ',
-        icon: Shield,
-    },
-    p2h: {
-        label: 'P2H',
-        className: 'border-warning/40 bg-warning-soft text-warning   ',
-        icon: Trash2,
-    },
+type Action = 'buat' | 'ubah' | 'hapus' | 'login' | 'otomatis';
+
+const ACTION_META: Record<Action, { label: string; className: string }> = {
+    buat: { label: 'Buat', className: 'bg-success-soft text-success' },
+    ubah: { label: 'Ubah', className: 'bg-info-soft text-info' },
+    hapus: { label: 'Hapus', className: 'bg-danger-soft text-danger' },
+    login: { label: 'Login', className: 'bg-muted text-muted-foreground' },
+    otomatis: { label: 'Otomatis', className: 'bg-warning-soft text-warning' },
 };
 
+const MODULE: Record<string, string> = {
+    user: 'Pengguna',
+    unit: 'Master unit',
+    p2h: 'P2H',
+};
+
+const SYSTEM = 'System';
+
+function actionOf(log: LogEntry): Action {
+    if (log.causer_name === SYSTEM) {
+        return 'otomatis';
+    }
+
+    const d = log.description.toLowerCase();
+
+    if (/^(masuk|login)/.test(d)) {
+        return 'login';
+    }
+
+    if (/^(menghapus|memindahkan ke sampah|membuang)/.test(d)) {
+        return 'hapus';
+    }
+
+    if (/^(menambahkan|membuat|mengimpor|mengundang|mendaftarkan)/.test(d)) {
+        return 'buat';
+    }
+
+    return 'ubah';
+}
+
+/** "Hari ini · 06:21" / "Kemarin · 14:03" / "14 Okt · 17:20". */
+function whenLabel(iso: string) {
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+    const day = same(d, today)
+        ? 'Hari ini'
+        : same(d, yesterday)
+          ? 'Kemarin'
+          : formatDate(d, { withYear: false });
+
+    return `${day} · ${formatTime(d)}`;
+}
+
+const isoDaysAgo = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+
+    return d.toLocaleDateString('en-CA');
+};
+
+/** Kalimat deskripsi dengan objek (kode unit / nama setelah ":") ditebalkan. */
+function Sentence({ text }: { text: string }) {
+    const [verb, ...rest] = text.split(': ');
+
+    if (rest.length > 0) {
+        return (
+            <>
+                {verb}: <b className="font-semibold">{rest.join(': ')}</b>
+            </>
+        );
+    }
+
+    const m = text.match(/^(.*?)([A-Z]{2,4}-[\w-]+.*)$/);
+
+    return m ? (
+        <>
+            {m[1]}
+            <b className="font-semibold">{m[2]}</b>
+        </>
+    ) : (
+        <>{text}</>
+    );
+}
+
+function Changes({ properties }: { properties: Record<string, unknown> }) {
+    const after = (properties.attributes ?? null) as Record<string, unknown> | null;
+    const before = (properties.old ?? null) as Record<string, unknown> | null;
+    const show = (v: unknown) =>
+        v === null || v === undefined || v === ''
+            ? '—'
+            : typeof v === 'object'
+              ? JSON.stringify(v)
+              : String(v);
+
+    if (after) {
+        const fields = Object.keys(after);
+
+        return (
+            <table className="w-full text-sm">
+                <thead className="text-left text-xs text-muted-foreground">
+                    <tr>
+                        <th className="pb-2 font-semibold">Field</th>
+                        <th className="pb-2 font-semibold">Sebelum</th>
+                        <th className="pb-2 font-semibold">Sesudah</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {fields.map((f) => (
+                        <tr key={f} className="border-t-(length:--bw)">
+                            <td className="py-2 pr-3 font-mono text-xs">{f}</td>
+                            <td className="py-2 pr-3 text-danger line-through">
+                                {show(before?.[f])}
+                            </td>
+                            <td className="py-2 text-success">{show(after[f])}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        );
+    }
+
+    const entries = Object.entries(properties);
+
+    if (entries.length === 0) {
+        return <p className="text-sm text-muted-foreground">Tidak ada data tambahan.</p>;
+    }
+
+    return (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            {entries.map(([k, v]) => (
+                <div key={k} className="contents">
+                    <dt className="font-mono text-xs text-muted-foreground">{k}</dt>
+                    <dd className="break-words">{show(v)}</dd>
+                </div>
+            ))}
+        </dl>
+    );
+}
+
 export default function AuditLogIndex({ logs, filters }: Props) {
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [detail, setDetail] = useState<LogEntry | null>(null);
+    const getInitials = useInitials();
+    const [, copy] = useClipboard();
 
-    const applyFilter = (patch: Partial<typeof filters>) => {
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
+    const apply = (next: Partial<Props['filters']> & { page?: number }) =>
+        router.get(
+            '/audit-log',
+            { ...filters, ...next },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
 
-        debounceRef.current = setTimeout(() => {
-            router.get(
-                '/audit-log',
-                { ...filters, ...patch, page: 1 },
-                { preserveState: true, replace: true },
-            );
-        }, 350);
-    };
+    const range =
+        !filters.date_from && !filters.date_to
+            ? 'semua'
+            : filters.date_to
+              ? 'custom'
+              : filters.date_from === isoDaysAgo(0)
+                ? '1'
+                : filters.date_from === isoDaysAgo(6)
+                  ? '7'
+                  : filters.date_from === isoDaysAgo(29)
+                    ? '30'
+                    : 'custom';
 
-    const goToPage = (page: number) => {
-        router.get('/audit-log', { ...filters, page }, { preserveState: true });
-    };
+    const setRange = (v: string) =>
+        apply({
+            date_from: v === 'semua' ? undefined : isoDaysAgo(Number(v) - 1),
+            date_to: undefined,
+            page: 1,
+        });
 
     return (
         <>
-            <Head title="Audit Log" />
-            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
-                {/* Header */}
-                <div>
-                    <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
-                        Audit Log
-                    </h1>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                        Riwayat semua aksi penting yang dilakukan di sistem
-                    </p>
+            <Head title="Audit log" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
+                <PageHeader
+                    title="Audit log"
+                    description="Semua perubahan data tercatat dan tidak bisa diedit"
+                    actions={
+                        <Segmented
+                            label="Rentang"
+                            value={range}
+                            onChange={setRange}
+                            options={[
+                                { value: '1', label: 'Hari ini' },
+                                { value: '7', label: '7 hari' },
+                                { value: '30', label: '30 hari' },
+                                { value: 'semua', label: 'Semua' },
+                            ]}
+                        />
+                    }
+                />
+
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                    <form
+                        className="relative w-full lg:w-80"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            apply({ search: search || undefined, page: 1 });
+                        }}
+                    >
+                        <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Cari deskripsi atau objek"
+                            aria-label="Cari log"
+                            className="h-12 pl-10 lg:h-10"
+                        />
+                    </form>
+                    <FilterChips
+                        label="Modul"
+                        className="-mx-4 px-4 lg:mx-0 lg:px-0"
+                        value={filters.log_name ?? 'semua'}
+                        onChange={(v) =>
+                            apply({ log_name: v === 'semua' ? undefined : v, page: 1 })
+                        }
+                        options={[
+                            { value: 'semua', label: 'Semua modul' },
+                            { value: 'p2h', label: 'P2H' },
+                            { value: 'unit', label: 'Master unit' },
+                            { value: 'user', label: 'Pengguna' },
+                        ]}
+                    />
                 </div>
 
-                {/* Filters */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <ClipboardList className="h-4 w-4" />
-                            Filter Log
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    defaultValue={filters.search}
-                                    onChange={(e) =>
-                                        applyFilter({
-                                            search: e.target.value || undefined,
-                                        })
-                                    }
-                                    placeholder="Cari deskripsi…"
-                                    className="h-9 pl-9"
-                                />
-                            </div>
+                {logs.data.length === 0 ? (
+                    <EmptyState
+                        title="Tidak ada log"
+                        description="Tidak ada log yang cocok dengan filter."
+                    />
+                ) : (
+                    <div className="overflow-x-auto rounded-[14px] border-(length:--bw)">
+                        <table className="w-full min-w-[920px] text-sm">
+                            <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                                <tr className="h-11">
+                                    <SortableHead column="created_at" plain descFirst className="px-4">
+                                        Waktu
+                                    </SortableHead>
+                                    <SortableHead column="causer" plain className="px-4">
+                                        Pengguna
+                                    </SortableHead>
+                                    <th className="px-4 font-semibold">Aksi</th>
+                                    <SortableHead column="description" plain className="px-4">
+                                        Deskripsi
+                                    </SortableHead>
+                                    <SortableHead column="log_name" plain className="px-4">
+                                        Modul
+                                    </SortableHead>
+                                    <th className="px-4">
+                                        <span className="sr-only">Detail</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {logs.data.map((log) => {
+                                    const action = ACTION_META[actionOf(log)];
+                                    const system = log.causer_name === SYSTEM;
 
-                            <Select
-                                value={filters.log_name ?? 'all'}
-                                onValueChange={(v) =>
-                                    applyFilter({
-                                        log_name: v === 'all' ? undefined : v,
-                                    })
-                                }
-                            >
-                                <SelectTrigger
-                                    aria-label="Filter modul"
-                                    className="w-full"
-                                >
-                                    <SelectValue placeholder="Semua kategori" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua kategori
-                                    </SelectItem>
-                                    <SelectItem value="user">User</SelectItem>
-                                    <SelectItem value="unit">Unit</SelectItem>
-                                    <SelectItem value="p2h">P2H</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                    return (
+                                        <tr key={log.id} className="h-[52px] border-t-(length:--bw)">
+                                            <td className="px-4 whitespace-nowrap tnum">
+                                                {whenLabel(log.created_at_iso)}
+                                            </td>
+                                            <td className="px-4">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <span tabIndex={0} className="inline-flex items-center gap-2 whitespace-nowrap">
+                                                            <span
+                                                                className={cn(
+                                                                    'grid size-7 place-items-center rounded-full text-[10px] font-bold',
+                                                                    system
+                                                                        ? 'bg-foreground text-background'
+                                                                        : 'bg-muted',
+                                                                )}
+                                                            >
+                                                                {system ? 'SY' : getInitials(log.causer_name)}
+                                                            </span>
+                                                            {system ? 'Sistem' : log.causer_name}
+                                                        </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        {system
+                                                            ? 'Dijalankan otomatis oleh sistem'
+                                                            : `${log.causer_name} · ${log.causer_role}`}
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </td>
+                                            <td className="px-4">
+                                                <span
+                                                    className={cn(
+                                                        'inline-flex h-6 items-center rounded-md px-2 text-xs font-semibold',
+                                                        action.className,
+                                                    )}
+                                                >
+                                                    {action.label}
+                                                </span>
+                                            </td>
+                                            <td className="max-w-[420px] truncate px-4">
+                                                <Sentence text={log.description} />
+                                            </td>
+                                            <td className="px-4 whitespace-nowrap text-muted-foreground">
+                                                {MODULE[log.log_name] ?? log.log_name}
+                                            </td>
+                                            <td className="px-4 text-right">
+                                                <Button size="sm" variant="outline" onClick={() => setDetail(log)}>
+                                                    Detail
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                            <Input
-                                type="date"
-                                aria-label="Dari tanggal"
-                                defaultValue={filters.date_from}
-                                onChange={(e) =>
-                                    applyFilter({
-                                        date_from: e.target.value || undefined,
-                                    })
-                                }
-                                className="h-9"
-                            />
-                            <Input
-                                type="date"
-                                aria-label="Sampai tanggal"
-                                defaultValue={filters.date_to}
-                                onChange={(e) =>
-                                    applyFilter({
-                                        date_to: e.target.value || undefined,
-                                    })
-                                }
-                                className="h-9"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Table */}
-                <Card>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <SortableHead
-                                            column="created_at"
-                                            descFirst
-                                            className="w-32"
-                                        >
-                                            Waktu
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="log_name"
-                                            className="w-20"
-                                        >
-                                            Kategori
-                                        </SortableHead>
-                                        <SortableHead column="description">
-                                            Deskripsi
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="causer"
-                                            className="w-40"
-                                        >
-                                            Dilakukan oleh
-                                        </SortableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {logs.data.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={4}
-                                                className="py-12 text-center text-sm text-muted-foreground"
-                                            >
-                                                Tidak ada log yang cocok dengan
-                                                filter.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        logs.data.map((log) => {
-                                            const badge = LOG_BADGE[
-                                                log.log_name
-                                            ] ?? {
-                                                label: log.log_name,
-                                                className:
-                                                    'border-muted bg-muted/50 text-muted-foreground',
-                                                icon: ClipboardList,
-                                            };
-                                            const Icon = badge.icon;
-
-                                            return (
-                                                <TableRow key={log.id}>
-                                                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                                                        {log.created_at}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`gap-1 text-xs ${badge.className}`}
-                                                        >
-                                                            <Icon className="h-3 w-3" />
-                                                            {badge.label}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-sm">
-                                                        {log.description}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="text-sm font-medium">
-                                                            {log.causer_name}
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground capitalize">
-                                                            {log.causer_role}
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-
-                        {/* Pagination */}
-                        {logs.last_page > 1 && (
-                            <div className="flex items-center justify-between border-t px-4 py-3">
-                                <p className="text-xs text-muted-foreground">
-                                    {logs.from}–{logs.to} dari {logs.total} log
-                                </p>
-                                <PageButtons
-                                    currentPage={logs.current_page}
-                                    lastPage={logs.last_page}
-                                    onPageChange={goToPage}
-                                />
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+                    <span>
+                        {logs.total} entri · urut terbaru dulu · log tidak dapat diubah atau dihapus, termasuk oleh Admin.
+                    </span>
+                    {logs.last_page > 1 && (
+                        <PageButtons
+                            currentPage={logs.current_page}
+                            lastPage={logs.last_page}
+                            onPageChange={(page) => apply({ page })}
+                        />
+                    )}
+                </div>
             </div>
+
+            <ResponsiveDrawer
+                open={detail !== null}
+                onOpenChange={(o) => !o && setDetail(null)}
+                title={detail ? <Sentence text={`${detail.causer_name === SYSTEM ? 'Sistem' : detail.causer_name} — ${detail.description}`} /> : ''}
+                description={
+                    detail
+                        ? `${detail.created_at} WIB · ${MODULE[detail.log_name] ?? detail.log_name} · AL-${detail.id}`
+                        : undefined
+                }
+                footer={
+                    detail && (
+                        <Button
+                            variant="outline"
+                            onClick={async () => {
+                                if (await copy(`AL-${detail.id}`)) {
+                                    toast.success('ID log disalin');
+                                }
+                            }}
+                        >
+                            <Copy />
+                            Salin ID log
+                        </Button>
+                    )
+                }
+            >
+                {detail && (
+                    <div className="space-y-5">
+                        <section>
+                            <h3 className="mb-2 text-sm font-semibold">Perubahan</h3>
+                            <Changes properties={detail.properties ?? {}} />
+                        </section>
+                        <section>
+                            <h3 className="mb-2 text-sm font-semibold">Konteks</h3>
+                            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                                <dt className="text-muted-foreground">Pelaku</dt>
+                                <dd>
+                                    {detail.causer_name === SYSTEM
+                                        ? 'Sistem (otomatis)'
+                                        : `${detail.causer_name} · ${detail.causer_role}`}
+                                </dd>
+                                <dt className="text-muted-foreground">Modul</dt>
+                                <dd>{MODULE[detail.log_name] ?? detail.log_name}</dd>
+                                <dt className="text-muted-foreground">ID log</dt>
+                                <dd className="font-mono">AL-{detail.id}</dd>
+                            </dl>
+                        </section>
+                    </div>
+                )}
+            </ResponsiveDrawer>
         </>
     );
 }
 
 AuditLogIndex.layout = {
-    breadcrumbs: [{ title: 'Audit Log', href: '/audit-log' }],
+    breadcrumbs: [{ title: 'Audit log', href: '/audit-log' }],
 };

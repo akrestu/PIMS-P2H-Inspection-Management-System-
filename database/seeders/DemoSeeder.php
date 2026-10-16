@@ -14,6 +14,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 
 /**
  * Data contoh untuk pengembangan & cek visual terhadap mockup (pims-redesign/).
@@ -128,6 +129,7 @@ class DemoSeeder extends Seeder
         }
 
         $this->notifications($manager);
+        $this->auditLogs($manager, $units);
 
         // Satu unit sedang PM, satu servis (manual).
         UnitDowntimeLog::firstOrCreate(
@@ -166,6 +168,33 @@ class DemoSeeder extends Seeder
                 'created_at' => now()->subMinutes($minutesAgo),
                 'updated_at' => now()->subMinutes($minutesAgo),
             ]);
+        }
+    }
+
+    /** Contoh entri Audit log (format sama dengan activity() di controller). */
+    private function auditLogs(User $manager, $units): void
+    {
+        if (Activity::exists()) {
+            return;
+        }
+
+        $admin = User::where('nik', '19850704')->first();
+        $samples = [
+            [20, $manager, 'p2h', "Menyetujui P2H {$units[0]->no_unit}", ['catatan' => null]],
+            [55, $admin, 'unit', "Mengubah status unit {$units[12]->no_unit} menjadi PM", ['attributes' => ['status' => 'PM'], 'old' => ['status' => 'Ready']]],
+            [90, null, 'p2h', "Menandai BD otomatis dari P2H tidak layak {$units[6]->no_unit}", []],
+            [180, $admin, 'unit', 'Menambahkan unit: LV-041 (Light Vehicle)', ['no_unit' => 'LV-041']],
+            [600, $admin, 'user', 'Memperbarui user: Budi Santoso', ['attributes' => ['site_id' => 1], 'old' => ['site_id' => null]]],
+            [1500, $manager, 'p2h', 'Menutup temuan T-0009', []],
+            [2900, $admin, 'unit', 'Menghapus unit: LV-099', ['no_unit' => 'LV-099', 'jenis_unit' => 'Light Vehicle']],
+        ];
+
+        foreach ($samples as [$minutesAgo, $causer, $log, $description, $props]) {
+            $activity = activity($log)->withProperties($props);
+            if ($causer) {
+                $activity->causedBy($causer);
+            }
+            $activity->createdAt(now()->subMinutes($minutesAgo))->log($description);
         }
     }
 
