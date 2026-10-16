@@ -64,9 +64,9 @@ export function ShellTopBar({
             <div className="flex h-16 items-center gap-2 px-4 lg:hidden">
                 <div className="min-w-0 flex-1">
                     {title ? (
-                        <h1 className="truncate text-xl font-semibold tracking-[-0.01em]">
+                        <p className="truncate text-xl font-semibold tracking-[-0.01em]">
                             {title}
-                        </h1>
+                        </p>
                     ) : (
                         <ShellLogo />
                     )}

@@ -42,7 +42,7 @@ class P2hSessionController extends Controller
 
         $user = $request->user();
 
-        $query = P2hSession::with(['unit', 'userEntries.answers'])
+        $query = P2hSession::with(['unit', 'userEntries.answers', 'userEntries.user:id,name'])
             ->when($request->date_from, fn ($q) => $q->whereDate('tanggal', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('tanggal', '<=', $request->date_to))
             ->when($request->no_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$request->no_unit}%")))
@@ -62,6 +62,9 @@ class P2hSessionController extends Controller
         $sessions = $query->latest()->paginate(15)->withQueryString();
 
         $mapped = $sessions->through(function ($session) {
+            $entries = $session->userEntries->sortBy('submitted_at')->values();
+            $approvals = $entries->pluck('approval_status')->filter();
+
             return [
                 'id' => $session->id,
                 'tanggal' => $session->tanggal->format('Y-m-d'),
@@ -70,6 +73,20 @@ class P2hSessionController extends Controller
                 'slot_terisi' => $session->userEntries->count(),
                 'total_tl' => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
                 'status' => $session->status,
+                // Ringkasan tampilan (read-only) untuk kartu/tabel Riwayat
+                'entries' => $entries->map(fn ($e) => [
+                    'driver' => $e->user?->name,
+                    'shift' => $e->shift,
+                    'time' => $e->submitted_at?->format('H:i'),
+                ])->all(),
+                'hasil' => $entries->contains('kondisi_akhir', 'BD') ? 'BD' : ($entries->isEmpty() ? null : 'Layak Pakai'),
+                'approval' => match (true) {
+                    $approvals->contains('rejected') => 'rejected',
+                    $approvals->contains('pending') => 'pending',
+                    $approvals->isNotEmpty() => 'approved',
+                    default => null,
+                },
+                'hm_akhir' => $entries->pluck('hm_km_akhir')->filter()->max(),
             ];
         });
 

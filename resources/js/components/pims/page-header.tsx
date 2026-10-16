@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-/** PageHeader (docs/02#pageheader): judul 24/28 + subjudul konteks + aksi kanan. */
+/**
+ * PageHeader (docs/02#pageheader): judul 24/28 + subjudul konteks + aksi kanan.
+ * Di mobile judul sudah tampil di app bar, jadi h1 di sini hanya untuk pembaca layar.
+ */
 export function PageHeader({
     title,
     description,
@@ -21,7 +24,7 @@ export function PageHeader({
             )}
         >
             <div className="min-w-0">
-                <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] lg:text-[28px] lg:leading-[34px]">
+                <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                     {title}
                 </h1>
                 {description && (

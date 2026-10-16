@@ -81,6 +81,31 @@ test('beranda falls back to the last inspected unit and reports this shift entry
         );
 });
 
+test('riwayat rows summarise drivers, result, approval and last HM', function () {
+    $unit = Unit::create(['no_unit' => 'DT-1022', 'jenis_unit' => 'Bus', 'status' => 'active']);
+    $other = User::factory()->create(['name' => 'Sari Maharani'])->assignRole('driver');
+    $session = P2hSession::create(['unit_id' => $unit->id, 'tanggal' => '2026-10-16', 'status' => 'open', 'created_by' => $this->driver->id]);
+    P2hUserEntry::create([
+        'p2h_session_id' => $session->id, 'user_id' => $this->driver->id, 'user_slot' => 1, 'shift' => 'Shift I',
+        'submitted_at' => '2026-10-16 05:52', 'kondisi_akhir' => 'Layak Pakai', 'approval_status' => 'approved', 'hm_km_akhir' => 12490,
+    ]);
+    P2hUserEntry::create([
+        'p2h_session_id' => $session->id, 'user_id' => $other->id, 'user_slot' => 2, 'shift' => 'Shift I',
+        'submitted_at' => '2026-10-16 06:05', 'kondisi_akhir' => 'BD', 'approval_status' => 'pending',
+    ]);
+
+    $this->actingAs($this->driver)
+        ->get('/p2h')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('p2h/index')
+            ->where('sessions.data.0.entries.0.time', '05:52')
+            ->where('sessions.data.0.entries.1.driver', 'Sari Maharani')
+            ->where('sessions.data.0.hasil', 'BD')
+            ->where('sessions.data.0.approval', 'pending')
+            ->where('sessions.data.0.hm_akhir', fn ($hm) => (float) $hm === 12490.0)
+        );
+});
+
 test('beranda without any unit returns empty unit data', function () {
     $this->actingAs($this->driver)
         ->get('/driver/dashboard')
