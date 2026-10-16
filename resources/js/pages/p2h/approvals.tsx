@@ -16,8 +16,9 @@ import {
     XCircle,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import ReactSignatureCanvas from 'react-signature-canvas';
+import type ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
+import SignaturePad from '@/components/P2h/SignaturePad';
 import { PageButtons } from '@/components/pagination-bar';
 import { PageHeader } from '@/components/pims/page-header';
 import { Button } from '@/components/ui/button';
@@ -665,32 +666,12 @@ function ReviewApproveSheet({
                                     Dengan menandatangani, Anda menyatakan telah
                                     mereview dan menyetujui P2H ini.
                                 </p>
-                                <div className="overflow-hidden rounded-xl border-2 border-dashed border-border bg-white dark:bg-zinc-900">
-                                    <ReactSignatureCanvas
-                                        ref={sigPadRef}
-                                        penColor="#1d4ed8"
-                                        canvasProps={{
-                                            className: 'w-full',
-                                            style: {
-                                                height: 160,
-                                                touchAction: 'none',
-                                            },
-                                        }}
-                                        onEnd={() => setSigEmpty(false)}
-                                    />
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-muted-foreground"
-                                    onClick={() => {
-                                        sigPadRef.current?.clear();
-                                        setSigEmpty(true);
-                                    }}
-                                >
-                                    Hapus Tanda Tangan
-                                </Button>
+                                <SignaturePad
+                                    sigPadRef={sigPadRef}
+                                    penColor="#1d4ed8"
+                                    onEnd={() => setSigEmpty(false)}
+                                    onClear={() => setSigEmpty(true)}
+                                />
                             </div>
 
                             {/* Action buttons */}
@@ -840,29 +821,12 @@ function BulkApproveDialog({
                         Tanda Tangan Persetujuan{' '}
                         <span className="text-destructive">*</span>
                     </Label>
-                    <div className="overflow-hidden rounded-xl border-2 border-dashed border-border bg-white dark:bg-zinc-900">
-                        <ReactSignatureCanvas
-                            ref={sigPadRef}
-                            penColor="#1d4ed8"
-                            canvasProps={{
-                                className: 'w-full',
-                                style: { height: 140, touchAction: 'none' },
-                            }}
-                            onEnd={() => setSigEmpty(false)}
-                        />
-                    </div>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground"
-                        onClick={() => {
-                            sigPadRef.current?.clear();
-                            setSigEmpty(true);
-                        }}
-                    >
-                        Hapus Tanda Tangan
-                    </Button>
+                    <SignaturePad
+                        sigPadRef={sigPadRef}
+                        penColor="#1d4ed8"
+                        onEnd={() => setSigEmpty(false)}
+                        onClear={() => setSigEmpty(true)}
+                    />
                 </div>
 
                 <DialogFooter className="gap-2">

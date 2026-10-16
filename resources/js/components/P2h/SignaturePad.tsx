@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Maximize2, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,18 @@ interface Props {
     onEnd?: () => void;
     onClear?: () => void;
     sigPadRef: React.RefObject<ReactSignatureCanvas | null>;
+    /** Warna tinta (disimpan dalam gambar). Default gelap; approver memakai biru. */
+    penColor?: string;
 }
 
-export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
+export default function SignaturePad({
+    onEnd,
+    onClear,
+    sigPadRef,
+    penColor = '#1e293b',
+}: Props) {
     const [hasSig, setHasSig] = useState(false);
+    const [full, setFull] = useState(false);
     const savedDataUrl = useRef<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,43 +89,67 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
         };
     }, [restoreSignature]);
 
+    // Layar penuh: Esc menutup, scroll halaman dikunci
+    useEffect(() => {
+        if (!full) {
+            return;
+        }
+
+        const onKey = (e: KeyboardEvent) =>
+            e.key === 'Escape' && setFull(false);
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', onKey);
+
+        return () => {
+            document.body.style.overflow = prev;
+            window.removeEventListener('keydown', onKey);
+        };
+    }, [full]);
+
     return (
-        <div className="space-y-3">
-            {/* Canvas area */}
+        <div
+            className={cn(
+                full
+                    ? 'fixed inset-0 z-50 flex flex-col gap-3 bg-background p-4 pb-[max(env(safe-area-inset-bottom),16px)]'
+                    : 'space-y-3',
+            )}
+            role={full ? 'dialog' : undefined}
+            aria-modal={full || undefined}
+            aria-label={full ? 'Tanda tangan layar penuh' : undefined}
+        >
+            {full && (
+                <p className="text-sm font-semibold">
+                    Tanda tangan di area putih, lalu tekan Selesai.
+                </p>
+            )}
+            {/* Area kanvas — selalu putih karena tanda tangan disimpan sebagai gambar bertinta gelap */}
             <div
                 ref={containerRef}
                 className={cn(
-                    'relative overflow-hidden rounded-xl border-2 border-dashed transition-colors',
-                    hasSig
-                        ? 'border-primary bg-white dark:bg-gray-950'
-                        : 'border-muted-foreground/30 bg-muted/20',
+                    'relative overflow-hidden rounded-xl border-(length:--bw) bg-white',
+                    hasSig ? 'border-foreground' : 'border-dashed border-input',
+                    full && 'flex-1',
                 )}
             >
+                <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-6 bottom-10 border-t-2 border-dashed border-black/15"
+                />
                 {!hasSig && (
-                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground/50">
-                        <svg
-                            className="h-8 w-8"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={1.5}
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M16.862 3.487a2.25 2.25 0 113.181 3.182L7.5 19.212l-4.5 1 1-4.5L16.862 3.487z"
-                            />
-                        </svg>
-                        <span className="text-xs">Tanda tangan di sini</span>
-                    </div>
+                    <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-black/40">
+                        Tanda tangan di sini
+                    </span>
                 )}
                 <ReactSignatureCanvas
                     ref={sigPadRef as React.RefObject<ReactSignatureCanvas>}
-                    penColor="#1e293b"
+                    penColor={penColor}
+                    minWidth={1.6}
+                    maxWidth={3}
                     canvasProps={{
                         className: 'w-full',
                         style: {
-                            height: '160px',
+                            height: full ? '100%' : '180px',
                             touchAction: 'none',
                             display: 'block',
                         },
@@ -126,9 +158,12 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
                 />
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
+            {/* Aksi */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <p
+                    className="text-[13px] text-muted-foreground"
+                    aria-live="polite"
+                >
                     {hasSig ? (
                         <span className="font-medium text-success">
                             Tanda tangan tersimpan
@@ -137,18 +172,32 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
                         'Gunakan jari atau mouse untuk menandatangani'
                     )}
                 </p>
-                {hasSig && (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleClear}
-                        className="h-8 text-muted-foreground hover:text-destructive"
-                    >
-                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                        Ulangi
-                    </Button>
-                )}
+                <div className="flex gap-2">
+                    {hasSig && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleClear}
+                        >
+                            <RotateCcw />
+                            Ulangi
+                        </Button>
+                    )}
+                    {full ? (
+                        <Button type="button" onClick={() => setFull(false)}>
+                            Selesai
+                        </Button>
+                    ) : (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setFull(true)}
+                        >
+                            <Maximize2 />
+                            Layar penuh
+                        </Button>
+                    )}
+                </div>
             </div>
         </div>
     );

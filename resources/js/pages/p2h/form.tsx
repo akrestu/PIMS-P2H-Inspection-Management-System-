@@ -1,9 +1,8 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowRight,
-    Camera,
     Check,
     CheckCircle2,
     ChevronDown,
@@ -33,6 +32,7 @@ import type ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 import ChecklistGroup from '@/components/P2h/ChecklistGroup';
 import SignaturePad from '@/components/P2h/SignaturePad';
+import { PhotoPicker } from '@/components/pims/photo-picker';
 import { ChecklistProgress } from '@/components/pims/progress';
 import { useShellNavigation } from '@/components/shell/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -236,6 +236,76 @@ function StepIndicator({
     );
 }
 
+// ─── Layar sukses ─────────────────────────────────────────────────────────────
+// Lingkaran pop + centang digambar (stroke-dashoffset); gerak mati bila "Kurangi gerakan".
+function SubmitSuccess({
+    unit,
+    layak,
+    pic,
+    homeHref,
+}: {
+    unit: string;
+    layak: boolean;
+    pic: string | null;
+    homeHref: string;
+}) {
+    return (
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+            <div
+                className={cn(
+                    'grid size-28 animate-pop place-items-center rounded-full',
+                    layak
+                        ? 'bg-success-soft text-success'
+                        : 'bg-danger-soft text-danger',
+                )}
+            >
+                <svg viewBox="0 0 52 52" className="size-16" aria-hidden>
+                    <path
+                        d={
+                            layak
+                                ? 'M14 27 L23 36 L39 18'
+                                : 'M17 17 L35 35 M35 17 L17 35'
+                        }
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="[stroke-dasharray:60] [stroke-dashoffset:60] motion-safe:animate-[pims-draw_500ms_var(--ease-out)_250ms_forwards] motion-reduce:[stroke-dashoffset:0]"
+                    />
+                </svg>
+            </div>
+            <div className="space-y-2" role="status">
+                <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+                    P2H terkirim · {layak ? 'Layak Pakai' : 'Tidak Layak'}
+                </h1>
+                <p className="text-[15px] text-muted-foreground">
+                    {layak
+                        ? `${unit} siap dioperasikan.`
+                        : `${unit} tercatat BD. Pengawas sudah diberi tahu.`}
+                </p>
+                {pic && (
+                    <p className="text-[15px] text-muted-foreground">
+                        Diteruskan ke{' '}
+                        <span className="font-semibold text-foreground">
+                            {pic}
+                        </span>{' '}
+                        untuk persetujuan.
+                    </p>
+                )}
+            </div>
+            <div className="flex w-full max-w-sm flex-col gap-2">
+                <Button asChild size="xl">
+                    <Link href={homeHref}>Kembali ke Beranda</Link>
+                </Button>
+                <Button asChild variant="outline" size="xl">
+                    <Link href="/p2h">Lihat riwayat</Link>
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 // ─── Summary Row ──────────────────────────────────────────────────────────────
 function SummaryRow({
     icon: Icon,
@@ -277,6 +347,7 @@ interface StepNavFooterProps {
     onPrev: () => void;
     onSubmit: () => void;
     submitting: boolean;
+    uploadPct?: number | null;
     submitDisabled: boolean;
 }
 
@@ -288,6 +359,7 @@ function StepNavFooter({
     onPrev,
     onSubmit,
     submitting,
+    uploadPct,
     submitDisabled,
 }: StepNavFooterProps) {
     const nextStep = steps.find((s) => s.id === step + 1);
@@ -319,7 +391,11 @@ function StepNavFooter({
                         className="min-w-0 flex-[2]"
                     >
                         {!submitting && <Send />}
-                        {submitting ? 'Mengirim…' : 'Kirim P2H'}
+                        {submitting
+                            ? uploadPct !== null && uploadPct !== undefined
+                                ? `Mengunggah ${uploadPct}%`
+                                : 'Mengirim…'
+                            : 'Kirim P2H'}
                     </Button>
                 ) : (
                     <Button
@@ -809,6 +885,12 @@ export default function P2hForm({
         Record<number, boolean>
     >({});
     const [submitting, setSubmitting] = useState(false);
+    const [uploadPct, setUploadPct] = useState<number | null>(null);
+    const [submitted, setSubmitted] = useState<{
+        unit: string;
+        layak: boolean;
+        pic: string | null;
+    } | null>(null);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
     const [hasDraft] = useState(() => Boolean(draft.selectedUnitId));
@@ -1274,8 +1356,31 @@ export default function P2hForm({
             },
             {
                 forceFormData: true,
+                // Status "mengunggah %" (docs/02 PhotoCapture) — foto bisa besar di sinyal lemah
+                onProgress: (e) =>
+                    setUploadPct(
+                        e?.percentage !== undefined
+                            ? Math.round(e.percentage)
+                            : null,
+                    ),
+                onFinish: () => setUploadPct(null),
                 onSuccess: () => {
-                    router.visit('/p2h', { replace: true });
+                    // Layar sukses (docs/screens/driver.md §7) sebelum kembali
+                    try {
+                        navigator.vibrate?.([10, 30, 10]);
+                    } catch {
+                        // Vibration API tidak tersedia
+                    }
+
+                    setSubmitting(false);
+                    setSubmitted({
+                        unit: selectedUnit?.no_unit ?? 'Unit',
+                        layak: kondisiAkhir !== 'BD',
+                        pic:
+                            staffUsers.find(
+                                (u) => String(u.id) === picApproverId,
+                            )?.name ?? null,
+                    });
                 },
                 onError: (errors) => {
                     setSubmitting(false);
@@ -1331,6 +1436,15 @@ export default function P2hForm({
     const checklistProgress = Math.round(
         (filledCount / inspectionItems.length) * 100,
     );
+
+    if (submitted) {
+        return (
+            <>
+                <Head title="P2H terkirim" />
+                <SubmitSuccess {...submitted} homeHref={homeHref} />
+            </>
+        );
+    }
 
     return (
         <>
@@ -2620,97 +2734,12 @@ export default function P2hForm({
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3 px-4">
-                                    {/* Tombol ambil/pilih foto — pakai label agar capture berfungsi reliabel di mobile */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <label
-                                            className={cn(
-                                                'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
-                                                compressing
-                                                    ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-foreground/30 hover:text-primary',
-                                            )}
-                                        >
-                                            <Camera className="h-4 w-4" />
-                                            Ambil Foto
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                capture="environment"
-                                                disabled={compressing}
-                                                className="hidden"
-                                                onChange={(e) =>
-                                                    handleAttachmentFiles(
-                                                        e.target.files,
-                                                    )
-                                                }
-                                            />
-                                        </label>
-                                        <label
-                                            className={cn(
-                                                'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
-                                                compressing
-                                                    ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-foreground/30 hover:text-primary',
-                                            )}
-                                        >
-                                            <ImagePlus className="h-4 w-4" />
-                                            Dari Galeri
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                multiple
-                                                disabled={compressing}
-                                                className="hidden"
-                                                onChange={(e) =>
-                                                    handleAttachmentFiles(
-                                                        e.target.files,
-                                                    )
-                                                }
-                                            />
-                                        </label>
-                                    </div>
-
-                                    {/* Indikator kompresi */}
-                                    {compressing && (
-                                        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5">
-                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">
-                                                Memproses foto…
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Grid preview */}
-                                    {attachmentPreviews.length > 0 && (
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {attachmentPreviews.map(
-                                                (src, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="relative aspect-square"
-                                                    >
-                                                        <img
-                                                            src={src}
-                                                            alt={`Foto ${idx + 1}`}
-                                                            className="h-full w-full rounded-lg border object-cover"
-                                                        />
-                                                        <button
-                                                            aria-label="Hapus foto"
-                                                            type="button"
-                                                            onClick={() =>
-                                                                removeAttachment(
-                                                                    idx,
-                                                                )
-                                                            }
-                                                            className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white shadow"
-                                                        >
-                                                            <X className="h-3 w-3" />
-                                                        </button>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </div>
-                                    )}
+                                    <PhotoPicker
+                                        previews={attachmentPreviews}
+                                        processing={compressing}
+                                        onFiles={handleAttachmentFiles}
+                                        onRemove={removeAttachment}
+                                    />
                                     {!compressing &&
                                         attachments.length === 0 && (
                                             <p className="text-xs text-destructive">
@@ -2763,6 +2792,7 @@ export default function P2hForm({
                 onPrev={goPrev}
                 onSubmit={handleSubmit}
                 submitting={submitting}
+                uploadPct={uploadPct}
                 submitDisabled={submitting}
             />
         </>

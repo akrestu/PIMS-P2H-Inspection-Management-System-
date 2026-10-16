@@ -1,4 +1,4 @@
-import { Camera, ImagePlus, Loader2, X } from 'lucide-react';
+import { PhotoPicker } from '@/components/pims/photo-picker';
 import { SegmentedChoice } from '@/components/pims/segmented';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -106,91 +106,17 @@ export default function ChecklistItem({
                             <p className="mb-1.5 text-xs font-medium text-muted-foreground">
                                 Lampiran Foto Bukti (opsional)
                             </p>
-                            <div className="flex items-center gap-2">
-                                <label
-                                    className={cn(
-                                        'flex h-11 press cursor-pointer items-center gap-2 rounded-[10px] border-(length:--bw) border-dashed px-4 text-sm font-medium',
-                                        compressing
-                                            ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                            : 'border-input text-foreground hover:bg-muted',
-                                    )}
-                                >
-                                    <Camera className="size-4" />
-                                    Foto
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        disabled={compressing}
-                                        className="hidden"
-                                        onChange={(e) =>
-                                            onAttachmentChange(
-                                                item.id,
-                                                e.target.files,
-                                            )
-                                        }
-                                    />
-                                </label>
-                                <label
-                                    className={cn(
-                                        'flex h-11 press cursor-pointer items-center gap-2 rounded-[10px] border-(length:--bw) border-dashed px-4 text-sm font-medium',
-                                        compressing
-                                            ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                            : 'border-input text-foreground hover:bg-muted',
-                                    )}
-                                >
-                                    <ImagePlus className="size-4" />
-                                    Galeri
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        disabled={compressing}
-                                        className="hidden"
-                                        onChange={(e) =>
-                                            onAttachmentChange(
-                                                item.id,
-                                                e.target.files,
-                                            )
-                                        }
-                                    />
-                                </label>
-                                {compressing && (
-                                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                        Memproses…
-                                    </span>
-                                )}
-                            </div>
-                            {attachmentPreviews.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {attachmentPreviews.map((src, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="relative size-[72px] shrink-0"
-                                        >
-                                            <img
-                                                src={src}
-                                                alt={`Bukti ${idx + 1}`}
-                                                className="h-full w-full rounded-lg border object-cover"
-                                            />
-                                            <button
-                                                aria-label="Hapus foto bukti"
-                                                type="button"
-                                                onClick={() =>
-                                                    onRemoveAttachment(
-                                                        item.id,
-                                                        idx,
-                                                    )
-                                                }
-                                                className="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-ink-foreground shadow-md"
-                                            >
-                                                <X className="size-3.5" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <PhotoPicker
+                                compact
+                                previews={attachmentPreviews}
+                                processing={compressing}
+                                onFiles={(files) =>
+                                    onAttachmentChange(item.id, files)
+                                }
+                                onRemove={(idx) =>
+                                    onRemoveAttachment(item.id, idx)
+                                }
+                            />
                         </div>
                     )}
                 </div>
