@@ -326,59 +326,11 @@
 
 /* ---------- utilitas khusus aplikasi ---------- */
 
-.loader {
-    --c: no-repeat linear-gradient(orange 0 0);
-    width: 45px;
-    height: 45px;
-    background:
-        var(--c), var(--c), var(--c), var(--c), var(--c), var(--c), var(--c),
-        var(--c), var(--c);
-    background-size: 16px 16px;
-    animation:
-        l32-1 1s infinite,
-        l32-2 1s infinite;
-}
-
-@keyframes l32-1 {
-    0%,
-    100% {
-        width: 45px;
-        height: 45px;
-    }
-    35%,
-    65% {
-        width: 65px;
-        height: 65px;
-    }
-}
-
-@keyframes l32-2 {
-    0%,
-    40% {
-        background-position:
-            0 0,
-            0 50%,
-            0 100%,
-            50% 100%,
-            100% 100%,
-            100% 50%,
-            100% 0,
-            50% 0,
-            50% 50%;
-    }
-    60%,
-    100% {
-        background-position:
-            0 50%,
-            0 100%,
-            50% 100%,
-            100% 100%,
-            100% 50%,
-            100% 0,
-            50% 0,
-            0 0,
-            50% 50%;
-    }
+/* Muat ulang sebagian (filter): konten diredupkan selama aria-busy (docs/03) */
+#main-content[aria-busy="true"] {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity var(--dur-2) var(--ease-standard);
 }
 
 /* Jarak aman bawah untuk layar berponi / home indicator (bottom nav mobile) */
