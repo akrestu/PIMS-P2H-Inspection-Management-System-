@@ -1,7 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
-    ArrowLeft,
     Bus,
     Car,
     RotateCcw,
@@ -11,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { TrashTabs } from '@/components/pims/trash-tabs';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { TrashBatchActions } from '@/components/trash-batch-actions';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +61,7 @@ interface Filters {
 }
 
 interface Props {
+    tabCounts: { aktif: number; sampah: number };
     units: PaginatedData;
     filters: Filters;
 }
@@ -206,7 +207,11 @@ function ForceDeleteDialog({
     );
 }
 
-export default function UnitsTrashed({ units, filters }: Props) {
+export default function UnitsTrashed({
+    units,
+    filters,
+    tabCounts,
+}: Props) {
     const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
         .props;
     const roles = auth?.user?.roles ?? [];
@@ -240,23 +245,12 @@ export default function UnitsTrashed({ units, filters }: Props) {
 
     return (
         <TooltipProvider>
-            <Head title="Sampah Unit" />
+            <Head title="Sampah unit" />
             <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <a href="/units">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="-ml-2 gap-1.5"
-                                >
-                                    <ArrowLeft className="h-4 w-4" /> Kembali
-                                </Button>
-                            </a>
-                        </div>
                         <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
-                            Sampah Unit
+                            Master unit
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
                             Unit yang telah dihapus. Pulihkan kembali atau hapus
@@ -264,6 +258,14 @@ export default function UnitsTrashed({ units, filters }: Props) {
                         </p>
                     </div>
                 </div>
+
+                <TrashTabs
+                    current="sampah"
+                    activeHref="/units"
+                    trashHref="/units/trashed"
+                    counts={tabCounts}
+                    className="self-start"
+                />
 
                 <Card>
                     <CardContent className="flex items-center gap-3 py-3">

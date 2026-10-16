@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { TrashTabs } from '@/components/pims/trash-tabs';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ interface Filters {
     status?: string;
 }
 interface Props {
+    tabCounts: { aktif: number; sampah: number };
     sites: PaginatedData;
     filters: Filters;
 }
@@ -361,7 +363,11 @@ function BatchDeleteDialog({
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function SitesIndex({ sites, filters }: Props) {
+export default function SitesIndex({
+    sites,
+    filters,
+    tabCounts,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
 
@@ -436,41 +442,34 @@ export default function SitesIndex({ sites, filters }: Props) {
 
     return (
         <TooltipProvider>
-            <Head title="Manajemen Site" />
+            <Head title="Master site" />
             <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
-                            Manajemen Site
+                            Master site
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            Kelola lokasi kerja (site) untuk Unit dan Manpower.
+                            {tabCounts.aktif} site · {tabCounts.sampah} di
+                            Sampah
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <a href="/sites/trashed">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
-                                    >
-                                        <Trash2 className="h-4 w-4" /> Sampah
-                                    </Button>
-                                </a>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                Lihat site yang telah dihapus
-                            </TooltipContent>
-                        </Tooltip>
                         <Button onClick={openAdd} className="gap-2">
                             <Plus className="h-4 w-4" />
                             Tambah Site
                         </Button>
                     </div>
                 </div>
+
+                <TrashTabs
+                    current="aktif"
+                    activeHref="/sites"
+                    trashHref="/sites/trashed"
+                    counts={tabCounts}
+                    className="self-start"
+                />
 
                 {/* ── Batch Action Bar ── */}
                 {selectedIds.length > 0 && (

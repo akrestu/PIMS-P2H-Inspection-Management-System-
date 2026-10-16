@@ -18,11 +18,11 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { TrashTabs } from '@/components/pims/trash-tabs';
 import { SiteSelect } from '@/components/site-select';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -83,6 +83,7 @@ interface Props {
     units: PaginatedData;
     filters: Filters;
     sites: Site[];
+    tabCounts: { aktif: number; sampah: number };
 }
 
 /* ─────────────────── UnitFormDialog (Add / Edit) ─────────────── */
@@ -865,7 +866,12 @@ function UnitStatusControl({ unit }: { unit: Unit }) {
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UnitsIndex({ units, filters, sites }: Props) {
+export default function UnitsIndex({
+    units,
+    filters,
+    sites,
+    tabCounts,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_unit ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
@@ -952,35 +958,20 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
 
     return (
         <TooltipProvider>
-            <Head title="Manajemen Unit" />
+            <Head title="Master unit" />
             <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
-                {/* ── Header ── */}
+                {/* ── Header (MasterUnit-Desktop.png) ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
-                            Manajemen Unit
+                            Master unit
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            Kelola data kendaraan Bus & Light Vehicle.
+                            {tabCounts.aktif} unit aktif · {tabCounts.sampah} di
+                            Sampah
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <a href="/units/trashed">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
-                                    >
-                                        <Trash2 className="h-4 w-4" /> Sampah
-                                    </Button>
-                                </a>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                Lihat unit yang telah dihapus
-                            </TooltipContent>
-                        </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
@@ -1059,8 +1050,15 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                 )}
 
                 {/* ── Filter Bar ── */}
-                <Card>
-                    <CardContent className="flex flex-wrap items-center gap-3 py-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    <TrashTabs
+                        current="aktif"
+                        activeHref="/units"
+                        trashHref="/units/trashed"
+                        counts={tabCounts}
+                    />
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                    <>
                         {/* Search */}
                         <div className="relative min-w-[200px] flex-1">
                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1153,12 +1151,13 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                    </CardContent>
-                </Card>
+                    </>
+                </div>
+                </div>
 
                 {/* ── Table ── */}
-                <Card>
-                    <CardContent className="p-0">
+                <div className="overflow-hidden rounded-[14px] border-(length:--bw) bg-card">
+                    <>
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
@@ -1178,9 +1177,6 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                 aria-label="Pilih semua"
                                                 disabled={allIds.length === 0}
                                             />
-                                        </TableHead>
-                                        <TableHead className="hidden w-12 text-center sm:table-cell">
-                                            #
                                         </TableHead>
                                         <SortableHead column="no_unit">
                                             No. Unit
@@ -1215,7 +1211,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 <TableBody>
                                     {units.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={9}>
+                                            <TableCell colSpan={8}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Package className="h-8 w-8 text-muted-foreground" />
@@ -1257,7 +1253,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        units.data.map((unit, idx) => (
+                                        units.data.map((unit) => (
                                             <TableRow
                                                 key={unit.id}
                                                 className={`group ${selectedIds.includes(unit.id) ? 'bg-destructive/5' : ''}`}
@@ -1273,11 +1269,8 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                         aria-label={`Pilih ${unit.no_unit}`}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="hidden text-center text-sm text-muted-foreground sm:table-cell">
-                                                    {(units.from ?? 1) + idx}
-                                                </TableCell>
                                                 <TableCell>
-                                                    <span className="font-mono font-semibold">
+                                                    <span className="font-semibold tnum">
                                                         {unit.no_unit}
                                                     </span>
                                                 </TableCell>
@@ -1294,7 +1287,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                 </TableCell>
                                                 <TableCell>
                                                     {unit.no_lambung ? (
-                                                        <span className="font-mono text-sm">
+                                                        <span className="text-sm tnum">
                                                             {unit.no_lambung}
                                                         </span>
                                                     ) : (
@@ -1452,8 +1445,8 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 </p>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </>
+                </div>
             </div>
 
             {/* ── Import Sheet ── */}
