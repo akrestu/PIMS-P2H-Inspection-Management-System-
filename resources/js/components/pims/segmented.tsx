@@ -80,6 +80,7 @@ export function SegmentedChoice({
     label,
     disabled = false,
     invalid = false,
+    labels,
     className,
 }: {
     value: ItemResult | null;
@@ -88,6 +89,8 @@ export function SegmentedChoice({
     label: string;
     disabled?: boolean;
     invalid?: boolean;
+    /** Ganti teks tombol, mis. Layak / Tidak Layak. */
+    labels?: Partial<Record<ItemResult, string>>;
     className?: string;
 }) {
     return (
@@ -125,7 +128,7 @@ export function SegmentedChoice({
                         )}
                     >
                         <Icon className="size-4" aria-hidden />
-                        {text}
+                        {labels?.[v] ?? text}
                     </button>
                 );
             })}

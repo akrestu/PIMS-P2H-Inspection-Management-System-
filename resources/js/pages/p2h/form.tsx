@@ -33,6 +33,8 @@ import type ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 import ChecklistGroup from '@/components/P2h/ChecklistGroup';
 import SignaturePad from '@/components/P2h/SignaturePad';
+import { ChecklistProgress } from '@/components/pims/progress';
+import { useShellNavigation } from '@/components/shell/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -209,60 +211,27 @@ function stepForErrorKey(key: string): number {
 }
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
-function StepIndicator({ current }: { current: number }) {
+// ChecklistProgress (docs/02): "Langkah n dari 4" + bar + "12/18 item" di langkah pemeriksaan
+function StepIndicator({
+    current,
+    done,
+    total,
+}: {
+    current: number;
+    done?: number;
+    total?: number;
+}) {
     return (
-        <div className="flex items-center justify-between px-1">
-            {STEPS.map((step, idx) => {
-                const done = current > step.id;
-                const active = current === step.id;
-
-                return (
-                    <div key={step.id} className="flex flex-1 items-center">
-                        <div className="flex flex-col items-center gap-1">
-                            <div
-                                className={cn(
-                                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300',
-                                    done &&
-                                        'border-primary bg-primary text-primary-foreground',
-                                    active &&
-                                        'scale-110 border-primary bg-primary text-primary-foreground shadow-md',
-                                    !done &&
-                                        !active &&
-                                        'border-muted-foreground/30 bg-background text-muted-foreground/50',
-                                )}
-                            >
-                                {done ? (
-                                    <CheckCircle2 className="h-4 w-4" />
-                                ) : (
-                                    step.id
-                                )}
-                            </div>
-                            <span
-                                className={cn(
-                                    'text-center text-xs leading-tight font-medium whitespace-nowrap',
-                                    active
-                                        ? 'text-primary'
-                                        : done
-                                          ? 'text-primary/70'
-                                          : 'text-muted-foreground/50',
-                                )}
-                            >
-                                {step.label}
-                            </span>
-                        </div>
-                        {idx < STEPS.length - 1 && (
-                            <div
-                                className={cn(
-                                    'mx-1 mb-5 h-0.5 flex-1 rounded-full transition-all duration-300',
-                                    current > step.id
-                                        ? 'bg-primary'
-                                        : 'bg-muted',
-                                )}
-                            />
-                        )}
-                    </div>
-                );
-            })}
+        <div>
+            <p className="mb-1 text-base font-semibold">
+                {STEPS[current - 1].label}
+            </p>
+            <ChecklistProgress
+                step={current}
+                totalSteps={STEPS.length}
+                done={done}
+                total={total}
+            />
         </div>
     );
 }
@@ -309,9 +278,6 @@ interface StepNavFooterProps {
     onSubmit: () => void;
     submitting: boolean;
     submitDisabled: boolean;
-    checklistProgress?: number;
-    filledCount?: number;
-    totalItems?: number;
 }
 
 function StepNavFooter({
@@ -323,87 +289,53 @@ function StepNavFooter({
     onSubmit,
     submitting,
     submitDisabled,
-    checklistProgress,
-    filledCount,
-    totalItems,
 }: StepNavFooterProps) {
     const nextStep = steps.find((s) => s.id === step + 1);
     const isLastStep = step === totalSteps;
 
     return (
-        <div className="sticky bottom-0 z-40 mt-auto border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            {/* Progress bar — step 2 only */}
-            {checklistProgress !== undefined && (
-                <div className="flex items-center gap-3 border-b px-4 py-2">
-                    <Progress
-                        value={checklistProgress}
-                        className="h-1.5 flex-1"
-                    />
-                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                        {filledCount}/{totalItems} item
-                    </span>
-                </div>
-            )}
-
-            <div className="px-4 py-2">
+        <div className="sticky bottom-0 z-40 mt-auto border-t px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] blurbar">
+            <div className="mx-auto flex max-w-[640px] items-center gap-2.5">
+                {step > 1 && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="xl"
+                        onClick={onPrev}
+                        className="min-w-0 flex-1"
+                    >
+                        <ChevronLeft />
+                        Kembali
+                    </Button>
+                )}
                 {isLastStep ? (
                     <Button
                         type="button"
-                        size="lg"
+                        variant="brand"
+                        size="xl"
                         onClick={onSubmit}
-                        disabled={submitDisabled}
-                        className="h-11 w-full gap-2 text-base font-bold"
+                        disabled={submitDisabled && !submitting}
+                        loading={submitting}
+                        className="min-w-0 flex-[2]"
                     >
-                        {submitting ? (
-                            <>
-                                <Loader2
-                                    data-icon="inline-start"
-                                    className="animate-spin"
-                                />
-                                Menyimpan…
-                            </>
-                        ) : (
-                            <>
-                                <Send data-icon="inline-start" />
-                                Kirim &amp; Selesaikan P2H
-                            </>
-                        )}
+                        {!submitting && <Send />}
+                        {submitting ? 'Mengirim…' : 'Kirim P2H'}
                     </Button>
                 ) : (
-                    <div className="flex items-center gap-2.5">
-                        {step > 1 && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="lg"
-                                onClick={onPrev}
-                                className="h-11 flex-1 gap-1.5"
-                            >
-                                <ChevronLeft data-icon="inline-start" />
-                                Kembali
-                            </Button>
-                        )}
-                        <Button
-                            type="button"
-                            size="lg"
-                            onClick={onNext}
-                            className="h-11 flex-1 gap-1.5 font-semibold"
-                        >
-                            <span className="flex flex-col items-start leading-tight sm:flex-row sm:items-center sm:gap-1.5">
-                                <span>
-                                    {step === totalSteps - 1
-                                        ? 'Lanjut ke Konfirmasi'
-                                        : 'Lanjutkan'}
-                                </span>
-                                {nextStep && (
-                                    <span className="text-xs font-normal text-primary-foreground/60 sm:hidden">
-                                        Berikutnya: {nextStep.label}
-                                    </span>
-                                )}
+                    <Button
+                        type="button"
+                        size="xl"
+                        onClick={onNext}
+                        className="min-w-0 flex-[2]"
+                    >
+                        Lanjut
+                        {nextStep && (
+                            <span className="hidden sm:inline">
+                                : {nextStep.label}
                             </span>
-                            <ArrowRight data-icon="inline-end" />
-                        </Button>
-                    </div>
+                        )}
+                        <ArrowRight />
+                    </Button>
                 )}
             </div>
         </div>
@@ -793,6 +725,7 @@ export default function P2hForm({
     staffUsers,
     sites,
 }: Props) {
+    const { homeHref } = useShellNavigation();
     const { auth, options } = usePage<{
         auth: {
             user: {
@@ -1404,42 +1337,75 @@ export default function P2hForm({
             <Head title="Form P2H" />
 
             <div ref={topRef} className="flex min-h-dvh flex-col">
-                {/* ── Sticky Top Header ── */}
-                <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                    {hasDraft && (
-                        <div className="mb-2 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 dark:border-amber-900 dark:bg-amber-950/30">
-                            <p className="text-xs text-amber-700 dark:text-amber-300">
-                                Draft dilanjutkan otomatis.{' '}
-                                <span className="font-semibold">
-                                    Foto & tanda tangan tidak ikut tersimpan
-                                </span>{' '}
-                                — unggah ulang sebelum kirim.
-                            </p>
+                {/* ── App bar form (docs/screens/driver.md) ── */}
+                <div className="sticky top-0 z-20 border-b px-4 pt-3 pb-4 blurbar">
+                    <div className="mx-auto max-w-[640px]">
+                        <div className="mb-3 flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={() => {
-                                    clearDraft();
-                                    window.location.reload();
+                                    if (
+                                        filledCount === 0 ||
+                                        window.confirm(
+                                            'Keluar dari Form P2H? Draft tetap tersimpan di perangkat ini.',
+                                        )
+                                    ) {
+                                        router.visit(homeHref);
+                                    }
                                 }}
-                                className="ml-2 text-xs font-medium text-amber-600 underline hover:text-amber-800 dark:text-amber-400"
+                                aria-label="Keluar dari Form P2H"
+                                className="-ml-2 grid size-12 press place-items-center rounded-[12px] hover:bg-muted"
                             >
-                                Mulai ulang
+                                <X className="size-5" />
                             </button>
+                            <div className="min-w-0 flex-1">
+                                <h1 className="truncate text-lg font-semibold">
+                                    Form P2H
+                                    {selectedUnit
+                                        ? ` · ${selectedUnit.no_unit}`
+                                        : ''}
+                                </h1>
+                                <p className="truncate text-[13px] text-muted-foreground">
+                                    {selectedUnit
+                                        ? `${selectedUnit.jenis_unit}${slotInfo ? ` · Pengisian ke-${slotInfo.next_slot}` : ''}`
+                                        : 'Pemeriksaan & Perawatan Harian'}
+                                </p>
+                            </div>
                         </div>
-                    )}
-                    <div className="mb-3">
-                        <h1 className="text-base font-bold">Form P2H</h1>
-                        <p className="text-xs text-muted-foreground">
-                            {selectedUnit
-                                ? `${selectedUnit.no_unit} · ${selectedUnit.jenis_unit}${slotInfo ? ` · Pengisian ke-${slotInfo.next_slot}` : ''}`
-                                : 'Pemeriksaan & Perawatan Harian'}
-                        </p>
+                        {hasDraft && (
+                            <div className="mb-3 flex items-start justify-between gap-3 rounded-xl bg-warning-soft px-3 py-2 hc:border-2 hc:border-warning">
+                                <p className="text-[13px]">
+                                    Draft dilanjutkan otomatis.{' '}
+                                    <span className="font-semibold">
+                                        Foto &amp; tanda tangan tidak ikut
+                                        tersimpan
+                                    </span>{' '}
+                                    — unggah ulang sebelum kirim.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        clearDraft();
+                                        window.location.reload();
+                                    }}
+                                    className="shrink-0 text-[13px] font-semibold underline underline-offset-4"
+                                >
+                                    Mulai ulang
+                                </button>
+                            </div>
+                        )}
+                        <StepIndicator
+                            current={step}
+                            done={step === 2 ? filledCount : undefined}
+                            total={
+                                step === 2 ? inspectionItems.length : undefined
+                            }
+                        />
                     </div>
-                    <StepIndicator current={step} />
                 </div>
 
                 {/* ── Step Content ── */}
-                <div className="flex flex-1 flex-col gap-4 p-4 pb-6">
+                <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col gap-4 p-4 pb-6">
                     {/* ══════════════════════════════════════════
                         STEP 1 — Unit & Shift
                     ══════════════════════════════════════════ */}
@@ -1521,6 +1487,19 @@ export default function P2hForm({
                                                             </SheetTitle>
                                                         </SheetHeader>
                                                         <div className="space-y-2 overflow-y-auto px-4 pb-4">
+                                                            {units.length ===
+                                                                0 && (
+                                                                <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                                                                    Belum ada
+                                                                    unit untuk
+                                                                    akun Anda.
+                                                                    Hubungi
+                                                                    admin site
+                                                                    untuk
+                                                                    penugasan
+                                                                    unit.
+                                                                </p>
+                                                            )}
                                                             {units.map(
                                                                 (unit) => {
                                                                     const isSelected =
@@ -1607,12 +1586,12 @@ export default function P2hForm({
                                     )}
 
                                     {slotInfo && !checkingSlot && (
-                                        <Alert className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/20">
-                                            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                            <AlertTitle className="text-green-800 dark:text-green-300">
+                                        <Alert className="border-success/40 bg-success-soft">
+                                            <CheckCircle2 className="h-4 w-4 text-success" />
+                                            <AlertTitle className="text-success">
                                                 P2H Tersedia
                                             </AlertTitle>
-                                            <AlertDescription className="text-xs text-green-700 dark:text-green-400">
+                                            <AlertDescription className="text-xs text-success">
                                                 Anda akan melakukan{' '}
                                                 <strong>
                                                     pengisian ke-
@@ -1723,9 +1702,9 @@ export default function P2hForm({
                                 </CardHeader>
                                 <CardContent className="space-y-2 px-4">
                                     {slotInfo?.last_hm_km_akhir != null && (
-                                        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-900 dark:bg-blue-950/20">
-                                            <Gauge className="h-4 w-4 shrink-0 text-blue-500" />
-                                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                                        <div className="flex items-center gap-2 rounded-lg border border-info/40 bg-info-soft px-3 py-2">
+                                            <Gauge className="h-4 w-4 shrink-0 text-info" />
+                                            <p className="text-xs text-info">
                                                 HM/KM Akhir sesi sebelumnya:{' '}
                                                 <strong>
                                                     {slotInfo.last_hm_km_akhir.toLocaleString(
@@ -1813,8 +1792,8 @@ export default function P2hForm({
                                                     className={cn(
                                                         'h-20 flex-col gap-1.5 rounded-xl border-2 text-sm font-semibold',
                                                         isDay
-                                                            ? 'data-[state=on]:border-amber-500 data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 dark:data-[state=on]:bg-amber-950/30 dark:data-[state=on]:text-amber-300'
-                                                            : 'data-[state=on]:border-indigo-600 data-[state=on]:bg-indigo-50 data-[state=on]:text-indigo-700 dark:data-[state=on]:bg-indigo-950/30 dark:data-[state=on]:text-indigo-300',
+                                                            ? 'data-[state=on]:border-warning data-[state=on]:bg-warning-soft data-[state=on]:text-warning'
+                                                            : 'data-[state=on]:border-info data-[state=on]:bg-info-soft data-[state=on]:text-info',
                                                     )}
                                                 >
                                                     <Icon className="h-6 w-6" />
@@ -1827,10 +1806,10 @@ export default function P2hForm({
                             </Card>
                             {/* PIC Approver — muncul untuk semua driver yang mengisi unit LV */}
                             {needsApproval && (
-                                <Card className="border-amber-200 dark:border-amber-800">
+                                <Card className="border-warning/40">
                                     <CardHeader className="px-4 pb-0">
                                         <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                            <User className="h-4 w-4 text-warning" />
                                             <CardTitle className="text-base">
                                                 PIC Persetujuan
                                             </CardTitle>
@@ -1847,8 +1826,8 @@ export default function P2hForm({
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-2 px-4">
-                                        <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/30">
-                                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                                        <div className="rounded-lg border border-warning/40 bg-warning-soft px-3 py-2">
+                                            <p className="text-xs text-warning">
                                                 PIC yang dipilih akan mendapat
                                                 notifikasi dan wajib me-review
                                                 serta menandatangani P2H Anda
@@ -1933,13 +1912,13 @@ export default function P2hForm({
                                         className="h-3 rounded-full"
                                     />
                                     <div className="flex flex-wrap items-center gap-3 text-xs">
-                                        <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                            <span className="h-2 w-2 rounded-full bg-green-500" />
+                                        <span className="flex items-center gap-1 text-success">
+                                            <span className="h-2 w-2 rounded-full bg-success" />
                                             {filledCount - tlCount} Layak
                                         </span>
                                         {tlCount > 0 && (
-                                            <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                                                <span className="h-2 w-2 rounded-full bg-red-500" />
+                                            <span className="flex items-center gap-1 text-danger">
+                                                <span className="h-2 w-2 rounded-full bg-danger" />
                                                 {tlCount} Tidak Layak
                                             </span>
                                         )}
@@ -1954,9 +1933,9 @@ export default function P2hForm({
                             </Card>
 
                             {/* Instruksi */}
-                            <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/20">
-                                <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-                                <p className="text-sm text-blue-700 dark:text-blue-300">
+                            <div className="flex items-start gap-2.5 rounded-xl border border-info/40 bg-info-soft px-4 py-3">
+                                <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+                                <p className="text-sm text-info">
                                     Periksa setiap komponen kendaraan, lalu
                                     pilih <strong>Layak</strong> atau{' '}
                                     <strong>Tidak Layak</strong>. Jika Tidak
@@ -2320,13 +2299,13 @@ export default function P2hForm({
                                         </p>
                                         <div className="rounded-xl bg-muted/40 px-3 py-1">
                                             <div className="flex items-center gap-3 py-2">
-                                                <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                                                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
                                                 <span className="flex-1 text-sm text-muted-foreground">
                                                     Item Layak
                                                 </span>
                                                 <Badge
                                                     variant="secondary"
-                                                    className="bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300"
+                                                    className="bg-success-soft text-success"
                                                 >
                                                     {filledCount - tlCount} /{' '}
                                                     {inspectionItems.length}
@@ -2422,9 +2401,8 @@ export default function P2hForm({
                                 className={cn(
                                     'border-2',
                                     kondisiAkhir === 'Layak Pakai' &&
-                                        'border-emerald-400 dark:border-emerald-700',
-                                    kondisiAkhir === 'BD' &&
-                                        'border-red-400 dark:border-red-700',
+                                        'border-success',
+                                    kondisiAkhir === 'BD' && 'border-danger',
                                     !kondisiAkhir && 'border-primary/30',
                                 )}
                             >
@@ -2448,8 +2426,8 @@ export default function P2hForm({
                                                 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium',
                                                 recommendedKondisi ===
                                                     'Layak Pakai'
-                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-                                                    : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300',
+                                                    ? 'bg-success-soft text-success'
+                                                    : 'bg-danger-soft text-danger',
                                             )}
                                         >
                                             {recommendedKondisi ===
@@ -2489,8 +2467,8 @@ export default function P2hForm({
                                             className={cn(
                                                 'flex h-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
                                                 kondisiAkhir === 'Layak Pakai'
-                                                    ? 'scale-[1.02] border-emerald-500 bg-emerald-50 text-emerald-700 shadow-md dark:bg-emerald-950/30 dark:text-emerald-300'
-                                                    : 'border-border bg-background text-muted-foreground hover:border-emerald-400 hover:text-emerald-600',
+                                                    ? 'scale-[1.02] border-success bg-success-soft text-success shadow-md'
+                                                    : 'border-border bg-background text-muted-foreground hover:border-success hover:text-success',
                                             )}
                                         >
                                             <ShieldCheck className="h-6 w-6" />
@@ -2513,8 +2491,8 @@ export default function P2hForm({
                                             className={cn(
                                                 'flex h-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
                                                 kondisiAkhir === 'BD'
-                                                    ? 'scale-[1.02] border-red-500 bg-red-50 text-red-700 shadow-md dark:bg-red-950/30 dark:text-red-300'
-                                                    : 'border-border bg-background text-muted-foreground hover:border-red-400 hover:text-red-600',
+                                                    ? 'scale-[1.02] border-danger bg-danger-soft text-danger shadow-md'
+                                                    : 'border-border bg-background text-muted-foreground hover:border-danger hover:text-danger',
                                             )}
                                         >
                                             <ShieldAlert className="h-6 w-6" />
@@ -2528,9 +2506,9 @@ export default function P2hForm({
                                     {/* Justifikasi — wajib jika override */}
                                     {isOverride && (
                                         <div className="animate-in space-y-1.5 duration-200 fade-in slide-in-from-top-2">
-                                            <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
-                                                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                                                <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                                            <div className="flex items-center gap-1.5 rounded-lg bg-warning-soft px-3 py-2">
+                                                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" />
+                                                <p className="text-xs font-medium text-warning">
                                                     Keputusan Anda berbeda dari
                                                     rekomendasi sistem. Alasan
                                                     wajib diisi.
@@ -2785,10 +2763,7 @@ export default function P2hForm({
                 onPrev={goPrev}
                 onSubmit={handleSubmit}
                 submitting={submitting}
-                submitDisabled={submitting || sigEmpty}
-                checklistProgress={step === 2 ? checklistProgress : undefined}
-                filledCount={step === 2 ? filledCount : undefined}
-                totalItems={step === 2 ? inspectionItems.length : undefined}
+                submitDisabled={submitting}
             />
         </>
     );

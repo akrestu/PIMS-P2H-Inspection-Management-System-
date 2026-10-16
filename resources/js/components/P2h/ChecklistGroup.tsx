@@ -1,7 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-import ChecklistItem from './ChecklistItem';
-import { Badge } from '@/components/ui/badge';
+import { KritisTag } from '@/components/pims/status-pill';
 import {
     Collapsible,
     CollapsibleContent,
@@ -9,6 +8,7 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
+import ChecklistItem from './ChecklistItem';
 
 interface Props {
     section: P2hInspectionItem['section'];
@@ -24,27 +24,10 @@ interface Props {
     defaultOpen?: boolean;
 }
 
-const sectionConfig = {
-    A: {
-        label: 'A — Pemeriksaan Keliling Unit / Di Luar Kabin',
-        headerClass:
-            'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900',
-        badgeClass: 'bg-blue-600 text-white hover:bg-blue-600',
-        dotClass: 'bg-blue-500',
-    },
-    B: {
-        label: 'B — Pemeriksaan Dari Dalam Kabin',
-        headerClass:
-            'bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900',
-        badgeClass: 'bg-indigo-600 text-white hover:bg-indigo-600',
-        dotClass: 'bg-indigo-500',
-    },
-    C: {
-        label: 'C — Kelengkapan Tambahan',
-        headerClass: 'bg-muted/30 border-border',
-        badgeClass: '',
-        dotClass: 'bg-muted-foreground',
-    },
+const SECTION_LABEL: Record<P2hInspectionItem['section'], string> = {
+    A: 'Pemeriksaan keliling unit / di luar kabin',
+    B: 'Pemeriksaan dari dalam kabin',
+    C: 'Kelengkapan tambahan',
 };
 
 export default function ChecklistGroup({
@@ -61,7 +44,6 @@ export default function ChecklistGroup({
     defaultOpen = false,
 }: Props) {
     const [open, setOpen] = useState(defaultOpen);
-    const config = sectionConfig[section];
 
     const filledCount = items.filter(
         (item) =>
@@ -84,46 +66,29 @@ export default function ChecklistGroup({
                 <button
                     type="button"
                     className={cn(
-                        'flex w-full items-center justify-between rounded-lg border px-4 py-3 transition-colors',
-                        config.headerClass,
-                        hasAATL && 'border-red-400 dark:border-red-700',
-                        'hover:brightness-95 active:brightness-90',
+                        'flex min-h-14 w-full press items-center justify-between gap-3 rounded-xl border-(length:--bw) bg-muted-2 px-4 py-3 text-left hover:bg-muted',
+                        hasAATL && 'border-danger',
                     )}
                 >
-                    <div className="flex items-center gap-2.5">
-                        <span
-                            className={cn(
-                                'h-2.5 w-2.5 shrink-0 rounded-full',
-                                config.dotClass,
-                            )}
-                        />
-                        <span className="text-base font-semibold">
-                            Seksi {config.label}
+                    <span className="min-w-0">
+                        <span className="block text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                            Seksi {section} · {items.length} item
                         </span>
-                        <Badge
-                            className={cn(
-                                'px-2 py-0 text-sm',
-                                config.badgeClass,
-                            )}
-                        >
-                            {items.length} item
-                        </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {hasAATL && (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400">
-                                Stop!
-                            </span>
-                        )}
+                        <span className="block text-base font-semibold">
+                            {SECTION_LABEL[section]}
+                        </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                        {hasAATL && <KritisTag withIcon />}
                         <span
                             className={cn(
-                                'rounded-full px-2 py-0.5 text-xs font-medium',
+                                'rounded-full px-2.5 py-0.5 text-xs font-semibold',
                                 allFilled &&
                                     !hasTL &&
-                                    'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
+                                    'bg-success-soft text-success',
                                 allFilled &&
                                     hasTL &&
-                                    'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+                                    'bg-danger-soft text-danger',
                                 !allFilled && 'bg-muted text-muted-foreground',
                             )}
                         >
@@ -131,11 +96,12 @@ export default function ChecklistGroup({
                         </span>
                         <ChevronDown
                             className={cn(
-                                'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                                'size-4 text-muted-foreground transition-transform duration-200',
                                 open && 'rotate-180',
                             )}
+                            aria-hidden
                         />
-                    </div>
+                    </span>
                 </button>
             </CollapsibleTrigger>
 

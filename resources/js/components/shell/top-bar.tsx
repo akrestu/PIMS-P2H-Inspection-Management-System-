@@ -3,6 +3,7 @@ import { Bell } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useInitials } from '@/hooks/use-initials';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { useShellNavigation } from './navigation';
 import { ShellLogo } from './sidebar';
@@ -40,8 +41,11 @@ function NotificationButton() {
  */
 export function ShellTopBar({
     breadcrumbs = [],
+    hideOnMobile = false,
 }: {
     breadcrumbs?: BreadcrumbItem[];
+    /** Halaman alur layar penuh (Form P2H) punya app bar sendiri di mobile. */
+    hideOnMobile?: boolean;
 }) {
     const { user, account, bottom } = useShellNavigation();
     const getInitials = useInitials();
@@ -50,7 +54,12 @@ export function ShellTopBar({
     const bellInBottom = bottom.some((i) => i.href === '/notifications');
 
     return (
-        <header className="sticky top-0 z-30 border-b blurbar">
+        <header
+            className={cn(
+                'sticky top-0 z-30 border-b blurbar',
+                hideOnMobile && 'max-lg:hidden',
+            )}
+        >
             {/* Mobile */}
             <div className="flex h-16 items-center gap-2 px-4 lg:hidden">
                 <div className="min-w-0 flex-1">

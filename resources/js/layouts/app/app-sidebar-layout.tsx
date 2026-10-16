@@ -21,7 +21,10 @@ export default function AppSidebarLayout({
         <div className="flex min-h-svh w-full bg-background">
             <ShellSidebar />
             <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
-                <ShellTopBar breadcrumbs={breadcrumbs} />
+                <ShellTopBar
+                    breadcrumbs={breadcrumbs}
+                    hideOnMobile={fullscreenFlow}
+                />
                 <main
                     id="main-content"
                     className={
