@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 const FOOTER = 'PIMS v1.0 · masuk tercatat di Audit Log';
@@ -8,6 +9,10 @@ const FOOTER = 'PIMS v1.0 · masuk tercatat di Audit Log';
  * - Desktop (lg+): kartu kaca terpusat di atas motif topo layar penuh, mengikuti tema.
  */
 export function AuthShell({ children }: { children: ReactNode }) {
+    const { server } = usePage<{
+        server?: { time: string; tz: string; shift: number };
+    }>().props;
+
     return (
         <div className="min-h-svh bg-background lg:relative lg:grid lg:place-items-center lg:overflow-hidden lg:bg-[var(--auth-bg)] lg:p-8">
             {/* Mobile hero */}
@@ -32,6 +37,23 @@ export function AuthShell({ children }: { children: ReactNode }) {
                 </div>
             </div>
 
+            {/* Desktop: logo kiri atas + pill shift & jam server kanan atas */}
+            <header className="absolute inset-x-0 top-0 z-10 hidden items-center justify-between p-10 lg:flex">
+                <span className="flex items-center gap-2.5">
+                    <img src="/logo.png" alt="" className="size-8" />
+                    <span className="text-lg font-bold">PIMS</span>
+                </span>
+                {server && (
+                    <span className="inline-flex h-8 items-center gap-2 rounded-full border-(length:--bw) bg-[var(--auth-card)] px-3.5 text-xs text-muted-foreground tnum backdrop-blur">
+                        <span className="relative flex size-2">
+                            <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-60 motion-reduce:animate-none" />
+                            <span className="relative inline-flex size-2 rounded-full bg-success" />
+                        </span>
+                        Shift {server.shift} · {server.time} {server.tz}
+                    </span>
+                )}
+            </header>
+
             {/* Desktop topo */}
             <img
                 src="/topo-motif.png"
@@ -41,10 +63,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
             />
 
             <div className="relative -mt-16 rounded-t-[28px] bg-background px-6 pt-8 pb-8 lg:mt-0 lg:w-full lg:max-w-[440px] lg:rounded-[28px] lg:border-(length:--bw) lg:border-[var(--auth-card-border)] lg:bg-[var(--auth-card)] lg:p-9 lg:shadow-[var(--auth-card-shadow)] lg:backdrop-blur-[24px] lg:backdrop-saturate-[1.4] hc:lg:border-2">
-                <div className="mb-8 hidden items-center gap-2 lg:flex">
-                    <img src="/logo.png" alt="" className="size-8" />
-                    <span className="text-lg font-bold">PIMS</span>
-                </div>
                 <div className="mx-auto w-full max-w-[400px]">{children}</div>
             </div>
 

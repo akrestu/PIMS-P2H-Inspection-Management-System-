@@ -58,6 +58,13 @@ class HandleInertiaRequests extends Middleware
             'contact' => [
                 'wa_number' => config('app.contact_wa', '085156650598'),
             ],
+            // Jam server untuk pill "Shift 1 · 05:42 WITA" (Login-Desktop.png); shift
+            // mengikuti aturan Beranda driver (Shift I 06–18, Shift II 18–06)
+            'server' => fn () => [
+                'time' => now()->format('H:i'),
+                'tz' => ['Asia/Jakarta' => 'WIB', 'Asia/Makassar' => 'WITA', 'Asia/Jayapura' => 'WIT'][config('app.timezone')] ?? config('app.timezone'),
+                'shift' => now()->hour >= 6 && now()->hour < 18 ? 1 : 2,
+            ],
             'options' => [
                 'shifts' => AppSetting::shifts(),
                 'unit_analytics' => AppSetting::unitAnalyticsEnabled(),
