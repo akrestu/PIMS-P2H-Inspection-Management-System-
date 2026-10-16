@@ -1,7 +1,8 @@
 import { Head, router, useForm, useHttp } from '@inertiajs/react';
 import {
     AlarmClock,
-    ImageIcon,
+    AlertTriangle,
+    ChevronRight,
     Pencil,
     Repeat,
     Search,
@@ -23,7 +24,6 @@ import { KritisTag, StatusPill } from '@/components/pims/status-pill';
 import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -1175,6 +1175,7 @@ function ReportCount({ finding }: { finding: Finding }) {
 }
 
 /** Tampilan kartu untuk layar HP (menggantikan tabel 8 kolom). */
+/** Kartu temuan ringkas di HP (Temuan.png): ketuk = buka detail/update. */
 function FindingCard({
     finding: f,
     windowDays,
@@ -1185,99 +1186,53 @@ function FindingCard({
     onEdit: () => void;
 }) {
     return (
-        <Card className={cn('gap-0 py-0', f.overdue && 'border-danger')}>
-            <CardContent className="space-y-3 p-4">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                        <p className="font-semibold">
-                            {f.no_unit}
-                            {f.keputusan_unit === 'BD' && (
-                                <Badge
-                                    variant="outline"
-                                    className="ml-2 border-danger/40 text-danger"
-                                >
-                                    BD
-                                </Badge>
-                            )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            {f.jenis_unit} · {formatDate(f.tanggal_temuan)}
-                        </p>
-                    </div>
-                    <FindingStatusPill status={f.status} />
-                </div>
-
-                <div>
-                    <p className="font-medium">
-                        {f.item_nama}
-                        {f.kode_bahaya === 'AA' && (
-                            <Badge className="ml-2 bg-danger text-white hover:bg-danger">
-                                AA
-                            </Badge>
-                        )}
-                    </p>
-                    {f.keterangan && (
-                        <p className="text-sm text-muted-foreground">
-                            {f.keterangan}
-                        </p>
-                    )}
-                    <ReportCount finding={f} />
+        <button
+            type="button"
+            onClick={onEdit}
+            className={cn(
+                'flex w-full press items-center gap-3 rounded-[14px] border-(length:--bw) bg-card px-4 py-3.5 text-left',
+                f.overdue && 'border-danger/50',
+            )}
+        >
+            <span
+                aria-hidden
+                className={cn(
+                    'grid size-11 shrink-0 place-items-center rounded-[12px]',
+                    f.kode_bahaya === 'AA'
+                        ? 'bg-danger-soft text-danger'
+                        : 'bg-warning-soft text-warning',
+                )}
+            >
+                <AlertTriangle className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-semibold">
+                    {f.item_nama}
+                </span>
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <span className="font-mono">{findingCode(f.id)}</span>
+                    <span className="font-semibold text-foreground tnum">
+                        {f.no_unit}
+                    </span>
+                    <DueText finding={f} />
+                    {f.kode_bahaya === 'AA' && <KritisTag />}
+                </span>
+                {f.berulang && (
                     <FindingFlags
-                        overdue={f.overdue}
+                        overdue={false}
                         berulang={f.berulang}
                         windowDays={windowDays}
                     />
-                </div>
-
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                    <dt className="text-muted-foreground">PIC</dt>
-                    <dd>
-                        {f.pic_name || (
-                            <span className="text-muted-foreground italic">
-                                Belum ditunjuk
-                            </span>
-                        )}
-                    </dd>
-                    <dt className="text-muted-foreground">Tindakan</dt>
-                    <dd>
-                        {f.tindakan_perbaikan || (
-                            <span className="text-muted-foreground italic">
-                                Belum ditentukan
-                            </span>
-                        )}
-                    </dd>
-                    <dt className="text-muted-foreground">Target</dt>
-                    <dd className={cn(f.overdue && 'font-medium text-danger')}>
-                        {formatDate(f.target_selesai)}
-                    </dd>
-                </dl>
-
-                <div className="flex items-center justify-between gap-2">
-                    {f.foto_url ? (
-                        <a
-                            href={f.foto_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-foreground hover:underline"
-                        >
-                            <ImageIcon className="h-3.5 w-3.5" />
-                            Foto bukti
-                        </a>
-                    ) : (
-                        <span />
-                    )}
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5"
-                        onClick={onEdit}
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Update
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+                )}
+            </span>
+            <span className="flex shrink-0 flex-col items-end gap-1">
+                <FindingStatusPill status={f.status} />
+                <ChevronRight
+                    className="size-4 text-muted-foreground"
+                    aria-hidden
+                />
+            </span>
+        </button>
     );
 }
 
