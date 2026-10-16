@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Komponen</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 1440px; height: 4640px; box-sizing: border-box; padding: 96px 120px; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; gap: 96px; overflow: hidden; position: relative">
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span style="font-size: 14px; color: var(--muted-foreground)">PIMS Design System · Komponen inti</span>
+      <h1 style="margin: 0; font-size: 56px; line-height: 1.04; font-weight: 600; letter-spacing: -0.035em">Komponen & state</h1>
+    </div>
+    <p style="margin: 0; max-width: 520px; font-size: 16px; line-height: 1.6; color: var(--muted-foreground)">Semua specimen di sini hidup: geser kartu, tekan lama, tarik sheet, ganti Baik/Rusak. Komponen dipetakan ke shadcn/ui (Button, Sheet → vaul Drawer, Sonner, Dialog/AlertDialog, ToggleGroup, Badge).</p>
+  </header>
+
+  <!-- ============ BUTTON ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">Button</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">Tinggi 56 (CTA mobile), 48 (default), 40 (desktop padat). Radius 12 / 10. Hanya satu tombol kuning per layar.</span>
+      <span class="mono" style="font-size: 12px; line-height: 1.6; color: var(--muted-foreground); padding-top: 6px; word-break: break-all">&lt;Button variant="brand|default|outline|ghost|destructive" size="lg|default|sm"&gt;</span>
+    </div>
+    <div style="display: flex; flex-direction: column">
+      <div style="display: grid; grid-template-columns: 120px repeat(5, minmax(0, 1fr)); gap: 12px; padding-bottom: 12px; font-size: 13px; color: var(--muted-foreground)">
+        <span></span><span>Default</span><span>Ditekan</span><span>Fokus</span><span>Nonaktif</span><span>Memuat</span>
+      </div>
+      <sc-for list="{{ btnRows }}" as="r" hint-placeholder-count="5">
+        <div style="display: grid; grid-template-columns: 120px repeat(5, minmax(0, 1fr)); gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border)">
+          <span style="font-size: 14px; font-weight: 500">{{ r.name }}</span>
+          <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5">
+            <button type="button" class="press" style="height: 48px; border-radius: 10px; border: {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 15px; font-weight: 600; opacity: {{ c.opacity }}; transform: scale({{ c.scale }}); outline: {{ c.outline }}; outline-offset: 2px; box-shadow: {{ c.ring }}; display: flex; align-items: center; justify-content: center; gap: 8px">
+              <sc-if value="{{ c.loading }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></sc-if>
+              {{ c.label }}
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ============ NAV ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">Navigasi</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">App bar 64–72 dengan blur. Bottom nav 84 (termasuk safe area), item 60, tombol tengah 56. Indikator aktif: garis kuning 24×3 di atas ikon. Desktop: sidebar 264.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 390px 1fr; gap: 32px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 20px">
+        <div style="border-radius: 20px; overflow: hidden; border: 1px solid var(--border)">
+          <div style="display: flex; align-items: center; gap: 4px; height: 64px; padding: 0 8px 0 16px; background: var(--background)">
+            <span style="flex: 1; font-size: 20px; font-weight: 600; letter-spacing: -0.02em">Monitoring</span>
+            <button type="button" class="press hl" aria-label="Cari" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+            <button type="button" class="press hl" aria-label="Notifikasi, 3 baru" style="position: relative; width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="tnum" style="position: absolute; top: 8px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--background)">3</span></button>
+          </div>
+          <div style="display: flex; gap: 8px; padding: 0 16px 12px; background: var(--background)">
+            <button type="button" class="press" style="height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>Pit A<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <button type="button" class="press" style="height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>Hari ini · Shift 1<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          </div>
+        </div>
+
+        <div style="border-radius: 20px; overflow: hidden; border: 1px solid var(--border)">
+          <div style="height: 84px; padding: 4px 8px 12px; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; background: var(--background)">
+            <sc-for list="{{ mgrNav }}" as="n" hint-placeholder-count="5">
+              <button type="button" class="press" onClick="{{ n.pick }}" aria-current="{{ n.current }}" style="position: relative; height: 60px; border: 0; background: transparent; color: {{ n.fg }}; font: inherit; font-size: 12px; font-weight: {{ n.w }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px">
+                <span style="position: absolute; top: 0; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--brand); opacity: {{ n.ind }}; transition: opacity 150ms"></span>
+                <span style="position: relative; display: flex">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ n.d1 }}"/><path d="{{ n.d2 }}"/></svg>
+                  <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span class="tnum" style="position: absolute; top: -4px; right: -9px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--background)">{{ n.badge }}</span></sc-if>
+                </span>
+                {{ n.label }}
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <span style="font-size: 13px; color: var(--muted-foreground)">Bottom nav Manager/Admin (klik untuk pindah tab). "Lainnya" membuka sheet berisi laporan, analitik, downtime, master data, audit, pengaturan.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+        <aside style="width: 264px; flex-shrink: 0; border-radius: 16px; background: var(--sidebar); border: 1px solid var(--sidebar-border); padding: 16px 12px; display: flex; flex-direction: column; gap: 2px">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px">
+            <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 28px; height: 28px">
+            <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.02em">PIMS</span>
+            <span style="margin-left: auto; font-size: 12px; color: var(--muted-foreground)">Pit A</span>
+          </div>
+          <sc-for list="{{ sideNav }}" as="n" hint-placeholder-count="8">
+            <sc-if value="{{ n.group }}" hint-placeholder-val="{{ false }}">
+              <span style="padding: 14px 10px 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-foreground)">{{ n.group }}</span>
+            </sc-if>
+            <sc-if value="{{ n.item }}" hint-placeholder-val="{{ true }}">
+              <button type="button" class="press" onClick="{{ n.pick }}" style="position: relative; height: 40px; padding: 0 10px; border: 0; border-radius: 10px; background: {{ n.bg }}; color: {{ n.fg }}; font: inherit; font-size: 14px; font-weight: {{ n.w }}; display: flex; align-items: center; gap: 10px; text-align: left">
+                <span style="position: absolute; left: -12px; top: 10px; width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: var(--brand); opacity: {{ n.ind }}"></span>
+                <span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor; opacity: .5"></span>
+                <span style="flex: 1">{{ n.label }}</span>
+                <sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}"><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ n.count }}</span></sc-if>
+              </button>
+            </sc-if>
+          </sc-for>
+        </aside>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 8px">
+          <strong style="font-size: 15px; font-weight: 600">Sidebar desktop (≥ 1024)</strong>
+          <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">Item 40px, dikelompokkan per tugas. Aktif: latar sidebar-accent + garis kuning 3px. Kolaps menjadi rail 72 di tablet. Penghitung angka abu, bukan badge merah, kecuali butuh tindakan.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FORM CONTROLS ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">Kontrol form</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">Segmented Baik/Rusak 52px dengan thumb bergeser (150ms). Input 52, teks 16 agar iOS tidak zoom. Angka: inputmode="decimal", koma desimal.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 18px">
+        <span style="font-size: 13px; color: var(--muted-foreground)">Segmented Baik/Rusak · klik untuk mencoba</span>
+        <sc-for list="{{ segRows }}" as="g" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span style="font-size: 16px; font-weight: 500">{{ g.name }}</span>
+              <span style="font-size: 12px; color: var(--muted-foreground)">{{ g.state }}</span>
+            </div>
+            <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px; border-radius: 12px; background: var(--muted); opacity: {{ g.opacity }}; box-shadow: {{ g.errRing }}">
+              <span aria-hidden="true" style="position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: 52px; border-radius: 9px; box-sizing: border-box; background: {{ g.thumbBg }}; border: 1.5px solid {{ g.thumbBorder }}; transform: translateX({{ g.thumbX }}); opacity: {{ g.thumbOpacity }}; transition: transform 150ms cubic-bezier(.2,0,0,1), background-color 150ms, border-color 150ms, opacity 150ms"></span>
+              <button type="button" class="press" onClick="{{ g.baik }}" disabled="{{ g.disabled }}" aria-pressed="{{ g.isBaik }}" style="position: relative; height: 52px; border: 0; background: transparent; color: {{ g.baikFg }}; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Baik</button>
+              <button type="button" class="press" onClick="{{ g.rusak }}" disabled="{{ g.disabled }}" aria-pressed="{{ g.isRusak }}" style="position: relative; height: 52px; border: 0; background: transparent; color: {{ g.rusakFg }}; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Rusak</button>
+            </div>
+            <div class="collapse" data-open="{{ g.open }}">
+              <div><div style="padding-top: 4px"><div style="height: 76px; border-radius: 10px; border: 1px solid var(--input); padding: 12px 14px; box-sizing: border-box; font-size: 15px; color: var(--muted-foreground)">Catatan kerusakan…</div></div></div>
+            </div>
+            <sc-if value="{{ g.err }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--warning); font-weight: 600">Item ini belum dijawab</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px">
+        <span style="font-size: 13px; color: var(--muted-foreground)">Input · state</span>
+        <sc-for list="{{ inputs }}" as="f" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 14px; font-weight: 500; color: {{ f.labelFg }}">{{ f.label }}</span>
+            <div style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px; border-radius: 10px; border: {{ f.bw }} solid {{ f.border }}; background: {{ f.bg }}; box-shadow: {{ f.ring }}">
+              <span class="tnum" style="flex: 1; font-size: 16px; color: {{ f.fg }}">{{ f.value }}</span>
+              <sc-if value="{{ f.suffix }}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: var(--muted-foreground)">{{ f.suffix }}</span></sc-if>
+            </div>
+            <sc-if value="{{ f.help }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{ f.helpFg }}; font-weight: {{ f.helpW }}">{{ f.help }}</span></sc-if>
+          </div>
+        </sc-for>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 500">OTP 2FA</span>
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+            <span class="tnum" style="height: 56px; border-radius: 10px; border: 1px solid var(--input); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600">4</span>
+            <span class="tnum" style="height: 56px; border-radius: 10px; border: 1px solid var(--input); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600">8</span>
+            <span class="tnum" style="height: 56px; border-radius: 10px; border: 1px solid var(--input); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600">2</span>
+            <span style="height: 56px; border-radius: 10px; border: 2px solid var(--foreground); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 55%, transparent)"></span>
+            <span style="height: 56px; border-radius: 10px; border: 1px solid var(--input)"></span>
+            <span style="height: 56px; border-radius: 10px; border: 1px solid var(--input)"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATUS, CHIPS ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">Status, badge, chip</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">Pill lembut 28px dengan titik/ikon. KRITIS selalu huruf besar + ikon segitiga. Chip filter 40px; chip aktif hitam dengan tombol hapus 32px.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px">
+        <sc-for list="{{ pills }}" as="p" hint-placeholder-count="12">
+          <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--{{ p.k }}-soft); color: var(--{{ p.k }}); font-size: 13px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ p.t }}</span>
+        </sc-for>
+        <span style="display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; align-self: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>KRITIS</span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 6px; background: var(--warning-soft); color: var(--warning); font-size: 12px; font-weight: 600; align-self: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>Eskalasi</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <span style="font-size: 13px; color: var(--muted-foreground)">Chip filter · klik untuk memilih</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
+            <button type="button" class="press" aria-pressed="{{ c.on }}" onClick="{{ c.toggle }}" style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px">
+              <sc-if value="{{ c.on }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+              {{ c.label }}
+            </button>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 40px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Aktif:</span>
+          <sc-for list="{{ activeChips }}" as="c" hint-placeholder-count="2">
+            <span class="fade" style="height: 36px; padding: 0 2px 0 12px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px">{{ c.label }}
+              <button type="button" class="press" onClick="{{ c.remove }}" aria-label="Hapus filter {{ c.label }}" style="width: 32px; height: 32px; border: 0; border-radius: 999px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </span>
+          </sc-for>
+          <sc-if value="{{ hasActive }}" hint-placeholder-val="{{ true }}">
+            <button type="button" class="press" onClick="{{ clearChips }}" style="height: 36px; padding: 0 8px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Reset</button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIST CARD SWIPE + SHEET ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">List card, aksi massal, sheet</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">Geser kanan ≥ 96px = Setujui (optimistic + Urungkan). Geser kiri = Tolak (dialog alasan). Tekan lama 450ms = mode pilih massal. Sheet: tarik handle; snap 50% · 92%; turun > 30% = tutup.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, 390px); gap: 32px; align-items: start">
+      <!-- swipe list -->
+      <div style="position: relative; height: 640px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: var(--background); display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; height: 60px; padding: 0 16px; gap: 8px">
+          <sc-if value="{{ notSelecting }}" hint-placeholder-val="{{ true }}">
+            <span style="flex: 1; font-size: 18px; font-weight: 600">Persetujuan</span>
+            <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ approvalCount }} menunggu</span>
+          </sc-if>
+          <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="press hl" onClick="{{ exitSelect }}" aria-label="Batal pilih" style="width: 44px; height: 44px; margin-left: -8px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            <span class="tnum" style="flex: 1; font-size: 18px; font-weight: 600">{{ selCount }} dipilih</span>
+            <button type="button" class="press" onClick="{{ selectAll }}" style="height: 44px; padding: 0 8px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Pilih semua</button>
+          </sc-if>
+        </div>
+        <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 0">
+          <sc-for list="{{ approvals }}" as="a" hint-placeholder-count="4">
+            <div style="position: relative; border-radius: 16px; overflow: hidden; flex-shrink: 0">
+              <div aria-hidden="true" style="position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: {{ a.underBg }}; opacity: {{ a.underOp }}; color: #FFFFFF; font-size: 15px; font-weight: 600">
+                <span style="display: flex; align-items: center; gap: 8px; opacity: {{ a.leftOp }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Setujui</span>
+                <span style="display: flex; align-items: center; gap: 8px; opacity: {{ a.rightOp }}">Tolak<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+              </div>
+              <div onPointerDown="{{ a.down }}" onPointerMove="{{ a.move }}" onPointerUp="{{ a.up }}" onPointerCancel="{{ a.up }}" onPointerLeave="{{ a.up }}" style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 12px 14px; background: {{ a.cardBg }}; border: 1px solid {{ a.cardBorder }}; border-radius: 16px; transform: translateX({{ a.dx }}px); transition: {{ a.trans }}; touch-action: pan-y; user-select: none; cursor: grab">
+                <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+                  <span style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid {{ a.boxBorder }}; background: {{ a.boxBg }}; color: var(--primary-foreground); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background-color 150ms">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: {{ a.checkOp }}"><path d="M20 6 9 17l-5-5"/></svg>
+                  </span>
+                </sc-if>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+                  <span style="display: flex; align-items: center; gap: 8px">
+                    <span class="tnum" style="font-size: 16px; font-weight: 600">{{ a.unit }}</span>
+                    <span style="font-size: 13px; color: var(--muted-foreground)">Shift {{ a.shift }} · {{ a.time }}</span>
+                  </span>
+                  <span style="font-size: 14px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ a.driver }} · {{ a.summary }}</span>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 999px; background: {{ a.pillBg }}; color: {{ a.pillFg }}; font-size: 12px; font-weight: 600; flex-shrink: 0"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ a.pill }}</span>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noApprovals }}" hint-placeholder-val="{{ false }}">
+            <div class="fade" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 24px">
+              <span style="width: 52px; height: 52px; border-radius: 16px; background: var(--success-soft); color: var(--success); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <strong style="font-size: 17px; font-weight: 600">Semua sudah ditinjau</strong>
+              <button type="button" class="press" onClick="{{ resetApprovals }}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: transparent; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Muat ulang contoh</button>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+          <div class="toast-in blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 12px 16px; display: flex; gap: 8px; border-top: 1px solid var(--border)">
+            <button type="button" class="press" onClick="{{ bulkReject }}" style="flex: 1; height: 52px; border-radius: 12px; border: 1px solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600">Tolak</button>
+            <button type="button" class="press" onClick="{{ bulkApprove }}" style="flex: 2; height: 52px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600"><span class="tnum">Setujui {{ selCount }}</span></button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+          <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: {{ toastBottom }}px; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3); z-index: 3">
+            <span style="flex: 1">{{ toastText }}</span>
+            <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ true }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button></sc-if>
+          </div>
+        </sc-if>
+
+        <!-- reject dialog -->
+        <sc-if value="{{ dialogOn }}" hint-placeholder-val="{{ false }}">
+          <div class="fade" style="position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: flex-end; z-index: 4">
+            <div role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" class="sheet-in" style="width: 100%; background: var(--background); border-radius: 20px 20px 0 0; padding: 20px 16px 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-3)">
+              <strong id="dlg-t" style="font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Tolak P2H {{ dialogUnit }}?</strong>
+              <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Driver akan diberi tahu dan harus mengisi ulang. Alasan wajib diisi.</span>
+              <textarea value="{{ reason }}" onChange="{{ onReason }}" aria-label="Alasan penolakan" rows="2" placeholder="Contoh: foto HM buram, ulangi foto" class="field" style="min-height: 76px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; resize: none; outline: 0"></textarea>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+                <button type="button" class="press" onClick="{{ closeDialog }}" style="height: 52px; border-radius: 12px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+                <button type="button" class="press" onClick="{{ confirmReject }}" aria-disabled="{{ reasonEmpty }}" style="height: 52px; border: 0; border-radius: 12px; background: {{ rejectBg }}; color: {{ rejectFg }}; font: inherit; font-size: 15px; font-weight: 600">Tolak P2H</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- bottom sheet -->
+      <div style="position: relative; height: 640px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: var(--muted-2)">
+        <div style="padding: 20px 16px; display: flex; flex-direction: column; gap: 14px">
+          <span style="font-size: 18px; font-weight: 600">Temuan</span>
+          <button type="button" class="press" onClick="{{ openSheet }}" style="align-self: flex-start; height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>Filter & urutkan</button>
+          <span class="skeleton" style="height: 64px; border-radius: 14px"></span>
+          <span class="skeleton" style="height: 64px; border-radius: 14px"></span>
+          <span class="skeleton" style="height: 64px; border-radius: 14px"></span>
+        </div>
+        <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+          <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim); opacity: {{ scrimOp }}"></div>
+          <div role="dialog" aria-modal="true" aria-label="Filter temuan" style="position: absolute; left: 0; right: 0; bottom: 0; height: 92%; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3); transform: translateY({{ sheetY }}px); transition: {{ sheetTrans }}; display: flex; flex-direction: column">
+            <div onPointerDown="{{ hDown }}" onPointerMove="{{ hMove }}" onPointerUp="{{ hUp }}" onPointerCancel="{{ hUp }}" style="height: 36px; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; flex-shrink: 0">
+              <span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span>
+            </div>
+            <div style="display: flex; align-items: center; padding: 0 16px 12px">
+              <strong style="flex: 1; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Filter</strong>
+              <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">Snap {{ snapLabel }}</span>
+            </div>
+            <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 14px; font-weight: 500">Status</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                  <span style="height: 40px; padding: 0 14px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-size: 14px; display: inline-flex; align-items: center">Open</span>
+                  <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--input); font-size: 14px; display: inline-flex; align-items: center">Overdue</span>
+                  <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--input); font-size: 14px; display: inline-flex; align-items: center">Closed</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 14px; font-weight: 500">Site</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                  <span style="height: 40px; padding: 0 14px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-size: 14px; display: inline-flex; align-items: center">Pit A</span>
+                  <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--input); font-size: 14px; display: inline-flex; align-items: center">Pit B</span>
+                  <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--input); font-size: 14px; display: inline-flex; align-items: center">Hauling Road</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0">
+                <span style="font-size: 14px; font-weight: 500; padding-bottom: 4px">Urutkan</span>
+                <span style="display: flex; align-items: center; justify-content: space-between; height: 48px; font-size: 16px; border-bottom: 1px solid var(--border)">Tenggat terdekat<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <span style="display: flex; align-items: center; height: 48px; font-size: 16px; color: var(--muted-foreground); border-bottom: 1px solid var(--border)">Terbaru</span>
+                <span style="display: flex; align-items: center; height: 48px; font-size: 16px; color: var(--muted-foreground)">Kritis dulu</span>
+              </div>
+            </div>
+            <div style="margin-top: auto; padding: 12px 16px 16px; display: flex; gap: 8px; border-top: 1px solid var(--border)">
+              <button type="button" class="press" onClick="{{ closeSheet }}" style="flex: 1; height: 52px; border-radius: 12px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Reset</button>
+              <button type="button" class="press" onClick="{{ closeSheet }}" style="flex: 2; height: 52px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600">Tampilkan 12 temuan</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 32px; padding-top: 8px; font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">
+        <strong style="grid-column: 1 / -1; font-size: 15px; font-weight: 600; color: var(--foreground)">Implementasi</strong>
+        <span>Sheet: vaul &lt;Drawer snapPoints={[0.5, 0.92]}&gt;, scrim 40%, blur halus di app bar. Desktop: &lt;Sheet side="right"&gt; 480px.</span>
+        <span>Swipe: Motion drag="x" dengan dragConstraints dan dragElastic 0.2; ambang 96px atau kecepatan &gt; 500px/s.</span>
+        <span>Long-press: pointerdown + timer 450ms, batal bila bergeser &gt; 8px. Haptic 15ms saat masuk mode pilih.</span>
+        <span>Toast: sonner, posisi bawah di atas bottom nav (offset 96), durasi 5 dtk untuk aksi dengan Urungkan.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEEDBACK & STATES ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">Feedback & keadaan layar</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">Setiap layar data punya 5 keadaan: memuat, kosong, error, offline, tanpa akses. Pesan menyebut apa yang terjadi dan langkah berikutnya.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 24px">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+        <div role="status" style="padding: 12px 14px; border-radius: 12px; background: var(--warning-soft); display: flex; gap: 12px; align-items: flex-start">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="m2 2 20 20"/></svg>
+          <span style="font-size: 14px; line-height: 20px"><strong style="font-weight: 600">Anda sedang offline.</strong> <span style="color: var(--muted-foreground)">3 P2H menunggu dikirim. Data terakhir 06:02.</span></span>
+        </div>
+        <div role="status" style="padding: 12px 14px; border-radius: 12px; background: var(--muted); display: flex; gap: 12px; align-items: center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9.5 14 1.8 1.8 3.2-3.3"/></svg>
+          <span style="font-size: 14px; flex: 1">Draft tersimpan otomatis · 06:04</span>
+          <span style="font-size: 13px; color: var(--muted-foreground)">Lanjutkan</span>
+        </div>
+        <div style="padding: 6px 6px 6px 16px; min-height: 52px; box-sizing: border-box; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px">
+          <span style="flex: 1">Temuan T-0228 ditutup</span>
+          <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; color: #F4D435; font-weight: 600">Urungkan</span>
+        </div>
+        <div style="padding: 6px 6px 6px 16px; min-height: 52px; box-sizing: border-box; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          <span style="flex: 1">Gagal menyimpan. Periksa sinyal.</span>
+          <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; color: #F4D435; font-weight: 600">Coba lagi</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+        <div style="border-radius: 16px; border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 12px; height: 260px; box-sizing: border-box">
+          <span style="font-size: 12px; color: var(--muted-foreground)">Memuat</span>
+          <span class="skeleton" style="width: 60%; height: 14px"></span>
+          <span class="skeleton" style="width: 100%; height: 48px; border-radius: 12px"></span>
+          <span class="skeleton" style="width: 100%; height: 48px; border-radius: 12px"></span>
+          <span class="skeleton" style="width: 80%; height: 14px"></span>
+        </div>
+        <div style="position: relative; overflow: hidden; border-radius: 16px; border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 10px; height: 260px; box-sizing: border-box; justify-content: flex-end">
+          <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -200px; top: -90px; width: 520px; opacity: .4; pointer-events: none">
+          <span style="position: absolute; top: 20px; left: 20px; font-size: 12px; color: var(--muted-foreground)">Kosong</span>
+          <strong style="position: relative; font-size: 17px; font-weight: 600">Tidak ada temuan terbuka</strong>
+          <span style="position: relative; font-size: 14px; line-height: 20px; color: var(--muted-foreground)">Semua temuan Pit A sudah ditutup. Bagus.</span>
+        </div>
+        <div style="border-radius: 16px; border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 10px; height: 260px; box-sizing: border-box; justify-content: flex-end">
+          <span style="margin-bottom: auto; font-size: 12px; color: var(--muted-foreground)">Error</span>
+          <span style="width: 40px; height: 40px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span>
+          <strong style="font-size: 17px; font-weight: 600">Data gagal dimuat</strong>
+          <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">Server tidak merespons (504).</span>
+          <span style="align-self: flex-start; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); display: flex; align-items: center; font-size: 14px; font-weight: 600">Coba lagi</span>
+        </div>
+        <div style="border-radius: 16px; border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 10px; height: 260px; box-sizing: border-box; justify-content: flex-end">
+          <span style="margin-bottom: auto; font-size: 12px; color: var(--muted-foreground)">Tanpa akses · 403</span>
+          <span style="width: 40px; height: 40px; border-radius: 12px; background: var(--muted); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <strong style="font-size: 17px; font-weight: 600">Halaman khusus Admin</strong>
+          <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">Akun Manager tidak bisa membuka Audit Log. Minta akses ke admin.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DATA DISPLAY ============ -->
+  <section style="display: grid; grid-template-columns: 260px 1fr; gap: 56px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em">KPI, timeline, stepper</h2>
+      <span style="font-size: 14px; line-height: 1.55; color: var(--muted-foreground)">KPI tanpa kartu: label 13, angka 36–40 tabular, tanpa dekorasi pada angka. Chart lengkap (bar, donut, heatmap) dirancang di tahap Dashboard.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; align-content: start">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">P2H masuk</span>
+          <span class="tnum" style="font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em">{{ k1 }}<span style="font-size: 22px; color: var(--muted-foreground); font-weight: 500">/48</span></span>
+          <svg width="160" height="32" viewBox="0 0 160 32" aria-hidden="true"><path d="M0 26 L20 22 L40 24 L60 16 L80 18 L100 10 L120 12 L140 6 L160 4" fill="none" stroke="var(--foreground)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><circle cx="160" cy="4" r="3" fill="#F4D435" stroke="var(--foreground)" stroke-width="1.5"/></svg>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Belum P2H</span>
+          <span class="tnum" style="font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em">{{ k2 }}</span>
+          <span style="font-size: 13px; color: var(--warning); font-weight: 600">batas 06:30 · 18 mnt</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Tidak Layak</span>
+          <span class="tnum" style="font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em; color: var(--danger)">{{ k3 }}</span>
+          <span style="font-size: 13px; color: var(--muted-foreground)">DT-1045, EX-2003</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Kepatuhan 7 hari</span>
+          <span class="tnum" style="font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em">{{ k4 }}<span style="font-size: 22px; color: var(--muted-foreground); font-weight: 500">%</span></span>
+          <span style="font-size: 13px; color: var(--success); font-weight: 600">▲ 3 poin</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0">
+        <span style="font-size: 13px; color: var(--muted-foreground); padding-bottom: 12px">Timeline persetujuan</span>
+        <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 20px 1fr; gap: 12px">
+            <div style="display: flex; flex-direction: column; align-items: center">
+              <span style="width: 12px; height: 12px; border-radius: 999px; background: {{ t.dot }}; box-shadow: 0 0 0 3px var(--background), 0 0 0 4px {{ t.ring }}; margin-top: 4px; flex-shrink: 0"></span>
+              <span style="flex: 1; width: 1.5px; background: var(--border); opacity: {{ t.lineOp }}; margin: 4px 0"></span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px; padding-bottom: 20px">
+              <span style="font-size: 15px; font-weight: 600">{{ t.title }}</span>
+              <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ t.meta }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Stepper (form multi-langkah)</span>
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px">
+            <span style="height: 4px; border-radius: 4px; background: var(--foreground)"></span>
+            <span style="height: 4px; border-radius: 4px; background: var(--muted); overflow: hidden"><span style="display: block; width: 66%; height: 100%; background: #F4D435"></span></span>
+            <span style="height: 4px; border-radius: 4px; background: var(--muted)"></span>
+            <span style="height: 4px; border-radius: 4px; background: var(--muted)"></span>
+            <span style="height: 4px; border-radius: 4px; background: var(--muted)"></span>
+            <span style="height: 4px; border-radius: 4px; background: var(--muted)"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--muted-foreground)"><span>Langkah 2 dari 6</span><strong class="tnum" style="color: var(--foreground)">12/18 item</strong></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Avatar</span>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="width: 48px; height: 48px; border-radius: 999px; background: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600">BS</span>
+            <span style="width: 40px; height: 40px; border-radius: 999px; background: #FEF9DB; color: #7A5312; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600">HW</span>
+            <span style="width: 32px; height: 32px; border-radius: 999px; background: #EEF3FF; color: #1D4ED8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">RA</span>
+            <div style="display: flex">
+              <span style="width: 32px; height: 32px; border-radius: 999px; background: var(--muted); box-shadow: 0 0 0 2px var(--background); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">AP</span>
+              <span style="width: 32px; height: 32px; border-radius: 999px; background: #EDFBF1; color: #15803D; box-shadow: 0 0 0 2px var(--background); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">DK</span>
+              <span class="tnum" style="width: 32px; height: 32px; border-radius: 999px; background: var(--foreground); color: var(--background); box-shadow: 0 0 0 2px var(--background); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600">+4</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Dialog destruktif (hapus permanen)</span>
+          <div style="border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-3); padding: 18px; display: flex; flex-direction: column; gap: 10px; background: var(--background)">
+            <strong style="font-size: 17px; font-weight: 600">Hapus permanen 3 unit?</strong>
+            <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">Riwayat P2H tetap tersimpan, tapi unit tidak bisa dipulihkan. Ketik <strong class="mono" style="color: var(--foreground)">HAPUS</strong> untuk konfirmasi.</span>
+            <span class="mono" style="height: 44px; border-radius: 10px; border: 1px solid var(--input); display: flex; align-items: center; padding: 0 12px; font-size: 15px">HAP</span>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+              <span style="height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600">Batal</span>
+              <span style="height: 44px; padding: 0 14px; border-radius: 10px; background: var(--muted); color: var(--muted-foreground); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; white-space: nowrap">Hapus permanen</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":4640}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.APPROVALS = [
+      { id: 'a1', unit: 'DT-1045', shift: 1, time: '05:48', driver: 'Budi S.', summary: '18 Baik', pill: 'Layak', ok: true },
+      { id: 'a2', unit: 'LV-031', shift: 1, time: '05:52', driver: 'Andi P.', summary: '17 Baik · 1 Rusak', pill: 'Layak', ok: true, esc: true },
+      { id: 'a3', unit: 'EX-2003', shift: 1, time: '05:57', driver: 'Dedi K.', summary: 'Rem parkir rusak', pill: 'Tidak Layak', ok: false },
+      { id: 'a4', unit: 'DT-1022', shift: 1, time: '06:01', driver: 'Rudi H.', summary: '18 Baik', pill: 'Layak', ok: true }
+    ];
+    this.state = { seg: { a: null, b: 'baik', c: 'rusak' }, nav: 0, side: 1, chips: { 'Pit A': true, 'Overdue': true }, list: this.APPROVALS.map((a) => a.id), drag: null, dx: 0, selecting: false, sel: {}, toast: null, dialog: null, reason: '', sheet: false, snap: 'half', sy: 0, sdrag: false, t: 0 };
+  }
+  componentDidMount() {
+    const start = performance.now();
+    const step = (now) => { const p = Math.min(1, (now - start) / 800); this.setState({ t: 1 - Math.pow(1 - p, 3) }); if (p < 1) this.raf = requestAnimationFrame(step); };
+    this.raf = requestAnimationFrame(step);
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); clearTimeout(this.lp); clearTimeout(this.tt); }
+  buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), 5000); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+
+    const variants = [
+      { name: 'Utama', bg: 'var(--primary)', fg: 'var(--primary-foreground)', press: '#27272A', border: '0' , label: 'Kirim P2H' },
+      { name: 'Brand CTA', bg: '#F4D435', fg: '#0A0A0A', press: '#DDB80F', border: '0', label: 'Isi P2H' },
+      { name: 'Outline', bg: 'var(--background)', fg: 'var(--foreground)', press: 'var(--muted)', border: '1px solid var(--input)', label: 'Unduh PDF' },
+      { name: 'Ghost', bg: 'transparent', fg: 'var(--foreground)', press: 'var(--muted)', border: '0', label: 'Batal' },
+      { name: 'Destruktif', bg: '#DC2626', fg: '#FFFFFF', press: '#B91C1C', border: '0', label: 'Hapus' }
+    ];
+    const btnRows = variants.map((v) => ({
+      name: v.name,
+      cells: ['default', 'pressed', 'focus', 'disabled', 'loading'].map((st) => ({
+        bg: st === 'pressed' ? v.press : v.bg, fg: v.fg, border: v.border,
+        opacity: st === 'disabled' ? 0.4 : 1, scale: st === 'pressed' ? 0.97 : 1,
+        outline: st === 'focus' ? '2px solid var(--foreground)' : '0', ring: st === 'focus' ? '0 0 0 5px var(--ring)' : 'none',
+        loading: st === 'loading', label: st === 'loading' ? 'Memproses' : v.label
+      }))
+    }));
+
+    const navDefs = [
+      { label: 'Beranda', d1: 'M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8', d2: 'M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
+      { label: 'Monitoring', d1: 'M3 3v16a2 2 0 0 0 2 2h16', d2: 'm19 9-5 5-4-4-3 3' },
+      { label: 'Temuan', d1: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3', d2: 'M12 9v4M12 17h.01' },
+      { label: 'Persetujuan', d1: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', d2: 'm9 14 2 2 4-4M9 2h6v4H9z', badge: 5 },
+      { label: 'Lainnya', d1: 'M4 6h16M4 12h16M4 18h16', d2: '' }
+    ];
+    const mgrNav = navDefs.map((n, i) => ({ ...n, badge: n.badge || 0, current: s.nav === i ? 'page' : 'false', fg: s.nav === i ? 'var(--foreground)' : 'var(--muted-foreground)', w: s.nav === i ? 600 : 500, ind: s.nav === i ? 1 : 0, pick: () => { this.buzz(10); this.setState({ nav: i }); } }));
+    const sideDefs = [
+      { label: 'Beranda' }, { label: 'Monitoring P2H' }, { label: 'Kepatuhan' }, { label: 'Persetujuan', count: 5 }, { label: 'Temuan', count: 12 },
+      { group: 'Laporan' }, { label: 'Ringkasan harian' }, { label: 'Laporan periode' }, { label: 'Analitik unit' },
+      { group: 'Master data' }, { label: 'Unit' }, { label: 'Pengguna & driver' }
+    ];
+    let idx = -1;
+    const sideNav = sideDefs.map((n) => {
+      if (n.group) return { group: n.group, item: false };
+      idx += 1; const my = idx; const on = s.side === my;
+      return { group: '', item: true, label: n.label, count: n.count || 0, bg: on ? 'var(--sidebar-accent)' : 'transparent', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', w: on ? 600 : 500, ind: on ? 1 : 0, pick: () => this.setState({ side: my }) };
+    });
+
+    const segDefs = [
+      { k: 'a', name: 'Rem utama', state: 'Belum dijawab · klik' },
+      { k: 'b', name: 'Lampu utama', state: 'Baik' },
+      { k: 'c', name: 'Kebocoran oli / BBM', state: 'Rusak → expand' },
+      { k: 'd', name: 'Radio komunikasi', state: 'Nonaktif (sesi terkunci)', disabled: true },
+      { k: 'e', name: 'Sabuk pengaman', state: 'Error validasi', err: true }
+    ];
+    const segRows = segDefs.map((g) => {
+      const v = g.disabled ? 'baik' : s.seg[g.k];
+      const isBaik = v === 'baik', isRusak = v === 'rusak';
+      return {
+        ...g, isBaik, isRusak, disabled: !!g.disabled, opacity: g.disabled ? 0.45 : 1, err: !!g.err && !v,
+        errRing: g.err && !v ? '0 0 0 2px var(--warning)' : 'none',
+        thumbX: isRusak ? '100%' : '0%', thumbOpacity: v ? 1 : 0,
+        thumbBg: isRusak ? 'var(--danger-soft)' : 'var(--success-soft)', thumbBorder: isRusak ? 'var(--danger)' : 'var(--success)',
+        baikFg: isBaik ? 'var(--success)' : (v ? 'var(--muted-foreground)' : 'var(--foreground)'),
+        rusakFg: isRusak ? 'var(--danger)' : (v ? 'var(--muted-foreground)' : 'var(--foreground)'),
+        open: isRusak ? 'true' : 'false',
+        baik: () => { this.buzz(10); this.setState({ seg: { ...s.seg, [g.k]: 'baik' } }); },
+        rusak: () => { this.buzz(10); this.setState({ seg: { ...s.seg, [g.k]: 'rusak' } }); }
+      };
+    });
+
+    const inputs = [
+      { label: 'Default', value: 'Cari kode unit', fg: 'var(--muted-foreground)', bw: '1px', border: 'var(--input)', bg: 'var(--background)', ring: 'none' },
+      { label: 'Fokus', value: 'DT-10', fg: 'var(--foreground)', bw: '1px', border: 'var(--foreground)', bg: 'var(--background)', ring: '0 0 0 4px color-mix(in oklab, var(--ring) 55%, transparent)' },
+      { label: 'HM awal · numerik', value: '12.481,0', suffix: 'jam', fg: 'var(--foreground)', bw: '1px', border: 'var(--success)', bg: 'var(--background)', ring: 'none', help: '+0,5 jam sejak P2H terakhir', helpFg: 'var(--success)', helpW: 400 },
+      { label: 'Error', value: '12.400', suffix: 'jam', fg: 'var(--foreground)', bw: '1px', border: 'var(--danger)', bg: 'var(--background)', ring: 'none', help: 'HM tidak boleh lebih kecil dari 12.480,5', helpFg: 'var(--danger)', helpW: 600 },
+      { label: 'Nonaktif', value: 'Diisi saat akhir shift', fg: 'var(--muted-foreground)', bw: '1px', border: 'var(--border)', bg: 'var(--muted)', ring: 'none', labelFg: 'var(--muted-foreground)' }
+    ].map((f) => ({ suffix: '', help: '', labelFg: 'var(--foreground)', ...f }));
+
+    const pills = [
+      ['success', 'Ready'], ['success', 'Layak Pakai'], ['success', 'Disetujui'], ['success', 'Closed'],
+      ['danger', 'BD'], ['danger', 'Tidak Layak'], ['danger', 'Ditolak'],
+      ['info', 'PM'], ['info', 'Servis'],
+      ['warning', 'Menunggu'], ['warning', 'Open'], ['warning', 'Overdue']
+    ].map(([k, t]) => ({ k, t }));
+
+    const chipLabels = ['Pit A', 'Pit B', 'Hauling Road', 'Overdue', 'Kritis', 'Ditugaskan ke saya'];
+    const chips = chipLabels.map((label) => {
+      const on = !!s.chips[label];
+      return { label, on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', toggle: () => { this.buzz(10); this.setState({ chips: { ...s.chips, [label]: !on } }); } };
+    });
+    const activeChips = chipLabels.filter((l) => s.chips[l]).map((label) => ({ label, remove: () => this.setState({ chips: { ...s.chips, [label]: false } }) }));
+
+    const visible = this.APPROVALS.filter((a) => s.list.includes(a.id));
+    const selCount = Object.keys(s.sel).filter((k) => s.sel[k] && s.list.includes(k)).length;
+    const approvals = visible.map((a) => {
+      const dragging = s.drag === a.id;
+      const dx = dragging ? s.dx : 0;
+      const selected = !!s.sel[a.id];
+      return {
+        ...a, dx,
+        trans: dragging ? 'none' : 'transform 220ms cubic-bezier(.34,1.56,.64,1)',
+        underOp: dx === 0 ? 0 : 1,
+        underBg: dx >= 0 ? (dx > 96 ? '#15803D' : '#4B9D6A') : (dx < -96 ? '#B91C1C' : '#D25B5B'),
+        leftOp: dx > 0 ? 1 : 0, rightOp: dx < 0 ? 1 : 0,
+        cardBg: selected ? 'var(--brand-soft)' : 'var(--card)', cardBorder: selected ? 'var(--foreground)' : 'var(--border)',
+        boxBorder: selected ? 'var(--foreground)' : 'var(--input)', boxBg: selected ? 'var(--foreground)' : 'transparent', checkOp: selected ? 1 : 0,
+        pill: a.esc ? 'Eskalasi' : a.pill,
+        pillBg: a.esc ? 'var(--warning-soft)' : (a.ok ? 'var(--success-soft)' : 'var(--danger-soft)'),
+        pillFg: a.esc ? 'var(--warning)' : (a.ok ? 'var(--success)' : 'var(--danger)'),
+        down: (e) => {
+          this.x0 = e.clientX; this.moved = false;
+          e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+          this.setState({ drag: a.id, dx: 0 });
+          clearTimeout(this.lp);
+          this.lp = setTimeout(() => { if (!this.moved) { this.buzz(15); this.lpFired = true; this.setState({ selecting: true, sel: { ...this.state.sel, [a.id]: true }, drag: null, dx: 0 }); } }, 450);
+        },
+        move: (e) => {
+          if (this.state.drag !== a.id || this.state.selecting) return;
+          const d = e.clientX - this.x0;
+          if (Math.abs(d) > 8) { this.moved = true; clearTimeout(this.lp); }
+          const r = e.currentTarget.getBoundingClientRect(); const sc = e.currentTarget.offsetWidth / r.width || 1;
+          this.setState({ dx: Math.max(-180, Math.min(180, d * sc)) });
+        },
+        up: () => {
+          clearTimeout(this.lp);
+          if (this.lpFired) { this.lpFired = false; return; }
+          if (this.state.selecting && !this.moved && this.state.drag === null) return;
+          if (this.state.selecting && !this.moved) { this.setState({ drag: null, sel: { ...this.state.sel, [a.id]: !this.state.sel[a.id] } }); return; }
+          if (this.state.drag !== a.id) return;
+          const d = this.state.dx;
+          if (d > 96) {
+            this.buzz(10);
+            const prev = this.state.list;
+            this.setState({ drag: null, dx: 0, list: prev.filter((x) => x !== a.id) });
+            this.toast('P2H ' + a.unit + ' disetujui', () => this.setState({ list: prev }));
+          } else if (d < -96) {
+            this.buzz([15, 40, 15]);
+            this.setState({ drag: null, dx: 0, dialog: a.id, reason: '' });
+          } else this.setState({ drag: null, dx: 0 });
+        }
+      };
+    });
+    const dialogItem = this.APPROVALS.find((a) => a.id === s.dialog);
+
+    const containerH = 640 * 0.92;
+    const snapY = { half: containerH * 0.46, full: 0 }[s.snap];
+    const sheetY = Math.max(0, snapY + s.sy);
+
+    const tl = [
+      { title: 'P2H dikirim', meta: 'Budi S. · 05:48', dot: 'var(--foreground)', ring: 'transparent' },
+      { title: 'Menunggu Hendra W.', meta: 'Pengawas · 05:48', dot: 'var(--warning)', ring: 'transparent' },
+      { title: 'Eskalasi ke superintendent', meta: 'Otomatis · 06:18 (30 mnt)', dot: 'var(--warning)', ring: 'var(--warning)' },
+      { title: 'Disetujui', meta: 'Hendra W. · 06:21', dot: 'var(--success)', ring: 'transparent' }
+    ].map((t, i, arr) => ({ ...t, lineOp: i === arr.length - 1 ? 0 : 1 }));
+
+    const t = s.t;
+    const toastOn = !!s.toast;
+    return {
+      theme, btnRows, mgrNav, sideNav, segRows, inputs, pills, chips, activeChips, hasActive: activeChips.length > 0,
+      clearChips: () => this.setState({ chips: {} }),
+      approvals, approvalCount: visible.length, noApprovals: visible.length === 0,
+      resetApprovals: () => this.setState({ list: this.APPROVALS.map((a) => a.id) }),
+      selecting: s.selecting, notSelecting: !s.selecting, selCount,
+      exitSelect: () => this.setState({ selecting: false, sel: {} }),
+      selectAll: () => { const sel = {}; s.list.forEach((id) => { sel[id] = true; }); this.setState({ sel }); },
+      bulkApprove: () => {
+        if (!selCount) return;
+        const prev = s.list; const n = selCount;
+        this.buzz(10);
+        this.setState({ list: s.list.filter((id) => !s.sel[id]), selecting: false, sel: {} });
+        this.toast(n + ' P2H disetujui', () => this.setState({ list: prev }));
+      },
+      bulkReject: () => { const first = s.list.find((id) => s.sel[id]); if (first) this.setState({ dialog: first, reason: '', selecting: false, sel: {} }); },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo, toastBottom: s.selecting ? 92 : 16,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); },
+      dialogOn: !!s.dialog, dialogUnit: dialogItem ? dialogItem.unit : '', reason: s.reason, reasonEmpty: !s.reason.trim(),
+      onReason: (e) => this.setState({ reason: e.target.value }),
+      rejectBg: s.reason.trim() ? '#DC2626' : 'var(--muted)', rejectFg: s.reason.trim() ? '#FFFFFF' : 'var(--muted-foreground)',
+      closeDialog: () => this.setState({ dialog: null }),
+      confirmReject: () => {
+        if (!s.reason.trim()) { this.buzz([20, 40, 20]); return; }
+        const prev = s.list;
+        this.setState({ dialog: null, list: s.list.filter((id) => id !== s.dialog) });
+        this.toast('P2H ' + (dialogItem ? dialogItem.unit : '') + ' ditolak', () => this.setState({ list: prev }));
+      },
+      sheetOn: s.sheet, sheetY, sheetTrans: s.sdrag ? 'none' : 'transform 320ms cubic-bezier(.16,1,.3,1)',
+      scrimOp: Math.max(0.2, 1 - sheetY / containerH),
+      snapLabel: s.snap === 'half' ? '50%' : '92%',
+      openSheet: () => { this.buzz(10); this.setState({ sheet: true, snap: 'half', sy: 0 }); },
+      closeSheet: () => this.setState({ sheet: false, sy: 0 }),
+      hDown: (e) => { this.hy0 = e.clientY; e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); this.setState({ sdrag: true }); },
+      hMove: (e) => { if (!this.state.sdrag) return; const r = e.currentTarget.getBoundingClientRect(); const sc = e.currentTarget.offsetWidth / r.width || 1; this.setState({ sy: (e.clientY - this.hy0) * sc }); },
+      hUp: () => {
+        if (!this.state.sdrag) return;
+        const y = Math.max(0, snapY + this.state.sy);
+        let snap = 'half', close = false;
+        if (y > containerH * 0.7) close = true;
+        else if (y < containerH * 0.23) snap = 'full';
+        this.buzz(8);
+        this.setState({ sdrag: false, sy: 0, snap, sheet: !close });
+      },
+      k1: Math.round(42 * t), k2: Math.round(6 * t), k3: Math.round(2 * t), k4: Math.round(91 * t),
+      timeline: tl
+    };
+  }
+}
+</script>
+</body>
+</html>

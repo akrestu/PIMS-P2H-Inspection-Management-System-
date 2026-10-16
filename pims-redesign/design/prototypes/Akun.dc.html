@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Akun</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ themeAttr }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column; transition: background-color 220ms, color 220ms">
+
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 24px 20px 120px; display: flex; flex-direction: column; gap: 32px">
+    <header style="display: flex; align-items: center; gap: 14px; padding-top: 8px">
+      <span style="width: 64px; height: 64px; border-radius: 999px; background: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600">BS</span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+        <strong style="font-size: 22px; font-weight: 600; letter-spacing: -0.015em">Budi Santoso</strong>
+        <span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">Driver · NRP 20231045 · Pit A</span>
+      </span>
+    </header>
+
+    <section aria-labelledby="a1" style="display: flex; flex-direction: column">
+      <h2 id="a1" style="margin: 0 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground)">Profil</h2>
+      <sc-for list="{{ profile }}" as="r" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; min-height: 52px; border-bottom: var(--bw) solid var(--border); gap: 12px"><span style="width: 110px; font-size: 14px; color: var(--muted-foreground)">{{ r.k }}</span><span class="tnum" style="flex: 1; font-size: 15px">{{ r.v }}</span></div>
+      </sc-for>
+      <span style="padding-top: 8px; font-size: 13px; color: var(--muted-foreground)">Nama, NRP, dan site diatur oleh admin.</span>
+    </section>
+
+    <section aria-labelledby="a2" style="display: flex; flex-direction: column">
+      <h2 id="a2" style="margin: 0 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground)">Keamanan</h2>
+      <button type="button" class="press hl" onClick="{{ openPw }}" style="display: flex; align-items: center; gap: 12px; min-height: 56px; border: 0; border-bottom: var(--bw) solid var(--border); background: transparent; color: var(--foreground); font: inherit; font-size: 16px; text-align: left; padding: 0">
+        <span style="flex: 1">Ganti kata sandi</span><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">diubah 3 bln lalu</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; border-bottom: var(--bw) solid var(--border)">
+        <span style="display: flex; flex-direction: column; gap: 2px"><span id="tfa" style="font-size: 16px">Verifikasi 2 langkah</span><span style="font-size: 13px; color: {{ tfaFg }}">{{ tfaSub }}</span></span>
+        <button type="button" role="switch" aria-checked="{{ tfaOn }}" aria-labelledby="tfa" onClick="{{ toggleTfa }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center; flex-shrink: 0"><span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; padding: 3px; background: {{ tfaBg }}; display: flex; align-items: center; transition: background-color 150ms"><span style="width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ tfaX }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span></span></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: var(--bw) solid var(--border)">
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px">Sesi aktif</span><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ sessText }}</span></span>
+        <sc-if value="{{ hasOther }}" hint-placeholder-val="{{ true }}"><button type="button" class="press" onClick="{{ logoutOthers }}" style="height: 40px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Keluarkan lainnya</button></sc-if>
+      </div>
+    </section>
+
+    <section aria-labelledby="a3" style="display: flex; flex-direction: column; gap: 12px">
+      <h2 id="a3" style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground)">Tampilan</h2>
+      <div role="radiogroup" aria-label="Tema" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted)">
+        <sc-for list="{{ themes }}" as="t" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 48px; border: 0; border-radius: 9px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 15px; font-weight: 600">{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px">
+        <span style="display: flex; flex-direction: column; gap: 2px"><span id="hc-l" style="font-size: 16px">Kontras tinggi (outdoor)</span><span style="font-size: 13px; color: var(--muted-foreground)">Teks lebih tebal & garis 2px untuk di bawah terik</span></span>
+        <button type="button" role="switch" aria-checked="{{ hcOn }}" aria-labelledby="hc-l" onClick="{{ toggleHc }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center; flex-shrink: 0"><span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; padding: 3px; background: {{ hcBg }}; display: flex; align-items: center; transition: background-color 150ms"><span style="width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ hcX }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span></span></button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <button type="button" class="press" onClick="{{ logout }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Keluar</button>
+      <sc-if value="{{ delPending }}" hint-placeholder-val="{{ false }}">
+        <div class="fade" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 12px; background: var(--warning-soft)">
+          <span style="font-size: 14px; line-height: 20px"><strong style="font-weight: 600">Penghapusan akun diajukan.</strong> <span style="color: var(--muted-foreground)">Menunggu persetujuan admin (Rina A.). Anda masih bisa memakai akun sampai disetujui.</span></span>
+          <button type="button" class="press" onClick="{{ cancelDel }}" style="align-self: flex-start; height: 40px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Batalkan pengajuan</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ delNone }}" hint-placeholder-val="{{ true }}">
+        <button type="button" class="press" onClick="{{ openDel }}" style="height: 48px; border: 0; background: transparent; color: var(--danger); font: inherit; font-size: 15px; font-weight: 600">Ajukan hapus akun</button>
+      </sc-if>
+      <span class="tnum" style="text-align: center; font-size: 12px; color: var(--muted-foreground)">PIMS v1.0 · build 2026.10.16</span>
+    </section>
+  </div>
+
+  <nav aria-label="Navigasi utama" class="blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; height: 84px; padding: 4px 8px 12px; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; border-top: var(--bw) solid var(--border)">
+    <a href="BerandaDriver.dc.html" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Beranda</a>
+    <a href="#" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>Riwayat</a>
+    <a href="FormP2H.dc.html" class="press" aria-label="Isi P2H" style="height: 64px; display: flex; align-items: flex-start; justify-content: center; margin-top: -14px; text-decoration: none"><span style="width: 56px; height: 56px; border-radius: 999px; background: var(--brand); color: var(--brand-foreground); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px -6px rgba(180,140,0,.55), 0 0 0 4px var(--background)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span></a>
+    <a href="#" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>Notifikasi</a>
+    <a href="Akun.dc.html" aria-current="page" class="press" style="position: relative; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--foreground); font-size: 12px; font-weight: 600"><span style="position: absolute; top: 0; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--brand)"></span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Akun</a>
+  </nav>
+
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="ak-t" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 92%; display: flex; flex-direction: column; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3)">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <div class="noscroll" style="overflow-y: auto; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px">
+        <strong id="ak-t" style="font-size: 20px; font-weight: 600">{{ sheetTitle }}</strong>
+
+        <sc-if value="{{ shPw }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ pwFields }}" as="f" hint-placeholder-count="3">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">{{ f.label }}<input type="password" value="{{ f.value }}" onChange="{{ f.on }}" autocomplete="{{ f.ac }}" class="field" style="height: 52px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid {{ f.border }}; background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; font-weight: 400; outline: 0"></label>
+          </sc-for>
+          <span style="font-size: 13px; color: {{ pwMsgFg }}; font-weight: {{ pwMsgW }}">{{ pwMsg }}</span>
+          <button type="button" class="press" onClick="{{ savePw }}" aria-disabled="{{ pwBad }}" style="height: 56px; border: 0; border-radius: 12px; background: {{ pwBtnBg }}; color: {{ pwBtnFg }}; font: inherit; font-size: 16px; font-weight: 600">Simpan kata sandi</button>
+        </sc-if>
+
+        <sc-if value="{{ shTfa }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Pindai kode ini dengan aplikasi autentikator, lalu masukkan 6 digit kode.</span>
+          <div style="align-self: center; width: 168px; height: 168px; border-radius: 14px; background: #fff; padding: 12px; box-sizing: border-box; box-shadow: inset 0 0 0 1px var(--border); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1px" role="img" aria-label="Kode QR (contoh)">
+            <sc-for list="{{ qr }}" as="c" hint-placeholder-count="144"><span style="background: {{ c.bg }}; border-radius: 1px"></span></sc-for>
+          </div>
+          <span class="mono tnum" style="align-self: center; font-size: 13px; color: var(--muted-foreground)">Kunci manual: JBSW Y3DP EHPK 3PXP</span>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Kode 6 digit<input value="{{ otp }}" onChange="{{ onOtp }}" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="field mono tnum" style="height: 56px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font-size: 24px; letter-spacing: .3em; outline: 0"></label>
+          <button type="button" class="press" onClick="{{ confirmTfa }}" aria-disabled="{{ otpBad }}" style="height: 56px; border: 0; border-radius: 12px; background: {{ otpBg }}; color: {{ otpFg }}; font: inherit; font-size: 16px; font-weight: 600">Aktifkan</button>
+        </sc-if>
+
+        <sc-if value="{{ shDel }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Admin akan meninjau pengajuan ini. Setelah disetujui, Anda tidak bisa login lagi. Riwayat P2H tetap disimpan untuk kepatuhan, dengan nama Anda dianonimkan.</span>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Alasan (opsional)<textarea value="{{ delReason }}" onChange="{{ onDelReason }}" rows="2" placeholder="Contoh: pindah perusahaan" class="field" style="min-height: 76px; padding: 12px 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; font-weight: 400; resize: none; outline: 0"></textarea></label>
+          <button type="button" class="press" onClick="{{ submitDel }}" style="height: 56px; border: 0; border-radius: 12px; background: #DC2626; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600">Ajukan penghapusan</button>
+        </sc-if>
+        <button type="button" class="press" onClick="{{ closeSheet }}" style="height: 48px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 96px; z-index: 22; min-height: 52px; padding: 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 15px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: 'light', hc: false, tfa: false, sheet: null, pw: ['', '', ''], otp: '', others: true, del: false, delReason: '', toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const sysDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const base = s.mode === 'system' ? (sysDark ? 'dark' : 'light') : s.mode;
+    const themeAttr = s.hc ? 'hc' : base;
+    const sw = (on) => ({ bg: on ? 'var(--success)' : 'var(--input)', x: on ? 20 : 0 });
+    const themes = [['light', 'Terang'], ['dark', 'Gelap'], ['system', 'Sistem']].map(([k, label]) => ({ label, on: s.mode === k, bg: s.mode === k ? 'var(--card)' : 'transparent', shadow: s.mode === k ? 'var(--shadow-2)' : 'none', fg: s.mode === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => { this.setState({ mode: k, hc: false }); } }));
+    const [cur, nw, cf] = s.pw;
+    let pwMsg = 'Minimal 8 karakter, berisi angka dan huruf besar.', pwMsgFg = 'var(--muted-foreground)', pwMsgW = 400;
+    const strong = nw.length >= 8 && /[0-9]/.test(nw) && /[A-Z]/.test(nw);
+    if (nw && !strong) { pwMsg = 'Kata sandi baru belum memenuhi syarat.'; pwMsgFg = 'var(--warning)'; pwMsgW = 600; }
+    else if (cf && cf !== nw) { pwMsg = 'Konfirmasi tidak sama.'; pwMsgFg = 'var(--danger)'; pwMsgW = 600; }
+    else if (strong && cf === nw && cur) { pwMsg = 'Siap disimpan.'; pwMsgFg = 'var(--success)'; pwMsgW = 600; }
+    const pwOk = cur && strong && cf === nw;
+    const setPw = (i) => (e) => { const a = this.state.pw.slice(); a[i] = e.target.value; this.setState({ pw: a }); };
+    const pwFields = [['Kata sandi saat ini', 'current-password'], ['Kata sandi baru', 'new-password'], ['Ulangi kata sandi baru', 'new-password']].map(([label, ac], i) => ({ label, ac, value: s.pw[i], on: setPw(i), border: i === 2 && cf && cf !== nw ? 'var(--danger)' : 'var(--input)' }));
+    let seed = 11; const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const qr = Array.from({ length: 144 }, (_, i) => { const r = Math.floor(i / 12), c = i % 12; const finder = (r < 3 && c < 3) || (r < 3 && c > 8) || (r > 8 && c < 3); return { bg: finder || rnd() > 0.55 ? '#0A0A0A' : '#FFFFFF' }; });
+    const otpOk = /^[0-9]{6}$/.test(s.otp);
+    return {
+      themeAttr, themes,
+      profile: [{ k: 'Telepon', v: '0812-3456-7801' }, { k: 'Unit utama', v: 'DT-1045' }, { k: 'Approver', v: 'Hendra Wijaya' }],
+      tfaOn: s.tfa, tfaBg: sw(s.tfa).bg, tfaX: sw(s.tfa).x, tfaSub: s.tfa ? 'Aktif · aplikasi autentikator' : 'Disarankan · wajib untuk Admin', tfaFg: s.tfa ? 'var(--success)' : 'var(--muted-foreground)',
+      toggleTfa: () => { if (s.tfa) { this.setState({ tfa: false }); this.toast('Verifikasi 2 langkah dimatikan'); } else this.setState({ sheet: 'tfa', otp: '' }); },
+      sessText: s.others ? 'HP ini (Android) · Chrome laptop pos, 2 hari lalu' : 'Hanya HP ini', hasOther: s.others,
+      logoutOthers: () => { this.setState({ others: false }); this.toast('Perangkat lain sudah dikeluarkan'); },
+      hcOn: s.hc, hcBg: sw(s.hc).bg, hcX: sw(s.hc).x, toggleHc: () => this.setState({ hc: !s.hc }),
+      logout: () => this.toast('Keluar… (prototype)'),
+      delPending: s.del, delNone: !s.del, openDel: () => this.setState({ sheet: 'del', delReason: '' }), cancelDel: () => { this.setState({ del: false }); this.toast('Pengajuan dibatalkan'); },
+      sheetOn: !!s.sheet, shPw: s.sheet === 'pw', shTfa: s.sheet === 'tfa', shDel: s.sheet === 'del',
+      sheetTitle: { pw: 'Ganti kata sandi', tfa: 'Aktifkan verifikasi 2 langkah', del: 'Ajukan hapus akun' }[s.sheet] || '',
+      closeSheet: () => this.setState({ sheet: null }), openPw: () => this.setState({ sheet: 'pw', pw: ['', '', ''] }),
+      pwFields, pwMsg, pwMsgFg, pwMsgW, pwBad: !pwOk, pwBtnBg: pwOk ? 'var(--primary)' : 'var(--muted)', pwBtnFg: pwOk ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+      savePw: () => { if (!pwOk) return; this.setState({ sheet: null }); this.toast('Kata sandi diperbarui · sesi lain dikeluarkan'); },
+      qr, otp: s.otp, onOtp: (e) => this.setState({ otp: e.target.value.replace(/[^0-9]/g, '').slice(0, 6) }), otpBad: !otpOk,
+      otpBg: otpOk ? 'var(--primary)' : 'var(--muted)', otpFg: otpOk ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+      confirmTfa: () => { if (!otpOk) return; this.setState({ tfa: true, sheet: null }); this.toast('Verifikasi 2 langkah aktif · simpan kode cadangan'); },
+      delReason: s.delReason, onDelReason: (e) => this.setState({ delReason: e.target.value }),
+      submitDel: () => { this.setState({ del: true, sheet: null }); this.toast('Pengajuan dikirim ke admin'); },
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

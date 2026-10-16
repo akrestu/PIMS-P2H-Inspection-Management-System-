@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Audit log</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 8px 12px; display: flex; flex-direction: column; gap: 10px; border-bottom: var(--bw) solid var(--border)">
+    <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+      <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+      <span style="flex: 1; font-size: 18px; font-weight: 600">Audit log</span>
+      <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}"><button type="button" class="press hl" onClick="{{ exportIt }}" aria-label="Export audit log" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></button></sc-if>
+    </div>
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+      <div class="noscroll" style="display: flex; gap: 8px; overflow-x: auto; padding: 0 8px">
+        <button type="button" class="press" onClick="{{ cycleUser }}" style="flex-shrink: 0; height: 40px; padding: 0 12px; border-radius: 999px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px">{{ userLabel }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
+          <button type="button" class="press" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 999px; border: var(--bw) solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 14px; font-weight: 500">{{ c.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+  </header>
+
+  <sc-if value="{{ isManager }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 0 24px">
+      <span style="width: 52px; height: 52px; border-radius: 16px; background: var(--muted); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <strong style="font-size: 22px; font-weight: 600; letter-spacing: -0.015em">Halaman khusus Admin</strong>
+      <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Akun Manager tidak bisa membuka Audit Log. Jika perlu riwayat perubahan unit atau P2H, minta Admin mengekspornya.</span>
+      <a href="Dashboard.dc.html" class="press" style="align-self: flex-start; height: 48px; padding: 0 16px; border-radius: 12px; border: var(--bw) solid var(--input); display: inline-flex; align-items: center; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 8px">Kembali ke Dashboard</a>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+    <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 132px 0 40px">
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+        <section style="display: flex; flex-direction: column">
+          <h2 class="tnum" style="margin: 0; padding: 14px 20px 6px; font-size: 13px; font-weight: 600; color: var(--muted-foreground)">{{ g.day }}</h2>
+          <sc-for list="{{ g.items }}" as="e" hint-placeholder-count="4">
+            <button type="button" class="press hl" onClick="{{ e.open }}" style="display: grid; grid-template-columns: 36px 1fr; gap: 12px; padding: 12px 20px; border: 0; background: transparent; color: var(--foreground); font: inherit; text-align: left; width: 100%">
+              <span style="position: relative; display: flex; flex-direction: column; align-items: center">
+                <span style="width: 32px; height: 32px; border-radius: 999px; background: {{ e.avBg }}; color: {{ e.avFg }}; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{ e.init }}</span>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <span style="font-size: 15px; line-height: 21px"><strong style="font-weight: 600">{{ e.who }}</strong> <span style="color: var(--muted-foreground)">{{ e.verb }}</span> <strong class="tnum" style="font-weight: 600">{{ e.obj }}</strong></span>
+                <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted-foreground)">
+                  <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: {{ e.tagBg }}; color: {{ e.tagFg }}; font-weight: 600; display: inline-flex; align-items: center">{{ e.action }}</span>
+                  <span class="tnum">{{ e.time }}</span><span>· {{ e.module }}</span>
+                </span>
+              </span>
+            </button>
+          </sc-for>
+        </section>
+      </sc-for>
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="padding: 32px 20px; font-size: 15px; color: var(--muted-foreground)">Tidak ada aktivitas untuk filter ini.</span></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="al-t" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 88%; display: flex; flex-direction: column; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3)">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <div style="display: flex; align-items: flex-start; padding: 0 8px 8px 20px">
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong id="al-t" style="font-size: 18px; line-height: 24px; font-weight: 600">{{ d.title }}</strong><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ d.meta }}</span></span>
+        <button type="button" class="press hl" onClick="{{ closeSheet }}" aria-label="Tutup" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="noscroll" style="overflow-y: auto; padding: 4px 20px 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-direction: column; border: var(--bw) solid var(--border); border-radius: 12px; overflow: hidden">
+          <div style="display: grid; grid-template-columns: 96px 1fr 1fr; gap: 8px; padding: 10px 12px; background: var(--muted-2); font-size: 12px; font-weight: 600; color: var(--muted-foreground)"><span>Field</span><span>Sebelum</span><span>Sesudah</span></div>
+          <sc-for list="{{ d.diff }}" as="r" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: 96px 1fr 1fr; gap: 8px; padding: 10px 12px; border-top: var(--bw) solid var(--border); font-size: 14px; line-height: 20px">
+              <span class="mono" style="font-size: 12px; color: var(--muted-foreground); padding-top: 2px">{{ r.f }}</span>
+              <span class="tnum" style="color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; overflow-wrap: anywhere">{{ r.a }}</span>
+              <span class="tnum" style="color: var(--success); font-weight: 600; overflow-wrap: anywhere">{{ r.b }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{ d.ctx }}" as="c" hint-placeholder-count="3">
+            <div style="display: flex; justify-content: space-between; gap: 12px; min-height: 40px; align-items: center; border-bottom: var(--bw) solid var(--border); font-size: 14px"><span style="color: var(--muted-foreground)">{{ c.k }}</span><span class="mono tnum" style="font-size: 13px">{{ c.v }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 24px; z-index: 22; min-height: 52px; padding: 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 15px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const E = (id, day, time, who, init, action, verb, obj, module, diff, ctx) => ({ id, day, time, who, init, action, verb, obj, module, diff, ctx });
+    this.ALL = [
+      E(1, 'Hari ini · Jum, 16 Okt', '06:21', 'Hendra W.', 'HW', 'Ubah', 'menyetujui P2H', 'DT-1022', 'Persetujuan', [['status', 'Menunggu', 'Disetujui'], ['approver', '—', 'Hendra Wijaya'], ['ttd', '—', 'sig_7f2a.png']], [['IP', '10.12.4.88'], ['Perangkat', 'Android 14 · PWA']]),
+      E(2, 'Hari ini · Jum, 16 Okt', '06:10', 'Rina A.', 'RA', 'Ubah', 'mengubah status unit', 'DT-1018', 'Master unit', [['status', 'BD', 'Servis'], ['mulai', '15 Okt 14:20', '16 Okt 06:10'], ['keterangan', '—', 'Menunggu selang radiator']], [['IP', '10.12.1.5'], ['Perangkat', 'Chrome 141 · Windows']]),
+      E(3, 'Hari ini · Jum, 16 Okt', '05:57', 'Sistem', 'SY', 'Otomatis', 'menandai BD dari P2H Tidak Layak', 'EX-2003', 'P2H', [['status', 'Ready', 'BD'], ['sumber', '—', 'P2H #48211 (Dedi K.)']], [['Pemicu', 'Item kritis: rem parkir']]),
+      E(4, 'Hari ini · Jum, 16 Okt', '05:31', 'Rina A.', 'RA', 'Hapus', 'menghapus permanen', '2 unit', 'Sampah', [['DT-0981', 'di Sampah', 'dihapus'], ['LV-009', 'di Sampah', 'dihapus']], [['IP', '10.12.1.5'], ['Konfirmasi', 'ketik HAPUS']]),
+      E(5, 'Hari ini · Jum, 16 Okt', '05:02', 'Budi S.', 'BS', 'Login', 'masuk dengan 2FA', '', 'Auth', [['sesi', '—', 'baru (perangkat dikenal)']], [['IP', '10.12.7.31'], ['Perangkat', 'Android 13 · PWA']]),
+      E(6, 'Kamis, 15 Okt', '16:44', 'Wawan S.', 'WS', 'Buat', 'mengimpor', '10 unit', 'Master unit', [['baris valid', '—', '10'], ['baris dilewati', '—', '2 (kode ganda, site kosong)']], [['File', 'unit-pit-b-okt.xlsx']]),
+      E(7, 'Kamis, 15 Okt', '09:15', 'Rina A.', 'RA', 'Ubah', 'membuat ulang token rekap publik', 'Pit A', 'Pengaturan', [['token', '…4Rf9', '…7Kq2'], ['status', 'aktif', 'aktif']], [['IP', '10.12.1.5']])
+    ];
+    this.USERS = ['Semua pengguna', 'Rina A.', 'Hendra W.', 'Sistem'];
+    this.state = { act: 'Semua', ui: 0, open: null, toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const isAdmin = (this.props.peran ?? 'Admin') === 'Admin';
+    const T = { Ubah: ['var(--info-soft)', 'var(--info)'], Hapus: ['var(--danger-soft)', 'var(--danger)'], Buat: ['var(--success-soft)', 'var(--success)'], Login: ['var(--muted)', 'var(--muted-foreground)'], Otomatis: ['var(--warning-soft)', 'var(--warning)'] };
+    const chips = ['Semua', 'Buat', 'Ubah', 'Hapus', 'Login'].map((k) => { const on = s.act === k; return { label: k === 'Semua' ? 'Semua aksi' : k, on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', pick: () => this.setState({ act: k }) }; });
+    const user = this.USERS[s.ui];
+    const list = this.ALL.filter((e) => (s.act === 'Semua' || e.action === s.act) && (s.ui === 0 || e.who === user));
+    const days = [];
+    list.forEach((e) => { let g = days.find((x) => x.day === e.day); if (!g) { g = { day: e.day, items: [] }; days.push(g); } g.items.push({ ...e, tagBg: T[e.action][0], tagFg: T[e.action][1], avBg: e.who === 'Sistem' ? 'var(--foreground)' : 'var(--muted)', avFg: e.who === 'Sistem' ? 'var(--background)' : 'var(--foreground)', open: () => this.setState({ open: e.id }) }); });
+    const cur = this.ALL.find((e) => e.id === s.open);
+    const d = cur ? { title: cur.who + ' ' + cur.verb + (cur.obj ? ' ' + cur.obj : ''), meta: cur.day + ' · ' + cur.time + ' · ' + cur.module, diff: cur.diff.map(([f, a, b]) => ({ f, a, b })), ctx: cur.ctx.map(([k, v]) => ({ k, v })).concat([{ k: 'ID log', v: 'AL-' + (90210 + cur.id) }]) } : { title: '', meta: '', diff: [], ctx: [] };
+    return {
+      theme, isAdmin, isManager: !isAdmin, chips, groups: days, empty: days.length === 0,
+      userLabel: user, cycleUser: () => this.setState({ ui: (s.ui + 1) % this.USERS.length }),
+      sheetOn: !!cur, d, closeSheet: () => this.setState({ open: null }),
+      exportIt: () => { clearTimeout(this.tt); this.setState({ toast: 'Export audit log (CSV) sesuai filter' }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2400); },
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

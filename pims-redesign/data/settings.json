@@ -1,0 +1,27 @@
+{
+  "shifts_per_day": 2,
+  "shift1_start": "06:00",
+  "p2h_deadline_minutes": 30,
+  "approval_escalation_minutes": 15,
+  "finding_due": {
+    "critical": "end_of_shift",
+    "non_critical_days": 3
+  },
+  "trash_retention_days": 30,
+  "pa_target": 90,
+  "compliance_target": 95,
+  "notify": {
+    "remind": true,
+    "esc": true,
+    "crit": true,
+    "over": true,
+    "result": true
+  },
+  "ai": {
+    "daily_summary": true,
+    "finding_suggestion": true,
+    "whatsapp_line": true
+  },
+  "retention_months": 24,
+  "photo_archive_months": 6
+}

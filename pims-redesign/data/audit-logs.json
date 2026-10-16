@@ -1,0 +1,95 @@
+[
+  {
+    "id": "AL-90211",
+    "at_local": "2026-10-16 06:21",
+    "actor": "Hendra W.",
+    "action": "ubah",
+    "verb": "menyetujui P2H",
+    "subject": "DT-1022",
+    "module": "Persetujuan",
+    "changes": [
+      [
+        "status",
+        "Menunggu",
+        "Disetujui"
+      ],
+      [
+        "approver",
+        "—",
+        "Hendra Wijaya"
+      ]
+    ],
+    "context": {
+      "ip": "10.12.4.88",
+      "device": "Android 14 · PWA"
+    }
+  },
+  {
+    "id": "AL-90213",
+    "at_local": "2026-10-16 05:57",
+    "actor": null,
+    "action": "otomatis",
+    "verb": "menandai BD dari P2H tidak layak",
+    "subject": "EX-2003",
+    "module": "P2H",
+    "changes": [
+      [
+        "status",
+        "Ready",
+        "BD"
+      ]
+    ],
+    "context": {
+      "trigger": "Item kritis: rem parkir"
+    }
+  },
+  {
+    "id": "AL-90215",
+    "at_local": "2026-10-16 05:31",
+    "actor": "Rina A.",
+    "action": "hapus",
+    "verb": "menghapus permanen",
+    "subject": "2 unit",
+    "module": "Sampah",
+    "changes": [
+      [
+        "DT-0981",
+        "di Sampah",
+        "dihapus"
+      ],
+      [
+        "LV-009",
+        "di Sampah",
+        "dihapus"
+      ]
+    ],
+    "context": {
+      "ip": "10.12.1.5",
+      "confirm": "ketik HAPUS"
+    }
+  },
+  {
+    "id": "AL-90217",
+    "at_local": "2026-10-15 16:44",
+    "actor": "Wawan S.",
+    "action": "buat",
+    "verb": "mengimpor",
+    "subject": "10 unit",
+    "module": "Master unit",
+    "changes": [
+      [
+        "baris valid",
+        "—",
+        "10"
+      ],
+      [
+        "baris dilewati",
+        "—",
+        "2"
+      ]
+    ],
+    "context": {
+      "file": "unit-pit-b-okt.xlsx"
+    }
+  }
+]

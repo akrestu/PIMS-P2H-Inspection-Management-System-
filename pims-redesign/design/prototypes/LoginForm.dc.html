@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Form masuk (komponen)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.lf-key{transition:background-color 120ms,transform 90ms}
+.lf-key:active{transform:scale(.94)}
+.lf-key:hover{background:var(--muted)}
+.lf-dot{transition:background-color 150ms,border-color 150ms,transform 150ms var(--ease-pop)}
+.lf-step{animation:lf-in 320ms var(--ease-out) both}
+@keyframes lf-in{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.lf-back{animation:lf-back 320ms var(--ease-out) both}
+@keyframes lf-back{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.lf-bar{animation:lf-bar 1400ms var(--ease-out) both}
+@keyframes lf-bar{from{width:0}to{width:100%}}
+@media (prefers-reduced-motion: reduce){.lf-step,.lf-back,.lf-bar{animation-duration:1ms}}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 100%; max-width: {{ maxW }}px; color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; gap: 20px">
+
+  <!-- STEP 1 · identitas -->
+  <sc-if value="{{ s1 }}" hint-placeholder-val="{{ true }}">
+    <form onSubmit="{{ submitId }}" class="{{ anim }}" style="display: flex; flex-direction: column; gap: 20px" novalidate>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-size: {{ h1 }}px; line-height: 1.12; font-weight: 600; letter-spacing: -0.03em">{{ title1 }}</h1>
+        <p style="margin: 0; font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Driver pakai NRP, pengawas & admin pakai email kantor.</p>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 500">NRP atau email
+        <span class="field" data-invalid="{{ idBad }}" style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px; border-radius: 14px; border: var(--bw) solid var(--input); background: {{ fieldBg }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground); flex-shrink: 0"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <input value="{{ id }}" onChange="{{ onId }}" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" inputmode="{{ idMode }}" placeholder="20231045 atau nama@kontraktor.co.id" aria-invalid="{{ idBad }}" aria-describedby="lf-id-err" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 17px">
+          <sc-if value="{{ idKind }}" hint-placeholder-val="{{ false }}"><span class="fade" style="height: 26px; padding: 0 10px; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; white-space: nowrap">{{ idKind }}</span></sc-if>
+        </span>
+      </label>
+      <sc-if value="{{ idErr }}" hint-placeholder-val="{{ false }}"><span id="lf-id-err" role="alert" class="fade" style="margin-top: -10px; font-size: 14px; color: var(--danger); font-weight: 500">{{ idErr }}</span></sc-if>
+      <button type="submit" class="press" style="height: 56px; border: 0; border-radius: 14px; background: {{ ctaBg }}; color: {{ ctaFg }}; font: inherit; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+        <sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg></sc-if>
+        Lanjut
+        <sc-if value="{{ notBusy }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></sc-if>
+      </button>
+      <span style="font-size: 13px; line-height: 19px; color: var(--muted-foreground)">Demo: NRP <button type="button" onClick="{{ fillDriver }}" class="mono" style="padding: 0; border: 0; background: none; color: var(--foreground); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">20231045</button> atau <button type="button" onClick="{{ fillMgr }}" class="mono" style="padding: 0; border: 0; background: none; color: var(--foreground); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">hendra.w@kontraktor.co.id</button></span>
+    </form>
+  </sc-if>
+
+  <!-- STEP 2a · PIN driver -->
+  <sc-if value="{{ s2pin }}" hint-placeholder-val="{{ false }}">
+    <div class="{{ anim }}" style="display: flex; flex-direction: column; gap: 18px; align-items: stretch">
+      <button type="button" onClick="{{ back }}" class="press" aria-label="Ganti akun, sekarang {{ who.name }}" style="align-self: flex-start; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px 0 6px; border-radius: 999px; border: var(--bw) solid var(--border); background: {{ fieldBg }}; color: var(--foreground); font: inherit; text-align: left">
+        <span style="width: 40px; height: 40px; border-radius: 999px; background: var(--brand); color: #0A0A0A; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{ who.init }}</span>
+        <span style="display: flex; flex-direction: column; gap: 0"><strong style="font-size: 15px; font-weight: 600">{{ who.name }}</strong><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">NRP {{ who.nrp }} · {{ who.site }}</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left: 6px; color: var(--muted-foreground)"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-size: {{ h1 }}px; line-height: 1.12; font-weight: 600; letter-spacing: -0.03em">Masukkan PIN</h1>
+        <p aria-live="polite" class="tnum" style="margin: 0; min-height: 22px; font-size: 15px; line-height: 22px; color: {{ pinMsgFg }}; font-weight: {{ pinMsgW }}">{{ pinMsg }}</p>
+      </div>
+      <div role="group" aria-label="PIN 6 digit, {{ pinLen }} terisi" class="{{ shake }}" style="display: flex; gap: 12px; justify-content: {{ dotsJustify }}; padding: 6px 0">
+        <sc-for list="{{ dots }}" as="d" hint-placeholder-count="6"><span class="lf-dot" style="width: 18px; height: 18px; border-radius: 99px; border: 2px solid {{ d.border }}; background: {{ d.bg }}; transform: scale({{ d.sc }})"></span></sc-for>
+      </div>
+      <div role="group" aria-label="Keypad PIN" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: {{ keyGap }}px">
+        <sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+          <button type="button" onClick="{{ k.press }}" aria-label="{{ k.aria }}" disabled="{{ k.dis }}" class="lf-key" style="height: {{ keyH }}px; border: 1px solid {{ k.bd }}; border-radius: 16px; background: {{ k.bg }}; color: var(--foreground); font: inherit; font-size: 26px; font-weight: 500; display: flex; align-items: center; justify-content: center; visibility: {{ k.vis }}; opacity: {{ k.op }}; cursor: pointer">
+            <sc-if value="{{ k.isNum }}" hint-placeholder-val="{{ true }}"><span class="tnum">{{ k.label }}</span></sc-if>
+            <sc-if value="{{ k.isDel }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="m18 9-6 6"/><path d="m12 9 6 6"/></svg></sc-if>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px">
+        <button type="button" onClick="{{ forgotPin }}" style="height: 44px; padding: 0; border: 0; background: none; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Lupa PIN?</button>
+        <span class="mono" style="font-size: 12px; color: var(--muted-foreground)">{{ pinHint }}</span>
+      </div>
+      <sc-if value="{{ forgotOn }}" hint-placeholder-val="{{ false }}"><div class="fade" role="status" style="padding: 12px 14px; border-radius: 12px; background: var(--muted); font-size: 14px; line-height: 20px">PIN driver diatur ulang oleh admin site. Hubungi <strong>Hendra W.</strong> (Pit A) atau datang ke pos pengawas.</div></sc-if>
+    </div>
+  </sc-if>
+
+  <!-- STEP 2b · kata sandi -->
+  <sc-if value="{{ s2pw }}" hint-placeholder-val="{{ false }}">
+    <form onSubmit="{{ submitPw }}" class="{{ anim }}" style="display: flex; flex-direction: column; gap: 18px" novalidate>
+      <button type="button" onClick="{{ back }}" class="press" aria-label="Ganti akun" style="align-self: flex-start; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px 0 6px; border-radius: 999px; border: var(--bw) solid var(--border); background: {{ fieldBg }}; color: var(--foreground); font: inherit; text-align: left">
+        <span style="width: 40px; height: 40px; border-radius: 999px; background: var(--muted); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{ who.init }}</span>
+        <span style="display: flex; flex-direction: column"><strong style="font-size: 15px; font-weight: 600">{{ who.name }}</strong><span style="font-size: 12px; color: var(--muted-foreground)">{{ who.email }}</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left: 6px; color: var(--muted-foreground)"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
+      <h1 style="margin: 0; font-size: {{ h1 }}px; line-height: 1.12; font-weight: 600; letter-spacing: -0.03em">Masukkan kata sandi</h1>
+      <input type="text" name="username" autocomplete="username" value="{{ who.email }}" readonly aria-hidden="true" tabindex="-1" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none">
+      <label style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 500">Kata sandi
+        <span class="field" data-invalid="{{ pwBad }}" style="display: flex; align-items: center; gap: 6px; height: 56px; padding: 0 6px 0 16px; border-radius: 14px; border: var(--bw) solid var(--input); background: {{ fieldBg }}">
+          <input type="{{ pwType }}" value="{{ pw }}" onChange="{{ onPw }}" name="password" autocomplete="current-password" aria-invalid="{{ pwBad }}" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 17px">
+          <button type="button" onClick="{{ togglePw }}" aria-label="{{ pwEyeLabel }}" aria-pressed="{{ pwShown }}" style="width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--muted-foreground); display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <sc-if value="{{ pwHidden }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></sc-if>
+            <sc-if value="{{ pwShown }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.53 0 8.36 2.94 9.94 7a10.8 10.8 0 0 1-1.6 2.8"/><path d="M6.6 6.6A10.7 10.7 0 0 0 2.06 12a10.75 10.75 0 0 0 15.34 5.4"/><path d="m2 2 20 20"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/></svg></sc-if>
+          </button>
+        </span>
+      </label>
+      <sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><span role="alert" class="fade" style="margin-top: -8px; font-size: 14px; color: var(--danger); font-weight: 500">{{ pwErr }}</span></sc-if>
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <label style="display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{ remember }}" onChange="{{ toggleRemember }}" style="width: 18px; height: 18px; accent-color: #0A0A0A">Ingat perangkat ini</label>
+        <a href="Auth.dc.html" style="font-size: 14px; font-weight: 600; text-decoration: none">Lupa kata sandi?</a>
+      </div>
+      <button type="submit" class="press" style="height: 56px; border: 0; border-radius: 14px; background: {{ ctaBg }}; color: {{ ctaFg }}; font: inherit; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+        <sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg></sc-if>Masuk
+      </button>
+      <span style="font-size: 13px; color: var(--muted-foreground)">Demo: kata sandi apa saja; ketik <span class="mono">salah</span> untuk melihat error.</span>
+    </form>
+  </sc-if>
+
+  <!-- STEP 3 · sukses -->
+  <sc-if value="{{ s3 }}" hint-placeholder-val="{{ false }}">
+    <div class="lf-step" role="status" style="display: flex; flex-direction: column; gap: 18px; align-items: {{ okAlign }}; text-align: {{ okText }}">
+      <span class="pop" style="position: relative; width: 72px; height: 72px; border-radius: 999px; background: var(--brand); color: #0A0A0A; display: flex; align-items: center; justify-content: center">
+        <span class="ring" style="position: absolute; inset: 0; border-radius: 999px; border: 3px solid var(--brand)"></span>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="draw" d="M20 6 9 17l-5-5"/></svg>
+      </span>
+      <div style="display: flex; flex-direction: column; gap: 6px"><h1 style="margin: 0; font-size: {{ h1 }}px; line-height: 1.12; font-weight: 600; letter-spacing: -0.03em">Selamat pagi, {{ who.first }}</h1><p style="margin: 0; font-size: 15px; color: var(--muted-foreground)">{{ okSub }}</p></div>
+      <span style="width: 100%; height: 4px; border-radius: 2px; background: var(--muted); overflow: hidden"><span class="lf-bar" style="display: block; height: 100%; background: var(--brand)"></span></span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: {{ okAlign }}">
+        <a href="{{ okHref }}" class="press" style="height: 48px; padding: 0 18px; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">{{ okCta }}</a>
+        <button type="button" onClick="{{ restart }}" class="press" style="height: 48px; padding: 0 16px; border-radius: 12px; border: var(--bw) solid var(--input); background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Ulangi demo</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"tone":{"editor":"enum","options":["brand","ink"],"default":"brand"},"size":{"editor":"enum","options":["normal","besar"],"default":"normal"},"align":{"editor":"enum","options":["left","center"],"default":"left"},"surface":{"editor":"enum","options":["plain","raised"],"default":"plain"},"$preview":{"width":420,"height":760}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.USERS = {
+      '20231045': { name: 'Budi Santoso', first: 'Budi', init: 'BS', nrp: '20231045', site: 'Pit A', role: 'driver' },
+      '20220871': { name: 'Andi Pratama', first: 'Andi', init: 'AP', nrp: '20220871', site: 'Pit A', role: 'driver' },
+      'hendra.w@kontraktor.co.id': { name: 'Hendra Wijaya', first: 'Hendra', init: 'HW', email: 'hendra.w@kontraktor.co.id', role: 'manager' },
+      'rina.a@kontraktor.co.id': { name: 'Rina Anggraini', first: 'Rina', init: 'RA', email: 'rina.a@kontraktor.co.id', role: 'admin' }
+    };
+    this.state = { step: 1, dir: 1, id: '', idTried: false, idErr: '', busy: false, who: null, pin: '', pinState: 'idle', tries: 5, lockUntil: 0, now: Date.now(), forgot: false, pw: '', pwShow: false, pwErr: '', remember: true };
+    this.onKey = (e) => {
+      if (this.state.step !== 2 || !this.state.who || this.state.who.role !== 'driver') return;
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); this.digit(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); this.del(); }
+    };
+  }
+  componentDidMount() { window.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); clearTimeout(this.t1); clearTimeout(this.t2); clearInterval(this.lt); }
+  buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+  locked() { return this.state.lockUntil > Date.now(); }
+  digit(d) {
+    const s = this.state;
+    if (s.pinState === 'checking' || this.locked() || s.pin.length >= 6) return;
+    const pin = s.pin + d;
+    this.setState({ pin, pinState: 'idle', forgot: false });
+    if (pin.length === 6) {
+      this.setState({ pinState: 'checking' });
+      clearTimeout(this.t1);
+      this.t1 = setTimeout(() => {
+        if (pin === '000000') {
+          const tries = this.state.tries - 1; this.buzz([20, 40, 20]);
+          if (tries <= 0) { this.setState({ pin: '', pinState: 'locked', tries: 5, lockUntil: Date.now() + 60000 }); clearInterval(this.lt); this.lt = setInterval(() => { if (!this.locked()) { clearInterval(this.lt); this.setState({ pinState: 'idle' }); } else this.setState({ now: Date.now() }); }, 1000); }
+          else { this.setState({ pinState: 'wrong', tries }); clearTimeout(this.t2); this.t2 = setTimeout(() => this.setState({ pin: '' }), 450); }
+        } else { this.buzz([10, 30, 10]); this.setState({ step: 3, pinState: 'ok' }); }
+      }, 650);
+    }
+  }
+  del() { const s = this.state; if (s.pinState === 'checking') return; this.setState({ pin: s.pin.slice(0, -1), pinState: 'idle' }); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const tone = this.props.tone ?? 'brand';
+    const big = (this.props.size ?? 'normal') === 'besar';
+    const center = (this.props.align ?? 'left') === 'center';
+    const raw = s.id.trim();
+    const isNrp = /^\d{8}$/.test(raw), isEmail = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(raw);
+    const idKind = isNrp ? 'Driver' : isEmail ? 'Email' : (/^\d+$/.test(raw) && raw ? raw.length + '/8 digit' : '');
+    const w = s.who || { name: '', first: '', init: '', nrp: '', site: '', email: '' };
+    const lockLeft = Math.max(0, Math.ceil((s.lockUntil - s.now) / 1000));
+    const locked = s.lockUntil > Date.now();
+    const pinMsg = locked ? 'Terlalu banyak percobaan. Coba lagi dalam ' + lockLeft + ' detik.' : s.pinState === 'wrong' ? 'PIN salah. Sisa ' + s.tries + ' percobaan.' : s.pinState === 'checking' ? 'Memeriksa…' : 'Halo, ' + w.first + '. 6 digit PIN Anda.';
+    const red = s.pinState === 'wrong' || locked;
+    const dots = Array.from({ length: 6 }, (_, i) => { const on = i < s.pin.length; return { bg: on ? (red ? 'var(--danger)' : 'var(--foreground)') : 'transparent', border: red ? 'var(--danger)' : on ? 'var(--foreground)' : 'var(--input)', sc: on ? 1.08 : 1 }; });
+    const raised = (this.props.surface ?? 'plain') === 'raised';
+    const keyBg = theme === 'dark' ? 'rgba(255,255,255,.06)' : raised ? 'var(--background)' : 'var(--muted)';
+    const keyBd = raised && theme !== 'dark' ? 'var(--border)' : 'transparent';
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((k) => ({ label: k, isNum: k !== 'del', isDel: k === 'del', vis: k === '' ? 'hidden' : 'visible', dis: locked || s.pinState === 'checking', op: locked ? 0.4 : 1, bg: k === 'del' ? 'transparent' : keyBg, bd: k === 'del' ? 'transparent' : keyBd, aria: k === 'del' ? 'Hapus digit' : k,
+      press: () => { if (k === 'del') this.del(); else if (k) this.digit(k); } }));
+    return {
+      theme, maxW: big ? 440 : 400, h1: big ? 40 : 30, anim: s.dir > 0 ? 'lf-step' : 'lf-back',
+      fieldBg: theme === 'dark' ? 'rgba(255,255,255,.04)' : 'var(--background)',
+      ctaBg: tone === 'brand' ? 'var(--brand)' : 'var(--primary)', ctaFg: tone === 'brand' ? '#0A0A0A' : 'var(--primary-foreground)',
+      s1: s.step === 1, s2pin: s.step === 2 && w.role === 'driver', s2pw: s.step === 2 && w.role !== 'driver', s3: s.step === 3,
+      title1: big ? 'Siapa yang bertugas?' : 'Masuk ke PIMS',
+      id: s.id, onId: (e) => this.setState({ id: e.target.value, idErr: '' }), idMode: /^\d/.test(raw) ? 'numeric' : 'email', idKind,
+      idBad: !!s.idErr, idErr: s.idErr, busy: s.busy, notBusy: !s.busy,
+      fillDriver: () => this.setState({ id: '20231045', idErr: '' }), fillMgr: () => this.setState({ id: 'hendra.w@kontraktor.co.id', idErr: '' }),
+      submitId: (e) => {
+        e.preventDefault();
+        if (!raw) { this.buzz([20, 40, 20]); this.setState({ idErr: 'Masukkan NRP (8 digit) atau email kantor.' }); return; }
+        if (!isNrp && !isEmail) { this.buzz([20, 40, 20]); this.setState({ idErr: /^\d+$/.test(raw) ? 'NRP harus 8 digit angka.' : 'Format email tidak valid.' }); return; }
+        this.setState({ busy: true });
+        clearTimeout(this.t1);
+        this.t1 = setTimeout(() => {
+          const u = this.USERS[raw.toLowerCase()] || (isEmail ? { name: raw.split('@')[0], first: raw.split('@')[0], init: raw.slice(0, 2).toUpperCase(), email: raw, role: 'manager' } : null);
+          if (!u) { this.buzz([20, 40, 20]); this.setState({ busy: false, idErr: 'NRP tidak terdaftar. Hubungi admin site Anda.' }); return; }
+          this.setState({ busy: false, who: u, step: 2, dir: 1, pin: '', pinState: 'idle', pw: '', pwErr: '', forgot: false });
+        }, 500);
+      },
+      back: () => this.setState({ step: 1, dir: -1, pin: '', pw: '', pwErr: '', forgot: false }),
+      who: w, dots, keys, pinLen: s.pin.length, pinMsg, pinMsgFg: red ? 'var(--danger)' : 'var(--muted-foreground)', pinMsgW: red ? 600 : 400,
+      shake: s.pinState === 'wrong' ? 'shake' : '', dotsJustify: center ? 'center' : 'flex-start', keyH: big ? 72 : 64, keyGap: big ? 12 : 10,
+      pinHint: 'Demo: 000000 = salah', forgotOn: s.forgot, forgotPin: () => this.setState({ forgot: !s.forgot }),
+      pw: s.pw, onPw: (e) => this.setState({ pw: e.target.value, pwErr: '' }), pwType: s.pwShow ? 'text' : 'password', pwShown: s.pwShow, pwHidden: !s.pwShow,
+      pwEyeLabel: s.pwShow ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi', togglePw: () => this.setState({ pwShow: !s.pwShow }),
+      pwBad: !!s.pwErr, pwErr: s.pwErr, remember: s.remember, toggleRemember: () => this.setState({ remember: !s.remember }),
+      submitPw: (e) => {
+        e.preventDefault();
+        if (!s.pw) { this.buzz([20, 40, 20]); this.setState({ pwErr: 'Masukkan kata sandi.' }); return; }
+        this.setState({ busy: true }); clearTimeout(this.t1);
+        this.t1 = setTimeout(() => { if (s.pw === 'salah') { this.buzz([20, 40, 20]); this.setState({ busy: false, pwErr: 'Email atau kata sandi salah.' }); } else this.setState({ busy: false, step: 3 }); }, 700);
+      },
+      okAlign: center ? 'center' : 'flex-start', okText: center ? 'center' : 'left',
+      okSub: w.role === 'driver' ? 'Membuka Beranda · Shift 1 · DT-1045 menunggu P2H Anda.' : 'Membuka Dashboard · Pit A · 5 P2H menunggu persetujuan.',
+      okHref: w.role === 'driver' ? 'BerandaDriver.dc.html' : 'Dashboard.dc.html', okCta: w.role === 'driver' ? 'Ke Beranda' : 'Ke Dashboard',
+      restart: () => this.setState({ step: 1, dir: -1, id: '', who: null, pin: '', pw: '', pinState: 'idle', idErr: '', pwErr: '' })
+    };
+  }
+}
+</script>
+</body>
+</html>

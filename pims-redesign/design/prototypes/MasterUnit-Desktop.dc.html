@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Master unit (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Unit" peran="Admin" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Master unit</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ activeN }} unit aktif · {{ trashN }} di Sampah</span></div>
+      <button type="button" class="press" onClick="{{ openImport }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>Import</button>
+      <button type="button" class="press" onClick="{{ exportAll }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Export</button>
+      <button type="button" class="press" onClick="{{ openAdd }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Tambah unit</button>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <div role="tablist" style="display: flex; padding: 3px; border-radius: 10px; background: var(--muted)">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: 600"><span class="tnum">{{ t.label }}</span></button></sc-for>
+      </div>
+      <div class="field" style="flex: 0 1 280px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="{{ q }}" onChange="{{ onQ }}" aria-label="Cari unit" placeholder="Cari kode, jenis, site" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px"></div>
+      <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4"><button type="button" class="press" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 13px; font-weight: 500">{{ c.label }}</button></sc-for>
+    </div>
+
+    <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+      <table style="width: 100%; min-width: 920px; border-collapse: collapse; font-size: 14px">
+        <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+          <th style="width: 44px; padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih semua" checked="{{ allSel }}" onChange="{{ toggleAll }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></th>
+          <sc-for list="{{ cols }}" as="h" hint-placeholder-count="7"><th aria-sort="{{ h.aria }}" style="padding: 0 12px; text-align: {{ h.align }}"><button type="button" class="press" onClick="{{ h.sort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: {{ h.fg }}; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap">{{ h.label }}<span style="opacity: {{ h.op }}">{{ h.arrow }}</span></button></th></sc-for>
+          <th style="padding: 0 14px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+            <tr style="border-top: 1px solid var(--border); height: 52px; background: {{ r.bg }}">
+              <td style="padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih {{ r.code }}" checked="{{ r.sel }}" onChange="{{ r.toggle }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></td>
+              <td style="padding: 0 12px"><strong class="tnum" style="font-weight: 600">{{ r.code }}</strong></td>
+              <td style="padding: 0 12px">{{ r.type }} <span style="color: var(--muted-foreground)">· {{ r.model }}</span></td>
+              <td style="padding: 0 12px">{{ r.site }}</td>
+              <td class="tnum" style="padding: 0 12px; text-align: right">{{ r.hm }}</td>
+              <td style="padding: 0 12px"><span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; background: {{ r.pBg }}; color: {{ r.pFg }}; font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ r.pill }}</span></td>
+              <td style="padding: 0 12px; color: var(--muted-foreground)">{{ r.cl }}</td>
+              <td style="padding: 0 12px; color: var(--muted-foreground)">{{ r.apprTxt }}</td>
+              <td style="padding: 0 14px; text-align: right"><button type="button" class="press" onClick="{{ r.act }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">{{ r.actLabel }}</button></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ footer }}</span>
+
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div class="toast-in" role="toolbar" aria-label="Aksi massal" style="position: sticky; bottom: 16px; align-self: center; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; box-shadow: var(--shadow-3)">
+        <span class="tnum" style="font-size: 14px; font-weight: 600; padding-right: 8px">{{ selN }} dipilih</span>
+        <sc-if value="{{ isActive }}" hint-placeholder-val="{{ true }}">
+          <button type="button" class="press" onClick="{{ bulkExport }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FAFAFA; font: inherit; font-size: 13px; font-weight: 600">Export</button>
+          <button type="button" class="press" onClick="{{ bulkTrash }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FCA5A5; font: inherit; font-size: 13px; font-weight: 600">Pindah ke Sampah</button>
+        </sc-if>
+        <sc-if value="{{ isTrash }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="press" onClick="{{ bulkRestore }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: #F4D435; color: #0A0A0A; font: inherit; font-size: 13px; font-weight: 600">Pulihkan</button>
+          <button type="button" class="press" onClick="{{ askPurge }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FCA5A5; font: inherit; font-size: 13px; font-weight: 600">Hapus permanen</button>
+        </sc-if>
+        <button type="button" class="press" onClick="{{ clearSel }}" aria-label="Batal pilih" style="width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: #FAFAFA; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+    </sc-if>
+  </main>
+
+  <!-- Drawer -->
+  <sc-if value="{{ drawerOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: fixed; inset: 0; z-index: 30; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="dr-t" style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 31; width: min(480px, 100%); background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; animation: pims-fade 220ms var(--ease-out) both">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 16px 12px 16px 24px; border-bottom: 1px solid var(--border)"><strong id="dr-t" style="flex: 1; font-size: 18px; font-weight: 600">{{ drawerTitle }}</strong><button type="button" class="press hl" onClick="{{ closeDrawer }}" aria-label="Tutup" style="width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+      <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+        <sc-if value="{{ dImport }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="press" onClick="{{ dlTemplate }}" style="align-self: flex-start; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">Unduh template (.xlsx)</button>
+          <div onDragOver="{{ dragOver }}" onDragLeave="{{ dragLeave }}" onDrop="{{ drop }}" style="border-radius: 14px; border: 1.5px dashed {{ dzBorder }}; background: {{ dzBg }}; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; transition: background-color 150ms, border-color 150ms">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+            <strong style="font-size: 15px; font-weight: 600">{{ dzTitle }}</strong>
+            <span style="font-size: 13px; color: var(--muted-foreground)">.xlsx · maks 5 MB · 1.000 baris</span>
+            <button type="button" class="press" onClick="{{ pickFile }}" style="margin-top: 4px; height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 13px; font-weight: 600">Pilih file</button>
+          </div>
+          <sc-if value="{{ impBusy }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px"><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">Memvalidasi… {{ impProg }}%</span><span style="height: 6px; border-radius: 3px; background: var(--muted); overflow: hidden"><span class="bar" style="display: block; height: 100%; width: {{ impProg }}%; background: var(--foreground)"></span></span></div></sc-if>
+          <sc-if value="{{ impDone }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 16px; font-size: 14px; font-weight: 600"><span style="color: var(--success)">10 valid</span><span style="color: var(--danger)">2 error</span></div>
+            <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden">
+              <div style="display: grid; grid-template-columns: 44px 90px 1fr; gap: 8px; padding: 8px 12px; background: var(--muted-2); font-size: 12px; font-weight: 600; color: var(--muted-foreground)"><span>Baris</span><span>Kode</span><span>Hasil</span></div>
+              <sc-for list="{{ impRows }}" as="r" hint-placeholder-count="6"><div style="display: grid; grid-template-columns: 44px 90px 1fr; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); font-size: 13px; background: {{ r.bg }}"><span class="mono tnum" style="color: var(--muted-foreground)">{{ r.n }}</span><strong class="tnum" style="font-weight: 600">{{ r.code }}</strong><span style="color: {{ r.fg }}; font-weight: {{ r.w }}">{{ r.msg }}</span></div></sc-for>
+            </div>
+          </sc-if>
+        </sc-if>
+        <sc-if value="{{ dForm }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ fields }}" as="f" hint-placeholder-count="6"><label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">{{ f.label }}<input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" class="field" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 400; outline: 0"></label></sc-for>
+        </sc-if>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border)">
+        <button type="button" class="press" onClick="{{ closeDrawer }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Batal</button>
+        <button type="button" class="press" onClick="{{ drawerOk }}" aria-disabled="{{ drawerOkOff }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: {{ okBg }}; color: {{ okFg }}; font: inherit; font-size: 14px; font-weight: 600">{{ drawerOkLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ purgeOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: fixed; inset: 0; z-index: 40; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 20px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="pg" class="pop" style="width: min(420px, 100%); padding: 24px; border-radius: 16px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="pg" class="tnum" style="font-size: 18px; font-weight: 600">Hapus permanen {{ selN }} unit?</strong>
+        <span style="font-size: 14px; line-height: 21px; color: var(--muted-foreground)">Tidak bisa dipulihkan. Ketik <strong class="mono" style="color: var(--foreground)">HAPUS</strong> untuk konfirmasi.</span>
+        <input value="{{ purgeText }}" onChange="{{ onPurge }}" aria-label="Ketik HAPUS" class="field mono" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font-size: 15px; outline: 0">
+        <div style="display: flex; justify-content: flex-end; gap: 8px"><button type="button" class="press" onClick="{{ cancelPurge }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Batal</button><button type="button" class="press" onClick="{{ doPurge }}" aria-disabled="{{ purgeLocked }}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: {{ purgeBg }}; color: {{ purgeFg }}; font: inherit; font-size: 14px; font-weight: 600">Hapus permanen</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 6px 6px 6px 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: var(--shadow-3)">
+      <span>{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #F4D435; font: inherit; font-size: 14px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const U = (code, type, model, site, hm, status, cl, appr, del) => ({ code, type, model, site, hm, status, cl, appr, del: del || '' });
+    this.state = {
+      units: [
+        U('DT-1045', 'Dump Truck', 'HD 90 t', 'Pit A', 12481.0, 'Ready', 'Dump Truck', ''), U('DT-1050', 'Dump Truck', 'HD 90 t', 'Pit A', 9812.0, 'BD', 'Dump Truck', ''),
+        U('DT-1022', 'Dump Truck', 'HD 90 t', 'Pit A', 11902.4, 'Ready', 'Dump Truck', ''), U('EX-2001', 'Excavator', '200 t', 'Pit A', 18330.0, 'Ready', 'Excavator', ''),
+        U('EX-2003', 'Excavator', '200 t', 'Pit A', 15204.5, 'BD', 'Excavator', ''), U('LV-031', 'Light Vehicle', '4×4 double cabin', 'Pit A', 4110.2, 'Ready', 'Light Vehicle', 'Hendra W.'),
+        U('GR-012', 'Motor Grader', '16 ft', 'Hauling Road', 7022.6, 'PM', 'Grader', ''), U('WT-007', 'Water Truck', '20 kL', 'Pit B', 8904.1, 'Ready', 'Water Truck', ''),
+        U('DT-1061', 'Dump Truck', 'HD 90 t', 'Pit B', 10552.3, 'Servis', 'Dump Truck', ''), U('LV-022', 'Light Vehicle', '4×4 single cabin', 'Pit B', 6310.0, 'Servis', 'Light Vehicle', 'Rina A.'),
+        U('DT-0998', 'Dump Truck', 'HD 90 t', 'Pit A', 21004.0, 'Ready', 'Dump Truck', '', '12 Okt · Rina A.'), U('LV-015', 'Light Vehicle', '4×4 double cabin', 'Pit B', 15800.7, 'Ready', 'Light Vehicle', '', '9 Okt · Hendra W.')
+      ],
+      tab: 'aktif', q: '', st: 'Semua', sortKey: 'code', dir: 1, sel: {}, drawer: null, editCode: null, form: {}, drag: false, imp: 0, prog: 0, purge: false, purgeText: '', toast: null
+    };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); clearInterval(this.it); }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  runImport() { this.setState({ imp: 1, prog: 0, drag: false }); clearInterval(this.it); this.it = setInterval(() => { const p = this.state.prog + 12; if (p >= 100) { clearInterval(this.it); this.setState({ imp: 2, prog: 100 }); } else this.setState({ prog: p }); }, 120); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const navDefs = [['Dashboard', 'Dashboard-Desktop.dc.html'], ['Monitoring P2H', 'Monitoring-Desktop.dc.html'], ['Riwayat P2H', 'RiwayatP2H-Desktop.dc.html'], ['Persetujuan', 'Persetujuan-Desktop.dc.html'], ['Temuan', 'Temuan-Desktop.dc.html'], '#Laporan', ['Laporan periode', 'LaporanPeriode-Desktop.dc.html'], ['Monitoring PA', 'PA-Desktop.dc.html'], ['Downtime', 'Downtime-Desktop.dc.html'], '#Data master', ['Unit', 'MasterUnit-Desktop.dc.html', true], ['Site', 'MasterSite.dc.html'], ['Pengguna & driver', 'Pengguna-Desktop.dc.html'], '#Admin', ['Audit log', 'AuditLog-Desktop.dc.html'], ['Pengaturan', 'Pengaturan-Desktop.dc.html']];
+    const nav = navDefs.map((n) => typeof n === 'string' ? { group: n.slice(1), item: false } : { group: '', item: true, label: n[0], href: n[1], cur: n[2] ? 'page' : 'false', bg: n[2] ? 'var(--sidebar-accent)' : 'transparent', fg: n[2] ? 'var(--foreground)' : 'var(--muted-foreground)', w: n[2] ? 600 : 500, ind: n[2] ? 1 : 0 });
+    const active = s.units.filter((u) => !u.del), trash = s.units.filter((u) => u.del);
+    const isTrash = s.tab === 'sampah';
+    const q = s.q.trim().toLowerCase();
+    let list = (isTrash ? trash : active).filter((u) => (!q || (u.code + u.type + u.site).toLowerCase().includes(q)) && (isTrash || s.st === 'Semua' || u.status === s.st));
+    list = list.slice().sort((a, b) => (a[s.sortKey] > b[s.sortKey] ? 1 : a[s.sortKey] < b[s.sortKey] ? -1 : 0) * s.dir);
+    const kind = (st) => st === 'Ready' ? 'success' : (st === 'BD' ? 'danger' : 'info');
+    const fmt = (v) => v.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const rows = list.map((u) => { const sel = !!s.sel[u.code]; return { ...u, sel, bg: sel ? 'var(--brand-soft)' : 'transparent', hm: fmt(u.hm), pill: isTrash ? 'Dihapus ' + u.del.split(' · ')[0] : u.status, pBg: isTrash ? 'var(--muted)' : 'var(--' + kind(u.status) + '-soft)', pFg: isTrash ? 'var(--muted-foreground)' : 'var(--' + kind(u.status) + ')', apprTxt: u.appr || '—', actLabel: isTrash ? 'Pulihkan' : 'Ubah',
+      toggle: () => this.setState({ sel: { ...this.state.sel, [u.code]: !sel } }),
+      act: () => { if (isTrash) { const prev = s.units; this.setState({ units: prev.map((x) => x.code === u.code ? { ...x, del: '' } : x) }); this.toast(u.code + ' dipulihkan', () => this.setState({ units: prev })); } else this.setState({ drawer: 'edit', editCode: u.code, form: { ...u, hm: fmt(u.hm) } }); } }; });
+    const colDefs = [['code', 'Kode', 'left'], ['type', 'Jenis / model', 'left'], ['site', 'Site', 'left'], ['hm', 'HM', 'right'], ['status', 'Status', 'left'], ['cl', 'Checklist', 'left'], ['appr', 'Approver LV', 'left']];
+    const cols = colDefs.map(([k, label, align]) => { const on = s.sortKey === k; return { label, align, fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', arrow: on ? (s.dir > 0 ? '↑' : '↓') : '↕', op: on ? 1 : 0.35, aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : 'none', sort: () => this.setState({ sortKey: k, dir: on ? -s.dir : 1 }) }; });
+    const selCodes = Object.keys(s.sel).filter((k) => s.sel[k] && list.find((u) => u.code === k));
+    const chips = ['Semua', 'Ready', 'BD', 'PM', 'Servis'].map((k) => { const on = s.st === k; return { label: k, on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', pick: () => this.setState({ st: k }) }; });
+    const F = s.form || {};
+    const setF = (k) => (e) => this.setState({ form: { ...this.state.form, [k]: e.target.value } });
+    const fields = [['code', 'Kode unit', 'DT-1100'], ['type', 'Jenis', 'Dump Truck'], ['model', 'Merek / model', 'HD 90 t'], ['site', 'Site', 'Pit A'], ['hm', 'HM saat ini', '0,0'], ['status', 'Status', 'Ready'], ['cl', 'Tipe checklist P2H', 'Dump Truck'], ['appr', 'Approver LV (opsional)', '']].map(([k, label, ph]) => ({ label, ph, value: F[k] || '', on: setF(k) }));
+    const impRows = [[2, 'DT-1101', ''], [3, 'DT-1102', ''], [4, 'DT-1045', 'Kode unit sudah terdaftar'], [5, 'EX-2010', ''], [6, 'LV-041', 'Site wajib diisi'], [7, 'WT-009', '']].map(([n, code, err]) => ({ n, code, msg: err || 'Valid', fg: err ? 'var(--danger)' : 'var(--success)', w: err ? 600 : 500, bg: err ? 'var(--danger-soft)' : 'transparent' }));
+    const purgeOk = s.purgeText.trim().toUpperCase() === 'HAPUS';
+    const okOn = s.drawer === 'import' ? s.imp === 2 : true;
+    const toastOn = !!s.toast;
+    return {
+      theme, nav, activeN: active.length, trashN: trash.length, isActive: !isTrash, isTrash,
+      tabs: [['aktif', 'Aktif · ' + active.length], ['sampah', 'Sampah · ' + trash.length]].map(([k, label]) => ({ label, on: s.tab === k, bg: s.tab === k ? 'var(--card)' : 'transparent', shadow: s.tab === k ? 'var(--shadow-2)' : 'none', fg: s.tab === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ tab: k, sel: {} }) })),
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value }), chips, cols, rows,
+      footer: isTrash ? 'Item di Sampah terhapus permanen otomatis setelah 30 hari.' : 'Menampilkan ' + rows.length + ' dari ' + active.length + ' unit.',
+      allSel: rows.length > 0 && rows.every((r) => r.sel), toggleAll: () => { const all = rows.length && rows.every((r) => r.sel); const n = {}; if (!all) rows.forEach((r) => { n[r.code] = true; }); this.setState({ sel: n }); },
+      hasSel: selCodes.length > 0, selN: selCodes.length, clearSel: () => this.setState({ sel: {} }),
+      bulkExport: () => this.toast('Export ' + selCodes.length + ' unit'),
+      bulkTrash: () => { const prev = s.units; this.setState({ units: prev.map((u) => selCodes.includes(u.code) ? { ...u, del: '16 Okt · Anda' } : u), sel: {} }); this.toast(selCodes.length + ' unit dipindah ke Sampah', () => this.setState({ units: prev })); },
+      bulkRestore: () => { const prev = s.units; this.setState({ units: prev.map((u) => selCodes.includes(u.code) ? { ...u, del: '' } : u), sel: {} }); this.toast(selCodes.length + ' unit dipulihkan', () => this.setState({ units: prev })); },
+      askPurge: () => this.setState({ purge: true, purgeText: '' }), purgeOn: s.purge, purgeText: s.purgeText, onPurge: (e) => this.setState({ purgeText: e.target.value }),
+      purgeLocked: !purgeOk, purgeBg: purgeOk ? '#DC2626' : 'var(--muted)', purgeFg: purgeOk ? '#fff' : 'var(--muted-foreground)', cancelPurge: () => this.setState({ purge: false }),
+      doPurge: () => { if (!purgeOk) return; this.setState({ units: s.units.filter((u) => !selCodes.includes(u.code)), purge: false, sel: {} }); this.toast(selCodes.length + ' unit dihapus permanen'); },
+      exportAll: () => this.toast('Export ' + active.length + ' unit ke Excel'),
+      openAdd: () => this.setState({ drawer: 'add', form: { status: 'Ready', site: 'Pit A' } }), openImport: () => this.setState({ drawer: 'import', imp: 0, prog: 0 }),
+      drawerOn: !!s.drawer, dImport: s.drawer === 'import', dForm: s.drawer === 'edit' || s.drawer === 'add',
+      drawerTitle: { import: 'Import unit dari Excel', add: 'Tambah unit', edit: 'Ubah ' + (s.editCode || '') }[s.drawer] || '',
+      closeDrawer: () => { clearInterval(this.it); this.setState({ drawer: null }); },
+      dzBorder: s.drag ? 'var(--foreground)' : 'var(--input)', dzBg: s.drag ? 'var(--brand-soft)' : 'var(--muted-2)', dzTitle: s.drag ? 'Lepaskan untuk mengunggah' : 'Seret file ke sini',
+      dragOver: (e) => { e.preventDefault(); if (!this.state.drag) this.setState({ drag: true }); }, dragLeave: () => this.setState({ drag: false }),
+      drop: (e) => { e.preventDefault(); this.runImport(); }, pickFile: () => this.runImport(),
+      impBusy: s.imp === 1, impDone: s.imp === 2, impProg: s.prog, impRows, fields,
+      dlTemplate: () => this.toast('template-unit-pims.xlsx diunduh'),
+      drawerOkLabel: s.drawer === 'import' ? 'Impor 10 baris valid' : 'Simpan', drawerOkOff: !okOn, okBg: okOn ? 'var(--primary)' : 'var(--muted)', okFg: okOn ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+      drawerOk: () => {
+        const prev = s.units;
+        if (s.drawer === 'import') { if (s.imp !== 2) return; const add = ['DT-1101', 'DT-1102', 'EX-2010', 'WT-009', 'DT-1103', 'DT-1104', 'LV-042', 'LV-043', 'DZ-022', 'GR-014'].map((c) => ({ code: c, type: 'Baru', model: '—', site: 'Pit B', hm: 0, status: 'Ready', cl: '—', appr: '', del: '' })); this.setState({ units: add.concat(prev), drawer: null }); this.toast('10 unit diimpor · 2 baris dilewati', () => this.setState({ units: prev })); return; }
+        const rec = { ...F, hm: parseFloat(String(F.hm || '0').replace(/\./g, '').replace(',', '.')) || 0 };
+        const units = s.drawer === 'edit' ? prev.map((u) => u.code === s.editCode ? { ...u, ...rec } : u) : [{ del: '', appr: '', ...rec }].concat(prev);
+        this.setState({ units, drawer: null }); this.toast((F.code || 'Unit') + ' disimpan', () => this.setState({ units: prev }));
+      },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

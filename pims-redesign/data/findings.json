@@ -1,0 +1,79 @@
+[
+  {
+    "code": "T-0235",
+    "unit": "EX-2003",
+    "title": "Rem parkir tidak menahan unit",
+    "is_critical": true,
+    "pic": "Yanto · Mekanik",
+    "due_at_local": "2026-10-16 18:00",
+    "status": "open",
+    "found_from": "P2H 16 Okt · Shift 1 · Dedi K.",
+    "note": "Unit bergeser di tanjakan ringan saat rem parkir aktif. Tuas terasa longgar."
+  },
+  {
+    "code": "T-0234",
+    "unit": "DT-1050",
+    "title": "Tetesan oli mesin di bawah unit",
+    "is_critical": true,
+    "pic": "Yanto · Mekanik",
+    "due_at_local": "2026-10-16 18:00",
+    "status": "open",
+    "found_from": "P2H 16 Okt · Shift 1 · Joko W.",
+    "note": "Tetesan oli setelah parkir 10 menit, area carter."
+  },
+  {
+    "code": "T-0231",
+    "unit": "DT-1045",
+    "title": "Rembesan oli di selang hidrolik",
+    "is_critical": true,
+    "pic": "Yanto · Mekanik",
+    "due_at_local": "2026-10-15 18:00",
+    "status": "open",
+    "found_from": "P2H 14 Okt · Shift 1 · Budi S.",
+    "note": "Rembesan di sambungan selang hidrolik sisi kiri."
+  },
+  {
+    "code": "T-0228",
+    "unit": "DT-1045",
+    "title": "Lampu rotary tidak menyala",
+    "is_critical": false,
+    "pic": "Wahyu · Elektrik",
+    "due_at_local": "2026-10-18 18:00",
+    "status": "open",
+    "found_from": "P2H 15 Okt · Shift 1 · Budi S.",
+    "note": "Lampu rotary mati, kemungkinan sekring putus."
+  },
+  {
+    "code": "T-0226",
+    "unit": "LV-031",
+    "title": "Karet wiper sobek",
+    "is_critical": false,
+    "pic": "Wahyu · Elektrik",
+    "due_at_local": "2026-10-14 18:00",
+    "status": "open",
+    "found_from": "P2H 13 Okt · Shift 1 · Andi P.",
+    "note": "Karet wiper kanan sobek."
+  },
+  {
+    "code": "T-0219",
+    "unit": "LV-022",
+    "title": "AC kabin tidak dingin",
+    "is_critical": false,
+    "pic": "Wahyu · Elektrik",
+    "due_at_local": "2026-10-12 18:00",
+    "status": "open",
+    "found_from": "P2H 11 Okt · Shift 2 · Sari M.",
+    "note": "AC menyala tapi tidak dingin setelah 15 menit."
+  },
+  {
+    "code": "T-0210",
+    "unit": "DT-1022",
+    "title": "Spion kiri retak",
+    "is_critical": false,
+    "pic": "Tim Body",
+    "due_at_local": "2026-10-13 18:00",
+    "status": "closed",
+    "found_from": "P2H 10 Okt · Shift 1 · Rudi H.",
+    "note": "Kaca spion kiri retak memanjang."
+  }
+]

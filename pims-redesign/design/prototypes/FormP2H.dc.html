@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Form P2H</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" data-motion="{{ motion }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <!-- ========== APP BAR + PROGRESS ========== -->
+  <sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
+    <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 8px 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: var(--bw) solid {{ hcLine }}">
+      <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+        <sc-if value="{{ isFirst }}" hint-placeholder-val="{{ true }}">
+          <a href="BerandaDriver.dc.html" class="press hl" aria-label="Tutup form" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </a>
+        </sc-if>
+        <sc-if value="{{ notFirst }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="press hl" onClick="{{ back }}" aria-label="Langkah sebelumnya" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; display: flex; align-items: center; justify-content: center; color: var(--foreground)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          </button>
+        </sc-if>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; padding-left: 4px">
+          <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">{{ stepTitle }}</span>
+          <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ unitCode }} · Shift {{ shift }} · 16 Okt</span>
+        </div>
+        <span role="status" aria-live="polite" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--muted-foreground); background: var(--muted)">
+          <sc-if value="{{ saving }}" hint-placeholder-val="{{ false }}">
+            <svg class="spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          </sc-if>
+          <sc-if value="{{ saved }}" hint-placeholder-val="{{ true }}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9.5 14 1.8 1.8 3.2-3.3"/></svg>
+          </sc-if>
+          {{ saveLabel }}
+        </span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 8px">
+        <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px" role="progressbar" aria-label="Progres P2H" aria-valuemin="0" aria-valuemax="6" aria-valuenow="{{ stepNo }}">
+          <sc-for list="{{ segs }}" as="g" hint-placeholder-count="6">
+            <span style="height: 4px; border-radius: 4px; background: {{ g.track }}; overflow: hidden; display: block">
+              <span class="bar" style="display: block; height: 100%; width: {{ g.fill }}%; background: {{ g.color }}; border-radius: 4px"></span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--muted-foreground)">
+          <span class="tnum">Langkah {{ stepNo }} dari 6</span>
+          <span class="tnum" style="font-weight: 600; color: var(--foreground)">{{ progressRight }}</span>
+        </div>
+      </div>
+    </header>
+  </sc-if>
+
+  <!-- ========== SCROLL ========== -->
+  <div class="noscroll" ref="{{ setScroller }}" style="flex: 1; overflow-y: auto; padding: {{ scrollPadTop }}px 16px 120px; scroll-behavior: auto">
+
+    <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="margin: 0 0 16px; padding: 10px 12px; border-radius: 12px; background: var(--warning-soft); display: flex; gap: 10px; align-items: center; font-size: 14px; border: var(--bw) solid {{ hcWarnBorder }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="m2 2 20 20"/></svg>
+        <span><strong style="font-weight: 600">Offline.</strong> <span style="color: var(--muted-foreground)">Draft aman di perangkat, dikirim otomatis saat online.</span></span>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 0: UNIT & SHIFT ===== -->
+    <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}">
+      <div class="fade-up" style="display: flex; flex-direction: column; gap: 28px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 14px; font-weight: 500">Shift</span>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); border: var(--bw) solid {{ hcLine }}">
+            <sc-for list="{{ shifts }}" as="sh" hint-placeholder-count="2">
+              <button type="button" class="press" aria-pressed="{{ sh.on }}" onClick="{{ sh.pick }}" style="height: 56px; border: var(--bw) solid {{ sh.border }}; border-radius: 9px; background: {{ sh.bg }}; box-shadow: {{ sh.shadow }}; color: var(--foreground); font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px">
+                <span style="font-size: 15px; font-weight: 600">{{ sh.label }}</span>
+                <span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ sh.time }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <label for="cari" style="font-size: 14px; font-weight: 500">Unit</label>
+          <div class="field" style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="cari" value="{{ q }}" onChange="{{ onQ }}" placeholder="Cari kode atau jenis unit" autocomplete="off" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 16px">
+          </div>
+          <div role="radiogroup" aria-label="Pilih unit" style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px">
+            <sc-for list="{{ units }}" as="u" hint-placeholder-count="5">
+              <button type="button" role="radio" aria-checked="{{ u.on }}" aria-disabled="{{ u.locked }}" class="press" onClick="{{ u.pick }}" style="display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 12px 14px; border-radius: 14px; border: {{ u.bw }} solid {{ u.border }}; background: var(--card); color: var(--foreground); font: inherit; text-align: left; opacity: {{ u.opacity }}">
+                <span style="width: 22px; height: 22px; border-radius: 999px; border: 2px solid {{ u.radio }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 150ms">
+                  <span style="width: 10px; height: 10px; border-radius: 999px; background: var(--foreground); transform: scale({{ u.dot }}); transition: transform 150ms cubic-bezier(.34,1.56,.64,1)"></span>
+                </span>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                  <span style="display: flex; align-items: center; gap: 8px">
+                    <span class="tnum" style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">{{ u.code }}</span>
+                    <sc-if value="{{ u.assigned }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: var(--brand); color: #0A0A0A">Ditugaskan</span>
+                    </sc-if>
+                  </span>
+                  <span style="font-size: 14px; color: var(--muted-foreground)">{{ u.sub }}</span>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 999px; background: {{ u.pillBg }}; color: {{ u.pillFg }}; font-size: 12px; font-weight: 600; flex-shrink: 0; border: var(--bw) solid {{ u.pillBorder }}">
+                  <sc-if value="{{ u.locked }}" hint-placeholder-val="{{ false }}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </sc-if>
+                  <sc-if value="{{ u.unlocked }}" hint-placeholder-val="{{ true }}">
+                    <span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>
+                  </sc-if>
+                  {{ u.pill }}
+                </span>
+              </button>
+            </sc-for>
+          </div>
+          <span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground); display: flex; gap: 8px; align-items: flex-start; padding-top: 4px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            Unit yang sudah di-P2H pada shift ini terkunci. Satu unit, satu P2H per shift.
+          </span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 1: CHECKLIST ===== -->
+    <sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}">
+      <div class="fade-up" style="display: flex; flex-direction: column; gap: 32px">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+          <section style="display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 2px 8px">
+              <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">{{ c.name }}</h2>
+              <span class="tnum" style="font-size: 14px; font-weight: 600; color: {{ c.countColor }}">{{ c.done }}/{{ c.total }}</span>
+            </div>
+            <sc-for list="{{ c.items }}" as="it" hint-placeholder-count="4">
+              <div id="{{ it.domId }}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 0 18px; border-top: var(--bw) solid var(--border); scroll-margin-top: 160px">
+                <div style="display: flex; align-items: flex-start; gap: 10px">
+                  <span style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+                    <span style="font-size: 17px; line-height: 24px; font-weight: 500">{{ it.name }}</span>
+                    <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">{{ it.hint }}</span>
+                  </span>
+                  <sc-if value="{{ it.critical }}" hint-placeholder-val="{{ false }}">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; flex-shrink: 0; border: var(--bw) solid {{ hcDangerBorder }}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>KRITIS
+                    </span>
+                  </sc-if>
+                </div>
+                <div role="group" aria-label="{{ it.name }}" style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px; border-radius: 12px; background: var(--muted); border: var(--bw) solid {{ hcLine }}">
+                  <span aria-hidden="true" style="position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: 52px; border-radius: 9px; background: {{ it.thumbBg }}; border: {{ it.thumbBw }} solid {{ it.thumbBorder }}; box-sizing: border-box; transform: translateX({{ it.thumbX }}); opacity: {{ it.thumbOpacity }}; transition: transform 150ms cubic-bezier(.2,0,0,1), background-color 150ms, border-color 150ms, opacity 150ms; box-shadow: var(--shadow-1)"></span>
+                  <button type="button" class="press" aria-pressed="{{ it.isBaik }}" onClick="{{ it.setBaik }}" style="position: relative; height: 52px; border: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 600; color: {{ it.baikFg }}; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9px">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Baik
+                  </button>
+                  <button type="button" class="press" aria-pressed="{{ it.isRusak }}" onClick="{{ it.setRusak }}" style="position: relative; height: 52px; border: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 600; color: {{ it.rusakFg }}; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9px">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Rusak
+                  </button>
+                </div>
+                <div class="collapse" data-open="{{ it.open }}">
+                  <div>
+                    <sc-if value="{{ it.isRusak }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 6px">
+                      <sc-if value="{{ it.critRusak }}" hint-placeholder-val="{{ false }}">
+                        <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 20px; color: var(--danger); font-weight: 500">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                          Item kritis rusak: hasil P2H menjadi Tidak Layak dan unit otomatis BD.
+                        </span>
+                      </sc-if>
+                      <label for="{{ it.noteId }}" style="font-size: 14px; font-weight: 500">Catatan kerusakan <span style="color: var(--danger)">*</span></label>
+                      <textarea id="{{ it.noteId }}" value="{{ it.note }}" onChange="{{ it.onNote }}" rows="2" placeholder="Contoh: rembesan di sambungan selang sisi kiri" class="field" style="min-height: 76px; padding: 12px 14px; border-radius: 10px; border: var(--bw) solid {{ it.noteBorder }}; background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; line-height: 22px; resize: none; outline: 0"></textarea>
+                      <div style="display: flex; align-items: center; gap: 10px">
+                        <sc-if value="{{ it.hasPhoto }}" hint-placeholder-val="{{ false }}">
+                          <span class="pop" style="position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #18181B">
+                            <img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="Foto kerusakan {{ it.name }}" style="width: 100%; height: 100%; object-fit: cover; object-position: {{ it.photoPos }}">
+                          </span>
+                        </sc-if>
+                        <button type="button" class="press" onClick="{{ it.togglePhoto }}" style="height: 48px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>{{ it.photoLabel }}
+                        </button>
+                      </div>
+                    </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </section>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 2: HM, BBM, SERVIS ===== -->
+    <sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}">
+      <div class="fade-up" style="display: flex; flex-direction: column; gap: 36px">
+        <section style="display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Hour meter & odometer</h2>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <label for="hm" style="font-size: 14px; font-weight: 500">HM awal <span style="color: var(--danger)">*</span></label>
+            <div class="field" data-invalid="{{ hmInvalid }}" style="display: flex; align-items: center; height: 56px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid {{ hmBorder }}; background: var(--background)">
+              <input id="hm" value="{{ hm }}" onChange="{{ onHm }}" inputmode="decimal" autocomplete="off" placeholder="12.480,5" class="tnum" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 20px; font-weight: 600; letter-spacing: -0.01em">
+              <span style="font-size: 15px; color: var(--muted-foreground)">jam</span>
+            </div>
+            <span class="tnum" style="font-size: 13px; line-height: 18px; color: {{ hmMsgColor }}; font-weight: {{ hmMsgWeight }}">{{ hmMsg }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <label for="km" style="font-size: 14px; font-weight: 500">KM awal</label>
+              <div class="field" style="display: flex; align-items: center; height: 52px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background)">
+                <input id="km" value="{{ km }}" onChange="{{ onKm }}" inputmode="numeric" autocomplete="off" placeholder="84.210" class="tnum" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 17px">
+                <span style="font-size: 14px; color: var(--muted-foreground)">km</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 14px; font-weight: 500; color: var(--muted-foreground)">HM akhir</span>
+              <div style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 12px; border-radius: 10px; background: var(--muted); color: var(--muted-foreground); font-size: 14px; border: var(--bw) solid {{ hcLine }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Akhir shift
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">BBM</h2>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span id="bbm-l" style="font-size: 14px; font-weight: 500">Level tangki <span style="color: var(--danger)">*</span></span>
+            <div role="radiogroup" aria-labelledby="bbm-l" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); border: var(--bw) solid {{ hcLine }}">
+              <sc-for list="{{ levels }}" as="l" hint-placeholder-count="4">
+                <button type="button" role="radio" aria-checked="{{ l.on }}" class="press" onClick="{{ l.pick }}" style="height: 52px; border: var(--bw) solid {{ l.border }}; border-radius: 9px; background: {{ l.bg }}; box-shadow: {{ l.shadow }}; color: {{ l.fg }}; font: inherit; font-size: 16px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+                  {{ l.label }}
+                  <span style="width: 28px; height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{ l.pct }}%; background: {{ l.bar }}"></span></span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; gap: 12px">
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span id="refuel-l" style="font-size: 16px; font-weight: 500">Isi BBM sebelum operasi</span>
+              <span style="font-size: 13px; color: var(--muted-foreground)">Catat liter dari fuel truck</span>
+            </span>
+            <button type="button" role="switch" aria-checked="{{ refuel }}" aria-labelledby="refuel-l" onClick="{{ toggleRefuel }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center; flex-shrink: 0">
+              <span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; border: var(--bw) solid {{ hcLine }}; padding: 3px; background: {{ switchBg }}; display: flex; align-items: center; transition: background-color 150ms">
+                <span style="width: 26px; height: 26px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ switchX }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span>
+              </span>
+            </button>
+          </div>
+          <div class="collapse" data-open="{{ refuel }}">
+            <div>
+              <sc-if value="{{ refuelOn }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 2px">
+                <label for="liter" style="font-size: 14px; font-weight: 500">Jumlah isi</label>
+                <div class="field" style="display: flex; align-items: center; height: 52px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background)">
+                  <input id="liter" value="{{ liter }}" onChange="{{ onLiter }}" inputmode="decimal" placeholder="0" class="tnum" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 17px">
+                  <span style="font-size: 14px; color: var(--muted-foreground)">liter</span>
+                </div>
+              </div>
+              </sc-if>
+            </div>
+          </div>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Servis</h2>
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 14px; background: var(--info-soft); border: var(--bw) solid {{ hcInfoBorder }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 20px">
+              <strong style="font-weight: 600">PM 500 jam di HM 12.500</strong>
+              <span class="tnum" style="color: var(--muted-foreground)">± {{ pmLeft }} jam lagi · servis terakhir 28 Sep (PM 250)</span>
+            </span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span id="sv-l" style="font-size: 14px; font-weight: 500">Ada servis / perbaikan sejak P2H terakhir?</span>
+            <div role="radiogroup" aria-labelledby="sv-l" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); border: var(--bw) solid {{ hcLine }}">
+              <sc-for list="{{ svcOpts }}" as="o" hint-placeholder-count="2">
+                <button type="button" role="radio" aria-checked="{{ o.on }}" class="press" onClick="{{ o.pick }}" style="height: 52px; border: var(--bw) solid {{ o.border }}; border-radius: 9px; background: {{ o.bg }}; box-shadow: {{ o.shadow }}; color: {{ o.fg }}; font: inherit; font-size: 16px; font-weight: 600">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div class="collapse" data-open="{{ svcYes }}">
+            <div>
+              <sc-if value="{{ svcYesOn }}" hint-placeholder-val="{{ false }}">
+              <textarea value="{{ svcNote }}" onChange="{{ onSvcNote }}" aria-label="Keterangan servis" rows="2" placeholder="Contoh: ganti filter udara oleh mekanik shift malam" class="field" style="width: 100%; box-sizing: border-box; min-height: 76px; padding: 12px 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; line-height: 22px; resize: none; outline: 0"></textarea>
+              </sc-if>
+            </div>
+          </div>
+        </section>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 3: FOTO ===== -->
+    <sc-if value="{{ s3 }}" hint-placeholder-val="{{ false }}">
+      <div class="fade-up" style="display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Foto lampiran</h2>
+          <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">2 foto wajib. Foto dikompres ± 300 KB agar tetap terkirim di sinyal lemah.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{ photos }}" as="p" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="position: relative; height: 150px; border-radius: 14px; overflow: hidden; background: {{ p.tileBg }}; border: {{ p.tileBorder }}">
+                <sc-if value="{{ p.isEmpty }}" hint-placeholder-val="{{ true }}">
+                  <button type="button" class="press" onClick="{{ p.take }}" aria-label="Ambil foto {{ p.label }}" style="position: absolute; inset: 0; border: 0; background: transparent; color: var(--foreground); font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px">
+                    <span style="width: 48px; height: 48px; border-radius: 999px; background: var(--card); box-shadow: var(--shadow-2); display: flex; align-items: center; justify-content: center">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                    </span>
+                    <span style="font-size: 14px; font-weight: 600">Ambil foto</span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{ p.hasImage }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ p.isHm }}" hint-placeholder-val="{{ false }}">
+                    <div style="position: absolute; inset: 0; background: #111113; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+                      <span class="mono tnum" style="font-size: 26px; color: #E8FFE8; letter-spacing: 0.08em; padding: 6px 10px; border-radius: 6px; background: #1E2A1E">12481.0</span>
+                      <span class="mono" style="font-size: 11px; color: #A1A1AA">HOUR METER</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ p.isPhoto }}" hint-placeholder-val="{{ true }}">
+                    <img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="{{ p.label }}" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: {{ p.pos }}">
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ p.isUploading }}" hint-placeholder-val="{{ false }}">
+                  <div style="position: absolute; left: 10px; right: 10px; bottom: 10px; height: 28px; border-radius: 8px; background: rgba(10,10,10,.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; padding: 0 10px; color: #FFFFFF; font-size: 12px">
+                    <span style="flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,.25); overflow: hidden"><span style="display: block; height: 100%; width: {{ p.progress }}%; background: #F4D435; transition: width 120ms linear"></span></span>
+                    <span class="tnum">{{ p.progress }}%</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isQueued }}" hint-placeholder-val="{{ false }}">
+                  <div style="position: absolute; left: 10px; right: 10px; bottom: 10px; min-height: 28px; border-radius: 8px; background: rgba(10,10,10,.72); display: flex; align-items: center; gap: 6px; padding: 4px 10px; color: #FFFFFF; font-size: 12px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FB923C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Antre, unggah saat online
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isFailed }}" hint-placeholder-val="{{ false }}">
+                  <div class="fade" style="position: absolute; inset: 0; background: rgba(10,10,10,.66); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #FFFFFF; text-align: center; padding: 10px">
+                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>Gagal mengunggah</span>
+                    <button type="button" class="press" onClick="{{ p.retry }}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: #FFFFFF; color: #0A0A0A; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Coba lagi
+                    </button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isDone }}" hint-placeholder-val="{{ false }}">
+                  <span class="pop" style="position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; border-radius: 999px; background: #15803D; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px rgba(255,255,255,.9)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  </span>
+                  <button type="button" class="press" onClick="{{ p.remove }}" aria-label="Hapus foto {{ p.label }}" style="position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center">
+                    <span style="width: 28px; height: 28px; border-radius: 999px; background: rgba(10,10,10,.7); color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </span>
+                  </button>
+                </sc-if>
+              </div>
+              <span style="display: flex; flex-direction: column; gap: 1px; padding: 0 2px">
+                <span style="font-size: 14px; font-weight: 500">{{ p.label }}</span>
+                <span style="font-size: 12px; color: {{ p.metaColor }}; font-weight: {{ p.metaWeight }}">{{ p.meta }}</span>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 4: REVIEW ===== -->
+    <sc-if value="{{ s4 }}" hint-placeholder-val="{{ false }}">
+      <div class="fade-up" style="display: flex; flex-direction: column; gap: 28px">
+        <div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 16px; background: {{ resultBg }}; border: var(--bw) solid {{ resultBorder }}">
+          <span style="width: 40px; height: 40px; border-radius: 999px; background: {{ resultFg }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <sc-if value="{{ layak }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+            <sc-if value="{{ tidakLayak }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></sc-if>
+          </span>
+          <span style="display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 13px; color: var(--muted-foreground)">Perkiraan hasil</span>
+            <strong style="font-size: 20px; font-weight: 600; letter-spacing: -0.015em; color: {{ resultFg }}">{{ resultLabel }}</strong>
+            <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">{{ resultDesc }}</span>
+          </span>
+        </div>
+
+        <section style="display: flex; flex-direction: column">
+          <sc-for list="{{ summary }}" as="r" hint-placeholder-count="7">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 0; border-top: var(--bw) solid var(--border)">
+              <span style="width: 108px; font-size: 14px; color: var(--muted-foreground); flex-shrink: 0">{{ r.k }}</span>
+              <span class="tnum" style="flex: 1; min-width: 0; font-size: 16px; font-weight: 500">{{ r.v }}</span>
+              <sc-if value="{{ r.edit }}" hint-placeholder-val="{{ false }}">
+                <button type="button" class="press hl" onClick="{{ r.edit }}" style="height: 44px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Ubah</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </section>
+
+        <sc-if value="{{ hasRusak }}" hint-placeholder-val="{{ false }}">
+          <section style="display: flex; flex-direction: column; gap: 10px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 600">Akan menjadi temuan ({{ rusakCount }})</h2>
+            <sc-for list="{{ rusakList }}" as="r" hint-placeholder-count="1">
+              <div style="display: flex; gap: 12px; padding: 14px; border-radius: 14px; background: var(--muted-2); border: var(--bw) solid var(--border)">
+                <span style="width: 8px; height: 8px; border-radius: 9px; background: {{ r.dot }}; margin-top: 7px; flex-shrink: 0"></span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+                  <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+                    <strong style="font-size: 16px; font-weight: 600">{{ r.name }}</strong>
+                    <sc-if value="{{ r.critical }}" hint-placeholder-val="{{ false }}"><span style="height: 20px; padding: 0 6px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; display: inline-flex; align-items: center; border: var(--bw) solid {{ hcDangerBorder }}">KRITIS</span></sc-if>
+                  </span>
+                  <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">{{ r.note }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </section>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 5: TANDA TANGAN ===== -->
+    <sc-if value="{{ s5 }}" hint-placeholder-val="{{ false }}">
+      <div class="fade-up" style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Tanda tangan driver</h2>
+          <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Budi Santoso · NRP 20231045</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="position: relative; height: 172px; border-radius: 14px; background: var(--muted-2); border: {{ sigBorder }}; overflow: hidden">
+            <svg viewBox="0 0 760 340" preserveAspectRatio="xMidYMid meet" onPointerDown="{{ sigDown }}" onPointerMove="{{ sigMove }}" onPointerUp="{{ sigUp }}" onPointerCancel="{{ sigUp }}" role="img" aria-label="Area tanda tangan" style="position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair">
+              <line x1="60" y1="262" x2="700" y2="262" stroke="var(--border)" stroke-width="3" stroke-dasharray="10 10"/>
+              <path d="{{ sigPath }}" fill="none" stroke="var(--foreground)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <sc-if value="{{ sigEmpty }}" hint-placeholder-val="{{ true }}">
+              <span style="position: absolute; left: 0; right: 0; top: 58px; text-align: center; font-size: 15px; color: var(--muted-foreground); pointer-events: none">Tanda tangan di sini</span>
+            </sc-if>
+            <span style="position: absolute; left: 22px; bottom: 26px; font-size: 18px; color: var(--muted-foreground); pointer-events: none" aria-hidden="true">×</span>
+          </div>
+          <div style="display: flex; gap: 8px">
+            <button type="button" class="press" onClick="{{ sigClear }}" disabled="{{ sigEmpty }}" style="flex: 1; height: 48px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; opacity: {{ sigClearOpacity }}; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>Ulangi
+            </button>
+            <button type="button" class="press" onClick="{{ sigOpenFull }}" style="flex: 1; height: 48px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>Layar penuh
+            </button>
+          </div>
+        </div>
+        <label style="display: flex; gap: 12px; align-items: flex-start; min-height: 48px; cursor: pointer">
+          <input type="checkbox" checked="{{ agree }}" onChange="{{ toggleAgree }}" style="width: 22px; height: 22px; margin: 1px 0 0; accent-color: #0A0A0A; flex-shrink: 0">
+          <span style="font-size: 15px; line-height: 22px">Saya menyatakan pemeriksaan ini saya lakukan sendiri dan datanya benar.</span>
+        </label>
+        <div style="display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 14px; background: var(--muted-2); border: var(--bw) solid var(--border)">
+          <span style="width: 40px; height: 40px; border-radius: 999px; background: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0">HW</span>
+          <span style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 20px">
+            <span><span style="color: var(--muted-foreground)">Diteruskan ke</span> <strong style="font-weight: 600">Hendra Wijaya</strong></span>
+            <span style="color: var(--muted-foreground)">Eskalasi ke semua Manager site bila belum disetujui dalam 15 menit.</span>
+          </span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== STEP 6: SUKSES ===== -->
+    <sc-if value="{{ s6 }}" hint-placeholder-val="{{ false }}">
+      <div style="min-height: 690px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; padding: 56px 4px 0">
+        <div style="position: relative; width: 112px; height: 112px">
+          <span class="ring" style="position: absolute; inset: 0; border-radius: 999px; background: {{ resultFg }}"></span>
+          <span class="pop" style="position: absolute; inset: 0; border-radius: 999px; background: {{ resultFg }}; display: flex; align-items: center; justify-content: center">
+            <sc-if value="{{ layak }}" hint-placeholder-val="{{ true }}">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="draw" d="M20 6 9 17l-5-5"/></svg>
+            </sc-if>
+            <sc-if value="{{ tidakLayak }}" hint-placeholder-val="{{ false }}">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="draw" d="M12 7v6"/><path class="draw" d="M12 17h.01"/></svg>
+            </sc-if>
+          </span>
+        </div>
+        <div class="fade-up" style="display: flex; flex-direction: column; gap: 8px; animation-delay: 240ms">
+          <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.025em">{{ doneTitle }}</h1>
+          <p style="margin: 0; font-size: 16px; line-height: 24px; color: var(--muted-foreground); text-wrap: pretty">{{ doneDesc }}</p>
+        </div>
+        <div class="fade-up" style="width: 100%; display: flex; flex-direction: column; animation-delay: 360ms; text-align: left">
+          <sc-for list="{{ doneRows }}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-top: var(--bw) solid var(--border)">
+              <span style="font-size: 15px; color: var(--muted-foreground)">{{ r.k }}</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: {{ r.bg }}; color: {{ r.fg }}; font-size: 13px; font-weight: 600; border: var(--bw) solid {{ r.hcBorder }}"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div class="fade-up" style="margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 10px; animation-delay: 480ms">
+          <a href="BerandaDriver.dc.html" class="press" style="height: 56px; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Kembali ke Beranda</a>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+            <button type="button" class="press" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">{{ secondaryLabel }}</button>
+            <button type="button" class="press" onClick="{{ restart }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Ulangi demo</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- ========== STICKY CTA ========== -->
+  <sc-if value="{{ showCta }}" hint-placeholder-val="{{ true }}">
+    <div class="blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 12px 16px max(20px, env(safe-area-inset-bottom)); border-top: var(--bw) solid {{ hcLine }}; display: flex; flex-direction: column; gap: 8px">
+      <sc-if value="{{ ctaHint }}" hint-placeholder-val="{{ false }}">
+        <span class="tnum" style="font-size: 13px; text-align: center; color: var(--muted-foreground)">{{ ctaHint }}</span>
+      </sc-if>
+      <button type="button" class="press" onClick="{{ next }}" aria-disabled="{{ ctaDisabled }}" style="height: 56px; border: 0; border-radius: 12px; background: {{ ctaBg }}; color: {{ ctaFg }}; font: inherit; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background-color 150ms, color 150ms">
+        <sc-if value="{{ sending }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></sc-if>
+        {{ ctaLabel }}
+      </button>
+    </div>
+  </sc-if>
+
+  <!-- ========== TOAST ========== -->
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: {{ toastBottom }}px; z-index: 8; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <span style="flex: 1">{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}">
+        <button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ========== SIGNATURE FULLSCREEN ========== -->
+  <sc-if value="{{ sigFull }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" role="dialog" aria-modal="true" aria-label="Tanda tangan layar penuh" style="position: absolute; inset: 0; z-index: 20; background: var(--background); overflow: hidden">
+      <div style="position: absolute; left: 50%; top: 50%; width: 820px; height: 374px; transform: translate(-50%, -50%) rotate(90deg); display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; box-sizing: border-box">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <strong style="flex: 1; font-size: 17px; font-weight: 600">Tanda tangan · Budi Santoso</strong>
+          <button type="button" class="press" onClick="{{ sigClear }}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Ulangi</button>
+          <button type="button" class="press" onClick="{{ sigCloseFull }}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600">Selesai</button>
+        </div>
+        <div style="position: relative; flex: 1; border-radius: 14px; background: var(--muted-2); border: var(--bw) solid var(--border); overflow: hidden">
+          <svg viewBox="0 0 760 340" preserveAspectRatio="none" onPointerDown="{{ sigDownR }}" onPointerMove="{{ sigMoveR }}" onPointerUp="{{ sigUp }}" onPointerCancel="{{ sigUp }}" role="img" aria-label="Area tanda tangan layar penuh" style="position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair">
+            <line x1="60" y1="262" x2="700" y2="262" stroke="var(--border)" stroke-width="2" stroke-dasharray="10 10"/>
+            <path d="{{ sigPath }}" fill="none" stroke="var(--foreground)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mulai":{"editor":"enum","options":["Pilih unit","Checklist","HM & BBM","Foto","Review","Tanda tangan","Sukses — Layak","Sukses — Tidak Layak"],"default":"Pilih unit"},"offline":{"editor":"boolean","default":false},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"reducedMotion":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.CATS = [
+      { name: 'Keselamatan', items: [
+        { id: 'rem', name: 'Rem utama', hint: 'Uji jalan pelan, tidak menarik ke satu sisi', critical: true },
+        { id: 'parkir', name: 'Rem parkir', hint: 'Unit tertahan di tanjakan ringan', critical: true },
+        { id: 'kemudi', name: 'Kemudi', hint: 'Tidak berat, tidak ada jarak main berlebih', critical: true },
+        { id: 'sabuk', name: 'Sabuk pengaman', hint: 'Terkunci dan tidak sobek', critical: true },
+        { id: 'alarm', name: 'Klakson & alarm mundur', hint: 'Terdengar jelas dari 10 m', critical: true },
+        { id: 'apar', name: 'APAR', hint: 'Tersedia, segel utuh, jarum di hijau', critical: false }
+      ]},
+      { name: 'Mesin & cairan', items: [
+        { id: 'oli', name: 'Oli mesin', hint: 'Level di antara L–H pada dipstick', critical: false },
+        { id: 'radiator', name: 'Air radiator', hint: 'Level cukup, tutup rapat', critical: false },
+        { id: 'hidrolik', name: 'Oli hidrolik', hint: 'Level di sight gauge', critical: false },
+        { id: 'bocor', name: 'Kebocoran oli / BBM / air', hint: 'Cek bawah unit dan sambungan selang', critical: true }
+      ]},
+      { name: 'Lampu & kelistrikan', items: [
+        { id: 'lampu', name: 'Lampu utama', hint: 'Dekat dan jauh menyala', critical: false },
+        { id: 'sein', name: 'Lampu rem & sein', hint: 'Kiri, kanan, belakang', critical: false },
+        { id: 'rotary', name: 'Lampu rotary', hint: 'Menyala dan berputar', critical: false },
+        { id: 'wiper', name: 'Wiper & kaca depan', hint: 'Tidak retak, wiper menyapu bersih', critical: false }
+      ]},
+      { name: 'Ban, kabin & komunikasi', items: [
+        { id: 'ban', name: 'Ban & mur roda', hint: 'Tidak sobek, mur lengkap dan kencang', critical: true },
+        { id: 'spion', name: 'Spion', hint: 'Lengkap dan tersetel', critical: false },
+        { id: 'tangga', name: 'Tangga & pegangan', hint: 'Kokoh, tidak licin', critical: false },
+        { id: 'radio', name: 'Radio komunikasi', hint: 'Uji panggil ke dispatcher', critical: false }
+      ]}
+    ];
+    this.ORDER = this.CATS.flatMap((c) => c.items.map((i) => i.id));
+    this.ITEM = {};
+    this.CATS.forEach((c) => c.items.forEach((i) => { this.ITEM[i.id] = i; }));
+    this.strokes = [];
+    this.state = this.initial(props.mulai);
+  }
+  sampleSig() {
+    const a = [], b = [];
+    for (let x = 140; x <= 470; x += 8) a.push([x, 210 - 46 * Math.sin((x - 140) / 34) * Math.exp(-(x - 140) / 420) - (x - 140) * 0.12]);
+    for (let x = 430; x <= 640; x += 8) b.push([x, 232 - 28 * Math.sin((x - 430) / 22)]);
+    return [a, b];
+  }
+  initial(mulai) {
+    const m = mulai || 'Pilih unit';
+    const stepMap = { 'Pilih unit': 0, 'Checklist': 1, 'HM & BBM': 2, 'Foto': 3, 'Review': 4, 'Tanda tangan': 5, 'Sukses — Layak': 6, 'Sukses — Tidak Layak': 6 };
+    const step = stepMap[m] ?? 0;
+    const st = { step, unit: 'DT-1045', shift: 1, q: '', ans: {}, notes: {}, iphoto: {}, hm: '', km: '', level: '', refuel: false, liter: '', svc: '', svcNote: '', photos: { depan: 'empty', hm: 'empty' }, prog: { depan: 0, hm: 0 }, failed: {}, agree: false, sigTick: 0, sigFull: false, sending: false, saving: false, savedAt: '06:04', toast: null };
+    this.strokes = [];
+    if (step === 1) {
+      ['rem', 'parkir', 'kemudi', 'sabuk'].forEach((id) => { st.ans[id] = 'baik'; });
+      st.ans.alarm = 'rusak';
+      st.notes.alarm = 'Alarm mundur tidak berbunyi';
+    }
+    if (step >= 2) {
+      this.ORDER.forEach((id) => { st.ans[id] = 'baik'; });
+      st.ans.rotary = 'rusak'; st.notes.rotary = 'Lampu rotary mati, kemungkinan sekring putus'; st.iphoto.rotary = true;
+      if (m === 'Sukses — Tidak Layak') { st.ans.bocor = 'rusak'; st.notes.bocor = 'Rembesan oli di sambungan selang hidrolik sisi kiri'; st.iphoto.bocor = true; }
+    }
+    if (step >= 3) { st.hm = '12.481,0'; st.km = '84.215'; st.level = '3/4'; st.svc = 'tidak'; }
+    if (step >= 4) { st.photos = { depan: 'done', hm: 'done' }; st.prog = { depan: 100, hm: 100 }; st.failed = { hm: true }; }
+    if (step >= 5) { st.agree = step >= 6; }
+    if (step >= 6 || m === 'Tanda tangan') { if (step >= 6) this.strokes = this.sampleSig(); }
+    return st;
+  }
+  componentDidUpdate(prev) {
+    if (prev.mulai !== this.props.mulai) { this.setState(this.initial(this.props.mulai)); }
+    if (this.lastStep !== this.state.step) { this.lastStep = this.state.step; if (this.scroller) this.scroller.scrollTop = 0; }
+  }
+  componentWillUnmount() { clearTimeout(this.svT); clearTimeout(this.toT); Object.values(this.upT || {}).forEach(clearInterval); }
+  buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+  reduced() { return !!this.props.reducedMotion || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  touch(patch) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    this.setState({ ...patch, saving: true });
+    clearTimeout(this.svT);
+    this.svT = setTimeout(() => this.setState({ saving: false, savedAt: hh }), 600);
+  }
+  toast(text, undo) {
+    clearTimeout(this.toT);
+    this.setState({ toast: { text, undo } });
+    this.toT = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600);
+  }
+  parseNum(v) { if (!v) return NaN; return parseFloat(String(v).replace(/\./g, '').replace(',', '.')); }
+  fmt(n) { return n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  scrollToNext(fromId) {
+    const idx = this.ORDER.indexOf(fromId);
+    const ans = this.state.ans;
+    let nxt = null;
+    for (let i = idx + 1; i < this.ORDER.length; i++) { if (!ans[this.ORDER[i]]) { nxt = this.ORDER[i]; break; } }
+    if (!nxt) return;
+    setTimeout(() => {
+      const el = this.scroller && this.scroller.querySelector('#it-' + nxt);
+      if (el && this.scroller) {
+        const top = el.offsetTop - this.scroller.clientHeight / 2 + el.clientHeight / 2;
+        this.scroller.scrollTo({ top: Math.max(0, top), behavior: this.reduced() ? 'auto' : 'smooth' });
+      }
+    }, 160);
+  }
+  upload(id) {
+    this.upT = this.upT || {};
+    clearInterval(this.upT[id]);
+    if (this.props.offline) { this.touch({ photos: { ...this.state.photos, [id]: 'queued' } }); return; }
+    const willFail = id === 'hm' && !this.state.failed.hm;
+    this.setState({ photos: { ...this.state.photos, [id]: 'uploading' }, prog: { ...this.state.prog, [id]: 0 } });
+    this.upT[id] = setInterval(() => {
+      const p = this.state.prog[id] + 9;
+      if (willFail && p >= 63) {
+        clearInterval(this.upT[id]);
+        this.buzz([20, 40, 20]);
+        this.setState({ photos: { ...this.state.photos, [id]: 'failed' }, failed: { ...this.state.failed, [id]: true } });
+        return;
+      }
+      if (p >= 100) {
+        clearInterval(this.upT[id]);
+        this.touch({ photos: { ...this.state.photos, [id]: 'done' }, prog: { ...this.state.prog, [id]: 100 } });
+        return;
+      }
+      this.setState({ prog: { ...this.state.prog, [id]: p } });
+    }, 120);
+  }
+  sigPoint(e, rotated) {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (rotated) return [((e.clientY - r.top) / r.height) * 760, ((r.right - e.clientX) / r.width) * 340];
+    const scale = Math.min(r.width / 760, r.height / 340);
+    const ox = (r.width - 760 * scale) / 2, oy = (r.height - 340 * scale) / 2;
+    return [(e.clientX - r.left - ox) / scale, (e.clientY - r.top - oy) / scale];
+  }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const hc = theme === 'hc';
+    const offline = !!this.props.offline;
+    const ans = s.ans;
+    const answered = this.ORDER.filter((id) => ans[id]).length;
+    const total = this.ORDER.length;
+    const rusakIds = this.ORDER.filter((id) => ans[id] === 'rusak');
+    const missingNotes = rusakIds.filter((id) => !(s.notes[id] || '').trim()).length;
+    const critRusak = rusakIds.some((id) => this.ITEM[id].critical);
+    const layak = !critRusak;
+    const hmVal = this.parseNum(s.hm);
+    const LAST = 12480.5;
+    let hmMsg = 'Terakhir 12.480,5 · 15 Okt, Shift 1', hmMsgColor = 'var(--muted-foreground)', hmOk = false, hmErr = false;
+    if (s.hm) {
+      if (isNaN(hmVal)) { hmMsg = 'Masukkan angka, contoh 12.481,0'; hmMsgColor = 'var(--danger)'; hmErr = true; }
+      else if (hmVal < LAST) { hmMsg = 'HM tidak boleh lebih kecil dari HM terakhir (12.480,5).'; hmMsgColor = 'var(--danger)'; hmErr = true; }
+      else if (hmVal - LAST > 24) { hmMsg = 'Selisih ' + this.fmt(hmVal - LAST) + ' jam dari HM terakhir. Pastikan benar.'; hmMsgColor = 'var(--warning)'; hmOk = true; }
+      else { hmMsg = '+' + this.fmt(hmVal - LAST) + ' jam sejak P2H terakhir'; hmMsgColor = 'var(--success)'; hmOk = true; }
+    }
+    const photoOk = (id) => s.photos[id] === 'done' || s.photos[id] === 'queued';
+    const photosOk = photoOk('depan') && photoOk('hm');
+    const sigEmpty = this.strokes.length === 0;
+    const titles = ['Pilih unit & shift', 'Checklist', 'HM, BBM & servis', 'Foto', 'Review', 'Tanda tangan', 'Selesai'];
+    const step = s.step;
+    const stepFrac = [1, total ? answered / total : 0, (s.hm && s.level) ? 1 : 0.5, photosOk ? 1 : 0.5, 1, sigEmpty ? 0.5 : 1];
+    const segs = [0, 1, 2, 3, 4, 5].map((i) => ({
+      track: 'var(--muted)',
+      fill: i < step ? 100 : (i === step ? Math.max(8, Math.round(stepFrac[i] * 100)) : 0),
+      color: i < step ? 'var(--foreground)' : (hc ? '#000' : 'var(--brand)')
+    }));
+    const lineHc = hc ? '#000' : 'transparent';
+    const go = (n) => this.setState({ step: n });
+
+    // CTA per step
+    let ctaLabel = 'Lanjut', ctaOk = true, ctaHint = '';
+    if (step === 0) { ctaLabel = 'Mulai checklist'; ctaOk = !!s.unit; }
+    if (step === 1) {
+      if (answered < total) { ctaOk = false; ctaLabel = 'Jawab ' + (total - answered) + ' item lagi'; }
+      else if (missingNotes) { ctaOk = false; ctaLabel = 'Lengkapi catatan ' + missingNotes + ' item rusak'; }
+      else ctaLabel = 'Lanjut ke HM & BBM';
+    }
+    if (step === 2) { ctaOk = hmOk && !!s.level && (s.svc !== ''); ctaLabel = 'Lanjut ke foto'; if (!ctaOk) ctaHint = !hmOk ? 'Isi HM awal yang valid' : (!s.level ? 'Pilih level BBM' : 'Jawab pertanyaan servis'); }
+    if (step === 3) { ctaOk = photosOk; ctaLabel = 'Lanjut ke review'; if (!ctaOk) ctaHint = 'Foto unit & panel HM wajib'; }
+    if (step === 4) { ctaLabel = 'Lanjut tanda tangan'; }
+    if (step === 5) { ctaOk = !sigEmpty && s.agree && !s.sending; ctaLabel = s.sending ? 'Mengirim…' : (offline ? 'Simpan, kirim saat online' : 'Kirim P2H'); if (!ctaOk && !s.sending) ctaHint = sigEmpty ? 'Tanda tangan diperlukan' : 'Centang pernyataan'; }
+
+    const unitsRaw = [
+      { code: 'DT-1045', sub: 'Dump Truck 90 t · Pit A', status: 'Ready', assigned: true },
+      { code: 'DT-1022', sub: 'Dump Truck 90 t · Pit A', status: 'Ready' },
+      { code: 'EX-2001', sub: 'Excavator 200 t · Pit A', status: 'Ready' },
+      { code: 'LV-031', sub: 'Light Vehicle 4×4 · Pit A', status: 'Ready', filled: { 1: 'Terisi 05:52' } },
+      { code: 'GR-012', sub: 'Motor Grader · Hauling Road', status: 'PM', filled: { 2: 'Terisi 18:05' } }
+    ];
+    const q = s.q.trim().toLowerCase();
+    const units = unitsRaw.filter((u) => !q || (u.code + ' ' + u.sub).toLowerCase().includes(q)).map((u) => {
+      const lockedTxt = u.filled && u.filled[s.shift];
+      const on = s.unit === u.code && !lockedTxt;
+      const pill = lockedTxt ? lockedTxt : u.status;
+      const kind = lockedTxt ? 'muted' : (u.status === 'Ready' ? 'success' : 'info');
+      return {
+        ...u, on, locked: !!lockedTxt, unlocked: !lockedTxt,
+        pill,
+        pillBg: kind === 'muted' ? 'var(--muted)' : 'var(--' + kind + '-soft)',
+        pillFg: kind === 'muted' ? 'var(--muted-foreground)' : 'var(--' + kind + ')',
+        pillBorder: hc ? 'currentColor' : 'transparent',
+        bw: on ? '2px' : 'var(--bw)', border: on ? 'var(--foreground)' : 'var(--border)',
+        radio: on ? 'var(--foreground)' : 'var(--input)', dot: on ? 1 : 0,
+        opacity: lockedTxt ? 0.55 : 1,
+        pick: () => {
+          if (lockedTxt) { this.buzz([20, 40, 20]); this.toast(u.code + ' sudah di-P2H pada Shift ' + s.shift + ' (' + lockedTxt.toLowerCase() + ').'); return; }
+          this.buzz(10); this.touch({ unit: u.code });
+        }
+      };
+    });
+    const shifts = [{ n: 1, label: 'Shift 1', time: '06:00–18:00' }, { n: 2, label: 'Shift 2', time: '18:00–06:00' }].map((x) => {
+      const on = s.shift === x.n;
+      return { ...x, on, bg: on ? 'var(--card)' : 'transparent', shadow: on ? 'var(--shadow-2)' : 'none', border: on && hc ? '#000' : 'transparent', pick: () => { this.buzz(10); this.touch({ shift: x.n }); } };
+    });
+
+    const cats = this.CATS.map((c) => {
+      const done = c.items.filter((i) => ans[i.id]).length;
+      return {
+        name: c.name, done, total: c.items.length,
+        countColor: done === c.items.length ? 'var(--success)' : 'var(--muted-foreground)',
+        items: c.items.map((i) => {
+          const a = ans[i.id];
+          const isBaik = a === 'baik', isRusak = a === 'rusak';
+          const note = s.notes[i.id] || '';
+          return {
+            ...i, domId: 'it-' + i.id, noteId: 'note-' + i.id,
+            isBaik, isRusak, open: isRusak ? 'true' : 'false', critRusak: isRusak && i.critical,
+            thumbX: isRusak ? '100%' : '0%', thumbOpacity: a ? 1 : 0,
+            thumbBg: isRusak ? 'var(--danger-soft)' : (isBaik ? 'var(--success-soft)' : 'var(--card)'),
+            thumbBorder: isRusak ? 'var(--danger)' : (isBaik ? 'var(--success)' : 'transparent'),
+            thumbBw: hc ? '2px' : '1.5px',
+            baikFg: isBaik ? 'var(--success)' : (a ? 'var(--muted-foreground)' : 'var(--foreground)'),
+            rusakFg: isRusak ? 'var(--danger)' : (a ? 'var(--muted-foreground)' : 'var(--foreground)'),
+            note, noteBorder: isRusak && !note.trim() ? 'var(--warning)' : 'var(--input)',
+            hasPhoto: !!s.iphoto[i.id], photoLabel: s.iphoto[i.id] ? 'Ganti foto' : 'Tambah foto',
+            photoPos: i.id === 'bocor' ? '30% 70%' : '78% 40%',
+            setBaik: () => {
+              if (ans[i.id] === 'baik') return;
+              const prevA = ans[i.id], prevNote = s.notes[i.id], prevPhoto = s.iphoto[i.id];
+              this.buzz(10);
+              this.touch({ ans: { ...this.state.ans, [i.id]: 'baik' } });
+              if (prevA === 'rusak' && (prevNote || prevPhoto)) {
+                this.toast('Catatan ' + i.name.toLowerCase() + ' dihapus', () => this.touch({ ans: { ...this.state.ans, [i.id]: 'rusak' } }));
+              } else this.scrollToNext(i.id);
+            },
+            setRusak: () => { if (ans[i.id] === 'rusak') return; this.buzz(i.critical ? [15, 60, 15] : 10); this.touch({ ans: { ...this.state.ans, [i.id]: 'rusak' } }); },
+            onNote: (e) => this.touch({ notes: { ...this.state.notes, [i.id]: e.target.value } }),
+            togglePhoto: () => { this.buzz(10); this.touch({ iphoto: { ...this.state.iphoto, [i.id]: true } }); this.toast('Foto ' + i.name.toLowerCase() + ' tersimpan'); }
+          };
+        })
+      };
+    });
+
+    const lvls = [['1/4', '¼', 25], ['1/2', '½', 50], ['3/4', '¾', 75], ['penuh', 'Penuh', 100]];
+    const levels = lvls.map(([k, label, pct]) => {
+      const on = s.level === k;
+      return { label, pct, on, bg: on ? 'var(--card)' : 'transparent', shadow: on ? 'var(--shadow-2)' : 'none', border: on && hc ? '#000' : 'transparent', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', bar: pct <= 25 ? 'var(--danger)' : 'var(--foreground)', pick: () => { this.buzz(10); this.touch({ level: k }); } };
+    });
+    const svcOpts = [['tidak', 'Tidak'], ['ya', 'Ya']].map(([k, label]) => {
+      const on = s.svc === k;
+      return { label, on, bg: on ? 'var(--card)' : 'transparent', shadow: on ? 'var(--shadow-2)' : 'none', border: on && hc ? '#000' : 'transparent', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => { this.buzz(10); this.touch({ svc: k }); } };
+    });
+
+    const photoDefs = [
+      { id: 'depan', label: 'Unit tampak depan', req: true, pos: '50% 50%' },
+      { id: 'hm', label: 'Panel HM / odometer', req: true, hmTile: true }
+    ];
+    rusakIds.filter((id) => s.iphoto[id]).forEach((id) => photoDefs.push({ id: 'i-' + id, label: this.ITEM[id].name + ' (rusak)', item: true, pos: id === 'bocor' ? '30% 70%' : '78% 40%' }));
+    const photos = photoDefs.map((d) => {
+      const st = d.item ? 'done' : s.photos[d.id];
+      const prog = d.item ? 100 : s.prog[d.id];
+      const hasImage = st !== 'empty';
+      const meta = { empty: d.req ? 'Wajib' : '', uploading: 'Mengunggah…', failed: 'Gagal · sinyal lemah', done: d.item ? 'Dari checklist' : 'Terunggah · 284 KB', queued: 'Antre di perangkat' }[st];
+      return {
+        ...d, isEmpty: st === 'empty', hasImage, isHm: !!d.hmTile, isPhoto: !d.hmTile,
+        isUploading: st === 'uploading', isFailed: st === 'failed', isDone: st === 'done' && !d.item, isQueued: st === 'queued', progress: prog,
+        tileBg: st === 'empty' ? 'var(--muted-2)' : '#18181B',
+        tileBorder: st === 'empty' ? (hc ? '2px dashed #000' : '1.5px dashed var(--input)') : 'none',
+        meta, metaColor: st === 'failed' ? 'var(--danger)' : (st === 'empty' && d.req ? 'var(--warning)' : 'var(--muted-foreground)'), metaWeight: st === 'failed' || (st === 'empty' && d.req) ? 600 : 400,
+        take: () => { this.buzz(10); this.upload(d.id); },
+        retry: () => { this.buzz(10); this.upload(d.id); },
+        remove: () => {
+          const prev = s.photos[d.id];
+          this.touch({ photos: { ...this.state.photos, [d.id]: 'empty' } });
+          this.toast('Foto ' + d.label.toLowerCase() + ' dihapus', () => this.touch({ photos: { ...this.state.photos, [d.id]: prev } }));
+        }
+      };
+    });
+
+    const lvlLabel = { '1/4': '¼', '1/2': '½', '3/4': '¾', penuh: 'Penuh' }[s.level] || '—';
+    const summary = [
+      { k: 'Unit', v: s.unit + ' · Shift ' + s.shift, edit: () => go(0) },
+      { k: 'Checklist', v: (total - rusakIds.length) + ' Baik · ' + rusakIds.length + ' Rusak', edit: () => go(1) },
+      { k: 'HM awal', v: s.hm ? s.hm + ' jam' : '—', edit: () => go(2) },
+      { k: 'KM awal', v: s.km ? s.km + ' km' : '—', edit: null },
+      { k: 'BBM', v: lvlLabel + (s.refuel && s.liter ? ' · isi ' + s.liter + ' L' : ''), edit: null },
+      { k: 'Servis', v: s.svc === 'ya' ? 'Ada servis' : 'Tidak ada', edit: null },
+      { k: 'Foto', v: photos.filter((p) => p.hasImage).length + ' foto', edit: () => go(3) }
+    ];
+    const rusakList = rusakIds.map((id) => ({ name: this.ITEM[id].name, critical: this.ITEM[id].critical, note: s.notes[id] || 'Belum ada catatan', dot: this.ITEM[id].critical ? 'var(--danger)' : 'var(--warning)' }));
+
+    const pill = (kind) => ({ bg: 'var(--' + kind + '-soft)', fg: 'var(--' + kind + ')', hcBorder: hc ? 'currentColor' : 'transparent' });
+    const doneRows = offline
+      ? [{ k: 'Pengiriman', v: 'Antre di perangkat', ...pill('warning') }, { k: 'Hasil', v: layak ? 'Layak Pakai' : 'Tidak Layak', ...pill(layak ? 'success' : 'danger') }, { k: 'Status unit', v: layak ? 'Ready' : 'BD', ...pill(layak ? 'success' : 'danger') }]
+      : [{ k: 'Hasil', v: layak ? 'Layak Pakai' : 'Tidak Layak', ...pill(layak ? 'success' : 'danger') }, { k: 'Status unit', v: layak ? 'Ready' : 'BD', ...pill(layak ? 'success' : 'danger') }, { k: 'Persetujuan', v: 'Menunggu', ...pill('warning') }];
+
+    const sigPath = this.strokes.map((st) => st.length ? 'M' + st.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') : '').join(' ');
+    const sigStart = (e, rot) => { e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); this.drawing = true; this.strokes.push([this.sigPoint(e, rot)]); this.setState({ sigTick: s.sigTick + 1 }); };
+    const sigMove = (e, rot) => { if (!this.drawing) return; const st = this.strokes[this.strokes.length - 1]; st.push(this.sigPoint(e, rot)); this.setState({ sigTick: this.state.sigTick + 1 }); };
+
+    const toastOn = !!s.toast;
+    return {
+      theme, motion: this.props.reducedMotion ? 'reduced' : 'full', offline,
+      hcLine: lineHc, hcWarnBorder: hc ? 'var(--warning)' : 'transparent', hcInfoBorder: hc ? 'var(--info)' : 'transparent', hcDangerBorder: hc ? 'currentColor' : 'transparent',
+      showChrome: step < 6, showCta: step < 6, scrollPadTop: step < 6 ? 128 : 16,
+      isFirst: step === 0, notFirst: step > 0 && step < 6,
+      stepTitle: titles[step], stepNo: Math.min(step + 1, 6), unitCode: s.unit, shift: s.shift,
+      progressRight: step === 1 ? answered + '/' + total + ' item' : titles[step],
+      segs,
+      saving: s.saving, saved: !s.saving, saveLabel: s.saving ? 'Menyimpan' : (offline ? 'Draft lokal ' + s.savedAt : 'Draft ' + s.savedAt),
+      s0: step === 0, s1: step === 1, s2: step === 2, s3: step === 3, s4: step === 4, s5: step === 5, s6: step === 6,
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value }), units, shifts,
+      cats,
+      hm: s.hm, onHm: (e) => this.touch({ hm: e.target.value.replace(/[^0-9.,]/g, '') }), hmMsg, hmMsgColor, hmMsgWeight: hmErr ? 600 : 400, hmInvalid: hmErr ? 'true' : 'false',
+      hmBorder: hmErr ? 'var(--danger)' : (hmOk ? 'var(--success)' : 'var(--input)'),
+      km: s.km, onKm: (e) => this.touch({ km: e.target.value.replace(/[^0-9.]/g, '') }),
+      levels, refuel: s.refuel ? 'true' : 'false', refuelOn: !!s.refuel, svcYesOn: s.svc === 'ya', toggleRefuel: () => { this.buzz(10); this.touch({ refuel: !s.refuel }); },
+      switchBg: s.refuel ? (hc ? '#000' : 'var(--success)') : 'var(--input)', switchX: s.refuel ? 20 : 0,
+      liter: s.liter, onLiter: (e) => this.touch({ liter: e.target.value.replace(/[^0-9.,]/g, '') }),
+      pmLeft: isNaN(hmVal) || hmVal < LAST ? '19,5' : this.fmt(Math.max(0, 12500 - hmVal)),
+      svcOpts, svcYes: s.svc === 'ya' ? 'true' : 'false', svcNote: s.svcNote, onSvcNote: (e) => this.touch({ svcNote: e.target.value }),
+      photos,
+      layak, tidakLayak: !layak,
+      resultLabel: layak ? 'Layak Pakai' : 'Tidak Layak',
+      resultFg: layak ? 'var(--success)' : 'var(--danger)',
+      resultBg: layak ? 'var(--success-soft)' : 'var(--danger-soft)',
+      resultBorder: hc ? (layak ? 'var(--success)' : 'var(--danger)') : 'transparent',
+      resultDesc: layak ? (rusakIds.length ? rusakIds.length + ' item non-kritis rusak akan menjadi temuan. Unit tetap Ready.' : 'Semua item baik. Unit tetap Ready.') : 'Ada item kritis rusak. Unit otomatis berstatus BD setelah dikirim.',
+      summary, hasRusak: rusakIds.length > 0, rusakCount: rusakIds.length, rusakList,
+      sigPath, sigEmpty, sigClearOpacity: sigEmpty ? 0.45 : 1,
+      sigBorder: sigEmpty ? (hc ? '2px dashed #000' : '1.5px dashed var(--input)') : (hc ? '2px solid #000' : '1.5px solid var(--foreground)'),
+      sigDown: (e) => sigStart(e, false), sigMove: (e) => sigMove(e, false),
+      sigDownR: (e) => sigStart(e, true), sigMoveR: (e) => sigMove(e, true),
+      sigUp: () => { if (this.drawing) { this.drawing = false; this.touch({ sigTick: this.state.sigTick + 1 }); } },
+      sigClear: () => { this.strokes = []; this.touch({ sigTick: s.sigTick + 1 }); },
+      sigFull: s.sigFull, sigOpenFull: () => this.setState({ sigFull: true }), sigCloseFull: () => this.setState({ sigFull: false }),
+      agree: s.agree, toggleAgree: () => this.touch({ agree: !s.agree }),
+      doneTitle: offline ? 'P2H tersimpan' : (layak ? 'P2H terkirim' : 'P2H terkirim · Tidak Layak'),
+      doneDesc: offline
+        ? 'Tidak ada sinyal. P2H ' + s.unit + ' akan dikirim otomatis begitu perangkat online. Jangan hapus data aplikasi.'
+        : (layak ? s.unit + ' siap dipakai. Hendra W. akan meninjau P2H Anda.' : s.unit + ' otomatis BD sejak ' + s.savedAt + '. ' + rusakIds.length + ' temuan dibuat dan pengawas sudah diberi tahu. Jangan operasikan unit.'),
+      doneRows, secondaryLabel: layak ? 'Unduh PDF' : 'Lihat temuan',
+      restart: () => { this.strokes = []; this.setState(this.initial('Pilih unit')); },
+      ctaLabel, ctaHint, ctaDisabled: !ctaOk, sending: s.sending,
+      ctaBg: ctaOk || s.sending ? 'var(--primary)' : 'var(--muted)', ctaFg: ctaOk || s.sending ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+      next: () => {
+        if (!ctaOk) { this.buzz([20, 40, 20]); if (step === 1) { const first = this.ORDER.find((id) => !ans[id] || (ans[id] === 'rusak' && !(s.notes[id] || '').trim())); if (first) { const el = this.scroller && this.scroller.querySelector('#it-' + first); if (el) this.scroller.scrollTo({ top: el.offsetTop - 180, behavior: this.reduced() ? 'auto' : 'smooth' }); } } return; }
+        this.buzz(10);
+        if (step === 5) {
+          this.setState({ sending: true });
+          setTimeout(() => { this.buzz([10, 50, 30]); this.setState({ sending: false, step: 6 }); }, offline ? 500 : 1200);
+          return;
+        }
+        this.setState({ step: step + 1 });
+      },
+      back: () => this.setState({ step: Math.max(0, step - 1) }),
+      setScroller: (el) => { this.scroller = el; },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      toastBottom: step < 6 ? 108 : 24,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.toT); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

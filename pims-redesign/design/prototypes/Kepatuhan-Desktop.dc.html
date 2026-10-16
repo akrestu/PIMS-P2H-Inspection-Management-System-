@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Kepatuhan P2H (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Kepatuhan" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Kepatuhan P2H</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ rangeLabel }} · Pit A · 12 unit</span></div>
+      <div role="radiogroup" aria-label="Rentang" style="display: flex; padding: 3px; border-radius: 10px; background: var(--muted)">
+        <sc-for list="{{ ranges }}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: 600">{{ t.label }}</button></sc-for>
+      </div>
+      <button type="button" class="press" onClick="{{ exportIt }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Export</button>
+    </header>
+
+    <div class="tnum" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+        <div style="padding: 16px; border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: var(--muted-foreground)">{{ k.label }}</span><strong style="font-size: 28px; font-weight: 600; letter-spacing: -0.02em; color: {{ k.fg }}">{{ k.v }}</strong><span style="font-size: 12px; color: var(--muted-foreground)">{{ k.sub }}</span></div>
+      </sc-for>
+    </div>
+
+    <section style="border: 1px solid var(--border); border-radius: 14px; padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 6px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding-bottom: 8px">
+        <strong style="flex: 1; font-size: 15px; font-weight: 600">Per unit per hari</strong>
+        <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground)"><span style="width: 14px; height: 14px; border-radius: 4px; background: {{ l.bg }}; box-shadow: {{ l.ring }}"></span>{{ l.label }}</span></sc-for>
+      </div>
+      <div role="row" style="display: grid; grid-template-columns: 150px repeat({{ n }}, minmax(0, 1fr)) 72px; gap: 3px; align-items: end">
+        <button type="button" class="press" onClick="{{ sortCode }}" style="justify-self: start; height: 28px; padding: 0 4px; margin-left: -4px; border: 0; border-radius: 6px; background: transparent; color: {{ codeFg }}; font: inherit; font-size: 12px; font-weight: 600">Unit · driver {{ codeArrow }}</button>
+        <sc-for list="{{ days }}" as="d" hint-placeholder-count="30"><span class="tnum" style="text-align: center; font-size: 11px; line-height: 13px; color: {{ d.fg }}; font-weight: {{ d.w }}">{{ d.wd }}<br>{{ d.n }}</span></sc-for>
+        <button type="button" class="press" onClick="{{ sortPct }}" style="justify-self: end; height: 28px; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; color: {{ pctHFg }}; font: inherit; font-size: 12px; font-weight: 600">Patuh {{ pctArrow }}</button>
+      </div>
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+        <div style="display: grid; grid-template-columns: 150px repeat({{ n }}, minmax(0, 1fr)) 72px; gap: 3px; align-items: center">
+          <span style="display: flex; flex-direction: column; gap: 0; min-width: 0"><strong class="tnum" style="font-size: 14px; font-weight: 600">{{ r.code }}</strong><span style="font-size: 12px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ r.driver }}</span></span>
+          <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="30">
+            <span style="position: relative; display: block">
+              <button type="button" aria-label="{{ c.aria }}" onMouseEnter="{{ c.tipIn }}" onMouseLeave="{{ c.tipOut }}" onFocus="{{ c.tipIn }}" onBlur="{{ c.tipOut }}" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 28px; padding: 0; border: 0; border-radius: 5px; background: {{ c.bg }}; color: {{ c.fg }}; box-shadow: {{ c.ring }}">
+                <sc-if value="{{ c.isLate }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></sc-if>
+                <sc-if value="{{ c.isMiss }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></sc-if>
+              </button>
+              <sc-if value="{{ c.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; {{ c.side }}: 0; bottom: calc(100% + 6px); z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; line-height: 17px; white-space: nowrap; box-shadow: var(--shadow-2); pointer-events: none"><strong style="font-weight: 600">{{ c.tipT }}</strong><br>{{ c.tipS }}</span></sc-if>
+            </span>
+          </sc-for>
+          <span class="tnum" style="text-align: right; font-size: 14px; font-weight: 600; color: {{ r.pctFg }}">{{ r.pct }}%</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <strong style="font-size: 15px; font-weight: 600">Perlu perhatian</strong>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{ worst }}" as="w" hint-placeholder-count="3">
+          <div style="padding: 16px; border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; gap: 8px">
+            <span style="display: flex; align-items: baseline; gap: 8px"><strong class="tnum" style="font-size: 16px; font-weight: 600">{{ w.code }}</strong><span style="font-size: 13px; color: var(--muted-foreground)">{{ w.driver }}</span><span class="tnum" style="margin-left: auto; font-size: 15px; font-weight: 600; color: {{ w.pctFg }}">{{ w.pct }}%</span></span>
+            <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ w.detail }}</span>
+            <button type="button" class="press" onClick="{{ w.ping }}" style="align-self: flex-start; height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">{{ w.pingLabel }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 0 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Manager"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.UNITS = [['DT-1045', 'Budi S.'], ['DT-1022', 'Rudi H.'], ['DT-1031', 'Agus S.'], ['DT-1050', 'Joko W.'], ['EX-2001', 'Slamet R.'], ['EX-2003', 'Dedi K.'], ['LV-031', 'Andi P.'], ['LV-034', 'Rudi H.'], ['WT-007', 'Fajar N.'], ['DZ-015', 'Hadi T.'], ['GR-012', '—'], ['DT-1061', '—']];
+    let seed = 7;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    this.DATA = this.UNITS.map(([code]) => Array.from({ length: 30 }, (_, di) => {
+      if (code === 'GR-012' && di > 26) return 'off';
+      if (code === 'DT-1061' && di > 27) return 'off';
+      if (code === 'DT-1050' && di === 29) return 'ok';
+      const r = rnd();
+      const weak = code === 'LV-034' || code === 'WT-007' || code === 'DT-1031';
+      if (di === 29 && weak) return 'miss';
+      if (r < (weak ? 0.16 : 0.03)) return 'miss';
+      if (r < (weak ? 0.32 : 0.09)) return 'late';
+      if (r > 0.985) return 'off';
+      return 'ok';
+    }));
+    this.state = { range: 30, sort: 'pct', dir: 1, tip: null, pinged: {}, toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Manager';
+    const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const WD = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const dateOf = (di) => new Date(2026, 8, 17 + di);
+    const from = 30 - s.range;
+    const idx = Array.from({ length: s.range }, (_, i) => from + i);
+    const days = idx.map((di) => { const d = dateOf(di); const today = di === 29; return { n: d.getDate(), wd: WD[d.getDay()].slice(0, 1), fg: today ? 'var(--foreground)' : 'var(--muted-foreground)', w: today ? 700 : 500 }; });
+    const label = { ok: 'Tepat waktu', late: 'Terlambat', miss: 'Tidak P2H', off: 'BD/PM — tidak wajib' };
+    const times = { ok: ['05:41', '05:48', '05:52', '05:56', '06:02', '06:11'], late: ['06:38', '06:52', '07:15'] };
+    let ok = 0, late = 0, miss = 0;
+    let rows = this.UNITS.map(([code, driver], ui) => {
+      let rok = 0, rtot = 0, rl = 0, rm = 0;
+      const cells = idx.map((di, ci) => {
+        const v = this.DATA[ui][di];
+        if (v !== 'off') { rtot++; if (v === 'ok') { rok++; ok++; } if (v === 'late') { late++; rl++; } if (v === 'miss') { miss++; rm++; } }
+        const d = dateOf(di); const on = s.tip && s.tip[0] === ui && s.tip[1] === di;
+        const t = v === 'ok' ? times.ok[(ui + di) % 6] : v === 'late' ? times.late[(ui + di) % 3] : '';
+        return {
+          isLate: v === 'late', isMiss: v === 'miss',
+          bg: v === 'ok' ? 'var(--foreground)' : (v === 'late' ? 'var(--brand)' : (v === 'miss' ? 'var(--danger-soft)' : 'repeating-linear-gradient(135deg, var(--muted) 0 3px, var(--border) 3px 5px)')),
+          fg: v === 'ok' ? 'var(--background)' : (v === 'late' ? '#0A0A0A' : 'var(--danger)'),
+          ring: on ? '0 0 0 2px var(--background), 0 0 0 4px var(--foreground)' : (v === 'miss' ? 'inset 0 0 0 1px var(--danger)' : 'none'),
+          aria: code + ', ' + d.getDate() + ' ' + MON[d.getMonth()] + ': ' + label[v] + (t ? ' ' + t : ''),
+          tipOn: !!on, side: ci > s.range - 8 ? 'right' : 'left',
+          tipT: code + ' · ' + WD[d.getDay()] + ', ' + d.getDate() + ' ' + MON[d.getMonth()],
+          tipS: label[v] + (t ? ' · submit ' + t : '') + (v === 'late' ? ' (tenggat 06:30)' : '') + (v === 'miss' ? ' · ' + driver : ''),
+          tipIn: () => this.setState({ tip: [ui, di] }), tipOut: () => { if (this.state.tip && this.state.tip[0] === ui && this.state.tip[1] === di) this.setState({ tip: null }); }
+        };
+      });
+      const pct = rtot ? Math.round((rok / rtot) * 100) : 100;
+      return { code, driver, pct, rl, rm, pctFg: pct < 80 ? 'var(--danger)' : (pct < 95 ? 'var(--warning)' : 'var(--foreground)'), cells };
+    });
+    rows = rows.slice().sort((a, b) => s.sort === 'pct' ? (a.pct - b.pct) * s.dir || (a.code > b.code ? 1 : -1) : (a.code > b.code ? 1 : -1) * s.dir);
+    const tot = ok + late + miss;
+    const fmt = (x) => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',');
+    const worst = rows.filter((r) => r.driver !== '—').slice().sort((a, b) => a.pct - b.pct).slice(0, 3).map((r) => ({ ...r, detail: r.rm + '× tidak P2H · ' + r.rl + '× terlambat dalam ' + s.range + ' hari', pingLabel: s.pinged[r.code] ? 'Teguran terkirim ✓' : 'Kirim teguran ke ' + r.driver,
+      ping: () => { if (this.state.pinged[r.code]) return; this.setState({ pinged: { ...this.state.pinged, [r.code]: true } }); this.toast('Teguran WhatsApp terkirim ke ' + r.driver + ' · tercatat di Audit Log'); } }));
+    const d0 = dateOf(from), d1 = dateOf(29);
+    return {
+      theme, peran, n: s.range, days, rows, worst,
+      rangeLabel: d0.getDate() + ' ' + MON[d0.getMonth()] + ' – ' + d1.getDate() + ' ' + MON[d1.getMonth()] + ' 2026',
+      ranges: [7, 14, 30].map((k) => ({ label: k + ' hari', on: s.range === k, bg: s.range === k ? 'var(--card)' : 'transparent', shadow: s.range === k ? 'var(--shadow-2)' : 'none', fg: s.range === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ range: k, tip: null }) })),
+      kpis: [
+        { label: 'Kepatuhan armada', v: fmt(ok / tot * 100) + '%', sub: 'target ≥ 95%', fg: ok / tot < 0.95 ? 'var(--warning)' : 'var(--foreground)' },
+        { label: 'Tepat waktu', v: ok, sub: 'submit sebelum 06:30', fg: 'var(--foreground)' },
+        { label: 'Terlambat', v: late, sub: fmt(late / tot * 100) + '% dari wajib', fg: 'var(--foreground)' },
+        { label: 'Tidak P2H', v: miss, sub: fmt(miss / tot * 100) + '% · unit tetap beroperasi', fg: miss ? 'var(--danger)' : 'var(--foreground)' }
+      ],
+      legend: [['Tepat waktu', 'var(--foreground)', 'none'], ['Terlambat', 'var(--brand)', 'none'], ['Tidak P2H', 'var(--danger-soft)', 'inset 0 0 0 1px var(--danger)'], ['BD/PM (tidak wajib)', 'repeating-linear-gradient(135deg, var(--muted) 0 3px, var(--border) 3px 5px)', 'none']].map(([label, bg, ring]) => ({ label, bg, ring })),
+      sortPct: () => this.setState({ sort: 'pct', dir: s.sort === 'pct' ? -s.dir : 1 }), sortCode: () => this.setState({ sort: 'code', dir: s.sort === 'code' ? -s.dir : 1 }),
+      pctArrow: s.sort === 'pct' ? (s.dir > 0 ? '↑' : '↓') : '↕', codeArrow: s.sort === 'code' ? (s.dir > 0 ? '↑' : '↓') : '↕',
+      pctHFg: s.sort === 'pct' ? 'var(--foreground)' : 'var(--muted-foreground)', codeFg: s.sort === 'code' ? 'var(--foreground)' : 'var(--muted-foreground)',
+      exportIt: () => this.toast('Laporan kepatuhan ' + s.range + ' hari diunduh (Excel)'),
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

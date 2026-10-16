@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Masuk (Fokus)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.lc{position:relative;min-height:100vh;overflow:hidden;background:var(--muted-2);color:var(--foreground);font-family:'Geist',ui-sans-serif,system-ui,sans-serif;display:flex;flex-direction:column}
+.lc-mark{position:absolute;right:-180px;bottom:-180px;width:560px;opacity:.07;pointer-events:none}
+.lc-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
+.lc-main{position:relative;flex:1;display:flex;justify-content:center;align-items:flex-start;padding:8px 20px 20px}
+.lc-ticker{position:relative;padding:14px 20px 22px;display:flex;justify-content:center;gap:16px;font-size:12px;color:var(--muted-foreground);flex-wrap:wrap}
+@media (min-width:1024px){
+ .lc-top{padding:28px 48px}
+ .lc-main{align-items:center}
+ .lc-mark{right:-120px;bottom:-160px;width:760px}
+}
+</style>
+</helmet>
+<div class="pims lc" data-theme="{{ theme }}">
+  <header class="lc-top">
+    <span style="display: flex; align-items: center; gap: 10px"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 30px; height: 30px"><span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">PIMS</span></span>
+    <a href="Auth.dc.html" style="height: 40px; padding: 0 14px; border-radius: 999px; border: var(--bw) solid var(--border); background: var(--background); font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">Bantuan</a>
+  </header>
+  <main class="lc-main">
+    <dc-import name="LoginForm" theme="{{ theme }}" tone="ink" size="besar" align="left" surface="raised" hint-size="440px,620px"></dc-import>
+  </main>
+  <footer class="lc-ticker tnum"><span style="text-align: center">Jumat, 16 Okt 2026 · Shift 1 mulai 06:00 WITA · Batas P2H 06:30</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'light' }; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Masuk (Hero)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.la{min-height:100vh;display:grid;grid-template-columns:1fr;background:var(--background);color:var(--foreground);font-family:'Geist',ui-sans-serif,system-ui,sans-serif}
+.la-hero{position:relative;min-height:300px;overflow:hidden;color:#FAFAFA}
+.la-hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 40%}
+.la-hero .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,.35) 0%,rgba(10,10,10,.1) 40%,var(--background) 100%)}
+.la-copy{display:none}
+.la-form{position:relative;margin-top:-56px;padding:8px 24px 32px;display:flex;flex-direction:column;align-items:stretch;gap:24px}
+.la-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted-foreground)}
+@media (min-width:1024px){
+ .la{grid-template-columns:1.15fr 1fr}
+ .la-hero{min-height:100vh}
+ .la-hero .ov{background:linear-gradient(180deg,rgba(10,10,10,.25) 0%,rgba(10,10,10,.15) 35%,rgba(10,10,10,.88) 100%)}
+ .la-copy{display:flex;position:absolute;left:56px;right:56px;bottom:56px;flex-direction:column;gap:20px}
+ .la-form{margin:0;padding:40px 56px;justify-content:space-between;min-height:100vh;box-sizing:border-box}
+ .la-mid{flex:1;display:flex;align-items:center;justify-content:center}
+}
+</style>
+</helmet>
+<div class="pims la" data-theme="{{ theme }}">
+  <section class="la-hero" aria-hidden="true">
+    <img class="bg" src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="">
+    <div class="ov"></div>
+    <div style="position: absolute; top: 24px; left: 24px; display: flex; align-items: center; gap: 10px"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 34px; height: 34px"><span style="font-size: 19px; font-weight: 700; letter-spacing: -0.02em; text-shadow: 0 1px 8px rgba(0,0,0,.4)">PIMS</span></div>
+    <div class="la-copy">
+      <h2 style="margin: 0; font-size: 52px; line-height: 1.02; font-weight: 600; letter-spacing: -0.035em">P2H lebih cepat.<br>Unit lebih aman.</h2>
+      <p style="margin: 0; max-width: 460px; font-size: 17px; line-height: 26px; color: rgba(250,250,250,.78)">Pemeriksaan harian unit & alat berat dari HP — tetap jalan saat sinyal hilang, langsung sampai ke pengawas.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <span style="height: 36px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px"><span class="tnum" style="font-weight: 700; color: #F4D435">± 2 mnt</span>per P2H</span>
+        <span style="height: 36px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center">Tetap jalan saat offline</span>
+        <span style="height: 36px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center">Unit kritis otomatis BD</span>
+      </div>
+    </div>
+  </section>
+  <section class="la-form">
+    <div class="la-mid"><dc-import name="LoginForm" theme="{{ theme }}" tone="brand" size="normal" align="left" hint-size="400px,560px"></dc-import></div>
+    <div class="la-foot"><span>PIMS v1.0 · Bahasa Indonesia</span><a href="Auth.dc.html" style="text-decoration: none; font-weight: 600; color: var(--foreground)">Butuh bantuan?</a></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'light' }; }
+}
+</script>
+</body>
+</html>

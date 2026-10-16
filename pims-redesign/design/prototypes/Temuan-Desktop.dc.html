@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Temuan (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Temuan" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Temuan</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ sub }}</span></div>
+      <button type="button" class="press" onClick="{{ exportAll }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Export</button>
+    </header>
+
+    <div class="tnum" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+        <div style="padding: 16px; border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: var(--muted-foreground)">{{ k.label }}</span><strong style="font-size: 28px; font-weight: 600; letter-spacing: -0.02em; color: {{ k.fg }}">{{ k.v }}</strong><span style="font-size: 12px; color: var(--muted-foreground)">{{ k.sub }}</span></div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <div class="field" style="flex: 0 1 280px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="{{ q }}" onChange="{{ onQ }}" aria-label="Cari temuan" placeholder="Cari ID, unit, item" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px"></div>
+      <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4"><button type="button" class="press" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px">{{ c.label }}<span class="tnum" style="opacity: .7">{{ c.n }}</span></button></sc-for>
+      <span style="flex: 1"></span>
+      <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500"><input type="checkbox" checked="{{ critOnly }}" onChange="{{ toggleCrit }}" style="width: 16px; height: 16px; accent-color: #0A0A0A">Hanya kritis</label>
+    </div>
+
+    <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+      <table style="width: 100%; min-width: 980px; border-collapse: collapse; font-size: 14px">
+        <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+          <th style="width: 44px; padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih semua" checked="{{ allSel }}" onChange="{{ toggleAll }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></th>
+          <sc-for list="{{ cols }}" as="h" hint-placeholder-count="6"><th aria-sort="{{ h.aria }}" style="padding: 0 12px"><button type="button" class="press" onClick="{{ h.sort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: {{ h.fg }}; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap">{{ h.label }}<span style="opacity: {{ h.op }}">{{ h.arrow }}</span></button></th></sc-for>
+          <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">PJ</th>
+          <th style="padding: 0 14px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+            <tr style="border-top: 1px solid var(--border); height: 60px; background: {{ r.bg }}">
+              <td style="padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih {{ r.id }}" checked="{{ r.sel }}" onChange="{{ r.toggle }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></td>
+              <td class="mono tnum" style="padding: 0 12px; font-size: 13px; color: var(--muted-foreground)">{{ r.id }}</td>
+              <td style="padding: 0 12px"><strong class="tnum" style="font-weight: 600">{{ r.unit }}</strong></td>
+              <td style="padding: 0 12px"><span style="display: flex; align-items: center; gap: 8px"><img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="" style="width: 40px; height: 32px; border-radius: 6px; object-fit: cover; object-position: {{ r.pos }}; filter: {{ r.imgF }}; flex-shrink: 0"><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><span style="display: flex; align-items: center; gap: 6px"><span style="font-weight: 500">{{ r.title }}</span><sc-if value="{{ r.crit }}" hint-placeholder-val="{{ false }}"><span style="height: 18px; padding: 0 6px; border-radius: 5px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .03em; display: inline-flex; align-items: center">KRITIS</span></sc-if></span><span style="font-size: 12px; color: var(--muted-foreground)">{{ r.found }}</span></span></span></td>
+              <td class="tnum" style="padding: 0 12px; color: {{ r.dueFg }}; font-weight: {{ r.dueW }}; white-space: nowrap">{{ r.due }}</td>
+              <td style="padding: 0 12px"><span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; background: {{ r.sBg }}; color: {{ r.sFg }}; font-size: 12px; font-weight: 600; white-space: nowrap"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ r.stLabel }}</span></td>
+              <td class="tnum" style="padding: 0 12px; text-align: right">{{ r.age }}</td>
+              <td style="padding: 0 12px; position: relative"><button type="button" onMouseEnter="{{ r.tipIn }}" onMouseLeave="{{ r.tipOut }}" onFocus="{{ r.tipIn }}" onBlur="{{ r.tipOut }}" aria-label="PJ: {{ r.pj }}" style="width: 30px; height: 30px; border-radius: 999px; border: 0; background: var(--muted); color: var(--foreground); font: inherit; font-size: 11px; font-weight: 600">{{ r.pjInit }}</button>
+                <sc-if value="{{ r.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; right: 8px; bottom: calc(100% - 10px); z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; white-space: nowrap; box-shadow: var(--shadow-2)">{{ r.pj }}</span></sc-if></td>
+              <td style="padding: 0 14px; text-align: right"><button type="button" class="press" onClick="{{ r.open }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">Buka</button></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; text-align: center; color: var(--muted-foreground); font-size: 14px">Tidak ada temuan untuk filter ini.</div></sc-if>
+    </div>
+
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div class="toast-in" role="toolbar" aria-label="Aksi massal" style="position: sticky; bottom: 16px; align-self: center; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; box-shadow: var(--shadow-3)">
+        <span class="tnum" style="font-size: 14px; font-weight: 600; padding-right: 8px">{{ selN }} dipilih</span>
+        <sc-for list="{{ pjOpts }}" as="o" hint-placeholder-count="3"><button type="button" class="press" onClick="{{ o.pick }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FAFAFA; font: inherit; font-size: 13px; font-weight: 600">PJ → {{ o.label }}</button></sc-for>
+        <button type="button" class="press" onClick="{{ clearSel }}" aria-label="Batal pilih" style="width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: #FAFAFA; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ drawerOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" onClick="{{ closeDrawer }}" style="position: fixed; inset: 0; z-index: 30; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="dr-t" style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 31; width: min(540px, 100%); background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; animation: pims-fade 220ms var(--ease-out) both">
+      <div style="display: flex; align-items: flex-start; gap: 8px; padding: 16px 12px 16px 24px; border-bottom: 1px solid var(--border)">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="mono tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ d.id }} · {{ d.unit }}</span><strong id="dr-t" style="font-size: 18px; font-weight: 600">{{ d.title }}</strong></div>
+        <button type="button" class="press hl" onClick="{{ closeDrawer }}" aria-label="Tutup" style="width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+        <img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="Foto temuan {{ d.title }}" style="width: 100%; height: 220px; border-radius: 14px; object-fit: cover; object-position: {{ d.pos }}">
+        <dl class="tnum" style="margin: 0; display: grid; grid-template-columns: 110px 1fr; row-gap: 8px; font-size: 14px">
+          <dt style="color: var(--muted-foreground)">Ditemukan</dt><dd style="margin: 0">{{ d.found }}</dd>
+          <dt style="color: var(--muted-foreground)">PJ</dt><dd style="margin: 0">{{ d.pj }}</dd>
+          <dt style="color: var(--muted-foreground)">Tenggat</dt><dd style="margin: 0; color: {{ d.dueFg }}; font-weight: 600">{{ d.due }}</dd>
+          <dt style="color: var(--muted-foreground)">Catatan driver</dt><dd style="margin: 0; line-height: 21px">{{ d.note }}</dd>
+        </dl>
+        <section style="border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg><strong style="flex: 1; font-size: 14px; font-weight: 600">Saran perbaikan AI</strong>
+            <sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}"><button type="button" class="press" onClick="{{ askAi }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">Buat saran</button></sc-if>
+          </div>
+          <sc-if value="{{ aiShown }}" hint-placeholder-val="{{ false }}"><p aria-live="polite" style="margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 21px">{{ aiText }}<sc-if value="{{ aiRun }}" hint-placeholder-val="{{ false }}"><span class="pulse" style="display: inline-block; width: 7px; height: 15px; margin-left: 2px; vertical-align: -2px; background: var(--foreground)"></span></sc-if></p></sc-if>
+          <sc-if value="{{ aiDone }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: var(--muted-foreground)">Saran AI bersifat bantuan. Keputusan tetap pada mekanik.</span></sc-if>
+        </section>
+        <sc-if value="{{ d.open }}" hint-placeholder-val="{{ true }}">
+          <section style="display: flex; flex-direction: column; gap: 10px">
+            <strong style="font-size: 15px; font-weight: 600">Tutup temuan</strong>
+            <button type="button" class="press" onClick="{{ addPhoto }}" style="height: 92px; border-radius: 12px; border: 1.5px dashed {{ phBorder }}; background: var(--muted-2); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px">
+              <sc-if value="{{ phEmpty }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>Unggah foto setelah perbaikan</sc-if>
+              <sc-if value="{{ phDone }}" hint-placeholder-val="{{ false }}"><img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="Foto setelah perbaikan" style="width: 88px; height: 64px; border-radius: 8px; object-fit: cover; object-position: {{ d.pos }}"><span style="color: var(--success)">Foto terunggah · ganti</span></sc-if>
+            </button>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Catatan perbaikan
+              <textarea value="{{ note }}" onChange="{{ onNote }}" rows="3" placeholder="mis. Ganti O-ring fitting, uji 5 siklus, tidak rembes" data-invalid="{{ noteBad }}" class="field" style="padding: 10px 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 400; outline: 0; resize: vertical"></textarea>
+            </label>
+            <sc-if value="{{ closeErr }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--danger); font-weight: 500">{{ closeErr }}</span></sc-if>
+          </section>
+        </sc-if>
+        <sc-if value="{{ d.closed }}" hint-placeholder-val="{{ false }}"><div style="padding: 12px 14px; border-radius: 12px; background: var(--success-soft); color: var(--success); font-size: 14px; font-weight: 600">Temuan sudah ditutup · {{ d.due }}</div></sc-if>
+      </div>
+      <sc-if value="{{ d.open }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border)">
+          <button type="button" class="press" onClick="{{ closeDrawer }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Nanti</button>
+          <button type="button" class="press" onClick="{{ doClose }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600">Tutup temuan</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 6px 6px 6px 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: var(--shadow-3)">
+      <span>{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #F4D435; font: inherit; font-size: 14px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Manager"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const PJ = { Y: ['Yanto · Mekanik', 'YA'], W: ['Wahyu · Elektrik', 'WA'], B: ['Tim Body', 'TB'], N: ['Tim Ban', 'TN'] };
+    const T = (id, unit, title, crit, pj, due, dueN, age, pos, found, note, st) => ({ id, unit, title, crit, pj: PJ[pj][0], pjInit: PJ[pj][1], due, dueN, age, pos, found, note, st });
+    this.PJ = PJ;
+    this.ALL = [
+      T('T-0235', 'EX-2003', 'Rem parkir tidak menahan unit', true, 'Y', 'Hari ini 18:00', 0, 0, '15% 70%', 'P2H 16 Okt · Shift 1 · Dedi K.', 'Unit bergeser di tanjakan ringan saat rem parkir aktif. Tuas terasa longgar.', 'open'),
+      T('T-0234', 'DT-1050', 'Tetesan oli mesin di bawah unit', true, 'Y', 'Hari ini 18:00', 0, 0, '30% 70%', 'P2H 16 Okt · Shift 1 · Joko W.', 'Tetesan oli setelah parkir 10 menit, area carter.', 'open'),
+      T('T-0233', 'DT-1061', 'Ban depan kanan sobek samping', true, 'N', '17 Okt', 1, 1, '45% 75%', 'P2H 15 Okt · Shift 2 · Agus S.', 'Sobek samping ±6 cm, benang belum terlihat.', 'open'),
+      T('T-0231', 'DT-1045', 'Rembesan oli di selang hidrolik', true, 'Y', 'Lewat 1 hari', -1, 2, '30% 70%', 'P2H 14 Okt · Shift 1 · Budi S.', 'Rembesan di sambungan selang hidrolik sisi kiri, tetesan di bawah unit setelah parkir 10 menit.', 'open'),
+      T('T-0230', 'WT-007', 'Sprayer belakang macet', false, 'Y', '19 Okt', 3, 2, '70% 60%', 'P2H 14 Okt · Shift 1 · Fajar N.', 'Nozzle kanan tidak keluar air.', 'open'),
+      T('T-0228', 'DT-1045', 'Lampu rotary tidak menyala', false, 'W', '18 Okt', 2, 1, '78% 40%', 'P2H 15 Okt · Shift 1 · Budi S.', 'Lampu rotary mati, kemungkinan sekring putus.', 'open'),
+      T('T-0227', 'DZ-015', 'Seat belt tidak mengunci', true, 'B', 'Lewat 1 hari', -1, 3, '50% 50%', 'P2H 13 Okt · Shift 1 · Hadi T.', 'Gesper tidak mengunci saat ditarik.', 'open'),
+      T('T-0226', 'LV-031', 'Karet wiper sobek', false, 'W', 'Lewat 2 hari', -2, 3, '60% 20%', 'P2H 13 Okt · Shift 1 · Andi P.', 'Karet wiper kanan sobek, sapuan meninggalkan garis.', 'open'),
+      T('T-0224', 'DT-1031', 'Klakson lemah', false, 'W', '20 Okt', 4, 4, '20% 30%', 'P2H 12 Okt · Shift 2 · Agus S.', 'Bunyi klakson pelan dan putus-putus.', 'open'),
+      T('T-0222', 'LV-034', 'Radio komunikasi tidak jernih', false, 'W', '21 Okt', 5, 4, '85% 30%', 'P2H 12 Okt · Shift 1 · Rudi H.', 'Suara bergemuruh di channel 2.', 'open'),
+      T('T-0219', 'LV-022', 'AC kabin tidak dingin', false, 'W', 'Lewat 4 hari', -4, 5, '75% 35%', 'P2H 11 Okt · Shift 2 · Sari M.', 'AC menyala tapi tidak dingin setelah 15 menit.', 'open'),
+      T('T-0218', 'EX-2001', 'APAR lewat masa berlaku', true, 'B', 'Hari ini 18:00', 0, 5, '40% 45%', 'P2H 11 Okt · Shift 1 · Slamet R.', 'Label inspeksi APAR terakhir Agustus 2025.', 'open'),
+      T('T-0210', 'DT-1022', 'Spion kiri retak', false, 'B', 'Ditutup 14 Okt', 9, 4, '45% 60%', 'P2H 10 Okt · Shift 1 · Rudi H.', 'Kaca spion kiri retak memanjang.', 'closed'),
+      T('T-0205', 'DT-1050', 'Kaca depan retak rambut', false, 'B', 'Ditutup 12 Okt', 9, 3, '55% 30%', 'P2H 9 Okt · Shift 1 · Joko W.', 'Retak rambut 10 cm di sisi penumpang.', 'closed')
+    ];
+    this.AI = 'Kemungkinan penyebab: O-ring sambungan aus atau klem kendor.\n\n1. Bersihkan area, nyalakan unit, tandai titik rembes.\n2. Kencangkan fitting sesuai torsi spesifikasi; jika tetap rembes, ganti O-ring.\n3. Bila selang retak atau menggelembung, ganti selang.\n4. Isi ulang ke level normal lalu uji fungsi 5 siklus.\n\nRiwayat: temuan serupa di unit ini 3× dalam 60 hari. Pertimbangkan penggantian selang menyeluruh saat PM berikutnya.';
+    this.state = { st: {}, pjOver: {}, filter: 'open', crit: false, q: '', sortKey: 'due', dir: 1, sel: {}, tip: null, open: null, ai: 'idle', aiN: 0, photo: false, note: '', tried: false, toast: null };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); clearInterval(this.aiT); }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Manager';
+    const all = this.ALL.map((f) => { const st = s.st[f.id] || f.st; const pjK = s.pjOver[f.id]; return { ...f, st, due: st === 'closed' && f.st === 'open' ? 'Ditutup hari ini' : f.due, pj: pjK ? this.PJ[pjK][0] : f.pj, pjInit: pjK ? this.PJ[pjK][1] : f.pjInit }; });
+    const open = all.filter((f) => f.st === 'open');
+    const over = open.filter((f) => f.dueN < 0);
+    const cnt = { open: open.length, over: over.length, closed: all.length - open.length, semua: all.length };
+    const chips = [['open', 'Open'], ['over', 'Lewat tenggat'], ['closed', 'Closed'], ['semua', 'Semua']].map(([k, label]) => { const on = s.filter === k; return { label, n: cnt[k], on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', pick: () => this.setState({ filter: k, sel: {} }) }; });
+    const q = s.q.trim().toLowerCase();
+    let list = all.filter((f) => (s.filter === 'semua' || (s.filter === 'open' && f.st === 'open') || (s.filter === 'over' && f.st === 'open' && f.dueN < 0) || (s.filter === 'closed' && f.st === 'closed')) && (!s.crit || f.crit) && (!q || (f.id + f.unit + f.title).toLowerCase().includes(q)));
+    const key = { id: (f) => f.id, unit: (f) => f.unit, title: (f) => (f.crit ? 0 : 1) + f.title, due: (f) => f.dueN, st: (f) => f.st, age: (f) => f.age };
+    list = list.slice().sort((a, b) => { const A = key[s.sortKey](a), B = key[s.sortKey](b); return (A > B ? 1 : A < B ? -1 : 0) * s.dir; });
+    const rows = list.map((f) => {
+      const sel = !!s.sel[f.id]; const closed = f.st === 'closed';
+      return { ...f, sel, bg: sel ? 'var(--brand-soft)' : 'transparent', imgF: closed ? 'grayscale(1)' : 'none',
+        dueFg: closed ? 'var(--success)' : f.dueN < 0 ? 'var(--danger)' : f.dueN === 0 ? 'var(--warning)' : 'var(--foreground)', dueW: !closed && f.dueN <= 0 ? 600 : 400,
+        stLabel: closed ? 'Closed' : 'Open', sBg: closed ? 'var(--muted)' : 'var(--info-soft)', sFg: closed ? 'var(--muted-foreground)' : 'var(--info)', age: f.age === 0 ? 'hari ini' : f.age + ' hari',
+        tipOn: s.tip === f.id, tipIn: () => { if (this.state.tip !== f.id) this.setState({ tip: f.id }); }, tipOut: () => { if (this.state.tip === f.id) this.setState({ tip: null }); },
+        toggle: () => this.setState({ sel: { ...this.state.sel, [f.id]: !sel } }),
+        open: () => { clearInterval(this.aiT); this.setState({ open: f.id, ai: 'idle', aiN: 0, photo: false, note: '', tried: false, tip: null }); } };
+    });
+    const cols = [['id', 'ID'], ['unit', 'Unit'], ['title', 'Temuan'], ['due', 'Tenggat'], ['st', 'Status'], ['age', 'Umur']].map(([k, label]) => { const on = s.sortKey === k; return { label, fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', arrow: on ? (s.dir > 0 ? '↑' : '↓') : '↕', op: on ? 1 : 0.35, aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : 'none', sort: () => this.setState({ sortKey: k, dir: on ? -s.dir : 1 }) }; });
+    const selIds = rows.filter((r) => r.sel).map((r) => r.id);
+    const cur = all.find((f) => f.id === s.open);
+    const d = cur ? { ...cur, open: cur.st === 'open', closed: cur.st === 'closed', dueFg: cur.st === 'closed' ? 'var(--success)' : cur.dueN < 0 ? 'var(--danger)' : cur.dueN === 0 ? 'var(--warning)' : 'var(--foreground)' } : { open: false, closed: false };
+    const noteOk = s.note.trim().length >= 10;
+    const closeErr = s.tried ? (!s.photo && !noteOk ? 'Foto setelah perbaikan dan catatan wajib diisi.' : !s.photo ? 'Foto setelah perbaikan wajib diunggah.' : !noteOk ? 'Catatan perbaikan minimal 10 karakter.' : '') : '';
+    const avg = (open.reduce((a, f) => a + f.age, 0) / Math.max(open.length, 1)).toFixed(1).replace('.', ',');
+    const aiFull = cur && (cur.id === 'T-0231' || cur.id === 'T-0234') ? this.AI : 'Langkah yang disarankan untuk "' + (cur ? cur.title.toLowerCase() : '') + '":\n\n1. Verifikasi kerusakan di lokasi bersama driver.\n2. Siapkan part pengganti sesuai katalog ' + (cur ? cur.unit : '') + '.\n3. Lakukan perbaikan lalu uji fungsi.\n4. Ambil foto setelah perbaikan dari sudut yang sama.';
+    const toastOn = !!s.toast;
+    return {
+      theme, peran, sub: cnt.open + ' open · ' + cnt.over + ' lewat tenggat · Pit A',
+      kpis: [
+        { label: 'Open', v: cnt.open, sub: open.filter((f) => f.crit).length + ' kritis', fg: 'var(--foreground)' },
+        { label: 'Lewat tenggat', v: cnt.over, sub: 'perlu eskalasi ke PJ', fg: cnt.over ? 'var(--danger)' : 'var(--foreground)' },
+        { label: 'Jatuh tempo hari ini', v: open.filter((f) => f.dueN === 0).length, sub: 'tenggat 18:00 WITA', fg: 'var(--foreground)' },
+        { label: 'Rata-rata umur open', v: avg + ' hari', sub: 'target ≤ 2 hari', fg: 'var(--foreground)' }
+      ],
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value }), chips, critOnly: s.crit, toggleCrit: () => this.setState({ crit: !s.crit }),
+      cols, rows, empty: rows.length === 0,
+      allSel: rows.length > 0 && rows.every((r) => r.sel), toggleAll: () => { const a = rows.length && rows.every((r) => r.sel); const n = {}; if (!a) rows.forEach((r) => { n[r.id] = true; }); this.setState({ sel: n }); },
+      hasSel: selIds.length > 0, selN: selIds.length, clearSel: () => this.setState({ sel: {} }),
+      pjOpts: [['Y', 'Yanto'], ['W', 'Wahyu'], ['B', 'Tim Body']].map(([k, label]) => ({ label, pick: () => { const prev = s.pjOver; const n = { ...prev }; selIds.forEach((i) => { n[i] = k; }); this.setState({ pjOver: n, sel: {} }); this.toast(selIds.length + ' temuan ditugaskan ke ' + label + ' · notifikasi terkirim', () => this.setState({ pjOver: prev })); } })),
+      exportAll: () => this.toast('Export ' + rows.length + ' temuan ke Excel'),
+      drawerOn: !!cur, d, closeDrawer: () => { clearInterval(this.aiT); this.setState({ open: null }); },
+      aiIdle: s.ai === 'idle', aiShown: s.ai !== 'idle', aiRun: s.ai === 'run', aiDone: s.ai === 'done', aiText: aiFull.slice(0, s.aiN),
+      askAi: () => { clearInterval(this.aiT); this.setState({ ai: 'run', aiN: 0 }); this.aiT = setInterval(() => { const n = this.state.aiN + 6; if (n >= aiFull.length) { clearInterval(this.aiT); this.setState({ ai: 'done', aiN: aiFull.length }); } else this.setState({ aiN: n }); }, 30); },
+      phEmpty: !s.photo, phDone: s.photo, phBorder: s.tried && !s.photo ? 'var(--danger)' : 'var(--input)', addPhoto: () => this.setState({ photo: true }),
+      note: s.note, onNote: (e) => this.setState({ note: e.target.value }), noteBad: s.tried && !noteOk, closeErr,
+      doClose: () => { if (!s.photo || !noteOk) { this.setState({ tried: true }); return; } const prev = s.st; this.setState({ st: { ...prev, [cur.id]: 'closed' }, open: null }); this.toast(cur.id + ' ditutup · ' + cur.unit + ' tercatat', () => this.setState({ st: prev })); },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

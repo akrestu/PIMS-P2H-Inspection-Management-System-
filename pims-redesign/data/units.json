@@ -1,0 +1,162 @@
+[
+  {
+    "code": "DT-1045",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 12481.0,
+    "status": "ready",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1050",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 9812.0,
+    "status": "bd",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1022",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 11902.4,
+    "status": "ready",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1031",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 10870.0,
+    "status": "ready",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1003",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 8114.0,
+    "status": "ready",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1018",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 13020.5,
+    "status": "bd",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1102",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTA",
+    "hm_current": 10287.3,
+    "status": "ready",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "EX-2001",
+    "type": "Excavator",
+    "model": "200 t",
+    "site": "PTA",
+    "hm_current": 18330.0,
+    "status": "ready",
+    "checklist_template": "Excavator",
+    "lv_approver": null
+  },
+  {
+    "code": "EX-2003",
+    "type": "Excavator",
+    "model": "200 t",
+    "site": "PTA",
+    "hm_current": 15204.5,
+    "status": "bd",
+    "checklist_template": "Excavator",
+    "lv_approver": null
+  },
+  {
+    "code": "LV-031",
+    "type": "Light Vehicle",
+    "model": "4×4 double cabin",
+    "site": "PTA",
+    "hm_current": 4110.2,
+    "status": "ready",
+    "checklist_template": "Light Vehicle",
+    "lv_approver": "hendra.w@kontraktor.co.id"
+  },
+  {
+    "code": "LV-034",
+    "type": "Light Vehicle",
+    "model": "4×4 double cabin",
+    "site": "PTA",
+    "hm_current": 5221.0,
+    "status": "ready",
+    "checklist_template": "Light Vehicle",
+    "lv_approver": "hendra.w@kontraktor.co.id"
+  },
+  {
+    "code": "GR-012",
+    "type": "Motor Grader",
+    "model": "16 ft",
+    "site": "HLR",
+    "hm_current": 7022.6,
+    "status": "pm",
+    "checklist_template": "Motor Grader",
+    "lv_approver": null
+  },
+  {
+    "code": "DZ-015",
+    "type": "Dozer",
+    "model": "D9",
+    "site": "PTA",
+    "hm_current": 7415.8,
+    "status": "ready",
+    "checklist_template": "Dozer",
+    "lv_approver": null
+  },
+  {
+    "code": "WT-007",
+    "type": "Water Truck",
+    "model": "20 kL",
+    "site": "PTB",
+    "hm_current": 8904.1,
+    "status": "ready",
+    "checklist_template": "Water Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "DT-1061",
+    "type": "Dump Truck",
+    "model": "HD 90 t",
+    "site": "PTB",
+    "hm_current": 10552.3,
+    "status": "servis",
+    "checklist_template": "Dump Truck",
+    "lv_approver": null
+  },
+  {
+    "code": "LV-022",
+    "type": "Light Vehicle",
+    "model": "4×4 single cabin",
+    "site": "PTB",
+    "hm_current": 6310.0,
+    "status": "servis",
+    "checklist_template": "Light Vehicle",
+    "lv_approver": "wawan.s@kontraktor.co.id"
+  }
+]

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Audit log (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Audit log" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <sc-if value="{{ isManager }}" hint-placeholder-val="{{ false }}">
+      <div class="fade" style="flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 12px; padding: 0 8%">
+        <span aria-hidden="true" class="mono tnum" style="position: absolute; right: 6%; top: 50%; transform: translateY(-50%); font-size: 280px; font-weight: 500; letter-spacing: -0.06em; line-height: 1; color: transparent; -webkit-text-stroke: 1.5px var(--border); pointer-events: none">403</span>
+        <span class="mono" style="position: relative; font-size: 13px; color: var(--muted-foreground)">403 · Akses ditolak</span>
+        <h1 style="position: relative; margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.025em">Audit log hanya untuk Admin</h1>
+        <p style="position: relative; margin: 0; max-width: 460px; font-size: 15px; line-height: 23px; color: var(--muted-foreground)">Anda masuk sebagai Manager. Jika butuh jejak perubahan untuk investigasi, minta Admin mengekspor log dengan filter yang sesuai.</p>
+        <div style="position: relative; display: flex; gap: 8px; padding-top: 8px">
+          <a href="Dashboard-Desktop.dc.html" class="press" style="height: 40px; padding: 0 16px; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">Kembali ke Dashboard</a>
+          <button type="button" class="press" onClick="{{ askAdmin }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Minta ekspor ke Admin</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Audit log</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">Semua perubahan data tercatat dan tidak bisa diedit · disimpan 2 tahun</span></div>
+        <div role="radiogroup" aria-label="Rentang" style="display: flex; padding: 3px; border-radius: 10px; background: var(--muted)">
+          <sc-for list="{{ ranges }}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: 600">{{ t.label }}</button></sc-for>
+        </div>
+        <button type="button" class="press" onClick="{{ exportIt }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Export CSV</button>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <div class="field" style="flex: 0 1 260px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="{{ q }}" onChange="{{ onQ }}" aria-label="Cari log" placeholder="Cari objek atau ID log" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px"></div>
+        <label class="field" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 10px 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); font-size: 13px; color: var(--muted-foreground)">Pengguna
+          <select value="{{ user }}" onChange="{{ onUser }}" aria-label="Filter pengguna" style="border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500">
+            <sc-for list="{{ users }}" as="u" hint-placeholder-count="5"><option value="{{ u }}">{{ u }}</option></sc-for>
+          </select>
+        </label>
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6"><button type="button" class="press" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 13px; font-weight: 500">{{ c.label }}</button></sc-for>
+      </div>
+
+      <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+        <table style="width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 14px">
+          <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+            <th aria-sort="{{ sortAria }}" style="padding: 0 14px"><button type="button" class="press" onClick="{{ toggleSort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: var(--foreground); font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px">Waktu {{ sortArrow }}</button></th>
+            <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Pengguna</th>
+            <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Aksi</th>
+            <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Deskripsi</th>
+            <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Modul</th>
+            <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Sumber</th>
+            <th style="padding: 0 14px"></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="e" hint-placeholder-count="12">
+              <tr style="border-top: 1px solid var(--border); height: 52px; background: {{ e.bg }}">
+                <td class="tnum" style="padding: 0 14px; white-space: nowrap">{{ e.dayShort }} <span style="color: var(--muted-foreground)">· {{ e.time }}</span></td>
+                <td style="padding: 0 12px; position: relative"><span style="display: inline-flex; align-items: center; gap: 8px"><button type="button" onMouseEnter="{{ e.tipIn }}" onMouseLeave="{{ e.tipOut }}" onFocus="{{ e.tipIn }}" onBlur="{{ e.tipOut }}" aria-label="{{ e.whoFull }}" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: {{ e.avBg }}; color: {{ e.avFg }}; font: inherit; font-size: 11px; font-weight: 600">{{ e.init }}</button>{{ e.who }}</span>
+                  <sc-if value="{{ e.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; left: 12px; bottom: calc(100% - 8px); z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; white-space: nowrap; box-shadow: var(--shadow-2); pointer-events: none">{{ e.whoFull }}</span></sc-if></td>
+                <td style="padding: 0 12px"><span style="height: 22px; padding: 0 8px; border-radius: 6px; background: {{ e.tagBg }}; color: {{ e.tagFg }}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{ e.action }}</span></td>
+                <td style="padding: 0 12px">{{ e.verb }} <strong class="tnum" style="font-weight: 600">{{ e.obj }}</strong></td>
+                <td style="padding: 0 12px; color: var(--muted-foreground)">{{ e.module }}</td>
+                <td class="mono tnum" style="padding: 0 12px; font-size: 12px; color: var(--muted-foreground); white-space: nowrap">{{ e.src }}</td>
+                <td style="padding: 0 14px; text-align: right"><button type="button" class="press" onClick="{{ e.open }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">Detail</button></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; text-align: center; color: var(--muted-foreground); font-size: 14px">Tidak ada aktivitas untuk filter ini.</div></sc-if>
+      </div>
+      <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ footer }}</span>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ drawerOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" onClick="{{ closeDrawer }}" style="position: fixed; inset: 0; z-index: 30; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="dr-t" style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 31; width: min(500px, 100%); background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; animation: pims-fade 220ms var(--ease-out) both">
+      <div style="display: flex; align-items: flex-start; gap: 8px; padding: 16px 12px 16px 24px; border-bottom: 1px solid var(--border)">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong id="dr-t" style="font-size: 18px; font-weight: 600; line-height: 24px">{{ d.title }}</strong><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ d.meta }}</span></div>
+        <button type="button" class="press hl" onClick="{{ closeDrawer }}" aria-label="Tutup" style="width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px">
+        <section style="display: flex; flex-direction: column; gap: 8px">
+          <strong style="font-size: 13px; font-weight: 600; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: .04em">Perubahan</strong>
+          <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden">
+            <div style="display: grid; grid-template-columns: 110px 1fr 1fr; gap: 8px; padding: 8px 12px; background: var(--muted-2); font-size: 12px; font-weight: 600; color: var(--muted-foreground)"><span>Field</span><span>Sebelum</span><span>Sesudah</span></div>
+            <sc-for list="{{ d.diff }}" as="x" hint-placeholder-count="3"><div class="tnum" style="display: grid; grid-template-columns: 110px 1fr 1fr; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); font-size: 13px"><span class="mono" style="color: var(--muted-foreground)">{{ x.f }}</span><span style="color: var(--danger); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--danger) 50%, transparent)">{{ x.a }}</span><span style="color: var(--success); font-weight: 600">{{ x.b }}</span></div></sc-for>
+          </div>
+        </section>
+        <section style="display: flex; flex-direction: column; gap: 8px">
+          <strong style="font-size: 13px; font-weight: 600; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: .04em">Konteks</strong>
+          <dl class="tnum" style="margin: 0; display: grid; grid-template-columns: 110px 1fr; row-gap: 8px; font-size: 14px">
+            <sc-for list="{{ d.ctx }}" as="c" hint-placeholder-count="3"><dt style="color: var(--muted-foreground)">{{ c.k }}</dt><dd class="mono" style="margin: 0; font-size: 13px">{{ c.v }}</dd></sc-for>
+          </dl>
+        </section>
+      </div>
+      <div style="display: flex; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border)">
+        <button type="button" class="press" onClick="{{ copyId }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Salin ID log</button>
+        <span style="flex: 1"></span>
+        <button type="button" class="press" onClick="{{ filterObj }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600">Lihat semua log {{ d.obj }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 0 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const E = (id, dn, time, who, init, action, verb, obj, module, src, diff, ctx) => ({ id, dn, time, who, init, action, verb, obj, module, src, diff, ctx });
+    this.FULL = { 'Rina A.': 'Rina Anggraini · Admin', 'Hendra W.': 'Hendra Wijaya · Manager', 'Wawan S.': 'Wawan Setiadi · Manager', 'Budi S.': 'Budi Santoso · Driver', 'Sistem': 'Aksi otomatis oleh sistem PIMS' };
+    this.ALL = [
+      E(1, 16, '06:21', 'Hendra W.', 'HW', 'Ubah', 'menyetujui P2H', 'DT-1022', 'Persetujuan', '10.12.4.88', [['status', 'Menunggu', 'Disetujui'], ['approver', '—', 'Hendra Wijaya'], ['ttd', '—', 'sig_7f2a.png']], [['IP', '10.12.4.88'], ['Perangkat', 'Android 14 · PWA']]),
+      E(2, 16, '06:10', 'Rina A.', 'RA', 'Ubah', 'mengubah status unit', 'DT-1018', 'Master unit', '10.12.1.5', [['status', 'BD', 'Servis'], ['mulai', '15 Okt 14:20', '16 Okt 06:10'], ['keterangan', '—', 'Menunggu selang radiator']], [['IP', '10.12.1.5'], ['Perangkat', 'Chrome 141 · Windows']]),
+      E(3, 16, '05:57', 'Sistem', 'SY', 'Otomatis', 'menandai BD dari P2H tidak layak', 'EX-2003', 'P2H', 'sistem', [['status', 'Ready', 'BD'], ['sumber', '—', 'P2H #48211 (Dedi K.)']], [['Pemicu', 'Item kritis: rem parkir']]),
+      E(4, 16, '05:55', 'Sistem', 'SY', 'Otomatis', 'menandai BD dari P2H tidak layak', 'DT-1050', 'P2H', 'sistem', [['status', 'Ready', 'BD'], ['sumber', '—', 'P2H #48209 (Joko W.)']], [['Pemicu', 'Item kritis: kebocoran oli']]),
+      E(5, 16, '05:31', 'Rina A.', 'RA', 'Hapus', 'menghapus permanen', '2 unit', 'Sampah', '10.12.1.5', [['DT-0981', 'di Sampah', 'dihapus'], ['LV-009', 'di Sampah', 'dihapus']], [['IP', '10.12.1.5'], ['Konfirmasi', 'ketik HAPUS']]),
+      E(6, 16, '05:02', 'Budi S.', 'BS', 'Login', 'masuk dengan NRP + PIN', '', 'Auth', '10.12.7.31', [['sesi', '—', 'baru (perangkat dikenal)']], [['IP', '10.12.7.31'], ['Perangkat', 'Android 13 · PWA']]),
+      E(7, 15, '16:44', 'Wawan S.', 'WS', 'Buat', 'mengimpor', '10 unit', 'Master unit', '10.12.2.17', [['baris valid', '—', '10'], ['baris dilewati', '—', '2 (kode ganda, site kosong)']], [['File', 'unit-pit-b-okt.xlsx'], ['IP', '10.12.2.17']]),
+      E(8, 15, '14:03', 'Hendra W.', 'HW', 'Ubah', 'menutup temuan', 'T-0212', 'Temuan', '10.12.4.88', [['status', 'Open', 'Closed'], ['foto sesudah', '—', 'after_0212.jpg'], ['catatan', '—', 'Ganti sekring 15A, uji OK']], [['IP', '10.12.4.88'], ['Perangkat', 'Android 14 · PWA']]),
+      E(9, 15, '09:15', 'Rina A.', 'RA', 'Ubah', 'membuat ulang token rekap publik', 'Pit A', 'Pengaturan', '10.12.1.5', [['token', '…4Rf9', '…7Kq2'], ['status', 'aktif', 'aktif']], [['IP', '10.12.1.5']]),
+      E(10, 14, '17:20', 'Rina A.', 'RA', 'Buat', 'mengundang pengguna', 'Dewi Kartika', 'Pengguna', '10.12.1.5', [['peran', '—', 'Manager'], ['site', '—', 'Jetty']], [['IP', '10.12.1.5'], ['Kanal', 'email']]),
+      E(11, 14, '07:48', 'Sistem', 'SY', 'Otomatis', 'mengirim ringkasan harian', 'Pit A', 'Laporan', 'sistem', [['penerima', '—', '3 manager'], ['kanal', '—', 'WhatsApp']], [['Jadwal', 'setiap hari 07:45 WITA']]),
+      E(12, 12, '10:02', 'Rina A.', 'RA', 'Hapus', 'memindahkan ke Sampah', 'Pit C (lama)', 'Master site', '10.12.1.5', [['status', 'aktif', 'di Sampah'], ['unit terhubung', '0', '0']], [['IP', '10.12.1.5']]),
+      E(13, 10, '08:30', 'Rina A.', 'RA', 'Ubah', 'mengubah tenggat P2H', 'Shift 1', 'Pengaturan', '10.12.1.5', [['tenggat', '06:45', '06:30'], ['pengingat', '06:15', '06:00']], [['IP', '10.12.1.5']]),
+      E(14, 9, '13:11', 'Hendra W.', 'HW', 'Hapus', 'memindahkan ke Sampah', 'LV-015', 'Master unit', '10.12.4.88', [['status', 'aktif', 'di Sampah']], [['IP', '10.12.4.88']])
+    ];
+    this.USERS = ['Semua pengguna', 'Rina A.', 'Hendra W.', 'Wawan S.', 'Budi S.', 'Sistem'];
+    this.state = { act: 'Semua', user: 'Semua pengguna', range: 7, q: '', dir: -1, open: null, tip: null, toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Admin';
+    const isAdmin = peran === 'Admin';
+    const T = { Ubah: ['var(--info-soft)', 'var(--info)'], Hapus: ['var(--danger-soft)', 'var(--danger)'], Buat: ['var(--success-soft)', 'var(--success)'], Login: ['var(--muted)', 'var(--muted-foreground)'], Otomatis: ['var(--warning-soft)', 'var(--warning)'] };
+    const chips = ['Semua', 'Buat', 'Ubah', 'Hapus', 'Login', 'Otomatis'].map((k) => { const on = s.act === k; return { label: k === 'Semua' ? 'Semua aksi' : k, on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', pick: () => this.setState({ act: k }) }; });
+    const q = s.q.trim().toLowerCase();
+    const minDay = s.range === 1 ? 16 : 17 - s.range;
+    let list = this.ALL.filter((e) => e.dn >= minDay && (s.act === 'Semua' || e.action === s.act) && (s.user === 'Semua pengguna' || e.who === s.user) && (!q || (e.obj + ' ' + e.verb + ' AL-' + (90210 + e.id)).toLowerCase().includes(q)));
+    list = list.slice().sort((a, b) => ((a.dn * 10000 + parseInt(a.time.replace(':', ''), 10)) - (b.dn * 10000 + parseInt(b.time.replace(':', ''), 10))) * s.dir);
+    const rows = list.map((e) => ({ ...e, dayShort: e.dn === 16 ? 'Hari ini' : e.dn === 15 ? 'Kemarin' : e.dn + ' Okt', tagBg: T[e.action][0], tagFg: T[e.action][1], bg: s.open === e.id ? 'var(--muted-2)' : 'transparent',
+      avBg: e.who === 'Sistem' ? 'var(--foreground)' : 'var(--muted)', avFg: e.who === 'Sistem' ? 'var(--background)' : 'var(--foreground)', whoFull: this.FULL[e.who] || e.who,
+      tipOn: s.tip === e.id, tipIn: () => { if (this.state.tip !== e.id) this.setState({ tip: e.id }); }, tipOut: () => { if (this.state.tip === e.id) this.setState({ tip: null }); },
+      open: () => this.setState({ open: e.id, tip: null }) }));
+    const cur = this.ALL.find((e) => e.id === s.open);
+    const d = cur ? { title: cur.who + ' ' + cur.verb + (cur.obj ? ' ' + cur.obj : ''), obj: cur.obj || cur.who, meta: (cur.dn === 16 ? 'Hari ini' : cur.dn + ' Okt') + ' · ' + cur.time + ' WITA · ' + cur.module + ' · AL-' + (90210 + cur.id), diff: cur.diff.map(([f, a, b]) => ({ f, a, b })), ctx: cur.ctx.map(([k, v]) => ({ k, v })).concat([{ k: 'ID log', v: 'AL-' + (90210 + cur.id) }]) } : { title: '', obj: '', meta: '', diff: [], ctx: [] };
+    return {
+      theme, peran, isAdmin, isManager: !isAdmin,
+      askAdmin: () => this.toast('Permintaan ekspor terkirim ke Admin (Rina A.)'),
+      ranges: [[1, 'Hari ini'], [7, '7 hari'], [30, '30 hari']].map(([k, label]) => ({ label, on: s.range === k, bg: s.range === k ? 'var(--card)' : 'transparent', shadow: s.range === k ? 'var(--shadow-2)' : 'none', fg: s.range === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ range: k }) })),
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value }), users: this.USERS, user: s.user, onUser: (e) => this.setState({ user: e.target.value }),
+      chips, rows, empty: rows.length === 0, footer: rows.length + ' entri · urut ' + (s.dir < 0 ? 'terbaru dulu' : 'terlama dulu') + ' · log tidak dapat diubah atau dihapus, termasuk oleh Admin.',
+      toggleSort: () => this.setState({ dir: -s.dir }), sortArrow: s.dir < 0 ? '↓' : '↑', sortAria: s.dir < 0 ? 'descending' : 'ascending',
+      drawerOn: !!cur, d, closeDrawer: () => this.setState({ open: null }),
+      copyId: () => { try { navigator.clipboard && navigator.clipboard.writeText('AL-' + (90210 + cur.id)); } catch (e) {} this.toast('ID log disalin'); },
+      filterObj: () => this.setState({ q: cur.obj || '', act: 'Semua', user: 'Semua pengguna', range: 30, open: null }),
+      exportIt: () => this.toast('Export ' + rows.length + ' entri audit log (CSV) sesuai filter'),
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

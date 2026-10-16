@@ -1,0 +1,777 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Akun-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "42 · Akun saya desktop",
+      "w": 1440,
+      "x": 1520,
+      "y": 13040
+    },
+    "Akun.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "25 · Akun",
+      "w": 390,
+      "x": 1880,
+      "y": 5960
+    },
+    "Analitik-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "33 · Analitik unit desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 10320
+    },
+    "AnalitikUnit.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "16 · Analitik unit",
+      "w": 390,
+      "x": 940,
+      "y": 4020
+    },
+    "AuditLog-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "36 · Audit log desktop",
+      "w": 1440,
+      "x": 4560,
+      "y": 10320
+    },
+    "AuditLog.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "23 · Audit log",
+      "w": 390,
+      "x": 940,
+      "y": 5960
+    },
+    "Auth.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "01 · Masuk, lupa sandi & 2FA",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "BerandaDriver-Gelap.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "04 · Beranda — mode gelap",
+      "w": 390,
+      "x": 1540,
+      "y": 0
+    },
+    "BerandaDriver.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "02 · Beranda Driver",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "Dashboard-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1460,
+      "is_interactive": true,
+      "title": "13 · Dashboard desktop (1440)",
+      "w": 1440,
+      "x": 2900,
+      "y": 1900
+    },
+    "Dashboard.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "07 · Dashboard Manager",
+      "w": 390,
+      "x": 0,
+      "y": 1900
+    },
+    "Downtime-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "38 · Downtime desktop (linimasa)",
+      "w": 1440,
+      "x": 1520,
+      "y": 11820
+    },
+    "Downtime.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "18 · Downtime",
+      "w": 390,
+      "x": 1880,
+      "y": 4020
+    },
+    "FormP2H-Gelap.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "05 · Form P2H — mode gelap",
+      "w": 390,
+      "x": 2010,
+      "y": 0
+    },
+    "FormP2H-Kontras.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "06 · Form P2H — kontras tinggi (outdoor)",
+      "w": 390,
+      "x": 2480,
+      "y": 0
+    },
+    "FormP2H.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "03 · Form P2H (alur penuh)",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "Kepatuhan-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "32 · Kepatuhan desktop",
+      "w": 1440,
+      "x": 4560,
+      "y": 9100
+    },
+    "Kepatuhan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "09 · Kepatuhan P2H (heatmap)",
+      "w": 390,
+      "x": 940,
+      "y": 1900
+    },
+    "Komponen.dc.html": {
+      "h": 4640,
+      "is_interactive": true,
+      "title": "Komponen & state",
+      "w": 1440,
+      "x": 1520,
+      "y": 19200
+    },
+    "LaporanPeriode-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 940,
+      "is_interactive": true,
+      "title": "20 · Laporan periode desktop (1440)",
+      "w": 1440,
+      "x": 2900,
+      "y": 4020
+    },
+    "LaporanPeriode.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "15 · Laporan periode",
+      "w": 390,
+      "x": 470,
+      "y": 4020
+    },
+    "Login-Fokus-M.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "L3 · Login Fokus — mobile",
+      "w": 390,
+      "x": 940,
+      "y": 17820
+    },
+    "Login-Fokus.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "L3 · Login Fokus — desktop",
+      "w": 1440,
+      "x": 3040,
+      "y": 16800
+    },
+    "Login-Gelap-Final.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "L · Login FINAL — desktop tema gelap",
+      "w": 1440,
+      "x": 0,
+      "y": 15540
+    },
+    "Login-Gelap-M.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "L2 · Login Gelap — mobile",
+      "w": 390,
+      "x": 470,
+      "y": 17820
+    },
+    "Login-Gelap.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "L2 · Login Gelap imersif — desktop",
+      "w": 1440,
+      "x": 1520,
+      "y": 16800
+    },
+    "Login-Hero-M.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "L1 · Login Hero — mobile",
+      "w": 390,
+      "x": 0,
+      "y": 17820
+    },
+    "Login-Hero.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "L1 · Login Hero — desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 16800
+    },
+    "Login-M.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "L · Login FINAL — mobile (gaya L1)",
+      "w": 390,
+      "x": 1520,
+      "y": 14560
+    },
+    "Login.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "L · Login FINAL — desktop terang (default)",
+      "w": 1440,
+      "x": 0,
+      "y": 14560
+    },
+    "LoginForm.dc.html": {
+      "h": 760,
+      "is_interactive": true,
+      "title": "Komponen · LoginForm (dipakai ketiga varian)",
+      "w": 420,
+      "x": 1460,
+      "y": 17820
+    },
+    "LoginNRPForm.dc.html": {
+      "h": 760,
+      "is_interactive": true,
+      "title": "Komponen · LoginNRPForm",
+      "w": 420,
+      "x": 1990,
+      "y": 14560
+    },
+    "Main.dc.html": {
+      "h": 7960,
+      "title": "Foundations — token, tipografi, motion, logo",
+      "w": 1440,
+      "x": 0,
+      "y": 19200
+    },
+    "MasterSite.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "28 · Master site",
+      "w": 390,
+      "x": 470,
+      "y": 7760
+    },
+    "MasterUnit-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "title": "26 · Master unit desktop (1440)",
+      "w": 1440,
+      "x": 2420,
+      "y": 5960
+    },
+    "MasterUnit.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "21 · Master unit + import + Sampah",
+      "w": 390,
+      "x": 0,
+      "y": 5960
+    },
+    "Monitoring-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "31 · Monitoring P2H desktop",
+      "w": 1440,
+      "x": 3040,
+      "y": 9100
+    },
+    "Monitoring.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "08 · Monitoring P2H",
+      "w": 390,
+      "x": 470,
+      "y": 1900
+    },
+    "MonitoringPA.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "17 · Monitoring unit harian (PA)",
+      "w": 390,
+      "x": 1410,
+      "y": 4020
+    },
+    "Notifikasi-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "41 · Notifikasi desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 13040
+    },
+    "Notifikasi.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "12 · Notifikasi",
+      "w": 390,
+      "x": 2350,
+      "y": 1900
+    },
+    "PA-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "34 · Monitoring PA desktop",
+      "w": 1440,
+      "x": 1520,
+      "y": 10320
+    },
+    "Pengaturan-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "39 · Pengaturan desktop",
+      "w": 1440,
+      "x": 3040,
+      "y": 11820
+    },
+    "Pengaturan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "24 · Pengaturan aplikasi",
+      "w": 390,
+      "x": 1410,
+      "y": 5960
+    },
+    "Pengguna-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "35 · Pengguna & driver desktop",
+      "w": 1440,
+      "x": 3040,
+      "y": 10320
+    },
+    "Pengguna.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "22 · Pengguna & driver",
+      "w": 390,
+      "x": 470,
+      "y": 5960
+    },
+    "Persetujuan-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "37 · Persetujuan desktop (master–detail, pintasan keyboard)",
+      "w": 1440,
+      "x": 0,
+      "y": 11820
+    },
+    "Persetujuan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "10 · Persetujuan P2H",
+      "w": 390,
+      "x": 1410,
+      "y": 1900
+    },
+    "RekapPublik.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "19 · Rekap P2H publik (tanpa login)",
+      "w": 390,
+      "x": 2350,
+      "y": 4020
+    },
+    "RingkasanHarian-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "40 · Ringkasan harian desktop",
+      "w": 1440,
+      "x": 4560,
+      "y": 11820
+    },
+    "RingkasanHarian.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "14 · Ringkasan harian + AI + WhatsApp",
+      "w": 390,
+      "x": 0,
+      "y": 4020
+    },
+    "RiwayatP2H-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "29 · Riwayat P2H desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 9100
+    },
+    "RiwayatP2H.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "27 · Riwayat P2H + detail sesi",
+      "w": 390,
+      "x": 0,
+      "y": 7760
+    },
+    "Sidebar.dc.html": {
+      "h": 980,
+      "is_interactive": true,
+      "title": "Komponen · Sidebar desktop (dipakai ulang)",
+      "w": 264,
+      "x": 940,
+      "y": 7760
+    },
+    "Temuan-Desktop.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "30 · Temuan desktop",
+      "w": 1440,
+      "x": 1520,
+      "y": 9100
+    },
+    "Temuan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "11 · Temuan unit",
+      "w": 390,
+      "x": 1880,
+      "y": 1900
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-16T09:58:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "s_adm": {
+      "fill": "gray",
+      "maxH": 380,
+      "text": "Admin & akun\n• Master unit: cari + filter status, tekan lama → pilih massal → pindah ke Sampah (Urungkan). Tab Sampah: pulihkan / hapus permanen massal (Admin, ketik HAPUS). Manager tidak melihat hapus permanen.\n• Import: unduh template → pilih file → validasi per baris (hijau valid, merah dengan alasan) → impor hanya baris valid. Master Site memakai pola yang sama.\n• Audit log & Pengaturan khusus Admin (tweak peran Manager → layar 403).\n• Akun: tema Terang/Gelap/Sistem + kontras tinggi berlaku langsung; hapus akun = pengajuan ke admin.",
+      "w": 2000,
+      "x": 0,
+      "y": 6924
+    },
+    "s_appr": {
+      "fill": "orange",
+      "maxH": 460,
+      "text": "Persetujuan & Temuan\n• Geser kanan = Setujui, kiri = Tolak (alasan wajib). Detail: Setujui → sheet tanda tangan approver.\n• Admin: tekan lama → pilih massal → Setujui semua. Manager tidak punya aksi massal.\n• Temuan: tekan lama → tutup/tugaskan massal. Detail punya saran AI (streaming) + sheet \"Tutup temuan\" dengan foto penutupan wajib.",
+      "w": 860,
+      "x": 1410,
+      "y": 2864
+    },
+    "s_auth": {
+      "fill": "gray",
+      "maxH": 560,
+      "text": "Interaksi — Auth\n• Tombol Masuk: press scale .97 / 90ms ease-standard; loading = spinner 16px + label \"Memeriksa…\", tombol tetap 52px.\n• Error: field + pesan di bawah, shake 4px × 2 (220ms). Reduced motion: tanpa shake.\n• OTP: 1 input numerik (inputmode=numeric, autocomplete=one-time-code) digambar 6 kotak 48×56; auto-submit saat 6 digit.\n• Coba: isi sandi \"salah\" untuk melihat state error. Semua target ≥48px.",
+      "w": 390,
+      "x": 0,
+      "y": 964
+    },
+    "s_dash": {
+      "fill": "orange",
+      "maxH": 460,
+      "text": "Interaksi — Dashboard\n• Ketuk KPI → buka layar terkait (Monitoring, Temuan, Persetujuan).\n• Ketersediaan: ketuk segmen/legend → sorot + angka. Tren: ketuk/geser di chart → crosshair + tooltip; 7/30 hari.\n• \"Ingatkan\" = optimistic (langsung \"Terkirim\") + toast Urungkan.\n• Tweak peran: Admin melihat \"Ubah status\" (sheet waktu + keterangan → periode downtime).",
+      "w": 390,
+      "x": 0,
+      "y": 2864
+    },
+    "s_desk": {
+      "fill": "blue",
+      "maxH": 200,
+      "text": "Desktop: bottom nav → sidebar 264, list → tabel sortable (klik header), centang baris → bar aksi massal muncul di bawah, chart dengan hover tooltip. Sheet menjadi drawer kanan 480.",
+      "w": 1440,
+      "x": 2900,
+      "y": 3420
+    },
+    "s_form": {
+      "fill": "orange",
+      "maxH": 560,
+      "text": "Interaksi — Form P2H\n• Segmented Baik/Rusak 52px; pilih → 150ms. \"Rusak\" membuka catatan + foto (grid-rows 0fr→1fr, 220ms ease-out).\n• Setelah menjawab, auto-scroll ke item berikutnya (smooth; reduced motion = langsung).\n• Progress bar lebar transisi 320ms. Draft disimpan otomatis tiap perubahan (indikator di app bar).\n• Foto: progres unggah, gagal → \"Coba lagi\"; hapus → snackbar + Urungkan 5 dtk.\n• Item KRITIS rusak ⇒ hasil Tidak Layak ⇒ unit otomatis BD.",
+      "w": 390,
+      "x": 940,
+      "y": 964
+    },
+    "s_home": {
+      "fill": "orange",
+      "maxH": 560,
+      "text": "Interaksi — Beranda\n• Skeleton shimmer 1.2s linear saat memuat (data < 600ms tidak menampilkan skeleton).\n• Angka count-up 800ms ease-out, sekali per sesi.\n• Pull-to-refresh: tarik ≥64px dari atas → spinner → toast \"Data diperbarui\". Reduced motion: tanpa count-up.\n• Tweak \"Keadaan\": Normal, Memuat, Sudah P2H, Kosong, Offline.\n• CTA \"Isi P2H\" kuning hanya 1 per layar; tombol tengah bottom nav 56px.",
+      "w": 390,
+      "x": 470,
+      "y": 964
+    },
+    "s_lap": {
+      "fill": "orange",
+      "maxH": 420,
+      "text": "Laporan\n• Ringkasan harian: rekap angka → \"Buat ringkasan AI\" (streaming, bisa dibuat ulang) → pratinjau teks WhatsApp siap kirim (format *tebal* WA), Salin / Kirim / sertakan link rekap publik.\n• Laporan periode: preset rentang (sheet), KPI periode, chart dengan tooltip, ringkasan AI, unduh PDF/Excel.\n• Analitik: item paling sering rusak (peringkat), unit bermasalah, tren mingguan kritis vs non-kritis.",
+      "w": 1330,
+      "x": 0,
+      "y": 4984
+    },
+    "s_lfinal": {
+      "fill": "gray",
+      "maxH": 520,
+      "text": "Login final (menggantikan layar Masuk lama)\n• Satu layar, dua field: NRP (8 digit, angka saja, centang hijau saat format benar) + kata sandi (lihat/sembunyikan, peringatan Caps Lock). Berlaku untuk semua peran.\n• Ingat perangkat · Lupa kata sandi? (reset ke email & WhatsApp terdaftar).\n• Salah → banner \"NRP atau kata sandi salah. Sisa n percobaan.\" (pesan sama untuk NRP tak dikenal, demi keamanan). 5× salah → kunci 60 detik.\n• Sukses → Driver ke Beranda, Manager ke Dashboard, Admin lanjut verifikasi 2 langkah.\n• Desktop ≥ 1024: gaya L2 — default TERANG (latar #F7F7F5, kartu putih kaca, motif kontur & cahaya kuning); tema gelap & kontras tinggi mengikuti pilihan user. Mobile/tablet: gaya L1 (foto alat berat), juga mengikuti tema.\nDemo: 20231045 driver · 19870312 manager · 19850704 admin · sandi \"salah\" = error.",
+      "w": 560,
+      "x": 2490,
+      "y": 14560
+    },
+    "s_login": {
+      "fill": "gray",
+      "maxH": 520,
+      "text": "Alur sama di ketiga varian (komponen LoginForm):\n1. Satu field \"NRP atau email\" — terdeteksi otomatis (chip Driver/Email).\n2. Driver → kartu identitas + keypad PIN 6 digit besar, auto-kirim di digit ke-6, keyboard fisik didukung. Salah → titik merah + getar + sisa percobaan; 5× salah → kunci 60 detik. \"Lupa PIN?\" → info admin site.\n   Manager/Admin → kata sandi (lihat/sembunyikan, ingat perangkat, autocomplete untuk password manager).\n3. Sukses → centang + sapaan + progres → Beranda / Dashboard.\nDemo: 20231045 · PIN 000000 = salah · email hendra.w@kontraktor.co.id · sandi \"salah\" = error.\n\nL1 Hero: foto alat berat, kesan premium.\nL2 Gelap: kartu kaca + motif topo, nyaman di shift malam.\nL3 Fokus: tipografi besar, tanpa dekorasi, tombol hitam.",
+      "w": 560,
+      "x": 1960,
+      "y": 17820
+    },
+    "s_modes": {
+      "fill": "blue",
+      "maxH": 360,
+      "text": "Mode tampilan\n• Gelap: latar #0A0A0A, surface #141414, tombol utama kuning dengan teks hitam.\n• Kontras tinggi (outdoor): teks #000 di #FFF (≥ 15:1), garis 2px, teks tubuh 17px/500, status pakai warna gelap + ikon + label. Ditujukan untuk layar di bawah terik matahari.\n• Ketiganya memakai komponen yang sama — hanya token yang berubah (data-theme pada root).",
+      "w": 1330,
+      "x": 1540,
+      "y": 964
+    },
+    "s_mon": {
+      "fill": "gray",
+      "maxH": 460,
+      "text": "Monitoring & Kepatuhan\n• Monitoring: chip status = filter + jumlah; ketuk kartu → sheet ringkas entry. Shift 1/2 berganti tanpa reload.\n• Kepatuhan: heatmap unit × hari, kolom unit menempel, geser horizontal di dalam komponen (bukan halaman). Ketuk sel → tooltip. Isi sel dibedakan terang + simbol (✓ terlambat ×), bukan warna saja.",
+      "w": 860,
+      "x": 470,
+      "y": 2864
+    },
+    "s_pa": {
+      "fill": "gray",
+      "maxH": 420,
+      "text": "PA, Downtime & Rekap publik\n• PA: grid unit × 7 hari, nilai % di setiap sel + gradasi satu warna (makin gelap = makin rendah PA), ketuk sel → rincian jam.\n• Downtime: timeline 24 jam + daftar periode aktif/selesai; tambah/edit via sheet, hapus dengan konfirmasi.\n• Rekap publik: tanpa login, sangat ringan (kontrol native), filter tanggal/site sendiri. Tweak: tautan aktif / dinonaktifkan.",
+      "w": 1330,
+      "x": 1410,
+      "y": 4984
+    },
+    "s_t4": {
+      "fill": "gray",
+      "maxH": 420,
+      "text": "Tahap 4\n• Riwayat P2H: daftar per tanggal, filter hasil/rentang, export PDF/Excel (sheet). Detail sesi: entry per driver (checklist, HM/BBM, foto, tanda tangan driver & approver, riwayat persetujuan), unduh PDF sesi. Admin: hapus entry / sesi dengan alasan.\n• Master Site: pola sama dengan Master Unit (Aktif/Sampah, sheet tambah/ubah).\n• Semua halaman desktop memakai komponen Sidebar yang sama (dc-import) — ubah sekali, berlaku di semua.",
+      "w": 560,
+      "x": 1284,
+      "y": 7760
+    },
+    "s_t5": {
+      "fill": "gray",
+      "maxH": 420,
+      "text": "Tahap 5\n• Semua layar kini punya versi desktop 1440 dan tautan sidebar mengarah ke versi desktop.\n• Persetujuan: ↑↓ pindah, A setujui, R tolak, Spasi pilih. Satu tanda tangan dipakai untuk setujui massal.\n• Pengaturan & Audit log: Admin saja (Manager melihat 403).\n• Paket serah terima developer: lihat pims-handoff.zip (CLAUDE.md + docs/ + tokens + data contoh).",
+      "w": 560,
+      "x": 3040,
+      "y": 13040
+    },
+    "t_adm": {
+      "kind": "title1",
+      "maxW": 3860,
+      "text": "Tahap 3b · Admin, master data & akun",
+      "w": 240,
+      "x": 0,
+      "y": 5700
+    },
+    "t_desk": {
+      "kind": "title1",
+      "maxW": 5920,
+      "text": "Tahap 4 · Desktop 1440 (layar bertanda *)",
+      "w": 240,
+      "x": 0,
+      "y": 8840
+    },
+    "t_driver": {
+      "kind": "title1",
+      "maxW": 1330,
+      "text": "Tahap 1 · Alur Driver (prototype)",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_ds": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "Design system",
+      "w": 240,
+      "x": 0,
+      "y": 18940
+    },
+    "t_lap": {
+      "kind": "title1",
+      "maxW": 4340,
+      "text": "Tahap 3a · Laporan & analitik",
+      "w": 240,
+      "x": 0,
+      "y": 3760
+    },
+    "t_lfinal": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Login final — NRP + kata sandi",
+      "w": 240,
+      "x": 0,
+      "y": 14300
+    },
+    "t_login": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Login — eksplorasi (arsip)",
+      "w": 240,
+      "x": 0,
+      "y": 16540
+    },
+    "t_mgr": {
+      "kind": "title1",
+      "maxW": 4340,
+      "text": "Tahap 2 · Manager & Admin — operasional",
+      "w": 240,
+      "x": 0,
+      "y": 1600
+    },
+    "t_modes": {
+      "kind": "title1",
+      "maxW": 1330,
+      "text": "Mode gelap & kontras tinggi",
+      "w": 240,
+      "x": 1540,
+      "y": -300
+    },
+    "t_t4": {
+      "kind": "title1",
+      "maxW": 1300,
+      "text": "Tahap 4 · Riwayat P2H, Master Site",
+      "w": 240,
+      "x": 0,
+      "y": 7500
+    },
+    "t_t5": {
+      "kind": "title1",
+      "maxW": 5920,
+      "text": "Tahap 5 · Desktop pelengkap",
+      "w": 240,
+      "x": 0,
+      "y": 11560
+    }
+  },
+  "order": [
+    "Auth.dc.html",
+    "BerandaDriver.dc.html",
+    "FormP2H.dc.html",
+    "BerandaDriver-Gelap.dc.html",
+    "FormP2H-Gelap.dc.html",
+    "FormP2H-Kontras.dc.html",
+    "Dashboard.dc.html",
+    "Monitoring.dc.html",
+    "Kepatuhan.dc.html",
+    "Persetujuan.dc.html",
+    "Temuan.dc.html",
+    "Notifikasi.dc.html",
+    "Dashboard-Desktop.dc.html",
+    "RingkasanHarian.dc.html",
+    "LaporanPeriode.dc.html",
+    "AnalitikUnit.dc.html",
+    "MonitoringPA.dc.html",
+    "Downtime.dc.html",
+    "RekapPublik.dc.html",
+    "LaporanPeriode-Desktop.dc.html",
+    "MasterUnit.dc.html",
+    "Pengguna.dc.html",
+    "AuditLog.dc.html",
+    "Pengaturan.dc.html",
+    "Akun.dc.html",
+    "MasterUnit-Desktop.dc.html",
+    "RiwayatP2H.dc.html",
+    "MasterSite.dc.html",
+    "Sidebar.dc.html",
+    "RiwayatP2H-Desktop.dc.html",
+    "Temuan-Desktop.dc.html",
+    "Monitoring-Desktop.dc.html",
+    "Kepatuhan-Desktop.dc.html",
+    "Analitik-Desktop.dc.html",
+    "PA-Desktop.dc.html",
+    "Pengguna-Desktop.dc.html",
+    "AuditLog-Desktop.dc.html",
+    "Persetujuan-Desktop.dc.html",
+    "Downtime-Desktop.dc.html",
+    "Pengaturan-Desktop.dc.html",
+    "RingkasanHarian-Desktop.dc.html",
+    "Notifikasi-Desktop.dc.html",
+    "Akun-Desktop.dc.html",
+    "Login.dc.html",
+    "Login-Gelap-Final.dc.html",
+    "Login-M.dc.html",
+    "LoginNRPForm.dc.html",
+    "Login-Hero.dc.html",
+    "Login-Gelap.dc.html",
+    "Login-Fokus.dc.html",
+    "Login-Hero-M.dc.html",
+    "Login-Gelap-M.dc.html",
+    "Login-Fokus-M.dc.html",
+    "LoginForm.dc.html",
+    "Main.dc.html",
+    "Komponen.dc.html"
+  ],
+  "pages": [],
+  "title": "PIMS — P2H Management System"
+}

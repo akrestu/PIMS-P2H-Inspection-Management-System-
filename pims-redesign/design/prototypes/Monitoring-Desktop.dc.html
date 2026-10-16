@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Monitoring P2H (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Monitoring P2H" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Monitoring P2H</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">Jumat, 16 Okt 2026 · {{ shiftLabel }} · Pit A</span></div>
+      <button type="button" class="press" onClick="{{ refresh }}" aria-label="Muat ulang data" style="height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--muted-foreground); font: inherit; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px"><span class="{{ liveCls }}" style="width: 8px; height: 8px; border-radius: 9px; background: var(--success)"></span><span class="tnum">{{ updated }}</span><svg class="{{ spinCls }}" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+      <div role="radiogroup" aria-label="Shift" style="display: flex; padding: 3px; border-radius: 10px; background: var(--muted)">
+        <sc-for list="{{ shifts }}" as="t" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: 600">{{ t.label }}</button></sc-for>
+      </div>
+    </header>
+
+    <div class="tnum" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+        <button type="button" class="press" onClick="{{ k.pick }}" aria-pressed="{{ k.on }}" style="padding: 16px; border: 1px solid {{ k.border }}; border-radius: 14px; background: var(--background); color: var(--foreground); font: inherit; text-align: left; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">{{ k.label }}</span>
+          <span style="display: flex; align-items: baseline; gap: 4px"><strong style="font-size: 28px; font-weight: 600; letter-spacing: -0.02em; color: {{ k.fg }}">{{ k.v }}</strong><span style="font-size: 15px; color: var(--muted-foreground)">{{ k.of }}</span></span>
+          <span style="width: 100%; height: 4px; border-radius: 2px; background: var(--muted); overflow: hidden; opacity: {{ k.barOp }}"><span class="bar" style="display: block; height: 100%; width: {{ k.pct }}%; background: var(--foreground)"></span></span>
+          <span style="font-size: 12px; color: var(--muted-foreground)">{{ k.sub }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; gap: 20px; align-items: flex-start">
+      <section style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+          <div class="field" style="flex: 0 1 240px; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="{{ q }}" onChange="{{ onQ }}" aria-label="Cari unit atau driver" placeholder="Cari unit atau driver" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px"></div>
+          <sc-if value="{{ filterOn }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ clearFilter }}" style="height: 32px; padding: 0 10px; border-radius: 999px; border: 0; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px">{{ filterLabel }}<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></sc-if>
+        </div>
+        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+          <table style="width: 100%; min-width: 700px; border-collapse: collapse; font-size: 14px">
+            <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+              <th style="width: 44px; padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih semua yang belum P2H" checked="{{ allSel }}" onChange="{{ toggleAll }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></th>
+              <sc-for list="{{ cols }}" as="h" hint-placeholder-count="5"><th aria-sort="{{ h.aria }}" style="padding: 0 10px"><button type="button" class="press" onClick="{{ h.sort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: {{ h.fg }}; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap">{{ h.label }}<span style="opacity: {{ h.op }}">{{ h.arrow }}</span></button></th></sc-for>
+              <th style="padding: 0 14px"></th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+                <tr style="border-top: 1px solid var(--border); height: 54px; background: {{ r.bg }}">
+                  <td style="padding: 0 0 0 14px"><sc-if value="{{ r.canSel }}" hint-placeholder-val="{{ false }}"><input type="checkbox" aria-label="Pilih {{ r.code }}" checked="{{ r.sel }}" onChange="{{ r.toggle }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></sc-if></td>
+                  <td style="padding: 0 10px; white-space: nowrap"><strong class="tnum" style="font-weight: 600">{{ r.code }}</strong> <span style="font-size: 13px; color: var(--muted-foreground)">{{ r.type }}</span></td>
+                  <td style="padding: 0 10px; color: {{ r.drFg }}">{{ r.driver }}</td>
+                  <td style="padding: 0 10px"><span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; background: {{ r.uBg }}; color: {{ r.uFg }}; font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ r.unit }}</span></td>
+                  <td style="padding: 0 10px; position: relative">
+                    <span tabindex="{{ r.tabi }}" onMouseEnter="{{ r.tipIn }}" onMouseLeave="{{ r.tipOut }}" onFocus="{{ r.tipIn }}" onBlur="{{ r.tipOut }}" style="display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px; background: {{ r.pBg }}; color: {{ r.pFg }}; font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 999px">{{ r.pt }}</span>
+                    <sc-if value="{{ r.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; left: 10px; bottom: calc(100% - 8px); z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; line-height: 17px; white-space: nowrap; box-shadow: var(--shadow-2)">{{ r.tip }}</span></sc-if>
+                  </td>
+                  <td class="tnum" style="padding: 0 10px; color: var(--muted-foreground); white-space: nowrap">{{ r.time }}</td>
+                  <td style="padding: 0 14px; text-align: right; white-space: nowrap">
+                    <sc-if value="{{ r.remind }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ r.ping }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">{{ r.pingLabel }}</button></sc-if>
+                    <sc-if value="{{ r.view }}" hint-placeholder-val="{{ false }}"><a href="RiwayatP2H-Desktop.dc.html" class="press" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">Lihat</a></sc-if>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; text-align: center; color: var(--muted-foreground); font-size: 14px">Tidak ada unit untuk filter ini.</div></sc-if>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span class="tnum" style="flex: 1; font-size: 13px; color: var(--muted-foreground)">{{ pageInfo }}</span>
+          <sc-for list="{{ pages }}" as="g" hint-placeholder-count="4"><button type="button" class="press" aria-current="{{ g.cur }}" onClick="{{ g.pick }}" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; border: 1px solid {{ g.border }}; background: {{ g.bg }}; color: {{ g.fg }}; font: inherit; font-size: 13px; font-weight: 600">{{ g.label }}</button></sc-for>
+        </div>
+      </section>
+
+      <aside aria-label="Aktivitas terbaru" style="flex: 0 0 300px; border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <strong style="font-size: 15px; font-weight: 600; padding-bottom: 8px">Aktivitas terbaru</strong>
+        <sc-for list="{{ feed }}" as="f" hint-placeholder-count="7">
+          <div style="display: grid; grid-template-columns: 12px 1fr; gap: 10px; padding: 8px 0">
+            <span style="width: 8px; height: 8px; margin-top: 6px; border-radius: 9px; background: {{ f.dot }}"></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; line-height: 19px"><strong style="font-weight: 600">{{ f.unit }}</strong> {{ f.text }}</span><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ f.time }}</span></span>
+          </div>
+        </sc-for>
+      </aside>
+    </div>
+
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div class="toast-in" role="toolbar" aria-label="Aksi massal" style="position: sticky; bottom: 16px; align-self: center; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; box-shadow: var(--shadow-3)">
+        <span class="tnum" style="font-size: 14px; font-weight: 600; padding-right: 8px">{{ selN }} unit belum P2H</span>
+        <button type="button" class="press" onClick="{{ bulkPing }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: #F4D435; color: #0A0A0A; font: inherit; font-size: 13px; font-weight: 600">Ingatkan via WhatsApp</button>
+        <button type="button" class="press" onClick="{{ clearSel }}" aria-label="Batal pilih" style="width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: #FAFAFA; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 0 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Manager"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const U = (code, type, driver, unit, p, time, appr, rusak) => ({ code, type, driver, unit, p, time: time || '', appr: appr || '', rusak: rusak || '' });
+    const base = [
+      U('DT-1050', 'Dump Truck', 'Joko W.', 'BD', 'bad', '05:55', 'Disetujui', 'Kebocoran oli (kritis)'), U('EX-2003', 'Excavator', 'Dedi K.', 'BD', 'bad', '05:57', 'Menunggu', 'Rem parkir (kritis)'),
+      U('LV-031', 'Light Vehicle', 'Andi P.', 'Ready', 'wait', '05:52', 'Eskalasi 22 mnt', 'Wiper'), U('DT-1045', 'Dump Truck', 'Budi S.', 'Ready', 'wait', '05:48', 'Menunggu', 'Lampu rotary'),
+      U('LV-034', 'Light Vehicle', 'Rudi H.', 'Ready', 'none'), U('DT-1031', 'Dump Truck', 'Agus S.', 'Ready', 'none'), U('WT-007', 'Water Truck', 'Fajar N.', 'Ready', 'none'),
+      U('DT-1022', 'Dump Truck', 'Rudi H.', 'Ready', 'ok', '06:01', 'Disetujui'), U('EX-2001', 'Excavator', 'Slamet R.', 'Ready', 'ok', '05:40', 'Disetujui'), U('DZ-015', 'Dozer', 'Hadi T.', 'Ready', 'ok', '05:35', 'Disetujui'),
+      U('GR-012', 'Motor Grader', '—', 'PM', 'off'), U('DT-1061', 'Dump Truck', '—', 'Servis', 'off'),
+      U('DT-1038', 'Dump Truck', 'Yusuf P.', 'Ready', 'none'), U('DT-1072', 'Dump Truck', 'Imam F.', 'Ready', 'none'), U('LV-040', 'Light Vehicle', 'Dewi K.', 'Ready', 'none'),
+      U('DT-1003', 'Dump Truck', 'Bayu A.', 'Ready', 'wait', '05:59', 'Menunggu', 'Spion')
+    ];
+    const names = ['Arif H.', 'Bambang S.', 'Candra W.', 'Doni P.', 'Eko S.', 'Ferry G.', 'Gilang R.', 'Heru T.', 'Irfan M.', 'Johan L.', 'Kurnia D.', 'Lukman H.', 'Made W.', 'Nanda P.', 'Oki S.', 'Putra A.'];
+    for (let i = 0; base.length < 50; i++) { const n = i % 4; const w = i === 2; base.push(U(n === 3 ? 'EX-20' + (10 + i) : 'DT-11' + String(i).padStart(2, '0'), n === 3 ? 'Excavator' : 'Dump Truck', names[i % names.length], 'Ready', w ? 'wait' : 'ok', '05:' + String(30 + (i * 7) % 29).padStart(2, '0'), w ? 'Menunggu' : 'Disetujui', w ? (i === 2 ? 'Sabuk pengaman' : 'Lampu kerja') : '')); }
+    this.UNITS = base;
+    this.state = { shift: 1, filter: null, q: '', sortKey: 'p', dir: 1, page: 0, sel: {}, pinged: {}, tip: null, ago: 12, spin: false, toast: '' };
+  }
+  componentDidMount() { this.ti = setInterval(() => this.setState({ ago: this.state.ago + 1 }), 1000); }
+  componentWillUnmount() { clearTimeout(this.tt); clearInterval(this.ti); clearTimeout(this.sp); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Manager';
+    const view = this.UNITS.map((u) => s.shift === 2 ? { ...u, p: u.p === 'off' ? 'off' : 'later', time: '', appr: '', rusak: '' } : u);
+    const P = { ok: ['Layak · disetujui', 'var(--success-soft)', 'var(--success)'], wait: ['Layak · menunggu', 'var(--warning-soft)', 'var(--warning)'], bad: ['Tidak layak', 'var(--danger)', '#FFFFFF'], none: ['Belum P2H', 'var(--warning-soft)', 'var(--warning)'], off: ['Tidak dioperasikan', 'var(--muted)', 'var(--muted-foreground)'], later: ['Mulai 18:00', 'var(--muted)', 'var(--muted-foreground)'] };
+    const order = { bad: 0, none: 1, wait: 2, ok: 3, later: 4, off: 5 };
+    const sh1 = s.shift === 1;
+    const n = { masuk: view.filter((u) => ['ok', 'wait', 'bad'].includes(u.p)).length, belum: view.filter((u) => u.p === 'none').length, tidak: view.filter((u) => u.p === 'bad').length, wait: view.filter((u) => u.p === 'wait' || (u.p === 'bad' && /Menunggu/.test(u.appr))).length };
+    const wajib = view.filter((u) => u.p !== 'off').length;
+    const fdef = { masuk: ['Sudah P2H', (u) => ['ok', 'wait', 'bad'].includes(u.p)], belum: ['Belum P2H', (u) => u.p === 'none'], tidak: ['Tidak layak', (u) => u.p === 'bad'], wait: ['Menunggu setuju', (u) => u.p === 'wait' || (u.p === 'bad' && /Menunggu/.test(u.appr))] };
+    const kpi = (k, label, v, of, sub, fg, pct) => ({ label, v, of, sub, fg, pct, barOp: pct == null ? 0 : 1, on: s.filter === k, border: s.filter === k ? 'var(--foreground)' : 'var(--border)', pick: () => this.setState({ filter: s.filter === k ? null : k, page: 0, sel: {} }) });
+    const kpis = [
+      kpi('masuk', 'P2H masuk', n.masuk, '/ ' + wajib, sh1 ? (n.masuk / wajib * 100).toFixed(1).replace('.', ',') + '% unit wajib · tenggat 06:30' : 'Shift 2 mulai 18:00', 'var(--foreground)', sh1 ? n.masuk / wajib * 100 : 0),
+      kpi('belum', 'Belum P2H', n.belum, '', sh1 ? 'Tenggat 06:30 · ' + Math.max(0, 30 - Math.floor(s.ago / 60)) + ' mnt lagi' : '—', n.belum ? 'var(--warning)' : 'var(--foreground)', null),
+      kpi('tidak', 'Tidak layak', n.tidak, '', 'Otomatis BD sampai diperbaiki', n.tidak ? 'var(--danger)' : 'var(--foreground)', null),
+      kpi('wait', 'Menunggu persetujuan', n.wait, '', '2 eskalasi > 15 mnt', 'var(--foreground)', null)
+    ];
+    const q = s.q.trim().toLowerCase();
+    let list = view.filter((u) => (!s.filter || fdef[s.filter][1](u)) && (!q || (u.code + ' ' + u.driver).toLowerCase().includes(q)));
+    const key = { code: (u) => u.code, driver: (u) => u.driver, unit: (u) => u.unit, p: (u) => order[u.p], time: (u) => u.time || 'zz' };
+    list = list.slice().sort((a, b) => { const A = key[s.sortKey](a), B = key[s.sortKey](b); return ((A > B ? 1 : A < B ? -1 : 0) * s.dir) || (a.code > b.code ? 1 : -1); });
+    const per = 12, pages = Math.max(1, Math.ceil(list.length / per)), page = Math.min(s.page, pages - 1);
+    const shown = list.slice(page * per, page * per + per);
+    const kind = (st) => st === 'Ready' ? 'success' : (st === 'BD' ? 'danger' : 'info');
+    const rows = shown.map((u) => {
+      const sel = !!s.sel[u.code]; const pinged = !!s.pinged[u.code]; const has = !!u.rusak || !!u.appr;
+      return { ...u, sel, canSel: u.p === 'none', bg: sel ? 'var(--brand-soft)' : 'transparent', drFg: u.driver === '—' ? 'var(--muted-foreground)' : 'var(--foreground)',
+        uBg: 'var(--' + kind(u.unit) + '-soft)', uFg: 'var(--' + kind(u.unit) + ')', pt: P[u.p][0], pBg: P[u.p][1], pFg: P[u.p][2],
+        time: u.time || '—', tabi: has ? '0' : '-1', tipOn: s.tip === u.code && has,
+        tip: (u.rusak ? 'Rusak: ' + u.rusak : 'Semua item baik') + (u.appr ? ' · ' + u.appr : ''),
+        tipIn: () => { if (has && this.state.tip !== u.code) this.setState({ tip: u.code }); }, tipOut: () => { if (this.state.tip === u.code) this.setState({ tip: null }); },
+        remind: u.p === 'none', view: ['ok', 'wait', 'bad'].includes(u.p), pingLabel: pinged ? 'Terkirim ✓' : 'Ingatkan',
+        ping: () => { if (pinged) return; this.setState({ pinged: { ...this.state.pinged, [u.code]: true } }); this.toast('Pengingat WhatsApp terkirim ke ' + u.driver + ' (' + u.code + ')'); },
+        toggle: () => this.setState({ sel: { ...this.state.sel, [u.code]: !sel } }) };
+    });
+    const cols = [['code', 'Unit'], ['driver', 'Driver'], ['unit', 'Status unit'], ['p', 'P2H'], ['time', 'Jam']].map(([k, label]) => { const on = s.sortKey === k; return { label, fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', arrow: on ? (s.dir > 0 ? '↑' : '↓') : '↕', op: on ? 1 : 0.35, aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : 'none', sort: () => this.setState({ sortKey: k, dir: on ? -s.dir : 1 }) }; });
+    const selable = rows.filter((r) => r.canSel);
+    const selCodes = Object.keys(s.sel).filter((k) => s.sel[k]);
+    const feed = sh1 ? [['DT-1022', 'P2H disetujui Hendra W.', '06:03', 'var(--success)'], ['DT-1022', 'P2H masuk · Rudi H.', '06:01', 'var(--muted-foreground)'], ['DT-1003', 'P2H masuk · 1 rusak', '05:59', 'var(--warning)'], ['EX-2003', 'Tidak layak → BD otomatis', '05:57', 'var(--danger)'], ['DT-1050', 'Tidak layak → BD otomatis', '05:55', 'var(--danger)'], ['LV-031', 'P2H masuk · 1 rusak', '05:52', 'var(--warning)'], ['DT-1045', 'P2H masuk · 1 rusak', '05:48', 'var(--warning)']]
+      : [['Shift 2', 'belum dimulai. Pengingat otomatis 17:45.', '—', 'var(--muted-foreground)']];
+    const fmtAgo = s.ago < 60 ? 'Diperbarui ' + s.ago + ' dtk lalu' : 'Diperbarui ' + Math.floor(s.ago / 60) + ' mnt lalu';
+    return {
+      theme, peran, shiftLabel: sh1 ? 'Shift 1 (06:00–18:00 WITA)' : 'Shift 2 (18:00–06:00 WITA)',
+      shifts: [1, 2].map((k) => ({ label: 'Shift ' + k, on: s.shift === k, bg: s.shift === k ? 'var(--card)' : 'transparent', shadow: s.shift === k ? 'var(--shadow-2)' : 'none', fg: s.shift === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ shift: k, filter: null, page: 0, sel: {} }) })),
+      updated: fmtAgo, liveCls: 'pulse', spinCls: s.spin ? 'spin' : '',
+      refresh: () => { this.setState({ spin: true }); clearTimeout(this.sp); this.sp = setTimeout(() => this.setState({ spin: false, ago: 0 }), 700); },
+      kpis, q: s.q, onQ: (e) => this.setState({ q: e.target.value, page: 0 }),
+      filterOn: !!s.filter, filterLabel: s.filter ? fdef[s.filter][0] : '', clearFilter: () => this.setState({ filter: null, page: 0 }),
+      cols, rows, empty: rows.length === 0,
+      pageInfo: list.length ? (page * per + 1) + '–' + (page * per + shown.length) + ' dari ' + list.length + ' unit' : '0 unit',
+      pages: [{ label: '‹', i: page - 1, dis: page === 0 }].concat(Array.from({ length: pages }, (_, i) => ({ label: String(i + 1), i, cur: i === page }))).concat([{ label: '›', i: page + 1, dis: page >= pages - 1 }]).map((g) => ({ label: g.label, cur: g.cur ? 'page' : 'false', bg: g.cur ? 'var(--primary)' : 'var(--background)', fg: g.cur ? 'var(--primary-foreground)' : (g.dis ? 'var(--muted-foreground)' : 'var(--foreground)'), border: g.cur ? 'var(--primary)' : 'var(--input)', pick: () => { if (!g.dis) this.setState({ page: g.i }); } })),
+      allSel: selable.length > 0 && selable.every((r) => r.sel), toggleAll: () => { const a = selable.length && selable.every((r) => r.sel); const m = {}; if (!a) selable.forEach((r) => { m[r.code] = true; }); this.setState({ sel: m }); },
+      hasSel: selCodes.length > 0, selN: selCodes.length, clearSel: () => this.setState({ sel: {} }),
+      bulkPing: () => { const m = { ...s.pinged }; selCodes.forEach((c) => { m[c] = true; }); this.setState({ pinged: m, sel: {} }); this.toast('Pengingat WhatsApp terkirim ke ' + selCodes.length + ' driver'); },
+      feed: feed.map(([unit, text, time, dot]) => ({ unit, text, time, dot })),
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

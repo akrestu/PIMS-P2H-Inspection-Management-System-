@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Laporan periode (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Laporan periode" peran="Manager" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 32px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Laporan periode</h1>
+        <span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ rangeText }} · Semua site · dibanding periode sebelumnya</span>
+      </div>
+      <div role="radiogroup" aria-label="Rentang" style="display: flex; padding: 3px; border-radius: 10px; background: var(--muted)">
+        <sc-for list="{{ presets }}" as="r" hint-placeholder-count="4">
+          <button type="button" role="radio" aria-checked="{{ r.on }}" class="press" onClick="{{ r.pick }}" style="height: 34px; padding: 0 12px; border: 0; border-radius: 8px; background: {{ r.bg }}; box-shadow: {{ r.shadow }}; color: {{ r.fg }}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap">{{ r.label }}</button>
+        </sc-for>
+      </div>
+      <button type="button" class="press" onClick="{{ excel }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Excel</button>
+      <button type="button" class="press" onClick="{{ pdf }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px"><sc-if value="{{ pdfBusy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></sc-if>{{ pdfLabel }}</button>
+    </header>
+
+    <section aria-label="Ringkasan" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border)">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">{{ k.label }}</span>
+          <span class="tnum" style="font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -0.03em">{{ k.v }}</span>
+          <span class="tnum" style="font-size: 13px; font-weight: 600; color: {{ k.dFg }}">{{ k.d }}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 40px">
+      <section aria-labelledby="c1" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="display: flex; align-items: baseline; gap: 12px"><h2 id="c1" style="margin: 0; font-size: 17px; font-weight: 600">Kepatuhan harian</h2><span style="font-size: 13px; color: var(--muted-foreground)">garis putus = target 95%</span></div>
+        <div style="position: relative; height: 240px">
+          <div style="position: absolute; left: 0; right: 36px; top: 26px; bottom: 26px">
+            <svg viewBox="0 0 600 190" preserveAspectRatio="none" width="100%" height="100%" aria-hidden="true" style="display: block; overflow: visible">
+              <line x1="0" x2="600" y1="{{ y100 }}" y2="{{ y100 }}" stroke="var(--border)" vector-effect="non-scaling-stroke"/>
+              <line x1="0" x2="600" y1="{{ y90 }}" y2="{{ y90 }}" stroke="var(--border)" vector-effect="non-scaling-stroke"/>
+              <line x1="0" x2="600" y1="{{ y80 }}" y2="{{ y80 }}" stroke="var(--border)" vector-effect="non-scaling-stroke"/>
+              <line x1="0" x2="600" y1="{{ y95 }}" y2="{{ y95 }}" stroke="var(--chart-ref)" stroke-width="1.5" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>
+              <path d="{{ area }}" fill="var(--chart-1)" opacity="0.1"/>
+              <path d="{{ line }}" fill="none" stroke="var(--chart-1)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+              <line x1="{{ sx }}" x2="{{ sx }}" y1="0" y2="190" stroke="var(--foreground)" opacity="{{ hOp }}" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <span style="position: absolute; left: {{ sxPct }}%; top: {{ syPct }}%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 9px; background: var(--chart-1); box-shadow: 0 0 0 2px var(--background); opacity: {{ hOp }}"></span>
+            <div onPointerMove="{{ hover }}" onPointerLeave="{{ leave }}" style="position: absolute; inset: 0; cursor: crosshair"></div>
+            <div class="tnum" style="position: absolute; top: -26px; left: {{ sxPct }}%; transform: translateX({{ tipShift }}); padding: 4px 10px; border-radius: 8px; background: var(--foreground); color: var(--background); font-size: 12px; white-space: nowrap; pointer-events: none; opacity: {{ hOp }}"><strong>{{ sv }}%</strong> · {{ sd }} · {{ sp2h }} P2H</div>
+          </div>
+          <div class="tnum" style="position: absolute; right: 0; top: 26px; bottom: 26px; width: 30px; font-size: 11px; color: var(--muted-foreground)">
+            <span style="position: absolute; top: {{ p100 }}%; transform: translateY(-50%)">100</span><span style="position: absolute; top: {{ p95 }}%; transform: translateY(-50%); color: var(--foreground); font-weight: 600">95</span><span style="position: absolute; top: {{ p90 }}%; transform: translateY(-50%)">90</span><span style="position: absolute; top: {{ p80 }}%; transform: translateY(-50%)">80</span>
+          </div>
+          <div class="tnum" style="position: absolute; left: 0; right: 36px; bottom: 0; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted-foreground)"><span>1 Okt</span><span>8 Okt</span><span>16 Okt</span></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="c2" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="c2" style="margin: 0; font-size: 17px; font-weight: 600">Temuan per minggu</h2>
+          <span style="display: flex; gap: 14px; font-size: 12px; color: var(--muted-foreground)"><span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--chart-1)"></span>Dibuka</span><span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--chart-2)"></span>Ditutup</span></span></div>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: end; height: 214px; border-bottom: 1px solid var(--border)">
+          <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="5">
+            <div style="height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px" title="{{ w.aria }}">
+              <span style="width: 22px; display: flex; flex-direction: column; align-items: center; gap: 4px"><span class="tnum" style="font-size: 12px; font-weight: 600">{{ w.a }}</span><span style="width: 22px; height: {{ w.ha }}px; background: var(--chart-1); border-radius: 4px 4px 0 0"></span></span>
+              <span style="width: 22px; display: flex; flex-direction: column; align-items: center; gap: 4px"><span class="tnum" style="font-size: 12px; font-weight: 600">{{ w.b }}</span><span style="width: 22px; height: {{ w.hb }}px; background: var(--chart-2); border-radius: 4px 4px 0 0"></span></span>
+            </div>
+          </sc-for>
+        </div>
+        <div class="tnum" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; font-size: 12px; color: var(--muted-foreground); text-align: center"><sc-for list="{{ weeks }}" as="w" hint-placeholder-count="5"><span>{{ w.label }}</span></sc-for></div>
+      </section>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 40px; align-items: start">
+      <section aria-labelledby="t1" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <h2 id="t1" style="margin: 0; font-size: 17px; font-weight: 600">Per site</h2>
+        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+          <table style="width: 100%; min-width: 480px; border-collapse: collapse; font-size: 14px">
+            <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+              <sc-for list="{{ cols }}" as="h" hint-placeholder-count="5">
+                <th aria-sort="{{ h.aria }}" style="padding: 0 14px; text-align: {{ h.align }}"><button type="button" class="press" onClick="{{ h.sort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: {{ h.fg }}; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px">{{ h.label }}<span style="opacity: {{ h.op }}">{{ h.arrow }}</span></button></th>
+              </sc-for>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ siteRows }}" as="r" hint-placeholder-count="3">
+                <tr style="border-top: 1px solid var(--border); height: 52px">
+                  <td style="padding: 0 14px; font-weight: 600">{{ r.name }}</td>
+                  <td class="tnum" style="padding: 0 14px; text-align: right"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 56px; height: 6px; border-radius: 3px; background: var(--muted); overflow: hidden"><span style="display: block; height: 100%; width: {{ r.w }}%; background: var(--chart-1)"></span></span><span>{{ r.comp }}%</span></span></td>
+                  <td class="tnum" style="padding: 0 14px; text-align: right">{{ r.p2h }}</td>
+                  <td class="tnum" style="padding: 0 14px; text-align: right; color: {{ r.badFg }}">{{ r.bad }}</td>
+                  <td class="tnum" style="padding: 0 14px; text-align: right">{{ r.pa }}%</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 16px; background: var(--muted-2); border: 1px solid var(--border)">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 32px; height: 32px; border-radius: 10px; background: var(--brand); color: #0A0A0A; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
+          <h2 style="flex: 1; margin: 0; font-size: 17px; font-weight: 600">Ringkasan AI periode</h2>
+          <button type="button" class="press" onClick="{{ copy }}" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">Salin</button>
+        </div>
+        <p style="margin: 0; font-size: 15px; line-height: 24px">Kepatuhan rata-rata 91,4%, naik 2,1 poin dari periode lalu, tetapi masih di bawah target 95% pada 11 dari 16 hari. Pit B tertinggal (88,9%) karena 3 unit berulang tidak P2H di awal shift. Temuan dibuka 64, ditutup 52; backlog naik di minggu 41 karena menunggu sparepart hidrolik.</p>
+        <ul style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 22px; color: var(--muted-foreground)">
+          <li>Fokuskan pengingat 06:00 untuk LV-034, WT-007, DT-1031.</li>
+          <li>Siapkan stok selang hidrolik untuk DT-1045 dan DT-1050.</li>
+          <li>Lampu rotary (14 kasus): cek sekring saat servis rutin.</li>
+        </ul>
+        <span style="font-size: 12px; color: var(--muted-foreground)">Dibuat AI dari data PIMS · ikut dicetak di halaman 1 PDF.</span>
+      </section>
+    </div>
+  </main>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 20; min-height: 48px; padding: 6px 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":940}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.SER = [90, 93, 95, 92, 87, 90, 94, 96, 93, 91, 89, 92, 95, 94, 90, 87.5];
+    this.state = { range: 'bulan', hi: null, sortKey: 'comp', dir: -1, pdf: false, toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); clearTimeout(this.pt); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const navDefs = [['Dashboard', 'Dashboard-Desktop.dc.html'], ['Monitoring P2H', 'Monitoring-Desktop.dc.html'], ['Riwayat P2H', 'RiwayatP2H-Desktop.dc.html'], ['Kepatuhan', 'Kepatuhan-Desktop.dc.html'], ['Persetujuan', 'Persetujuan-Desktop.dc.html'], ['Temuan', 'Temuan-Desktop.dc.html'], '#Laporan', ['Ringkasan harian', 'RingkasanHarian-Desktop.dc.html'], ['Laporan periode', 'LaporanPeriode-Desktop.dc.html', true], ['Analitik unit', 'Analitik-Desktop.dc.html'], ['Monitoring PA', 'PA-Desktop.dc.html'], ['Downtime', 'Downtime-Desktop.dc.html'], '#Data master', ['Unit', 'MasterUnit-Desktop.dc.html'], ['Site', 'MasterSite.dc.html'], ['Pengguna & driver', '#']];
+    const nav = navDefs.map((n) => typeof n === 'string' ? { group: n.slice(1), item: false } : { group: '', item: true, label: n[0], href: n[1], cur: n[2] ? 'page' : 'false', bg: n[2] ? 'var(--sidebar-accent)' : 'transparent', fg: n[2] ? 'var(--foreground)' : 'var(--muted-foreground)', w: n[2] ? 600 : 500, ind: n[2] ? 1 : 0 });
+    const R = { '7': '10–16 Okt 2026', '30': '17 Sep–16 Okt 2026', bulan: '1–16 Okt 2026', lalu: '1–30 Sep 2026' };
+    const presets = [['7', '7 hari'], ['30', '30 hari'], ['bulan', 'Bulan ini'], ['lalu', 'Bulan lalu']].map(([k, label]) => ({ label, on: s.range === k, bg: s.range === k ? 'var(--card)' : 'transparent', shadow: s.range === k ? 'var(--shadow-2)' : 'none', fg: s.range === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ range: k }) }));
+    const kpis = [
+      { label: 'Kepatuhan rata-rata', v: '91,4%', d: '▲ 2,1 poin', dFg: 'var(--success)' },
+      { label: 'P2H tercatat', v: '1.412', d: 'dari 1.536 wajib', dFg: 'var(--muted-foreground)' },
+      { label: 'Tidak Layak', v: '38', d: '▼ 6 vs periode lalu', dFg: 'var(--success)' },
+      { label: 'Temuan dibuka', v: '64', d: '52 ditutup · 12 open', dFg: 'var(--muted-foreground)' },
+      { label: 'PA rata-rata', v: '86,1%', d: '▲ 0,8 poin', dFg: 'var(--success)' },
+      { label: 'Downtime', v: '214 j', d: '▲ 18 j · BD 61%', dFg: 'var(--danger)' }
+    ];
+    const W = 600, H = 190, min = 75, max = 100;
+    const xs = (i) => (i / (this.SER.length - 1)) * W, ys = (v) => (1 - (v - min) / (max - min)) * H;
+    const line = 'M' + this.SER.map((v, i) => xs(i).toFixed(1) + ' ' + ys(v).toFixed(1)).join(' L');
+    const i = s.hi == null ? this.SER.length - 1 : s.hi;
+    const weeks = [['M38', 14, 12], ['M39', 11, 13], ['M40', 15, 12], ['M41', 16, 9], ['M42', 8, 6]].map(([label, a, b]) => ({ label: 'Minggu ' + label.slice(1), a, b, ha: a * 10, hb: b * 10, aria: 'Minggu ' + label.slice(1) + ': dibuka ' + a + ', ditutup ' + b }));
+    const sitesRaw = [{ name: 'Pit A', comp: 91.4, p2h: 702, bad: 18, pa: 85.4 }, { name: 'Pit B', comp: 88.9, p2h: 498, bad: 15, pa: 84.0 }, { name: 'Hauling Road', comp: 94.0, p2h: 212, bad: 5, pa: 91.2 }];
+    const sorted = sitesRaw.slice().sort((a, b) => (a[s.sortKey] > b[s.sortKey] ? 1 : a[s.sortKey] < b[s.sortKey] ? -1 : 0) * s.dir);
+    const f = (v) => v.toFixed(1).replace('.', ',');
+    const siteRows = sorted.map((r) => ({ name: r.name, comp: f(r.comp), w: r.comp, p2h: r.p2h.toLocaleString('id-ID'), bad: r.bad, badFg: r.bad > 15 ? 'var(--danger)' : 'var(--foreground)', pa: f(r.pa) }));
+    const cols = [['name', 'Site', 'left'], ['comp', 'Kepatuhan', 'right'], ['p2h', 'P2H', 'right'], ['bad', 'Tidak Layak', 'right'], ['pa', 'PA', 'right']].map(([k, label, align]) => { const on = s.sortKey === k; return { label, align, fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', arrow: on ? (s.dir > 0 ? '↑' : '↓') : '↕', op: on ? 1 : 0.35, aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : 'none', sort: () => this.setState({ sortKey: k, dir: on ? -s.dir : -1 }) }; });
+    return {
+      theme, nav, presets, rangeText: R[s.range], kpis,
+      line, area: line + ' L' + W + ' ' + H + ' L0 ' + H + ' Z',
+      y100: ys(100), y95: ys(95), y90: ys(90), y80: ys(80), p100: ys(100) / H * 100, p95: ys(95) / H * 100, p90: ys(90) / H * 100, p80: ys(80) / H * 100,
+      sx: xs(i), sxPct: xs(i) / W * 100, syPct: ys(this.SER[i]) / H * 100, hOp: s.hi == null ? 0 : 1, sv: String(this.SER[i]).replace('.', ','), sd: (i + 1) + ' Okt', sp2h: 84 + (i % 5) * 2,
+      tipShift: i < 2 ? '0%' : (i > 13 ? '-100%' : '-50%'),
+      hover: (e) => { const r = e.currentTarget.getBoundingClientRect(); const c = Math.max(0, Math.min(this.SER.length - 1, Math.round(((e.clientX - r.left) / r.width) * (this.SER.length - 1)))); if (c !== this.state.hi) this.setState({ hi: c }); },
+      leave: () => this.setState({ hi: null }),
+      weeks, cols, siteRows,
+      pdfBusy: s.pdf, pdfLabel: s.pdf ? 'Menyiapkan…' : 'Unduh PDF',
+      pdf: () => { if (s.pdf) return; this.setState({ pdf: true }); this.pt = setTimeout(() => { this.setState({ pdf: false }); this.toast('PDF siap · 12 halaman · ringkasan AI di halaman 1'); }, 1600); },
+      excel: () => this.toast('Excel diunduh · 3 sheet'), copy: () => this.toast('Ringkasan AI disalin'),
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

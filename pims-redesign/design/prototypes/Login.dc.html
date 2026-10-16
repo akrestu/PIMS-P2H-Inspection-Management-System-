@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Masuk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.lg-m{min-height:100vh;display:flex;flex-direction:column;background:var(--background);color:var(--foreground);font-family:'Geist',ui-sans-serif,system-ui,sans-serif}
+.lg-hero{position:relative;height:300px;flex-shrink:0;overflow:hidden;color:#FAFAFA}
+.lg-hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 40%}
+.lg-hero .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,.4) 0%,rgba(10,10,10,.08) 42%,var(--background) 100%)}
+.lg-mform{position:relative;margin-top:-64px;padding:0 24px 24px;flex:1;display:flex;flex-direction:column;gap:24px}
+.lg-d{display:none}
+@media (min-width:1024px){
+ .lg-m{display:none}
+ .lg-d{position:relative;min-height:100vh;overflow:hidden;background:var(--lg-bg);color:var(--foreground);font-family:'Geist',ui-sans-serif,system-ui,sans-serif;display:flex;flex-direction:column}
+}
+.lg-d{--lg-bg:#F7F7F5;--lg-topo:.22;--lg-card:rgba(255,255,255,.78);--lg-card-bd:rgba(10,10,10,.07);--lg-card-sh:0 40px 80px -32px rgba(10,10,10,.22),0 1px 2px rgba(10,10,10,.04),inset 0 1px 0 rgba(255,255,255,.9);--lg-pill:rgba(255,255,255,.7);--lg-pill-bd:rgba(10,10,10,.08)}
+.lg-d[data-theme="dark"]{--lg-bg:#0A0A0A;--lg-topo:.16;--lg-card:rgba(22,22,24,.62);--lg-card-bd:rgba(255,255,255,.08);--lg-card-sh:0 40px 80px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);--lg-pill:rgba(255,255,255,.04);--lg-pill-bd:rgba(255,255,255,.1)}
+.lg-d[data-theme="hc"]{--lg-bg:#FFFFFF;--lg-topo:0;--lg-card:#FFFFFF;--lg-card-bd:#000;--lg-card-sh:none;--lg-pill:#FFFFFF;--lg-pill-bd:#000}
+.lg-topo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:var(--lg-topo);pointer-events:none}
+.lg-card{width:100%;max-width:440px;box-sizing:border-box;padding:36px;border-radius:28px;background:var(--lg-card);border:var(--bw) solid var(--lg-card-bd);box-shadow:var(--lg-card-sh);-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);display:flex;justify-content:center}
+.lg-pill{background:var(--lg-pill);border:1px solid var(--lg-pill-bd)}
+</style>
+</helmet>
+<div>
+  <!-- MOBILE & TABLET (< 1024): gaya L1 Hero -->
+  <div class="pims lg-m" data-theme="{{ theme }}">
+    <section class="lg-hero" aria-hidden="true">
+      <img class="bg" src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="">
+      <div class="ov"></div>
+      <div style="position: absolute; top: 20px; left: 24px; right: 24px; display: flex; align-items: center; justify-content: space-between">
+        <span style="display: flex; align-items: center; gap: 10px"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 34px; height: 34px"><span style="font-size: 19px; font-weight: 700; letter-spacing: -0.02em; text-shadow: 0 1px 8px rgba(0,0,0,.4)">PIMS</span></span>
+        <span style="font-size: 12px; font-weight: 500; text-shadow: 0 1px 6px rgba(0,0,0,.5)">P2H unit &amp; alat berat</span>
+      </div>
+    </section>
+    <section class="lg-mform">
+      <dc-import name="LoginNRPForm" theme="{{ theme }}" align="left" hint-size="342px,620px"></dc-import>
+      <span style="margin-top: auto; font-size: 12px; color: var(--muted-foreground)">PIMS v1.0 · masuk tercatat di Audit Log</span>
+    </section>
+  </div><div class="pims lg-d" data-theme="{{ dtheme }}">
+    <img class="lg-topo" src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true">
+    <header style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 28px 40px">
+      <span style="display: flex; align-items: center; gap: 10px"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 32px; height: 32px"><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">PIMS</span></span>
+      <span class="tnum lg-pill" style="height: 32px; padding: 0 12px; border-radius: 999px; font-size: 12px; color: var(--muted-foreground); display: inline-flex; align-items: center; gap: 8px"><span class="pulse" style="width: 7px; height: 7px; border-radius: 9px; background: var(--success)"></span>Shift 1 · 05:42 WITA</span>
+    </header>
+    <main style="position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 12px 24px">
+      <div class="lg-card"><dc-import name="LoginNRPForm" theme="{{ dtheme }}" align="left" hint-size="368px,620px"></dc-import></div>
+    </main>
+    <footer style="position: relative; padding: 16px 24px 28px; display: flex; justify-content: center"><span style="font-size: 12px; color: var(--muted-foreground)">PIMS v1.0 · masuk tercatat di Audit Log</span></footer>
+  </div>
+
+  <!-- DESKTOP (>= 1024): gaya L2 — terang (default) / gelap / kontras tinggi mengikuti tema -->
+  
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { const t = this.props.theme ?? 'light'; return { theme: t, dtheme: t }; }
+}
+</script>
+</body>
+</html>

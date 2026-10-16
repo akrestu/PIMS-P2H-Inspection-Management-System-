@@ -1,0 +1,159 @@
+[
+  {
+    "site": "PTA",
+    "unit": "DT-1045",
+    "date": "2026-10-16",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20231045",
+        "submitted_at_local": "05:48",
+        "result": "layak",
+        "hm_start": 12481.0,
+        "fuel_level": "3/4",
+        "answers_rusak": [
+          {
+            "item": "rotary",
+            "note": "Lampu rotary mati, kemungkinan sekring putus"
+          }
+        ],
+        "approval_status": "menunggu"
+      }
+    ]
+  },
+  {
+    "site": "PTA",
+    "unit": "EX-2003",
+    "date": "2026-10-16",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20210533",
+        "submitted_at_local": "05:57",
+        "result": "tidak_layak",
+        "hm_start": 15204.5,
+        "fuel_level": "3/4",
+        "answers_rusak": [
+          {
+            "item": "parkir",
+            "note": "Unit bergeser di tanjakan ringan saat rem parkir aktif"
+          }
+        ],
+        "approval_status": "eskalasi"
+      }
+    ]
+  },
+  {
+    "site": "PTA",
+    "unit": "LV-031",
+    "date": "2026-10-16",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20220871",
+        "submitted_at_local": "05:52",
+        "result": "layak",
+        "hm_start": 4110.2,
+        "fuel_level": "1/2",
+        "answers_rusak": [
+          {
+            "item": "wiper",
+            "note": "Karet wiper kanan sobek"
+          }
+        ],
+        "approval_status": "eskalasi"
+      },
+      {
+        "driver_nrp": "20240112",
+        "submitted_at_local": "06:05",
+        "result": "layak",
+        "hm_start": 4110.4,
+        "fuel_level": "1/2",
+        "answers_rusak": [],
+        "approval_status": "menunggu"
+      }
+    ]
+  },
+  {
+    "site": "PTA",
+    "unit": "DT-1022",
+    "date": "2026-10-16",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20200987",
+        "submitted_at_local": "06:01",
+        "result": "layak",
+        "hm_start": 11902.4,
+        "fuel_level": "3/4",
+        "answers_rusak": [],
+        "approval_status": "disetujui"
+      }
+    ]
+  },
+  {
+    "site": "PTA",
+    "unit": "DT-1050",
+    "date": "2026-10-16",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20230440",
+        "submitted_at_local": "05:55",
+        "result": "tidak_layak",
+        "hm_start": 9812.0,
+        "fuel_level": "1/2",
+        "answers_rusak": [
+          {
+            "item": "bocor",
+            "note": "Tetesan oli mesin di bawah unit"
+          }
+        ],
+        "approval_status": "disetujui"
+      }
+    ]
+  },
+  {
+    "site": "PTA",
+    "unit": "EX-2001",
+    "date": "2026-10-15",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20180122",
+        "submitted_at_local": "05:40",
+        "result": "layak",
+        "hm_start": 18318.6,
+        "fuel_level": "3/4",
+        "answers_rusak": [],
+        "approval_status": "disetujui"
+      }
+    ]
+  },
+  {
+    "site": "PTA",
+    "unit": "DT-1045",
+    "date": "2026-10-13",
+    "shift": 1,
+    "entries": [
+      {
+        "driver_nrp": "20231045",
+        "submitted_at_local": "06:02",
+        "result": "tidak_layak",
+        "hm_start": 12447.5,
+        "fuel_level": "1/2",
+        "answers_rusak": [
+          {
+            "item": "ban",
+            "note": "Mur roda kiri belakang kendor"
+          },
+          {
+            "item": "spion",
+            "note": "Spion kanan retak"
+          }
+        ],
+        "approval_status": "disetujui"
+      }
+    ]
+  }
+]

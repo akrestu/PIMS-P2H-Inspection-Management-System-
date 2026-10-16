@@ -1,0 +1,164 @@
+[
+  {
+    "sort": 1,
+    "category": "Keselamatan",
+    "code": "rem",
+    "name": "Rem utama",
+    "hint": "Uji jalan pelan, tidak menarik ke satu sisi",
+    "is_critical": true,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 2,
+    "category": "Keselamatan",
+    "code": "parkir",
+    "name": "Rem parkir",
+    "hint": "Unit tertahan di tanjakan ringan",
+    "is_critical": true,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 3,
+    "category": "Keselamatan",
+    "code": "kemudi",
+    "name": "Kemudi",
+    "hint": "Tidak berat, tidak ada jarak main berlebih",
+    "is_critical": true,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 4,
+    "category": "Keselamatan",
+    "code": "sabuk",
+    "name": "Sabuk pengaman",
+    "hint": "Terkunci dan tidak sobek",
+    "is_critical": true,
+    "default_pic_team": "Tim Body"
+  },
+  {
+    "sort": 5,
+    "category": "Keselamatan",
+    "code": "alarm",
+    "name": "Klakson & alarm mundur",
+    "hint": "Terdengar jelas dari 10 m",
+    "is_critical": true,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 6,
+    "category": "Keselamatan",
+    "code": "apar",
+    "name": "APAR",
+    "hint": "Tersedia, segel utuh, jarum di hijau",
+    "is_critical": false,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 7,
+    "category": "Mesin & cairan",
+    "code": "oli",
+    "name": "Oli mesin",
+    "hint": "Level di antara L–H pada dipstick",
+    "is_critical": false,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 8,
+    "category": "Mesin & cairan",
+    "code": "radiator",
+    "name": "Air radiator",
+    "hint": "Level cukup, tutup rapat",
+    "is_critical": false,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 9,
+    "category": "Mesin & cairan",
+    "code": "hidrolik",
+    "name": "Oli hidrolik",
+    "hint": "Level di sight gauge",
+    "is_critical": false,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 10,
+    "category": "Mesin & cairan",
+    "code": "bocor",
+    "name": "Kebocoran oli / BBM / air",
+    "hint": "Cek bawah unit dan sambungan selang",
+    "is_critical": true,
+    "default_pic_team": "Mekanik"
+  },
+  {
+    "sort": 11,
+    "category": "Lampu & kelistrikan",
+    "code": "lampu",
+    "name": "Lampu utama",
+    "hint": "Dekat dan jauh menyala",
+    "is_critical": false,
+    "default_pic_team": "Elektrik"
+  },
+  {
+    "sort": 12,
+    "category": "Lampu & kelistrikan",
+    "code": "sein",
+    "name": "Lampu rem & sein",
+    "hint": "Kiri, kanan, belakang",
+    "is_critical": false,
+    "default_pic_team": "Elektrik"
+  },
+  {
+    "sort": 13,
+    "category": "Lampu & kelistrikan",
+    "code": "rotary",
+    "name": "Lampu rotary",
+    "hint": "Menyala dan berputar",
+    "is_critical": false,
+    "default_pic_team": "Elektrik"
+  },
+  {
+    "sort": 14,
+    "category": "Lampu & kelistrikan",
+    "code": "wiper",
+    "name": "Wiper & kaca depan",
+    "hint": "Tidak retak, wiper menyapu bersih",
+    "is_critical": false,
+    "default_pic_team": "Elektrik"
+  },
+  {
+    "sort": 15,
+    "category": "Ban, kabin & komunikasi",
+    "code": "ban",
+    "name": "Ban & mur roda",
+    "hint": "Tidak sobek, mur lengkap dan kencang",
+    "is_critical": true,
+    "default_pic_team": "Tim Ban"
+  },
+  {
+    "sort": 16,
+    "category": "Ban, kabin & komunikasi",
+    "code": "spion",
+    "name": "Spion",
+    "hint": "Lengkap dan tersetel",
+    "is_critical": false,
+    "default_pic_team": "Tim Body"
+  },
+  {
+    "sort": 17,
+    "category": "Ban, kabin & komunikasi",
+    "code": "tangga",
+    "name": "Tangga & pegangan",
+    "hint": "Kokoh, tidak licin",
+    "is_critical": false,
+    "default_pic_team": "Tim Body"
+  },
+  {
+    "sort": 18,
+    "category": "Ban, kabin & komunikasi",
+    "code": "radio",
+    "name": "Radio komunikasi",
+    "hint": "Uji panggil ke dispatcher",
+    "is_critical": false,
+    "default_pic_team": "Mekanik"
+  }
+]
