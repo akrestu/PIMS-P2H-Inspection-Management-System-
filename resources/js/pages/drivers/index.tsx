@@ -528,7 +528,7 @@ function ViewDriverDialog({
                             className={`h-16 w-16 bg-muted text-foreground`}
                         >
                             <AvatarFallback
-                                className={`bg-muted text-xl font-bold text-foreground`}
+                                className={`bg-muted text-xl font-semibold text-foreground`}
                             >
                                 {getInitials(driver.nama)}
                             </AvatarFallback>
@@ -609,7 +609,7 @@ function StatCard({
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
+                <div className="text-2xl font-semibold">{value}</div>
                 {sub && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
                         {sub}
@@ -730,7 +730,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari nama atau NIK..."
-                                className="h-9 pr-8 pl-9"
+                                className="pr-8 pl-9"
                             />
                             {search && (
                                 <button
@@ -760,7 +760,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                                                 deptFilter === dept
                                                     ? 'border-primary bg-primary text-primary-foreground'
-                                                    : 'border-border hover:border-primary/60'
+                                                    : 'border-border hover:border-foreground/30'
                                             }`}
                                         >
                                             {dept}

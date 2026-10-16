@@ -97,8 +97,8 @@ function RestoreDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        <RotateCcw className="h-6 w-6 text-primary" />
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <RotateCcw className="h-6 w-6 text-foreground" />
                     </div>
                     <DialogTitle className="text-center">
                         Pulihkan Site?
@@ -268,7 +268,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari nama site..."
-                                className="h-9 pl-9"
+                                className="pl-9"
                             />
                         </div>
                     </CardContent>

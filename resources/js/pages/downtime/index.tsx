@@ -526,7 +526,7 @@ export default function DowntimeIndex({
 
                 {/* ── Filter Panel ── */}
                 {showFilter && (
-                    <Card className="border-primary/20">
+                    <Card className="border-border">
                         <CardHeader className="pt-4 pb-2">
                             <CardTitle className="flex items-center gap-2 text-sm">
                                 <Filter className="h-4 w-4" /> Filter Log

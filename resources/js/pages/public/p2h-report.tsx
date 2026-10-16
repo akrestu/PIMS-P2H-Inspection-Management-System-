@@ -161,7 +161,7 @@ export default function PublicP2hReport({
                                     }
                                 >
                                     <SelectTrigger
-                                        className="h-9 w-44"
+                                        className="w-44"
                                         aria-label="Pilih site"
                                     >
                                         <SelectValue />
@@ -186,7 +186,7 @@ export default function PublicP2hReport({
                                 onValueChange={(v) => go({ bulan: v })}
                             >
                                 <SelectTrigger
-                                    className="h-9 w-44"
+                                    className="w-44"
                                     aria-label="Pilih bulan"
                                 >
                                     <SelectValue />

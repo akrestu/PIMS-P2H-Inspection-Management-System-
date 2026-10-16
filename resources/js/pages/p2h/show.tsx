@@ -544,7 +544,7 @@ function EntryDetail({
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4 pb-4 text-sm">
                             <div className="rounded-lg bg-muted/40 p-3 text-center">
-                                <p className="text-2xl font-bold">
+                                <p className="text-2xl font-semibold">
                                     {entry.fuel_log.km_unit
                                         ? entry.fuel_log.km_unit.toLocaleString(
                                               'id-ID',
@@ -556,7 +556,7 @@ function EntryDetail({
                                 </p>
                             </div>
                             <div className="rounded-lg bg-muted/40 p-3 text-center">
-                                <p className="text-2xl font-bold">
+                                <p className="text-2xl font-semibold">
                                     {entry.fuel_log.jumlah_liter ?? '-'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">

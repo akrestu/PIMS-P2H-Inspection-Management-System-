@@ -26,21 +26,36 @@ type Segment = Exclude<keyof FleetCounts, 'total'>;
 // Warna status (tetap, tidak ikut tema) — selalu disertai label & angka, tidak warna saja
 const SEGMENTS: { key: Segment; label: string; color: string; ink: string }[] =
     [
-        { key: 'layak', label: 'Layak', color: 'var(--success)', ink: 'var(--background)' },
+        {
+            key: 'layak',
+            label: 'Layak',
+            color: 'var(--success)',
+            ink: 'var(--background)',
+        },
         {
             key: 'temuan',
             label: 'Ada temuan',
             color: 'var(--warning)',
             ink: 'var(--background)',
         },
-        { key: 'bd', label: 'BD (P2H)', color: 'var(--danger)', ink: 'var(--background)' },
+        {
+            key: 'bd',
+            label: 'BD (P2H)',
+            color: 'var(--danger)',
+            ink: 'var(--background)',
+        },
         {
             key: 'tidak_ready',
             label: 'Tidak Ready (BD/PM/Servis)',
             color: 'var(--muted-foreground)',
             ink: 'var(--background)',
         },
-        { key: 'belum', label: 'Belum P2H', color: 'var(--muted)', ink: 'var(--foreground)' },
+        {
+            key: 'belum',
+            label: 'Belum P2H',
+            color: 'var(--muted)',
+            ink: 'var(--foreground)',
+        },
     ];
 
 function FleetBar({ jenis, counts }: { jenis: string; counts: FleetCounts }) {
@@ -131,7 +146,7 @@ export function FleetTodayChart({
                     </CardDescription>
                 </div>
                 <div className="text-right">
-                    <p className="text-2xl font-bold tabular-nums">
+                    <p className="text-2xl font-semibold tabular-nums">
                         {sudah}
                         <span className="text-base font-medium text-muted-foreground">
                             /{wajib}
@@ -173,7 +188,7 @@ export function FleetTodayChart({
                     <li className="ml-auto">
                         <Link
                             href="/unit-monitoring"
-                            className="font-medium text-primary underline-offset-2 hover:underline"
+                            className="font-medium text-foreground underline-offset-2 hover:underline"
                         >
                             Lihat per unit
                         </Link>

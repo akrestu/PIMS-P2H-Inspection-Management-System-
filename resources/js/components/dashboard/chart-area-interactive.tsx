@@ -233,7 +233,10 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
                             />
                             <Tooltip
                                 content={<CustomTooltip />}
-                                cursor={{ fill: 'var(--chart-1)', fillOpacity: 0.06 }}
+                                cursor={{
+                                    fill: 'var(--chart-1)',
+                                    fillOpacity: 0.06,
+                                }}
                             />
                             <Bar
                                 dataKey="total"

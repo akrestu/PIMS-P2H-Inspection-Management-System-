@@ -342,7 +342,7 @@ function AssignedUnitsSelect({
                         value={unitSearch}
                         onChange={(e) => setUnitSearch(e.target.value)}
                         placeholder="Cari nomor unit…"
-                        className="h-8 pl-8 text-xs"
+                        className="pl-8 text-xs"
                     />
                 </div>
             )}
@@ -379,7 +379,7 @@ function AssignedUnitsSelect({
                     {selectedUnits.map((u) => (
                         <span
                             key={u.id}
-                            className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-foreground"
                         >
                             {u.no_unit}
                             <button
@@ -1116,7 +1116,7 @@ function ImportSheet({
 
                     <a
                         href="/users/import-template"
-                        className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline"
+                        className="inline-flex items-center justify-center gap-2 text-sm text-foreground hover:underline"
                     >
                         <Download className="h-4 w-4" />
                         Download Template Excel
@@ -1346,7 +1346,7 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari nama, NIK, atau email..."
-                                className="h-9 pr-8 pl-9"
+                                className="pr-8 pl-9"
                             />
                             {search && (
                                 <button
@@ -1376,7 +1376,7 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                         className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                                             roleFilter === r
                                                 ? 'border-primary bg-primary text-primary-foreground'
-                                                : 'border-border hover:border-primary/60'
+                                                : 'border-border hover:border-foreground/30'
                                         }`}
                                     >
                                         {ROLE_META[r].label}
@@ -1401,7 +1401,7 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                     className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                                         jabatanFilter === j
                                             ? 'border-primary bg-primary text-primary-foreground'
-                                            : 'border-border hover:border-primary/60'
+                                            : 'border-border hover:border-foreground/30'
                                     }`}
                                 >
                                     {j}
@@ -1753,7 +1753,7 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                     >
                                         <SelectTrigger
                                             aria-label="Baris per halaman"
-                                            className="h-8 w-32 text-xs"
+                                            className="w-32 text-xs"
                                         >
                                             <SelectValue />
                                         </SelectTrigger>

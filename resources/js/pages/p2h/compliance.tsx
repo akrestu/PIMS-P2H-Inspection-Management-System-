@@ -242,7 +242,7 @@ function FilterBar({
                         key={String(v)}
                         type="button"
                         onClick={() => applyPreset(v)}
-                        className="flex h-7 items-center rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:text-foreground"
+                        className="flex h-7 items-center rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-all hover:border-foreground/30 hover:text-foreground"
                     >
                         {v === 7
                             ? '7 Hari'
@@ -325,7 +325,7 @@ function FilterBar({
             </div>
 
             {showPanel && (
-                <Card className="border-primary/20">
+                <Card className="border-border">
                     <CardHeader className="pt-4 pb-3">
                         <CardTitle className="flex items-center gap-2 text-sm">
                             <Filter className="h-4 w-4" />

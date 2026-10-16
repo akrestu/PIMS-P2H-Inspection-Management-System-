@@ -177,7 +177,7 @@ export default function UnitAnalytics({
                             <Input
                                 id="start"
                                 type="date"
-                                className="h-9 w-38"
+                                className="w-38"
                                 value={range.start}
                                 onChange={(e) =>
                                     setRange((r) => ({
@@ -192,7 +192,7 @@ export default function UnitAnalytics({
                             <Input
                                 id="end"
                                 type="date"
-                                className="h-9 w-38"
+                                className="w-38"
                                 value={range.end}
                                 onChange={(e) =>
                                     setRange((r) => ({
@@ -219,7 +219,7 @@ export default function UnitAnalytics({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger className="w-40">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -248,7 +248,7 @@ export default function UnitAnalytics({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger className="w-40">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

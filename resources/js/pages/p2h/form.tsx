@@ -455,9 +455,9 @@ function PicCombobox({
             {/* Trigger / input */}
             <div
                 className={cn(
-                    'flex h-11 w-full cursor-text items-center gap-2 rounded-lg border px-3 text-sm transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20',
+                    'flex h-11 w-full cursor-text items-center gap-2 rounded-lg border field px-3 text-sm transition-colors',
                     open
-                        ? 'border-primary ring-2 ring-primary/20'
+                        ? 'border-primary ring-2 ring-ring'
                         : 'border-input hover:border-muted-foreground/50',
                 )}
                 onClick={() => {
@@ -521,7 +521,7 @@ function PicCombobox({
                                     onClick={() => select(String(s.id))}
                                     className={cn(
                                         'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent',
-                                        isSelected && 'bg-primary/5',
+                                        isSelected && 'bg-muted',
                                     )}
                                 >
                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -539,7 +539,7 @@ function PicCombobox({
                                         </p>
                                     </div>
                                     {isSelected && (
-                                        <Check className="h-4 w-4 shrink-0 text-primary" />
+                                        <Check className="h-4 w-4 shrink-0 text-foreground" />
                                     )}
                                 </button>
                             );
@@ -652,7 +652,7 @@ function LokasiCombobox({
 
                     {/* Search input — sticky, tidak ikut scroll */}
                     <div className="shrink-0 px-4 py-3">
-                        <div className="flex h-11 items-center gap-2 rounded-lg border px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                        <div className="flex h-11 items-center gap-2 rounded-lg border field px-3">
                             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <input
                                 ref={inputRef}
@@ -679,7 +679,7 @@ function LokasiCombobox({
                             <button
                                 type="button"
                                 onClick={addManual}
-                                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-primary/40 px-4 py-3 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+                                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-input px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted"
                             >
                                 <Plus className="h-4 w-4 shrink-0" />
                                 Tambahkan:{' '}
@@ -696,13 +696,13 @@ function LokasiCombobox({
                                 className={cn(
                                     'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:bg-accent',
                                     value === lokasi &&
-                                        'border-primary bg-primary/5 font-medium',
+                                        'border-primary bg-muted font-medium',
                                 )}
                             >
                                 <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                                 <span className="flex-1">{lokasi}</span>
                                 {value === lokasi && (
-                                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                                    <Check className="h-4 w-4 shrink-0 text-foreground" />
                                 )}
                             </button>
                         ))}
@@ -1439,14 +1439,14 @@ export default function P2hForm({
                                                     className={cn(
                                                         'flex w-full items-center justify-between rounded-xl border-2 px-4 py-3 text-left transition-colors',
                                                         pickedUnit
-                                                            ? 'border-primary/30 bg-primary/5 hover:border-primary/50'
+                                                            ? 'border-border bg-muted hover:border-foreground/30'
                                                             : 'border-dashed border-muted-foreground/30 bg-muted/30 hover:border-muted-foreground/50',
                                                     )}
                                                 >
                                                     {pickedUnit ? (
                                                         <div className="flex min-w-0 items-center gap-3">
-                                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                                                                <Truck className="h-5 w-5 text-primary" />
+                                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                                                <Truck className="h-5 w-5 text-foreground" />
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <div className="truncate text-base font-bold">
@@ -1530,15 +1530,15 @@ export default function P2hForm({
                                                                                 className={cn(
                                                                                     'flex w-full items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors',
                                                                                     isSelected
-                                                                                        ? 'border-primary bg-primary/5'
-                                                                                        : 'border-border hover:border-primary/40 hover:bg-muted/40',
+                                                                                        ? 'border-primary bg-muted'
+                                                                                        : 'border-border hover:border-foreground/30 hover:bg-muted/40',
                                                                                 )}
                                                                             >
                                                                                 <div
                                                                                     className={cn(
                                                                                         'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
                                                                                         isSelected
-                                                                                            ? 'bg-primary/15'
+                                                                                            ? 'bg-muted'
                                                                                             : 'bg-muted',
                                                                                     )}
                                                                                 >
@@ -1546,7 +1546,7 @@ export default function P2hForm({
                                                                                         className={cn(
                                                                                             'h-5 w-5',
                                                                                             isSelected
-                                                                                                ? 'text-primary'
+                                                                                                ? 'text-foreground'
                                                                                                 : 'text-muted-foreground',
                                                                                         )}
                                                                                     />
@@ -1564,7 +1564,7 @@ export default function P2hForm({
                                                                                     </div>
                                                                                 </div>
                                                                                 {isSelected && (
-                                                                                    <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                                                                                    <CheckCircle2 className="h-5 w-5 shrink-0 text-foreground" />
                                                                                 )}
                                                                             </button>
                                                                         </SheetClose>
@@ -1726,7 +1726,7 @@ export default function P2hForm({
                                             setKmAwal(e.target.value)
                                         }
                                         placeholder="Contoh: 12500"
-                                        className="h-14 text-xl font-bold tracking-wide"
+                                        className="h-14 text-xl font-semibold tracking-wide"
                                     />
                                     {kmAwal && (
                                         <p className="text-xs text-muted-foreground">
@@ -1860,9 +1860,9 @@ export default function P2hForm({
                                                 );
 
                                                 return pic ? (
-                                                    <div className="flex items-center gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-                                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                                                            <User className="h-4 w-4 text-primary" />
+                                                    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted px-3 py-2">
+                                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                                                            <User className="h-4 w-4 text-foreground" />
                                                         </div>
                                                         <div className="min-w-0">
                                                             <p className="truncate text-sm font-semibold">
@@ -1903,7 +1903,7 @@ export default function P2hForm({
                                                 sudah diperiksa
                                             </p>
                                         </div>
-                                        <span className="text-2xl font-bold text-primary">
+                                        <span className="text-2xl font-semibold text-foreground">
                                             {checklistProgress}%
                                         </span>
                                     </div>
@@ -2042,7 +2042,7 @@ export default function P2hForm({
                                             <label
                                                 key={srv.id}
                                                 htmlFor={srv.id}
-                                                className="flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+                                                className="flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground has-[[data-state=checked]]:bg-brand-soft"
                                             >
                                                 <Checkbox
                                                     id={srv.id}
@@ -2066,7 +2066,7 @@ export default function P2hForm({
                                         {/* Lainnya */}
                                         <label
                                             htmlFor="lainnya"
-                                            className="flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+                                            className="flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground has-[[data-state=checked]]:bg-brand-soft"
                                         >
                                             <Checkbox
                                                 id="lainnya"
@@ -2403,7 +2403,7 @@ export default function P2hForm({
                                     kondisiAkhir === 'Layak Pakai' &&
                                         'border-success',
                                     kondisiAkhir === 'BD' && 'border-danger',
-                                    !kondisiAkhir && 'border-primary/30',
+                                    !kondisiAkhir && 'border-border',
                                 )}
                             >
                                 <CardHeader className="px-4 pb-0">
@@ -2591,7 +2591,7 @@ export default function P2hForm({
                                             setHmKmAkhir(e.target.value)
                                         }
                                         placeholder="Contoh: 12700"
-                                        className="h-14 text-xl font-bold tracking-wide"
+                                        className="h-14 text-xl font-semibold tracking-wide"
                                     />
                                     {hmKmAkhir && (
                                         <p className="text-xs text-muted-foreground">
@@ -2627,7 +2627,7 @@ export default function P2hForm({
                                                 'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
                                                 compressing
                                                     ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
+                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-foreground/30 hover:text-primary',
                                             )}
                                         >
                                             <Camera className="h-4 w-4" />
@@ -2650,7 +2650,7 @@ export default function P2hForm({
                                                 'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm font-medium transition-colors',
                                                 compressing
                                                     ? 'cursor-not-allowed border-muted-foreground/20 text-muted-foreground/40'
-                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary',
+                                                    : 'border-muted-foreground/30 text-muted-foreground hover:border-foreground/30 hover:text-primary',
                                             )}
                                         >
                                             <ImagePlus className="h-4 w-4" />

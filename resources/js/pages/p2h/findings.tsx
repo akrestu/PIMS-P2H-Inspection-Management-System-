@@ -1146,7 +1146,7 @@ export default function P2hFindings({
                                                         href={f.foto_url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                                        className="mt-1 inline-flex items-center gap-1 text-xs text-foreground hover:underline"
                                                     >
                                                         <ImageIcon className="h-3 w-3" />
                                                         Foto bukti
@@ -1312,7 +1312,7 @@ function FindingCard({
                             href={f.foto_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-foreground hover:underline"
                         >
                             <ImageIcon className="h-3.5 w-3.5" />
                             Foto bukti

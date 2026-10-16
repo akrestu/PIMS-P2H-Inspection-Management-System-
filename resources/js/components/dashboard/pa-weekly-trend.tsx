@@ -62,7 +62,7 @@ export function PAWeeklyTrend({ data }: { data: PaPoint[] }) {
         <Card className="h-full">
             <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <TrendingUp className="h-4 w-4 text-foreground" />
                     Trend PA Mingguan
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2 text-xs">

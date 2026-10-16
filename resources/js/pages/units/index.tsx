@@ -192,8 +192,8 @@ function UnitFormDialog({
                                         }
                                         className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
                                             data.jenis_unit === jenis
-                                                ? 'border-primary bg-primary/5 text-primary'
-                                                : 'border-border text-muted-foreground hover:border-primary/50'
+                                                ? 'border-primary bg-muted text-foreground'
+                                                : 'border-border text-muted-foreground hover:border-foreground/30'
                                         }`}
                                     >
                                         {jenis === 'Bus' ? (
@@ -478,7 +478,7 @@ function ImportSheet({
 
                     <a
                         href="/units/import-template"
-                        className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline"
+                        className="inline-flex items-center justify-center gap-2 text-sm text-foreground hover:underline"
                     >
                         <Download className="h-4 w-4" />
                         Download Template Excel
@@ -1068,7 +1068,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari no. unit..."
-                                className="h-9 pl-9"
+                                className="pl-9"
                             />
                         </div>
 
@@ -1089,7 +1089,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                     className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                                         jenisFilter === j
                                             ? 'border-primary bg-primary text-primary-foreground'
-                                            : 'border-border hover:border-primary/60 hover:text-primary'
+                                            : 'border-border hover:border-foreground/30 hover:text-primary'
                                     }`}
                                 >
                                     {j === 'Bus' ? (
@@ -1121,7 +1121,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                             ? s === 'active'
                                                 ? 'border-success bg-success text-white'
                                                 : 'border-danger bg-danger text-white'
-                                            : 'border-border hover:border-primary/60'
+                                            : 'border-border hover:border-foreground/30'
                                     }`}
                                 >
                                     {s === 'active' ? (

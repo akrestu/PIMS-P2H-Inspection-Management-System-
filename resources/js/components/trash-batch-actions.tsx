@@ -116,12 +116,12 @@ export function TrashBatchActions({
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
                         <div
-                            className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${isForce ? 'bg-destructive/10' : 'bg-primary/10'}`}
+                            className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${isForce ? 'bg-destructive/10' : 'bg-muted'}`}
                         >
                             {isForce ? (
                                 <AlertTriangle className="h-6 w-6 text-destructive" />
                             ) : (
-                                <RotateCcw className="h-6 w-6 text-primary" />
+                                <RotateCcw className="h-6 w-6 text-foreground" />
                             )}
                         </div>
                         <DialogTitle className="text-center">

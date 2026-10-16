@@ -229,7 +229,7 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                             placeholder="Cari unit atau driver..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="h-8 pl-8 text-sm"
+                            className="pl-8 text-sm lg:h-8"
                         />
                     </div>
                 </div>

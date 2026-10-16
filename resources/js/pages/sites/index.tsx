@@ -519,7 +519,7 @@ export default function SitesIndex({ sites, filters }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari nama site..."
-                                className="h-9 pl-9"
+                                className="pl-9"
                             />
                         </div>
 
@@ -541,7 +541,7 @@ export default function SitesIndex({ sites, filters }: Props) {
                                             ? s === 'active'
                                                 ? 'border-success bg-success text-white'
                                                 : 'border-danger bg-danger text-white'
-                                            : 'border-border hover:border-primary/60'
+                                            : 'border-border hover:border-foreground/30'
                                     }`}
                                 >
                                     {s === 'active' ? (

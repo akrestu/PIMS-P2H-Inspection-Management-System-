@@ -167,7 +167,7 @@ export default function UnitMonitoring({
                         <Input
                             id="start"
                             type="date"
-                            className="h-9 w-38"
+                            className="w-38 lg:h-10"
                             value={range.start}
                             onChange={(e) =>
                                 setRange((r) => ({
@@ -182,7 +182,7 @@ export default function UnitMonitoring({
                         <Input
                             id="end"
                             type="date"
-                            className="h-9 w-38"
+                            className="w-38 lg:h-10"
                             value={range.end}
                             onChange={(e) =>
                                 setRange((r) => ({ ...r, end: e.target.value }))
@@ -190,8 +190,7 @@ export default function UnitMonitoring({
                         />
                     </div>
                     <Button
-                        size="sm"
-                        className="h-9"
+                        className="lg:h-10"
                         onClick={() => applyFilter(range)}
                     >
                         Terapkan
@@ -208,7 +207,7 @@ export default function UnitMonitoring({
                         >
                             <SelectTrigger
                                 aria-label="Jenis unit"
-                                className="h-9 w-40"
+                                className="w-40"
                             >
                                 <SelectValue />
                             </SelectTrigger>
@@ -235,10 +234,7 @@ export default function UnitMonitoring({
                                 })
                             }
                         >
-                            <SelectTrigger
-                                aria-label="Site"
-                                className="h-9 w-40"
-                            >
+                            <SelectTrigger aria-label="Site" className="w-40">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -263,7 +259,7 @@ export default function UnitMonitoring({
                             <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 id="search"
-                                className="h-9 w-44 pl-8"
+                                className="w-44 pl-8"
                                 placeholder="No. unit / lambung"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}

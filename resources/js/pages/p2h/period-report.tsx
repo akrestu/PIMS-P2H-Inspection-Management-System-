@@ -207,7 +207,7 @@ export default function PeriodReport({
                             >
                                 <SelectTrigger
                                     aria-label="Periode"
-                                    className="h-9 w-40"
+                                    className="w-40"
                                 >
                                     <SelectValue />
                                 </SelectTrigger>
@@ -229,7 +229,7 @@ export default function PeriodReport({
                                     <Input
                                         id="start"
                                         type="date"
-                                        className="h-9 w-38"
+                                        className="w-38"
                                         value={custom.start}
                                         onChange={(e) =>
                                             setCustom((c) => ({
@@ -244,7 +244,7 @@ export default function PeriodReport({
                                     <Input
                                         id="end"
                                         type="date"
-                                        className="h-9 w-38"
+                                        className="w-38"
                                         value={custom.end}
                                         onChange={(e) =>
                                             setCustom((c) => ({
@@ -280,7 +280,7 @@ export default function PeriodReport({
                             >
                                 <SelectTrigger
                                     aria-label="Jenis unit"
-                                    className="h-9 w-40"
+                                    className="w-40"
                                 >
                                     <SelectValue />
                                 </SelectTrigger>
@@ -312,7 +312,7 @@ export default function PeriodReport({
                             >
                                 <SelectTrigger
                                     aria-label="Site"
-                                    className="h-9 w-40"
+                                    className="w-40"
                                 >
                                     <SelectValue />
                                 </SelectTrigger>

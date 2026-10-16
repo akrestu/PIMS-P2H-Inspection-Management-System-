@@ -352,7 +352,7 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
                         {unit.has_time_data ? (
                             <span
                                 className={cn(
-                                    'text-lg font-bold tabular-nums',
+                                    'text-lg font-semibold tabular-nums',
                                     paColor(unit.actual_pa),
                                 )}
                             >
@@ -361,7 +361,7 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
                                     : '—'}
                             </span>
                         ) : (
-                            <span className="text-lg font-bold text-muted-foreground tabular-nums">
+                            <span className="text-lg font-semibold text-muted-foreground tabular-nums">
                                 —
                             </span>
                         )}
@@ -689,7 +689,7 @@ export default function MonitoringIndex({
                             key={p.value}
                             type="button"
                             onClick={() => applyPreset(p.value)}
-                            className="flex h-7 items-center rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:text-foreground"
+                            className="flex h-7 items-center rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-all hover:border-foreground/30 hover:text-foreground"
                         >
                             {p.label}
                         </button>
@@ -698,7 +698,7 @@ export default function MonitoringIndex({
 
                 {/* ── Filter Panel ── */}
                 {showFilter && (
-                    <Card className="border-primary/20">
+                    <Card className="border-border">
                         <CardHeader className="pt-4 pb-3">
                             <CardTitle className="flex items-center gap-2 text-sm">
                                 <Filter className="h-4 w-4" />
@@ -845,7 +845,7 @@ export default function MonitoringIndex({
                         >
                             <SelectTrigger
                                 aria-label="Urutkan"
-                                className="h-8 w-44 text-xs"
+                                className="w-44 text-xs"
                             >
                                 <SelectValue />
                             </SelectTrigger>

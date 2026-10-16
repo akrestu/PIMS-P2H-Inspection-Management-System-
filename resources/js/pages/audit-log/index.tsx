@@ -140,7 +140,7 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                             >
                                 <SelectTrigger
                                     aria-label="Filter modul"
-                                    className="h-9 w-full"
+                                    className="w-full"
                                 >
                                     <SelectValue placeholder="Semua kategori" />
                                 </SelectTrigger>

@@ -472,7 +472,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
 
                 {/* ── Advanced Filter Panel ── */}
                 {showFilter && (
-                    <Card className="border-primary/20">
+                    <Card className="border-border">
                         <CardContent className="pt-4">
                             <div className="mb-3 flex items-center gap-2">
                                 <Filter className="h-4 w-4 text-muted-foreground" />

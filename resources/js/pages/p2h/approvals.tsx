@@ -404,7 +404,7 @@ function ReviewApproveSheet({
                                     className={`rounded-xl border p-3 text-center ${detail.score < 80 ? 'border-danger/40 bg-danger-soft' : 'border-success/40 bg-success-soft'}`}
                                 >
                                     <p
-                                        className={`text-2xl font-bold ${detail.score < 80 ? 'text-danger' : 'text-success'}`}
+                                        className={`text-2xl font-semibold ${detail.score < 80 ? 'text-danger' : 'text-success'}`}
                                     >
                                         {detail.score}%
                                     </p>
@@ -416,7 +416,7 @@ function ReviewApproveSheet({
                                     className={`rounded-xl border p-3 text-center ${detail.tl_count > 0 ? 'border-warning/40 bg-warning-soft' : 'border-success/40 bg-success-soft'}`}
                                 >
                                     <p
-                                        className={`text-2xl font-bold ${detail.tl_count > 0 ? 'text-warning' : 'text-success'}`}
+                                        className={`text-2xl font-semibold ${detail.tl_count > 0 ? 'text-warning' : 'text-success'}`}
                                     >
                                         {detail.tl_count}
                                     </p>
@@ -428,7 +428,7 @@ function ReviewApproveSheet({
                                     className={`rounded-xl border p-3 text-center ${detail.kondisi_akhir === 'BD' ? 'border-danger/40 bg-danger-soft' : 'border-success/40 bg-success-soft'}`}
                                 >
                                     <p
-                                        className={`text-2xl font-bold ${detail.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
+                                        className={`text-2xl font-semibold ${detail.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
                                     >
                                         {detail.kondisi_akhir === 'BD'
                                             ? 'BD'
@@ -655,7 +655,7 @@ function ReviewApproveSheet({
                             {/* Signature section */}
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
-                                    <PenLine className="h-4 w-4 text-primary" />
+                                    <PenLine className="h-4 w-4 text-foreground" />
                                     <p className="text-sm font-semibold">
                                         Tanda Tangan Persetujuan
                                     </p>
@@ -665,7 +665,7 @@ function ReviewApproveSheet({
                                     Dengan menandatangani, Anda menyatakan telah
                                     mereview dan menyetujui P2H ini.
                                 </p>
-                                <div className="overflow-hidden rounded-xl border-2 border-dashed border-primary/40 bg-white dark:bg-zinc-900">
+                                <div className="overflow-hidden rounded-xl border-2 border-dashed border-border bg-white dark:bg-zinc-900">
                                     <ReactSignatureCanvas
                                         ref={sigPadRef}
                                         penColor="#1d4ed8"
@@ -840,7 +840,7 @@ function BulkApproveDialog({
                         Tanda Tangan Persetujuan{' '}
                         <span className="text-destructive">*</span>
                     </Label>
-                    <div className="overflow-hidden rounded-xl border-2 border-dashed border-primary/40 bg-white dark:bg-zinc-900">
+                    <div className="overflow-hidden rounded-xl border-2 border-dashed border-border bg-white dark:bg-zinc-900">
                         <ReactSignatureCanvas
                             ref={sigPadRef}
                             penColor="#1d4ed8"
@@ -964,7 +964,7 @@ function EntryCard({
             <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2">
                 <div className="flex-1 text-center">
                     <p
-                        className={`text-lg font-bold tabular-nums ${entry.score < 80 ? 'text-danger' : 'text-success'}`}
+                        className={`text-lg font-semibold tabular-nums ${entry.score < 80 ? 'text-danger' : 'text-success'}`}
                     >
                         {entry.score}%
                     </p>
@@ -973,7 +973,7 @@ function EntryCard({
                 <div className="h-8 w-px bg-border" />
                 <div className="flex-1 text-center">
                     <p
-                        className={`text-lg font-bold tabular-nums ${entry.tl_count > 0 ? 'text-warning' : 'text-success'}`}
+                        className={`text-lg font-semibold tabular-nums ${entry.tl_count > 0 ? 'text-warning' : 'text-success'}`}
                     >
                         {entry.tl_count}
                     </p>

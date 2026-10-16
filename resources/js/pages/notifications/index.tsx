@@ -508,7 +508,7 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
                             <TooltipTrigger asChild>
                                 <button
                                     onClick={handleMarkRead}
-                                    className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary md:h-7 md:w-7"
+                                    className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:h-7 md:w-7"
                                     aria-label="Tandai sudah dibaca"
                                 >
                                     <MailCheck className="h-3.5 w-3.5" />
@@ -632,7 +632,7 @@ function FilterTab({
         <button
             onClick={onClick}
             className={cn(
-                'press flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium whitespace-nowrap sm:px-3 sm:text-sm',
+                'flex min-h-10 flex-1 press items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium whitespace-nowrap sm:px-3 sm:text-sm',
                 active
                     ? 'bg-background text-foreground shadow-sm ring-1 ring-border/60'
                     : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',

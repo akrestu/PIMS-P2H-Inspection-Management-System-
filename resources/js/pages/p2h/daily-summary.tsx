@@ -179,7 +179,7 @@ export default function DailySummary({
                             <Input
                                 id="start"
                                 type="date"
-                                className="h-9 w-40"
+                                className="w-40"
                                 value={filters.start}
                                 max={today}
                                 onChange={(e) =>
@@ -200,7 +200,7 @@ export default function DailySummary({
                             <Input
                                 id="end"
                                 type="date"
-                                className="h-9 w-40"
+                                className="w-40"
                                 value={filters.end}
                                 min={filters.start}
                                 max={today}
@@ -223,7 +223,7 @@ export default function DailySummary({
                             >
                                 <SelectTrigger
                                     aria-label="Jenis unit"
-                                    className="h-9 w-44"
+                                    className="w-44"
                                 >
                                     <SelectValue />
                                 </SelectTrigger>
@@ -255,7 +255,7 @@ export default function DailySummary({
                             >
                                 <SelectTrigger
                                     aria-label="Site"
-                                    className="h-9 w-44"
+                                    className="w-44"
                                 >
                                     <SelectValue />
                                 </SelectTrigger>
