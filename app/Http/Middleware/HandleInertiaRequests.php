@@ -71,7 +71,7 @@ class HandleInertiaRequests extends Middleware
                 'session_lifetime_minutes' => (int) config('session.lifetime', 120),
             ],
             'auth' => [
-                'user' => $user ? array_merge($user->only(['id', 'name', 'email', 'jabatan', 'department', 'jenis_unit']), [
+                'user' => $user ? array_merge($user->only(['id', 'name', 'nik', 'email', 'jabatan', 'department', 'jenis_unit']), [
                     'roles' => $user->getRoleNames()->toArray(),
                     'can_approve' => $user->canApproveLv(),
                     'can_monitor' => $user->canViewMonitoring(),

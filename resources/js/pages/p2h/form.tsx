@@ -4,14 +4,10 @@ import {
     AlertTriangle,
     ArrowRight,
     Check,
-    CheckCircle2,
     ChevronDown,
     ChevronLeft,
     ClipboardList,
     Droplets,
-    Fuel,
-    Gauge,
-    ImagePlus,
     Info,
     Loader2,
     Lock,
@@ -22,36 +18,28 @@ import {
     Send,
     ShieldAlert,
     ShieldCheck,
-    Sun,
-    Truck,
     User,
-    X,
     Wrench,
+    X,
+    XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 import ChecklistGroup from '@/components/P2h/ChecklistGroup';
+import { checklistItemDomId } from '@/components/P2h/ChecklistItem';
 import SignaturePad from '@/components/P2h/SignaturePad';
 import { PhotoPicker } from '@/components/pims/photo-picker';
 import { ChecklistProgress } from '@/components/pims/progress';
 import { Segmented } from '@/components/pims/segmented';
-import { StatusPill } from '@/components/pims/status-pill';
+import { KritisTag, StatusPill } from '@/components/pims/status-pill';
+import { Switch } from '@/components/pims/switch';
 import { useShellNavigation } from '@/components/shell/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import {
     Select,
     SelectContent,
@@ -59,7 +47,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import {
     Sheet,
     SheetContent,
@@ -253,11 +240,13 @@ function SubmitSuccess({
     unit,
     layak,
     pic,
+    findings,
     homeHref,
 }: {
     unit: string;
     layak: boolean;
     pic: string | null;
+    findings: string[];
     homeHref: string;
 }) {
     return (
@@ -305,6 +294,25 @@ function SubmitSuccess({
                     </p>
                 )}
             </div>
+            {findings.length > 0 && (
+                <ul className="w-full max-w-sm divide-y rounded-[14px] border-(length:--bw) bg-card text-left">
+                    <li className="px-4 py-2.5 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                        {findings.length} temuan Tidak Layak
+                    </li>
+                    {findings.map((f) => (
+                        <li
+                            key={f}
+                            className="flex items-center gap-2 px-4 py-2.5 text-[15px]"
+                        >
+                            <span
+                                className="size-1.5 shrink-0 rounded-full bg-danger"
+                                aria-hidden
+                            />
+                            {f}
+                        </li>
+                    ))}
+                </ul>
+            )}
             <div className="flex w-full max-w-sm flex-col gap-2">
                 <Button asChild size="xl">
                     <Link href={homeHref}>Kembali ke Beranda</Link>
@@ -317,34 +325,81 @@ function SubmitSuccess({
     );
 }
 
-// ─── Summary Row ──────────────────────────────────────────────────────────────
-function SummaryRow({
-    icon: Icon,
-    label,
-    value,
-    highlight,
+// ─── Blok ringkasan (Review) dengan tautan "Ubah" ─────────────────────────────
+function ReviewBlock({
+    title,
+    rows,
+    onEdit,
+    danger,
 }: {
-    icon?: React.ElementType;
-    label: string;
-    value: string;
-    highlight?: boolean;
+    title: string;
+    rows: [string, string][];
+    onEdit: () => void;
+    /** Indeks baris yang ditandai merah. */
+    danger?: number;
 }) {
     return (
-        <div className="flex items-center gap-3 py-2">
-            {Icon && (
-                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-            <span className="min-w-0 flex-1 text-base text-muted-foreground">
-                {label}
-            </span>
-            <span
-                className={cn(
-                    'text-base font-semibold',
-                    highlight && 'text-destructive',
-                )}
-            >
-                {value}
-            </span>
+        <div className="rounded-[14px] border-(length:--bw) bg-card">
+            <div className="flex items-center justify-between gap-3 border-b-(length:--bw) py-2 pr-2 pl-4">
+                <h3 className="text-[15px] font-semibold">{title}</h3>
+                <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+                    Ubah
+                </Button>
+            </div>
+            <dl className="divide-y px-4">
+                {rows.map(([label, value], i) => (
+                    <div
+                        key={label}
+                        className="flex items-baseline justify-between gap-4 py-2.5 text-[15px]"
+                    >
+                        <dt className="text-muted-foreground">{label}</dt>
+                        <dd
+                            className={cn(
+                                'text-right font-medium tnum',
+                                danger === i && 'text-danger',
+                            )}
+                        >
+                            {value}
+                        </dd>
+                    </div>
+                ))}
+            </dl>
+        </div>
+    );
+}
+
+// ─── Input angka + satuan (FormP2H.dc.html: "12.480,5 jam") ──────────────────
+function UnitInput({
+    id,
+    value,
+    onChange,
+    suffix,
+    inputMode,
+    step,
+    placeholder,
+}: {
+    id: string;
+    value: string;
+    onChange: (value: string) => void;
+    suffix: string;
+    inputMode: 'numeric' | 'decimal';
+    step?: string;
+    placeholder?: string;
+}) {
+    return (
+        <div className="field flex h-[52px] items-center gap-2 rounded-[10px] border-(length:--bw) border-input bg-background px-3.5 focus-within:ring-2 focus-within:ring-ring">
+            <input
+                id={id}
+                type="number"
+                inputMode={inputMode}
+                min={0}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="h-full min-w-0 flex-1 bg-transparent text-base outline-none tnum placeholder:text-muted-foreground"
+            />
+            <span className="text-sm text-muted-foreground">{suffix}</span>
         </div>
     );
 }
@@ -831,6 +886,10 @@ export default function P2hForm({
     const [draft] = useState(loadDraft);
 
     const [step, setStep] = useState(draft.step ?? 1);
+    const [invalidItem, setInvalidItem] = useState<{
+        id: number;
+        message: string;
+    } | null>(null);
     const topRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -890,6 +949,20 @@ export default function P2hForm({
     );
     const [kmUnit, setKmUnit] = useState(draft.kmUnit ?? '');
     const [jumlahLiter, setJumlahLiter] = useState(draft.jumlahLiter ?? '');
+    // Hanya penampil (switch / Ya-Tidak); data yang dikirim tetap field di atas
+    const [isiBbm, setIsiBbm] = useState(
+        () => !!(draft.kmUnit || draft.jumlahLiter),
+    );
+    const [adaServis, setAdaServis] = useState(
+        () =>
+            !!(
+                draft.servisMingguan ||
+                draft.servisBerkala ||
+                draft.unscheduleBreakdown ||
+                draft.lainnya ||
+                draft.catatanServis
+            ),
+    );
 
     // Step 4
     const [hmKmAkhir, setHmKmAkhir] = useState(draft.hmKmAkhir ?? '');
@@ -911,6 +984,7 @@ export default function P2hForm({
         unit: string;
         layak: boolean;
         pic: string | null;
+        findings: string[];
     } | null>(null);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
@@ -1000,6 +1074,11 @@ export default function P2hForm({
                 .length,
         [answers],
     );
+    const tlItems = inspectionItems.filter(
+        (item) => answers[item.id]?.kondisi === 'Tidak Layak',
+    );
+    const picName =
+        staffUsers.find((st) => String(st.id) === picApproverId)?.name ?? null;
 
     const groupedItems = useMemo(() => {
         return SECTION_ORDER.reduce<
@@ -1109,6 +1188,7 @@ export default function P2hForm({
 
     const handleKondisiChange = useCallback(
         (itemId: number, kondisi: 'Layak' | 'Tidak Layak') => {
+            setInvalidItem((cur) => (cur?.id === itemId ? null : cur));
             setAnswers((prev) => ({
                 ...prev,
                 [itemId]: {
@@ -1123,6 +1203,10 @@ export default function P2hForm({
 
     const handleKeteranganChange = useCallback(
         (itemId: number, keterangan: string) => {
+            if (keterangan.trim()) {
+                setInvalidItem((cur) => (cur?.id === itemId ? null : cur));
+            }
+
             setAnswers((prev) => ({
                 ...prev,
                 [itemId]: {
@@ -1303,8 +1387,35 @@ export default function P2hForm({
         if (err) {
             toast.error(err);
 
+            // Checklist: tandai & gulir ke item pertama yang belum valid
+            if (step === 2) {
+                const bad = inspectionItems.find((item) => {
+                    const ans = answers[item.id];
+
+                    return (
+                        !ans?.kondisi ||
+                        (ans.kondisi === 'Tidak Layak' &&
+                            !ans.keterangan.trim())
+                    );
+                });
+
+                if (bad) {
+                    setInvalidItem({
+                        id: bad.id,
+                        message: answers[bad.id]?.kondisi
+                            ? 'Catatan kerusakan wajib diisi.'
+                            : 'Pilih Layak atau Tidak Layak.',
+                    });
+                    document
+                        .getElementById(checklistItemDomId(bad.id))
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
             return;
         }
+
+        setInvalidItem(null);
 
         setStep((s) => Math.min(s + 1, 4));
     };
@@ -1406,6 +1517,7 @@ export default function P2hForm({
                     setSubmitted({
                         unit: selectedUnit?.no_unit ?? 'Unit',
                         layak: kondisiAkhir !== 'BD',
+                        findings: tlItems.map((item) => item.nama_item),
                         pic:
                             staffUsers.find(
                                 (u) => String(u.id) === picApproverId,
@@ -1462,10 +1574,6 @@ export default function P2hForm({
             },
         );
     };
-
-    const checklistProgress = Math.round(
-        (filledCount / inspectionItems.length) * 100,
-    );
 
     if (submitted) {
         return (
@@ -1880,62 +1988,8 @@ export default function P2hForm({
                     ══════════════════════════════════════════ */}
                     {step === 2 && (
                         <>
-                            {/* Progress */}
-                            <Card>
-                                <CardContent className="space-y-3 px-4 py-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-base font-semibold">
-                                                Progress Pemeriksaan
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {filledCount} dari{' '}
-                                                {inspectionItems.length} item
-                                                sudah diperiksa
-                                            </p>
-                                        </div>
-                                        <span className="text-2xl font-semibold text-foreground">
-                                            {checklistProgress}%
-                                        </span>
-                                    </div>
-                                    <Progress
-                                        value={checklistProgress}
-                                        className="h-3 rounded-full"
-                                    />
-                                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                                        <span className="flex items-center gap-1 text-success">
-                                            <span className="h-2 w-2 rounded-full bg-success" />
-                                            {filledCount - tlCount} Layak
-                                        </span>
-                                        {tlCount > 0 && (
-                                            <span className="flex items-center gap-1 text-danger">
-                                                <span className="h-2 w-2 rounded-full bg-danger" />
-                                                {tlCount} Tidak Layak
-                                            </span>
-                                        )}
-                                        <span className="flex items-center gap-1 text-muted-foreground">
-                                            <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-                                            {inspectionItems.length -
-                                                filledCount}{' '}
-                                            Belum
-                                        </span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Instruksi */}
-                            <div className="flex items-start gap-2.5 rounded-xl border border-info/40 bg-info-soft px-4 py-3">
-                                <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-info" />
-                                <p className="text-sm text-info">
-                                    Periksa setiap komponen kendaraan, lalu
-                                    pilih <strong>Layak</strong> atau{' '}
-                                    <strong>Tidak Layak</strong>. Jika Tidak
-                                    Layak, wajib isi keterangan.
-                                </p>
-                            </div>
-
-                            {/* Checklist groups per seksi */}
-                            <div className="space-y-2">
+                            {/* Checklist per kategori (daftar datar, FormP2H.dc.html) */}
+                            <div className="flex flex-col gap-8">
                                 {SECTION_ORDER.map((section) => {
                                     const items = groupedItems[section];
 
@@ -1964,7 +2018,7 @@ export default function P2hForm({
                                             onRemoveItemAttachment={
                                                 removeItemAttachment
                                             }
-                                            defaultOpen={section === 'A'}
+                                            invalid={invalidItem}
                                         />
                                     );
                                 })}
@@ -1990,672 +2044,589 @@ export default function P2hForm({
                         STEP 3 — Servis & BBM
                     ══════════════════════════════════════════ */}
                     {step === 3 && (
-                        <>
-                            {/* Servis */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <Wrench className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            Informasi Servis
-                                        </CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        Centang jika ada kegiatan servis hari
-                                        ini (opsional)
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 px-4">
-                                    <div className="space-y-2">
-                                        {[
-                                            {
-                                                id: 'servis_mingguan',
-                                                label: 'Servis Mingguan',
-                                                desc: 'Servis rutin setiap minggu',
-                                                value: servisMingguan,
-                                                setter: setServisMingguan,
-                                            },
-                                            {
-                                                id: 'servis_berkala',
-                                                label: 'Servis Berkala',
-                                                desc: 'Servis per jarak tempuh / jam kerja',
-                                                value: servisBerkala,
-                                                setter: setServisBerkala,
-                                            },
-                                            {
-                                                id: 'unschedule',
-                                                label: 'Unschedule / Break Down',
-                                                desc: 'Servis darurat akibat kerusakan',
-                                                value: unscheduleBreakdown,
-                                                setter: setUnscheduleBreakdown,
-                                            },
-                                        ].map((srv) => (
-                                            <label
-                                                key={srv.id}
-                                                htmlFor={srv.id}
-                                                className="flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground has-[[data-state=checked]]:bg-brand-soft"
+                        <div className="flex flex-col gap-9">
+                            {/* BBM (FormP2H.dc.html "HM & BBM"): switch → KM + liter */}
+                            <section className="flex flex-col gap-4">
+                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                    BBM
+                                </h2>
+                                <div className="flex min-h-[52px] items-center justify-between gap-3">
+                                    <span className="flex flex-col gap-0.5">
+                                        <span
+                                            id="isi-bbm-l"
+                                            className="text-base font-medium"
+                                        >
+                                            Isi BBM sebelum operasi
+                                        </span>
+                                        <span className="text-[13px] text-muted-foreground">
+                                            Catat KM dan liter dari fuel truck
+                                        </span>
+                                    </span>
+                                    <Switch
+                                        checked={isiBbm}
+                                        label="Isi BBM sebelum operasi"
+                                        onCheckedChange={(on) => {
+                                            setIsiBbm(on);
+
+                                            if (!on) {
+                                                setKmUnit('');
+                                                setJumlahLiter('');
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                {isiBbm && (
+                                    <div className="grid animate-in grid-cols-2 gap-3 duration-200 fade-in slide-in-from-top-1">
+                                        <div className="flex flex-col gap-2">
+                                            <Label
+                                                htmlFor="km-unit"
+                                                className="text-sm font-medium"
                                             >
-                                                <Checkbox
-                                                    id={srv.id}
-                                                    checked={srv.value}
-                                                    onCheckedChange={(v) =>
-                                                        srv.setter(Boolean(v))
-                                                    }
-                                                    className="mt-0.5 h-5 w-5"
-                                                />
-                                                <div>
-                                                    <p className="text-base font-medium">
-                                                        {srv.label}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {srv.desc}
-                                                    </p>
-                                                </div>
-                                            </label>
-                                        ))}
-
-                                        {/* Lainnya */}
-                                        <label
-                                            htmlFor="lainnya"
-                                            className="flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground has-[[data-state=checked]]:bg-brand-soft"
-                                        >
-                                            <Checkbox
-                                                id="lainnya"
-                                                checked={lainnya}
-                                                onCheckedChange={(v) =>
-                                                    setLainnya(Boolean(v))
-                                                }
-                                                className="mt-0.5 h-5 w-5"
+                                                KM saat isi
+                                            </Label>
+                                            <UnitInput
+                                                id="km-unit"
+                                                inputMode="numeric"
+                                                value={kmUnit}
+                                                onChange={setKmUnit}
+                                                placeholder="12550"
+                                                suffix="km"
                                             />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-base font-medium">
-                                                    Lainnya
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Servis jenis lain — sebutkan
-                                                    di bawah
-                                                </p>
-                                                {lainnya && (
-                                                    <Input
-                                                        value={lainnyaText}
-                                                        onChange={(e) =>
-                                                            setLainnyaText(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        placeholder="Sebutkan jenis servis lainnya…"
-                                                        className="mt-2 h-10 w-full text-sm"
-                                                        onClick={(e) =>
-                                                            e.stopPropagation()
-                                                        }
-                                                    />
-                                                )}
-                                            </div>
-                                        </label>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm font-medium">
-                                            Catatan Servis
-                                        </Label>
-                                        <Textarea
-                                            value={catatanServis}
-                                            onChange={(e) =>
-                                                setCatatanServis(e.target.value)
-                                            }
-                                            placeholder="Tulis catatan tambahan tentang kondisi atau pekerjaan servis (opsional)…"
-                                            className="min-h-[88px] resize-none text-sm"
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* BBM */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <Fuel className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            Pengisian Bahan Bakar
-                                        </CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        Isi jika ada pengisian BBM hari ini.
-                                        Biarkan kosong jika tidak ada.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 px-4">
-                                    <div className="space-y-1.5">
-                                        <Label
-                                            htmlFor="km-unit"
-                                            className="text-sm font-medium"
-                                        >
-                                            KM Saat Isi BBM
-                                        </Label>
-                                        <Input
-                                            id="km-unit"
-                                            type="number"
-                                            inputMode="numeric"
-                                            min={0}
-                                            value={kmUnit}
-                                            onChange={(e) =>
-                                                setKmUnit(e.target.value)
-                                            }
-                                            placeholder="Contoh: 12550"
-                                            className="h-12 text-base"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label
-                                            htmlFor="jumlah-liter"
-                                            className="text-sm font-medium"
-                                        >
-                                            Jumlah Liter
-                                        </Label>
-                                        <Input
-                                            id="jumlah-liter"
-                                            type="number"
-                                            inputMode="decimal"
-                                            min={0}
-                                            step="0.01"
-                                            value={jumlahLiter}
-                                            onChange={(e) =>
-                                                setJumlahLiter(e.target.value)
-                                            }
-                                            placeholder="Contoh: 50.5"
-                                            className="h-12 text-base"
-                                        />
-                                    </div>
-                                    {kmUnit && jumlahLiter && (
-                                        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5">
-                                            <Fuel className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">
-                                                Pengisian{' '}
-                                                <strong>
-                                                    {jumlahLiter} liter
-                                                </strong>{' '}
-                                                pada KM{' '}
-                                                <strong>
-                                                    {Number(
-                                                        kmUnit,
-                                                    ).toLocaleString('id-ID')}
-                                                </strong>
-                                            </p>
                                         </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </>
+                                        <div className="flex flex-col gap-2">
+                                            <Label
+                                                htmlFor="jumlah-liter"
+                                                className="text-sm font-medium"
+                                            >
+                                                Jumlah isi
+                                            </Label>
+                                            <UnitInput
+                                                id="jumlah-liter"
+                                                inputMode="decimal"
+                                                step="0.01"
+                                                value={jumlahLiter}
+                                                onChange={setJumlahLiter}
+                                                placeholder="0"
+                                                suffix="liter"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+
+                            {/* Servis: pertanyaan Ya/Tidak → jenis servis + catatan */}
+                            <section className="flex flex-col gap-4">
+                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                    Servis
+                                </h2>
+                                <div className="flex flex-col gap-2">
+                                    <span
+                                        id="ada-servis-l"
+                                        className="text-sm font-medium"
+                                    >
+                                        Ada servis / perbaikan hari ini?
+                                    </span>
+                                    <Segmented
+                                        label="Ada servis / perbaikan hari ini?"
+                                        size="lg"
+                                        className="grid w-full grid-cols-2"
+                                        value={adaServis ? 'ya' : 'tidak'}
+                                        onChange={(v) => {
+                                            setAdaServis(v === 'ya');
+
+                                            if (v === 'tidak') {
+                                                setServisMingguan(false);
+                                                setServisBerkala(false);
+                                                setUnscheduleBreakdown(false);
+                                                setLainnya(false);
+                                                setLainnyaText('');
+                                                setCatatanServis('');
+                                            }
+                                        }}
+                                        options={[
+                                            { value: 'tidak', label: 'Tidak' },
+                                            { value: 'ya', label: 'Ya' },
+                                        ]}
+                                    />
+                                </div>
+                                {adaServis && (
+                                    <div className="flex animate-in flex-col gap-4 duration-200 fade-in slide-in-from-top-1">
+                                        <fieldset className="flex flex-col gap-2">
+                                            <legend className="mb-2 text-sm font-medium">
+                                                Jenis servis
+                                            </legend>
+                                            {[
+                                                {
+                                                    id: 'servis_mingguan',
+                                                    label: 'Servis mingguan',
+                                                    desc: 'Servis rutin setiap minggu',
+                                                    value: servisMingguan,
+                                                    setter: setServisMingguan,
+                                                },
+                                                {
+                                                    id: 'servis_berkala',
+                                                    label: 'Servis berkala',
+                                                    desc: 'Per jarak tempuh / jam kerja',
+                                                    value: servisBerkala,
+                                                    setter: setServisBerkala,
+                                                },
+                                                {
+                                                    id: 'unschedule',
+                                                    label: 'Unschedule / breakdown',
+                                                    desc: 'Perbaikan darurat akibat kerusakan',
+                                                    value: unscheduleBreakdown,
+                                                    setter: setUnscheduleBreakdown,
+                                                },
+                                                {
+                                                    id: 'lainnya',
+                                                    label: 'Lainnya',
+                                                    desc: 'Sebutkan jenis servis',
+                                                    value: lainnya,
+                                                    setter: setLainnya,
+                                                },
+                                            ].map((srv) => (
+                                                <label
+                                                    key={srv.id}
+                                                    htmlFor={srv.id}
+                                                    className="flex min-h-14 cursor-pointer items-center gap-3 rounded-[12px] border-(length:--bw) px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground"
+                                                >
+                                                    <Checkbox
+                                                        id={srv.id}
+                                                        checked={srv.value}
+                                                        onCheckedChange={(v) =>
+                                                            srv.setter(Boolean(v))
+                                                        }
+                                                        className="size-5"
+                                                    />
+                                                    <span className="flex flex-col">
+                                                        <span className="text-base font-medium">
+                                                            {srv.label}
+                                                        </span>
+                                                        <span className="text-[13px] text-muted-foreground">
+                                                            {srv.desc}
+                                                        </span>
+                                                    </span>
+                                                </label>
+                                            ))}
+                                            {lainnya && (
+                                                <Input
+                                                    aria-label="Jenis servis lainnya"
+                                                    value={lainnyaText}
+                                                    onChange={(e) =>
+                                                        setLainnyaText(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Sebutkan jenis servis lainnya…"
+                                                    className="h-12 text-base"
+                                                />
+                                            )}
+                                        </fieldset>
+                                        <div className="flex flex-col gap-2">
+                                            <Label
+                                                htmlFor="catatan-servis"
+                                                className="text-sm font-medium"
+                                            >
+                                                Keterangan servis
+                                            </Label>
+                                            <Textarea
+                                                id="catatan-servis"
+                                                value={catatanServis}
+                                                onChange={(e) =>
+                                                    setCatatanServis(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                rows={2}
+                                                placeholder="Contoh: ganti filter udara oleh mekanik shift malam"
+                                                className="min-h-[76px] text-base"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+                        </div>
                     )}
 
                     {/* ══════════════════════════════════════════
                         STEP 4 — Konfirmasi & Tanda Tangan
                     ══════════════════════════════════════════ */}
                     {step === 4 && (
-                        <>
-                            {/* Ringkasan */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">
-                                        Ringkasan Pemeriksaan
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Periksa kembali sebelum tanda tangan
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-0 px-4">
-                                    {/* Unit & Driver */}
-                                    <div className="mb-3 rounded-xl bg-muted/40 px-3 py-1">
-                                        <SummaryRow
-                                            icon={Truck}
-                                            label="Unit"
-                                            value={selectedUnit?.no_unit ?? '-'}
-                                        />
-                                        <Separator />
-                                        <SummaryRow
-                                            icon={Truck}
-                                            label="Jenis"
-                                            value={
-                                                selectedUnit?.jenis_unit ?? '-'
-                                            }
-                                        />
-                                        <Separator />
-                                        <SummaryRow
-                                            icon={User}
-                                            label="Pengemudi"
-                                            value={auth?.user?.name ?? '-'}
-                                        />
-                                        <Separator />
-                                        <SummaryRow
-                                            icon={Sun}
-                                            label="Shift"
-                                            value={shift}
-                                        />
-                                        {jobSite && (
-                                            <>
-                                                <Separator />
-                                                <SummaryRow
-                                                    label="Job Site"
-                                                    value={jobSite}
-                                                />
-                                            </>
-                                        )}
-                                        {lokasiKerja && (
-                                            <>
-                                                <Separator />
-                                                <SummaryRow
-                                                    label="Lokasi Kerja"
-                                                    value={lokasiKerja}
-                                                />
-                                            </>
-                                        )}
-                                        <Separator />
-                                        <SummaryRow
-                                            icon={Gauge}
-                                            label="HM/KM Awal"
-                                            value={
-                                                kmAwal
-                                                    ? Number(
-                                                          kmAwal,
-                                                      ).toLocaleString('id-ID')
-                                                    : '-'
-                                            }
-                                        />
-                                        {needsApproval &&
-                                            picApproverId &&
-                                            (() => {
-                                                const pic = staffUsers.find(
-                                                    (s) =>
-                                                        String(s.id) ===
-                                                        picApproverId,
-                                                );
-
-                                                return pic ? (
-                                                    <>
-                                                        <Separator />
-                                                        <SummaryRow
-                                                            icon={User}
-                                                            label="PIC Approval"
-                                                            value={`${pic.name} (${pic.jabatan})`}
-                                                        />
-                                                    </>
-                                                ) : null;
-                                            })()}
-                                    </div>
-
-                                    {/* Hasil Checklist */}
-                                    <div className="mb-3 space-y-1">
-                                        <p className="px-1 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                            Hasil Checklist
-                                        </p>
-                                        <div className="rounded-xl bg-muted/40 px-3 py-1">
-                                            <div className="flex items-center gap-3 py-2">
-                                                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-                                                <span className="flex-1 text-sm text-muted-foreground">
-                                                    Item Layak
-                                                </span>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="bg-success-soft text-success"
-                                                >
-                                                    {filledCount - tlCount} /{' '}
-                                                    {inspectionItems.length}
-                                                </Badge>
-                                            </div>
-                                            {tlCount > 0 && (
-                                                <>
-                                                    <Separator />
-                                                    <div className="flex items-center gap-3 py-2">
-                                                        <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
-                                                        <span className="flex-1 text-sm text-muted-foreground">
-                                                            Item Tidak Layak
-                                                        </span>
-                                                        <Badge variant="destructive">
-                                                            {tlCount} item
-                                                        </Badge>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Servis & BBM — hanya jika ada */}
-                                    {(servisMingguan ||
-                                        servisBerkala ||
-                                        unscheduleBreakdown ||
-                                        lainnya ||
-                                        kmUnit ||
-                                        jumlahLiter) && (
-                                        <div className="space-y-1">
-                                            <p className="px-1 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                                Servis & BBM
-                                            </p>
-                                            <div className="rounded-xl bg-muted/40 px-3 py-1">
-                                                {(servisMingguan ||
-                                                    servisBerkala ||
-                                                    unscheduleBreakdown ||
-                                                    lainnya) && (
-                                                    <SummaryRow
-                                                        icon={Wrench}
-                                                        label="Servis"
-                                                        value={[
-                                                            servisMingguan &&
-                                                                'Mingguan',
-                                                            servisBerkala &&
-                                                                'Berkala',
-                                                            unscheduleBreakdown &&
-                                                                'Breakdown',
-                                                            lainnya &&
-                                                                lainnyaText,
-                                                        ]
-                                                            .filter(Boolean)
-                                                            .join(', ')}
-                                                    />
-                                                )}
-                                                {(kmUnit || jumlahLiter) && (
-                                                    <>
-                                                        {(servisMingguan ||
-                                                            servisBerkala ||
-                                                            unscheduleBreakdown ||
-                                                            lainnya) && (
-                                                            <Separator />
-                                                        )}
-                                                        <SummaryRow
-                                                            icon={Fuel}
-                                                            label="Pengisian BBM"
-                                                            value={`${jumlahLiter || '-'} L @ ${kmUnit ? Number(kmUnit).toLocaleString('id-ID') : '-'} km`}
-                                                        />
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
+                        <div className="flex flex-col gap-9">
+                            {/* Perkiraan hasil (FormP2H.dc.html "Review") */}
+                            {recommendedKondisi && (
+                                <section
+                                    aria-label="Perkiraan hasil"
+                                    className={cn(
+                                        'flex flex-col gap-3 rounded-[14px] border-(length:--bw) p-4',
+                                        recommendedKondisi === 'Layak Pakai'
+                                            ? 'border-success/40 bg-success-soft'
+                                            : 'border-danger/40 bg-danger-soft',
                                     )}
-                                </CardContent>
-                            </Card>
-
-                            {tlCount > 0 && (
-                                <Alert variant="destructive">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    <AlertTitle>
-                                        {tlCount} Item Tidak Layak
-                                    </AlertTitle>
-                                    <AlertDescription className="text-xs">
-                                        Ada item yang tidak layak. Pastikan
-                                        sudah dilaporkan ke atasan / mekanik
-                                        sebelum kendaraan dioperasikan.
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            {/* Keputusan Kondisi Akhir */}
-                            <Card
-                                className={cn(
-                                    'border-2',
-                                    kondisiAkhir === 'Layak Pakai' &&
-                                        'border-success',
-                                    kondisiAkhir === 'BD' && 'border-danger',
-                                    !kondisiAkhir && 'border-border',
-                                )}
-                            >
-                                <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">
-                                        Keputusan Kondisi Akhir Unit{' '}
-                                        <span className="text-destructive">
-                                            *
-                                        </span>
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Nyatakan kondisi unit setelah Anda
-                                        periksa. Anda memiliki wewenang penuh.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4 px-4">
-                                    {/* Rekomendasi sistem */}
-                                    {recommendedKondisi && (
-                                        <div
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span
                                             className={cn(
-                                                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium',
+                                                'grid size-11 shrink-0 place-items-center rounded-full',
                                                 recommendedKondisi ===
                                                     'Layak Pakai'
-                                                    ? 'bg-success-soft text-success'
-                                                    : 'bg-danger-soft text-danger',
+                                                    ? 'bg-success text-white'
+                                                    : 'bg-danger text-white',
                                             )}
+                                            aria-hidden
                                         >
                                             {recommendedKondisi ===
                                             'Layak Pakai' ? (
-                                                <ShieldCheck className="h-4 w-4 shrink-0" />
+                                                <ShieldCheck className="size-6" />
                                             ) : (
-                                                <ShieldAlert className="h-4 w-4 shrink-0" />
+                                                <ShieldAlert className="size-6" />
                                             )}
-                                            <span>
-                                                Rekomendasi P2H:{' '}
-                                                <strong>
-                                                    {recommendedKondisi}
-                                                </strong>
-                                                {hasAATidakLayak
-                                                    ? ' — ada item AA (Stop) tidak layak'
-                                                    : ` (score ${p2hScore}%)`}
+                                        </span>
+                                        <span className="flex flex-col">
+                                            <span className="text-[13px] text-muted-foreground">
+                                                Perkiraan hasil
                                             </span>
-                                        </div>
-                                    )}
-
-                                    {/* Tombol pilihan */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setKondisiAkhir('Layak Pakai');
-
-                                                if (
-                                                    kondisiAkhir ===
-                                                    'Layak Pakai'
-                                                ) {
-                                                    return;
-                                                }
-
-                                                setJustifikasiKondisi('');
-                                            }}
-                                            className={cn(
-                                                'flex h-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
-                                                kondisiAkhir === 'Layak Pakai'
-                                                    ? 'scale-[1.02] border-success bg-success-soft text-success shadow-md'
-                                                    : 'border-border bg-background text-muted-foreground hover:border-success hover:text-success',
-                                            )}
-                                        >
-                                            <ShieldCheck className="h-6 w-6" />
-                                            Layak Pakai
-                                            <span className="text-xs font-normal opacity-70">
-                                                Unit siap beroperasi
+                                            <span
+                                                className={cn(
+                                                    'text-xl font-semibold tracking-[-0.015em]',
+                                                    recommendedKondisi ===
+                                                        'Layak Pakai'
+                                                        ? 'text-success'
+                                                        : 'text-danger',
+                                                )}
+                                            >
+                                                {recommendedKondisi ===
+                                                'Layak Pakai'
+                                                    ? 'Layak Pakai'
+                                                    : 'Tidak Layak · BD'}
                                             </span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setKondisiAkhir('BD');
-
-                                                if (kondisiAkhir === 'BD') {
-                                                    return;
-                                                }
-
-                                                setJustifikasiKondisi('');
-                                            }}
-                                            className={cn(
-                                                'flex h-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
-                                                kondisiAkhir === 'BD'
-                                                    ? 'scale-[1.02] border-danger bg-danger-soft text-danger shadow-md'
-                                                    : 'border-border bg-background text-muted-foreground hover:border-danger hover:text-danger',
-                                            )}
-                                        >
-                                            <ShieldAlert className="h-6 w-6" />
-                                            BD / Tidak Layak
-                                            <span className="text-xs font-normal opacity-70">
-                                                Tidak dapat dioperasikan
-                                            </span>
-                                        </button>
+                                        </span>
+                                        <span className="ml-auto text-sm font-semibold tnum">
+                                            Skor {p2hScore}%
+                                        </span>
                                     </div>
-
-                                    {/* Justifikasi — wajib jika override */}
-                                    {isOverride && (
-                                        <div className="animate-in space-y-1.5 duration-200 fade-in slide-in-from-top-2">
-                                            <div className="flex items-center gap-1.5 rounded-lg bg-warning-soft px-3 py-2">
-                                                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" />
-                                                <p className="text-xs font-medium text-warning">
-                                                    Keputusan Anda berbeda dari
-                                                    rekomendasi sistem. Alasan
-                                                    wajib diisi.
-                                                </p>
-                                            </div>
-                                            <Label className="text-sm font-medium">
-                                                Alasan Keputusan{' '}
-                                                <span className="text-destructive">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <Textarea
-                                                value={justifikasiKondisi}
-                                                onChange={(e) =>
-                                                    setJustifikasiKondisi(
-                                                        e.target.value.slice(
-                                                            0,
-                                                            500,
-                                                        ),
-                                                    )
-                                                }
-                                                placeholder="Jelaskan alasan keputusan Anda berbeda dari rekomendasi kalkulasi P2H…"
-                                                className="min-h-[88px] resize-none text-sm"
-                                                maxLength={500}
-                                            />
-                                            <p className="text-right text-xs text-muted-foreground">
-                                                {justifikasiKondisi.length}/500
-                                            </p>
-                                        </div>
+                                    {tlItems.length > 0 && (
+                                        <ul className="flex flex-col gap-1.5 border-t-(length:--bw) border-danger/20 pt-3">
+                                            {tlItems.map((item) => (
+                                                <li
+                                                    key={item.id}
+                                                    className="flex items-start gap-2 text-sm"
+                                                >
+                                                    <XCircle
+                                                        className="mt-0.5 size-4 shrink-0 text-danger"
+                                                        aria-hidden
+                                                    />
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="font-medium">
+                                                            {item.nama_item}
+                                                        </span>
+                                                        {answers[item.id]
+                                                            ?.keterangan && (
+                                                            <span className="block text-muted-foreground">
+                                                                {
+                                                                    answers[
+                                                                        item.id
+                                                                    ].keterangan
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    {item.kode_bahaya ===
+                                                        'AA' && <KritisTag />}
+                                                </li>
+                                            ))}
+                                        </ul>
                                     )}
+                                </section>
+                            )}
 
-                                    {/* Catatan opsional — saat layak pakai atau sesuai rekomendasi */}
-                                    {kondisiAkhir &&
-                                        (kondisiAkhir === 'Layak Pakai' ||
-                                            !isOverride) && (
-                                            <div className="space-y-1.5">
-                                                <Label className="text-sm font-medium text-muted-foreground">
-                                                    Catatan Tambahan (opsional)
-                                                </Label>
-                                                <Textarea
-                                                    value={justifikasiKondisi}
-                                                    onChange={(e) =>
+                            {/* Ringkasan per langkah + "Ubah" */}
+                            <section className="flex flex-col gap-3">
+                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                    Ringkasan
+                                </h2>
+                                <ReviewBlock
+                                    title="Unit & shift"
+                                    onEdit={() => setStep(1)}
+                                    rows={[
+                                        [
+                                            'Unit',
+                                            `${selectedUnit?.no_unit ?? '—'} · ${selectedUnit?.jenis_unit ?? ''}`,
+                                        ],
+                                        ['Shift', shift],
+                                        ['Job site', jobSite || '—'],
+                                        ['Lokasi kerja', lokasiKerja || '—'],
+                                        [
+                                            'HM/KM awal',
+                                            kmAwal
+                                                ? Number(kmAwal).toLocaleString(
+                                                      'id-ID',
+                                                  )
+                                                : '—',
+                                        ],
+                                        ...(needsApproval && picName
+                                            ? [['PIC persetujuan', picName] as [string, string]]
+                                            : []),
+                                    ]}
+                                />
+                                <ReviewBlock
+                                    title="Checklist"
+                                    onEdit={() => setStep(2)}
+                                    rows={[
+                                        [
+                                            'Layak',
+                                            `${filledCount - tlCount} dari ${inspectionItems.length} item`,
+                                        ],
+                                        [
+                                            'Tidak layak',
+                                            tlCount > 0
+                                                ? `${tlCount} item`
+                                                : '—',
+                                        ],
+                                    ]}
+                                    danger={tlCount > 0 ? 1 : undefined}
+                                />
+                                <ReviewBlock
+                                    title="Servis & BBM"
+                                    onEdit={() => setStep(3)}
+                                    rows={[
+                                        [
+                                            'Servis',
+                                            [
+                                                servisMingguan && 'Mingguan',
+                                                servisBerkala && 'Berkala',
+                                                unscheduleBreakdown &&
+                                                    'Breakdown',
+                                                lainnya &&
+                                                    (lainnyaText || 'Lainnya'),
+                                            ]
+                                                .filter(Boolean)
+                                                .join(', ') || 'Tidak ada',
+                                        ],
+                                        [
+                                            'Isi BBM',
+                                            kmUnit || jumlahLiter
+                                                ? `${jumlahLiter || '—'} L · KM ${kmUnit ? Number(kmUnit).toLocaleString('id-ID') : '—'}`
+                                                : 'Tidak',
+                                        ],
+                                    ]}
+                                />
+                            </section>
+
+                            {/* Keputusan kondisi akhir */}
+                            <section className="flex flex-col gap-3">
+                                <div>
+                                    <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                        Kondisi akhir unit{' '}
+                                        <span className="text-danger">*</span>
+                                    </h2>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Nyatakan kondisi unit setelah Anda
+                                        periksa. Bila berbeda dari perkiraan
+                                        hasil, alasan wajib diisi.
+                                    </p>
+                                </div>
+                                <div
+                                    role="radiogroup"
+                                    aria-label="Kondisi akhir unit"
+                                    className="grid grid-cols-2 gap-3"
+                                >
+                                    {(
+                                        [
+                                            {
+                                                value: 'Layak Pakai',
+                                                label: 'Layak Pakai',
+                                                sub: 'Unit siap beroperasi',
+                                                icon: ShieldCheck,
+                                                on: 'border-success bg-success-soft text-success',
+                                            },
+                                            {
+                                                value: 'BD',
+                                                label: 'BD / Tidak Layak',
+                                                sub: 'Tidak dapat dioperasikan',
+                                                icon: ShieldAlert,
+                                                on: 'border-danger bg-danger-soft text-danger',
+                                            },
+                                        ] as const
+                                    ).map((opt) => {
+                                        const Icon = opt.icon;
+                                        const active =
+                                            kondisiAkhir === opt.value;
+
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={active}
+                                                onClick={() => {
+                                                    setKondisiAkhir(opt.value);
+
+                                                    if (!active) {
                                                         setJustifikasiKondisi(
-                                                            e.target.value.slice(
-                                                                0,
-                                                                500,
-                                                            ),
-                                                        )
+                                                            '',
+                                                        );
                                                     }
-                                                    placeholder="Tambahkan catatan jika diperlukan…"
-                                                    className="min-h-[64px] resize-none text-sm"
-                                                    maxLength={500}
-                                                />
-                                            </div>
-                                        )}
-                                </CardContent>
-                            </Card>
+                                                }}
+                                                className={cn(
+                                                    'flex min-h-[88px] press flex-col items-center justify-center gap-1 rounded-[14px] border-2 px-2 text-[15px] font-semibold transition-colors duration-150',
+                                                    active
+                                                        ? opt.on
+                                                        : 'border-border bg-card text-muted-foreground hover:text-foreground',
+                                                )}
+                                            >
+                                                <Icon className="size-6" aria-hidden />
+                                                {opt.label}
+                                                <span className="text-xs font-normal opacity-75">
+                                                    {opt.sub}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
 
-                            {/* HM/KM Akhir */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            HM/KM Akhir
-                                        </CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        Isi HM/KM saat selesai shift (opsional)
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2 px-4">
-                                    <Input
-                                        id="hm-km-akhir"
-                                        type="number"
-                                        inputMode="numeric"
-                                        min={0}
-                                        value={hmKmAkhir}
-                                        onChange={(e) =>
-                                            setHmKmAkhir(e.target.value)
-                                        }
-                                        placeholder="Contoh: 12700"
-                                        className="h-14 text-xl font-semibold tracking-wide"
-                                    />
-                                    {hmKmAkhir && (
-                                        <p className="text-xs text-muted-foreground">
-                                            ={' '}
-                                            {Number(hmKmAkhir).toLocaleString(
-                                                'id-ID',
-                                            )}
+                                {/* Justifikasi — wajib jika berbeda dari rekomendasi */}
+                                {isOverride && (
+                                    <div className="flex animate-in flex-col gap-2 duration-200 fade-in slide-in-from-top-1">
+                                        <p className="flex items-start gap-2 rounded-[10px] bg-warning-soft px-3 py-2.5 text-sm font-medium text-warning">
+                                            <AlertTriangle
+                                                className="mt-0.5 size-4 shrink-0"
+                                                aria-hidden
+                                            />
+                                            Keputusan Anda berbeda dari
+                                            perkiraan hasil. Alasan wajib
+                                            diisi.
                                         </p>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            {/* Lampiran Foto */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            Lampiran Foto
-                                        </CardTitle>
+                                        <Label
+                                            htmlFor="justifikasi"
+                                            className="text-sm font-medium"
+                                        >
+                                            Alasan keputusan{' '}
+                                            <span className="text-danger">*</span>
+                                        </Label>
+                                        <Textarea
+                                            id="justifikasi"
+                                            value={justifikasiKondisi}
+                                            onChange={(e) =>
+                                                setJustifikasiKondisi(
+                                                    e.target.value.slice(0, 500),
+                                                )
+                                            }
+                                            placeholder="Jelaskan alasan keputusan Anda berbeda dari perkiraan hasil…"
+                                            className="min-h-[88px] text-base"
+                                            maxLength={500}
+                                        />
+                                        <p className="text-right text-xs text-muted-foreground tnum">
+                                            {justifikasiKondisi.length}/500
+                                        </p>
                                     </div>
-                                    <CardDescription>
-                                        Lampirkan foto sebagai bukti pemeriksaan
-                                        (opsional). Foto akan dikompresi
-                                        otomatis.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 px-4">
+                                )}
+
+                                {kondisiAkhir && !isOverride && (
+                                    <Textarea
+                                        aria-label="Catatan tambahan (opsional)"
+                                        value={justifikasiKondisi}
+                                        onChange={(e) =>
+                                            setJustifikasiKondisi(
+                                                e.target.value.slice(0, 500),
+                                            )
+                                        }
+                                        placeholder="Catatan tambahan (opsional)"
+                                        className="min-h-[64px] text-base"
+                                        maxLength={500}
+                                    />
+                                )}
+                            </section>
+
+                            {/* HM/KM akhir + foto */}
+                            <section className="flex flex-col gap-4">
+                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                    Akhir shift & foto
+                                </h2>
+                                <div className="flex flex-col gap-2">
+                                    <Label
+                                        htmlFor="hm-km-akhir"
+                                        className="text-sm font-medium"
+                                    >
+                                        HM/KM akhir{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (opsional)
+                                        </span>
+                                    </Label>
+                                    <UnitInput
+                                        id="hm-km-akhir"
+                                        inputMode="numeric"
+                                        value={hmKmAkhir}
+                                        onChange={setHmKmAkhir}
+                                        placeholder="12700"
+                                        suffix="HM/KM"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-sm font-medium">
+                                        Foto lampiran{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (opsional)
+                                        </span>
+                                    </span>
                                     <PhotoPicker
                                         previews={attachmentPreviews}
                                         processing={compressing}
                                         onFiles={handleAttachmentFiles}
                                         onRemove={removeAttachment}
                                     />
-                                    {!compressing &&
-                                        attachments.length === 0 && (
-                                            <p className="text-xs text-destructive">
-                                                Wajib melampirkan minimal 1 foto
-                                            </p>
-                                        )}
-                                    {attachments.length > 0 && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {attachments.length} foto terlampir
-                                        </p>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                    <p className="text-[13px] text-muted-foreground">
+                                        {attachments.length > 0
+                                            ? `${attachments.length} foto terlampir · dikompres otomatis`
+                                            : 'Misalnya unit tampak depan dan panel HM. Foto dikompres otomatis agar tetap terkirim di sinyal lemah.'}
+                                    </p>
+                                </div>
+                            </section>
 
-                            {/* Tanda Tangan */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <PenLine className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            Tanda Tangan Driver
-                                        </CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        Tanda tangani menggunakan jari atau
-                                        mouse sebagai pernyataan bahwa
-                                        pemeriksaan telah dilakukan dengan jujur
-                                        dan benar.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="px-4">
-                                    <SignaturePad
-                                        sigPadRef={sigPadRef}
-                                        onEnd={() => setSigEmpty(false)}
-                                        onClear={() => setSigEmpty(true)}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </>
+                            {/* Tanda tangan */}
+                            <section className="flex flex-col gap-3">
+                                <div>
+                                    <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                        Tanda tangan driver{' '}
+                                        <span className="text-danger">*</span>
+                                    </h2>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        {[
+                                            auth?.user?.name,
+                                            auth?.user?.nik &&
+                                                `NRP ${auth.user.nik}`,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(' · ')}
+                                    </p>
+                                </div>
+                                <SignaturePad
+                                    sigPadRef={sigPadRef}
+                                    onEnd={() => setSigEmpty(false)}
+                                    onClear={() => setSigEmpty(true)}
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    Dengan menandatangani, saya menyatakan
+                                    pemeriksaan ini dilakukan dengan jujur dan
+                                    benar.
+                                </p>
+                                {needsApproval && picName && (
+                                    <p className="flex items-center gap-2 rounded-[10px] bg-muted px-3 py-2.5 text-sm">
+                                        <Send
+                                            className="size-4 shrink-0 text-muted-foreground"
+                                            aria-hidden
+                                        />
+                                        <span>
+                                            Diteruskan ke{' '}
+                                            <strong className="font-semibold">
+                                                {picName}
+                                            </strong>{' '}
+                                            untuk persetujuan.
+                                        </span>
+                                    </p>
+                                )}
+                            </section>
+                        </div>
                     )}
                 </div>
             </div>

@@ -1,9 +1,11 @@
+import { AlertTriangle, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { PhotoPicker } from '@/components/pims/photo-picker';
 import { SegmentedChoice } from '@/components/pims/segmented';
+import { KritisTag } from '@/components/pims/status-pill';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
-import RiskBadge from './RiskBadge';
 
 interface Props {
     item: P2hInspectionItem;
@@ -15,8 +17,18 @@ interface Props {
     compressing: boolean;
     onAttachmentChange: (id: number, files: FileList | null) => void;
     onRemoveAttachment: (id: number, idx: number) => void;
+    /** Ditandai saat "Lanjut" ditekan dengan item ini kosong / tanpa keterangan. */
+    error?: string | null;
 }
 
+/** DOM id baris item — dipakai form untuk scroll ke item yang belum valid. */
+export const checklistItemDomId = (id: number) => `p2h-item-${id}`;
+
+/**
+ * Baris checklist (FormP2H.dc.html langkah Checklist): nama (body-lg) + caption
+ * kode bahaya + tag KRITIS, SegmentedChoice Layak/Tidak Layak. Tidak Layak →
+ * expand catatan wajib + foto; item kritis memunculkan peringatan BD otomatis.
+ */
 export default function ChecklistItem({
     item,
     answer,
@@ -26,37 +38,38 @@ export default function ChecklistItem({
     compressing,
     onAttachmentChange,
     onRemoveAttachment,
+    error,
 }: Props) {
     const isTidakLayak = answer.kondisi === 'Tidak Layak';
     const isLayak = answer.kondisi === 'Layak';
-    const unanswered = !answer.kondisi;
+    const kritis = item.kode_bahaya === 'AA';
+    // Catatan opsional untuk item Layak disembunyikan sampai diminta
+    const [showNote, setShowNote] = useState(answer.keterangan.trim() !== '');
+    const noteId = `${checklistItemDomId(item.id)}-catatan`;
 
     return (
         <div
-            className={cn(
-                'rounded-xl border-(length:--bw) bg-card p-4 transition-colors duration-200',
-                isTidakLayak && 'border-danger',
-                isLayak && 'border-success/40',
-            )}
+            id={checklistItemDomId(item.id)}
+            className="flex scroll-mt-56 flex-col gap-2.5 border-t-(length:--bw) pt-3.5 pb-[18px]"
         >
-            {/* Nama item + kode bahaya */}
-            <div className="mb-3 flex items-start gap-2.5">
-                <span className="mt-0.5 shrink-0 text-sm text-muted-foreground">
-                    {item.urutan}.
-                </span>
-                <div className="min-w-0 flex-1">
-                    <p className="text-[17px] leading-snug font-medium">
+            <div className="flex items-start gap-2.5">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-[17px] leading-6 font-medium">
                         {item.nama_item}
-                    </p>
-                    <div className="mt-1.5 flex items-center gap-2">
-                        <RiskBadge kode_bahaya={item.kode_bahaya} />
-                        {unanswered && (
-                            <span className="text-xs text-muted-foreground">
-                                Belum dijawab
-                            </span>
-                        )}
-                    </div>
-                </div>
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                        {kritis
+                            ? 'Kode AA · unit Stop bila Tidak Layak'
+                            : 'Kode A'}
+                    </span>
+                </span>
+                {kritis && (
+                    <KritisTag
+                        withIcon
+                        className="h-6 px-2"
+                        title="Kode bahaya AA — unit Stop bila Tidak Layak"
+                    />
+                )}
             </div>
 
             <SegmentedChoice
@@ -68,59 +81,73 @@ export default function ChecklistItem({
                 labels={{ baik: 'Layak', rusak: 'Tidak Layak' }}
             />
 
-            {/* Keterangan — wajib jika Tidak Layak, opsional jika Layak */}
-            {(isTidakLayak || isLayak) && (
-                <div className="mt-3 animate-in space-y-3 duration-200 fade-in slide-in-from-top-2">
-                    <div>
-                        {isTidakLayak ? (
-                            <p className="mb-1.5 text-sm font-medium text-danger">
-                                Wajib: Jelaskan kerusakan / kondisi yang
-                                ditemukan
-                            </p>
-                        ) : (
-                            <p className="mb-1.5 text-sm font-medium text-muted-foreground">
-                                Catatan (opsional)
-                            </p>
-                        )}
-                        <Textarea
-                            placeholder={
-                                isTidakLayak
-                                    ? 'Contoh: Ban bocor, tekanan hanya 20 psi...'
-                                    : 'Tambahkan catatan jika diperlukan…'
-                            }
-                            value={answer.keterangan}
-                            onChange={(e) =>
-                                onKeteranganChange(item.id, e.target.value)
-                            }
-                            className={cn(
-                                'min-h-[72px] text-base',
-                                !isTidakLayak && 'min-h-[56px]',
-                            )}
-                            required={isTidakLayak}
-                        />
-                    </div>
+            {error && (
+                <p role="alert" className="text-sm font-medium text-danger">
+                    {error}
+                </p>
+            )}
 
-                    {/* Attachment per item — hanya untuk Tidak Layak */}
-                    {isTidakLayak && (
-                        <div>
-                            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                                Lampiran Foto Bukti (opsional)
-                            </p>
-                            <PhotoPicker
-                                compact
-                                previews={attachmentPreviews}
-                                processing={compressing}
-                                onFiles={(files) =>
-                                    onAttachmentChange(item.id, files)
-                                }
-                                onRemove={(idx) =>
-                                    onRemoveAttachment(item.id, idx)
-                                }
+            {isTidakLayak && (
+                <div className="flex animate-in flex-col gap-2.5 duration-200 fade-in slide-in-from-top-1">
+                    {kritis && (
+                        <p className="flex items-start gap-2 rounded-[10px] bg-danger-soft px-3 py-2.5 text-sm font-medium text-danger">
+                            <AlertTriangle
+                                className="mt-0.5 size-4 shrink-0"
+                                aria-hidden
                             />
-                        </div>
+                            Item kritis rusak: rekomendasi hasil P2H menjadi
+                            BD (Tidak Layak).
+                        </p>
                     )}
+                    <label htmlFor={noteId} className="text-sm font-medium">
+                        Catatan kerusakan{' '}
+                        <span className="text-danger">*</span>
+                    </label>
+                    <Textarea
+                        id={noteId}
+                        rows={2}
+                        placeholder="Contoh: rembesan di sambungan selang sisi kiri"
+                        value={answer.keterangan}
+                        onChange={(e) =>
+                            onKeteranganChange(item.id, e.target.value)
+                        }
+                        aria-invalid={!!error && !answer.keterangan.trim()}
+                        className="min-h-[72px] text-base"
+                        required
+                    />
+                    <PhotoPicker
+                        compact
+                        previews={attachmentPreviews}
+                        processing={compressing}
+                        onFiles={(files) => onAttachmentChange(item.id, files)}
+                        onRemove={(idx) => onRemoveAttachment(item.id, idx)}
+                    />
                 </div>
             )}
+
+            {isLayak &&
+                (showNote ? (
+                    <Textarea
+                        aria-label={`Catatan ${item.nama_item} (opsional)`}
+                        placeholder="Catatan (opsional)"
+                        value={answer.keterangan}
+                        onChange={(e) =>
+                            onKeteranganChange(item.id, e.target.value)
+                        }
+                        className="min-h-[56px] animate-in text-base duration-200 fade-in"
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => setShowNote(true)}
+                        className={cn(
+                            'inline-flex h-8 items-center gap-1 self-start rounded-md px-1 text-[13px] font-medium text-muted-foreground hover:text-foreground',
+                        )}
+                    >
+                        <Plus className="size-3.5" aria-hidden />
+                        Tambah catatan
+                    </button>
+                ))}
         </div>
     );
 }
