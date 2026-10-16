@@ -20,7 +20,10 @@ import type ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 import SignaturePad from '@/components/P2h/SignaturePad';
 import { PageButtons } from '@/components/pagination-bar';
+import { FilterChips } from '@/components/pims/filter-chips';
 import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
+import { KritisTag, StatusPill } from '@/components/pims/status-pill';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -39,6 +42,8 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { useIsDesktop } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
 import type { ApprovalStatus } from '@/types/pims';
 
 /* ─────────────────────── Types ─────────────────────────────── */
@@ -1142,6 +1147,396 @@ function StatusFilterTab({
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
+/* ────────── Desktop master–detail (Persetujuan-Desktop.png) ────────── */
+
+function minutesSince(iso: string | null): number | null {
+    if (!iso) {
+        return null;
+    }
+
+    const t = new Date(iso).getTime();
+
+    return Number.isNaN(t) ? null : Math.max(0, Math.round((Date.now() - t) / 60000));
+}
+
+function submittedTime(iso: string | null): string {
+    if (!iso) {
+        return '—';
+    }
+
+    const d = new Date(iso);
+
+    return Number.isNaN(d.getTime())
+        ? iso.slice(11, 16)
+        : d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).replace('.', ':');
+}
+
+type QueueFilter = 'semua' | 'eskalasi' | 'rusak';
+
+function QueueRow({
+    entry,
+    selected,
+    onSelect,
+}: {
+    entry: ApprovalEntry;
+    selected: boolean;
+    onSelect: () => void;
+}) {
+    const age = entry.approval_status === 'pending' ? minutesSince(entry.submitted_at) : null;
+    const bd = entry.kondisi_akhir === 'BD';
+
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            aria-current={selected ? 'true' : undefined}
+            data-active={selected ? 'true' : undefined}
+            className={cn(
+                'relative flex w-full flex-col gap-1.5 border-b-(length:--bw) px-4 py-3.5 text-left transition-colors',
+                selected ? 'bg-muted' : 'hover:bg-muted/50',
+            )}
+        >
+            {selected && (
+                <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
+            )}
+            <span className="flex items-baseline gap-2">
+                <span className="text-[15px] font-semibold tnum">{entry.no_unit}</span>
+                <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
+                    {entry.driver_name}
+                </span>
+                {age !== null && (
+                    <span className={cn('text-xs font-semibold tnum', age > 15 ? 'text-danger' : 'text-muted-foreground')}>
+                        {age < 600 ? `${age} mnt` : submittedTime(entry.submitted_at)}
+                    </span>
+                )}
+            </span>
+            <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <StatusPill
+                    status={bd ? 'tidak-layak' : 'layak'}
+                    label={bd ? 'Tidak layak' : 'Layak'}
+                    size="sm"
+                    solid={bd}
+                />
+                <span className="tnum">
+                    {entry.tl_count > 0 ? `${entry.tl_count} Rusak` : 'Semua baik'}
+                </span>
+                {entry.has_critical && <KritisTag />}
+                {entry.escalated && (
+                    <span className="rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger">
+                        Eskalasi
+                    </span>
+                )}
+            </span>
+        </button>
+    );
+}
+
+function StatTile({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div className="rounded-[12px] bg-muted-2 px-4 py-3 ring-1 ring-border ring-inset">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="mt-1 truncate text-lg font-semibold tnum">{value}</p>
+        </div>
+    );
+}
+
+function ApprovalDetailPanel({
+    entry,
+    onReject,
+    approveRef,
+    onApproved,
+}: {
+    entry: ApprovalEntry;
+    onReject: () => void;
+    approveRef: React.MutableRefObject<(() => void) | null>;
+    onApproved: () => void;
+}) {
+    const [detail, setDetail] = useState<EntryDetail | null>(null);
+    const [error, setError] = useState(false);
+    const [sigEmpty, setSigEmpty] = useState(true);
+    const [sigError, setSigError] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const [showAll, setShowAll] = useState(false);
+    const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
+    const pending = entry.approval_status === 'pending';
+
+    useEffect(() => {
+        // Panel di-mount ulang per entry (key), jadi state awal sudah bersih
+        let cancelled = false;
+        fetch(`/p2h/entries/${entry.id}/detail`)
+            .then((r) => {
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}`);
+                }
+
+                return r.json();
+            })
+            .then((data) => !cancelled && setDetail(data))
+            .catch(() => !cancelled && setError(true));
+
+        return () => {
+            cancelled = true;
+        };
+    }, [entry.id]);
+
+    const approve = () => {
+        if (!pending || processing) {
+            return;
+        }
+
+        // Tombol tetap bisa diklik; error tampil di tempat (docs/02#button)
+        if (sigEmpty || sigPadRef.current?.isEmpty()) {
+            setSigError(true);
+            document.getElementById('approver-signature')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+            return;
+        }
+
+        const signature = sigPadRef.current?.toDataURL('image/png') ?? '';
+        setProcessing(true);
+        router.patch(
+            `/p2h/entries/${entry.id}/approve`,
+            { signature, catatan: null },
+            {
+                preserveScroll: true,
+                onSuccess: onApproved,
+                onFinish: () => setProcessing(false),
+            },
+        );
+    };
+
+    // Pintasan "A" di halaman memanggil aksi setujui panel ini
+    useEffect(() => {
+        approveRef.current = approve;
+    });
+
+    const answers = detail ? Object.values(detail.grouped_answers).flat() : [];
+    const broken = answers.filter((a) => a.kondisi === 'Tidak Layak');
+    const okCount = answers.filter((a) => a.kondisi === 'Layak').length;
+    const bd = entry.kondisi_akhir === 'BD';
+    const age = pending ? minutesSince(entry.submitted_at) : null;
+
+    return (
+        <div className="flex h-full min-h-0 flex-col">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
+                <header className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <h2 className="text-[22px] leading-tight font-semibold tracking-[-0.02em]">
+                            {entry.no_unit} · {entry.jenis_unit}
+                        </h2>
+                        <p className="mt-1 text-sm text-muted-foreground tnum">
+                            {entry.driver_name} · submit {submittedTime(entry.submitted_at)}
+                            {entry.shift && ` · ${entry.shift}`}
+                            {entry.department && ` · ${entry.department}`}
+                            {age !== null && age < 600 && ` · menunggu ${age} mnt`}
+                        </p>
+                    </div>
+                    <StatusPill
+                        status={bd ? 'tidak-layak' : 'layak'}
+                        label={bd ? 'Tidak layak' : 'Layak Pakai'}
+                        solid={bd}
+                        className="h-7 px-3 text-[13px]"
+                    />
+                </header>
+
+                {entry.escalated && pending && (
+                    <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm text-danger hc:border-2 hc:border-danger">
+                        Dieskalasi karena PIC belum menyetujui sampai akhir shift.
+                    </p>
+                )}
+                {bd && (
+                    <p className="rounded-[12px] border-(length:--bw) px-4 py-3 text-sm">
+                        Unit sudah otomatis <b>BD</b> dari P2H ini. Menyetujui = mengonfirmasi
+                        hasil P2H; unit tetap BD sampai temuan ditutup.
+                    </p>
+                )}
+                {!pending && (
+                    <p className="rounded-[12px] bg-muted px-4 py-3 text-sm">
+                        {entry.approval_status === 'approved'
+                            ? `Disetujui ${entry.approver_name ?? ''}${entry.approved_at ? ` · ${entry.approved_at}` : ''}`
+                            : `Ditolak${entry.approver_name ? ` oleh ${entry.approver_name}` : ''}${entry.catatan_approval ? ` — ${entry.catatan_approval}` : ''}`}
+                    </p>
+                )}
+
+                {error && (
+                    <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm text-danger">
+                        Detail gagal dimuat. Pilih ulang entry untuk mencoba lagi.
+                    </p>
+                )}
+                {!detail && !error && (
+                    <div className="space-y-3" aria-busy="true">
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="h-[68px] skeleton" />
+                            <div className="h-[68px] skeleton" />
+                            <div className="h-[68px] skeleton" />
+                        </div>
+                        <div className="h-24 skeleton" />
+                    </div>
+                )}
+
+                {detail && (
+                    <>
+                        <div className="grid grid-cols-3 gap-3">
+                            <StatTile
+                                label="HM/KM awal"
+                                value={detail.km_awal != null ? detail.km_awal.toLocaleString('id-ID') : '—'}
+                            />
+                            <StatTile
+                                label="Isi BBM"
+                                value={
+                                    detail.fuel_log?.jumlah_liter != null
+                                        ? `${detail.fuel_log.jumlah_liter.toLocaleString('id-ID')} L`
+                                        : '—'
+                                }
+                            />
+                            <StatTile
+                                label="Checklist"
+                                value={`${okCount} Baik · ${broken.length} Rusak`}
+                            />
+                        </div>
+
+                        {detail.justifikasi_kondisi && (
+                            <div>
+                                <h3 className="text-sm font-semibold">Catatan driver</h3>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    {detail.justifikasi_kondisi}
+                                </p>
+                            </div>
+                        )}
+
+                        <section>
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-semibold">
+                                    {broken.length > 0 ? 'Item rusak' : 'Checklist'}
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAll((v) => !v)}
+                                    className="text-[13px] font-medium text-muted-foreground hover:text-foreground"
+                                >
+                                    {showAll ? 'Sembunyikan item baik' : `Lihat semua ${answers.length} item`}
+                                </button>
+                            </div>
+                            {broken.length === 0 && !showAll && (
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    Semua {answers.length} item dalam kondisi baik.
+                                </p>
+                            )}
+                            <ul className="mt-2 space-y-2">
+                                {(showAll ? answers : broken).map((item) => {
+                                    const isTL = item.kondisi === 'Tidak Layak';
+
+                                    return (
+                                        <li
+                                            key={item.inspection_item_id}
+                                            className={cn(
+                                                'rounded-[12px] border-(length:--bw) px-4 py-3',
+                                                !isTL && 'py-2.5',
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className={cn('min-w-0 flex-1 text-sm', isTL && 'font-semibold')}>
+                                                    {item.nama_item}
+                                                </span>
+                                                {isTL && item.kode_bahaya === 'AA' && <KritisTag />}
+                                                <StatusPill
+                                                    status={isTL ? 'tidak-layak' : 'layak'}
+                                                    label={isTL ? 'Rusak' : 'Baik'}
+                                                    size="sm"
+                                                />
+                                            </div>
+                                            {isTL && item.keterangan && (
+                                                <p className="mt-1 text-[13px] text-muted-foreground">
+                                                    {item.keterangan}
+                                                </p>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                            {broken.length > 0 && (
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    Temuan sudah dibuat otomatis saat P2H masuk; dibatalkan bila P2H ditolak.
+                                </p>
+                            )}
+                        </section>
+
+                        {detail.attachments.length > 0 && (
+                            <section>
+                                <h3 className="text-sm font-semibold">Foto lampiran</h3>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {detail.attachments.map((att, i) => (
+                                        <a key={i} href={att.url} target="_blank" rel="noreferrer">
+                                            <img
+                                                src={att.url}
+                                                alt={`Foto unit ${i + 1}`}
+                                                className="h-[110px] w-40 rounded-[10px] border object-cover"
+                                            />
+                                        </a>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {detail.paraf_url && (
+                            <section>
+                                <h3 className="text-sm font-semibold">Tanda tangan driver</h3>
+                                <img
+                                    src={detail.paraf_url}
+                                    alt={`Tanda tangan ${detail.driver_name}`}
+                                    className="mt-2 h-16 rounded-[10px] border bg-white object-contain px-3"
+                                />
+                            </section>
+                        )}
+
+                        {pending && (
+                            <section id="approver-signature">
+                                <h3 className="text-sm font-semibold">
+                                    Tanda tangan approver <span className="text-danger">*</span>
+                                </h3>
+                                <div className="mt-2">
+                                    <SignaturePad
+                                        sigPadRef={sigPadRef}
+                                        penColor="#1d4ed8"
+                                        onEnd={() => {
+                                            setSigEmpty(false);
+                                            setSigError(false);
+                                        }}
+                                        onClear={() => setSigEmpty(true)}
+                                    />
+                                </div>
+                                {sigError && (
+                                    <p role="alert" className="mt-1.5 text-[13px] font-medium text-danger">
+                                        Buat tanda tangan dulu sebelum menyetujui.
+                                    </p>
+                                )}
+                            </section>
+                        )}
+                    </>
+                )}
+            </div>
+
+            {pending && (
+                <footer className="flex items-center justify-between gap-3 border-t-(length:--bw) bg-background px-6 py-4">
+                    <Button
+                        variant="outline"
+                        onClick={onReject}
+                        className="border-danger/40 text-danger hover:bg-danger-soft hover:text-danger"
+                    >
+                        Tolak
+                        <kbd className="font-mono text-[10px] opacity-60">R</kbd>
+                    </Button>
+                    <Button onClick={approve} disabled={processing || !detail}>
+                        {processing && <Loader2 className="animate-spin" />}
+                        Setujui P2H
+                        <kbd className="font-mono text-[10px] opacity-60">A</kbd>
+                    </Button>
+                </footer>
+            )}
+        </div>
+    );
+}
+
 export default function P2hApprovals({
     entries,
     filters,
@@ -1156,6 +1551,19 @@ export default function P2hApprovals({
 
     const activeStatus = filters.status ?? 'pending';
     const [activeIndex, setActiveIndex] = useState(0);
+    const isDesktop = useIsDesktop();
+    const [queueFilter, setQueueFilter] = useState<QueueFilter>('semua');
+    const approveRef = useRef<(() => void) | null>(null);
+    const queue = entries.data.filter((e) =>
+        queueFilter === 'eskalasi'
+            ? e.escalated
+            : queueFilter === 'rusak'
+              ? e.tl_count > 0
+              : true,
+    );
+    const selectedIndex = Math.min(activeIndex, Math.max(0, queue.length - 1));
+    const selected = queue[selectedIndex] ?? null;
+    const escalatedCount = entries.data.filter((e) => e.escalated).length;
 
     const openReview = (entry: ApprovalEntry) => {
         setReviewEntry(entry);
@@ -1186,7 +1594,7 @@ export default function P2hApprovals({
                 return;
             }
 
-            const list = entries.data;
+            const list = isDesktop ? queue : entries.data;
 
             if (list.length === 0) {
                 return;
@@ -1201,7 +1609,11 @@ export default function P2hApprovals({
             } else if (key === 'arrowup' || key === 'k') {
                 e.preventDefault();
                 setActiveIndex((i) => Math.max(i - 1, 0));
-            } else if ((key === 'a' || key === 'enter') && current) {
+            } else if (isDesktop && key === 'a' && current) {
+                // Desktop: setujui langsung dari panel detail (butuh tanda tangan)
+                e.preventDefault();
+                approveRef.current?.();
+            } else if ((key === 'a' || key === 'enter') && current && !isDesktop) {
                 e.preventDefault();
                 openReview(current);
             } else if (
@@ -1257,29 +1669,121 @@ export default function P2hApprovals({
 
             <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageHeader
-                    title="Persetujuan P2H"
+                    title="Persetujuan"
                     description={
-                        canSeeAllDept
-                            ? 'P2H Light Vehicle yang memerlukan verifikasi'
-                            : 'P2H LV dengan Anda sebagai PIC verifikasi'
+                        activeStatus === 'pending'
+                            ? `${stats.pending} menunggu${escalatedCount > 0 ? ` · ${escalatedCount} eskalasi` : ''} · ${canSeeAllDept ? 'semua departemen' : 'Anda sebagai PIC'}`
+                            : `${stats.approved_today} disetujui · ${stats.rejected_today} ditolak hari ini`
                     }
                     actions={
-                        // Approve massal — khusus admin
-                        bulkApprovable !== null &&
-                        activeStatus === 'pending' &&
-                        bulkApprovable > 0 && (
-                            <Button onClick={() => setBulkOpen(true)}>
-                                <ListChecks />
-                                Setujui semua ({bulkApprovable})
-                            </Button>
-                        )
+                        <>
+                            <span className="mr-2 hidden font-mono text-xs text-muted-foreground xl:inline">
+                                ↑↓ pindah · A setujui · R tolak
+                            </span>
+                            <Segmented
+                                className="hidden lg:inline-flex"
+                                label="Status persetujuan"
+                                value={activeStatus}
+                                onChange={setStatus}
+                                options={[
+                                    { value: 'pending', label: 'Menunggu' },
+                                    { value: 'approved', label: 'Disetujui' },
+                                    { value: 'rejected', label: 'Ditolak' },
+                                ]}
+                            />
+                            {
+                                // Approve massal — khusus admin
+                                bulkApprovable !== null &&
+                                    activeStatus === 'pending' &&
+                                    bulkApprovable > 0 && (
+                                        <Button onClick={() => setBulkOpen(true)}>
+                                            <ListChecks />
+                                            Setujui semua ({bulkApprovable})
+                                        </Button>
+                                    )
+                            }
+                        </>
                     }
                 />
 
-                <p className="-mt-2 hidden font-mono text-xs text-muted-foreground lg:block">
-                    ↑↓ pilih · A tinjau &amp; setujui · R tolak
-                </p>
+                {/* ── Desktop: master–detail ── */}
+                <div className="hidden h-[calc(100svh-150px)] min-h-[560px] grid-cols-[minmax(320px,380px)_1fr] overflow-hidden rounded-[14px] border-(length:--bw) lg:grid">
+                    <div className="flex min-h-0 flex-col border-r-(length:--bw)">
+                        <div className="border-b-(length:--bw) px-4 py-3">
+                            <FilterChips
+                                label="Filter antrean"
+                                value={queueFilter}
+                                onChange={(v) => {
+                                    setQueueFilter(v);
+                                    setActiveIndex(0);
+                                }}
+                                options={[
+                                    { value: 'semua', label: 'Semua', count: entries.data.length },
+                                    { value: 'eskalasi', label: 'Eskalasi', count: escalatedCount },
+                                    { value: 'rusak', label: 'Ada rusak', count: entries.data.filter((e) => e.tl_count > 0).length },
+                                ]}
+                            />
+                        </div>
+                        <div className="min-h-0 flex-1 overflow-y-auto">
+                            {queue.length === 0 ? (
+                                <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+                                    {entries.data.length === 0
+                                        ? emptyMsg.title
+                                        : 'Tidak ada entry dengan filter ini.'}
+                                </p>
+                            ) : (
+                                queue.map((entry, i) => (
+                                    <QueueRow
+                                        key={entry.id}
+                                        entry={entry}
+                                        selected={i === selectedIndex}
+                                        onSelect={() => setActiveIndex(i)}
+                                    />
+                                ))
+                            )}
+                        </div>
+                        {entries.last_page > 1 && (
+                            <div className="flex items-center justify-between gap-2 border-t-(length:--bw) px-4 py-2.5 text-xs text-muted-foreground">
+                                <span className="tnum">
+                                    {entries.from}–{entries.to} dari {entries.total}
+                                </span>
+                                <PageButtons
+                                    currentPage={entries.current_page}
+                                    lastPage={entries.last_page}
+                                    onPageChange={(page) =>
+                                        router.get('/p2h/approvals', { ...filters, page })
+                                    }
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div className="min-h-0">
+                        {selected ? (
+                            <ApprovalDetailPanel
+                                key={selected.id}
+                                entry={selected}
+                                approveRef={approveRef}
+                                onReject={() => setRejectEntry(selected)}
+                                onApproved={() => toast.success(`P2H ${selected.no_unit} disetujui`)}
+                            />
+                        ) : (
+                            <div className="grid h-full place-items-center px-6 text-center">
+                                <div>
+                                    <p className="text-lg font-semibold">
+                                        {activeStatus === 'pending' ? 'Antrean kosong' : emptyMsg.title}
+                                    </p>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        {activeStatus === 'pending'
+                                            ? 'Semua P2H sudah ditinjau.'
+                                            : emptyMsg.desc}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
+                <div className="contents lg:hidden">
                 {/* ── Status filter ── */}
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-1 rounded-xl bg-muted/60 p-1">
@@ -1359,6 +1863,7 @@ export default function P2hApprovals({
                         />
                     </div>
                 )}
+                </div>
             </div>
 
             <ReviewApproveSheet
