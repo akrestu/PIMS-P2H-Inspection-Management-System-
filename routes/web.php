@@ -76,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/p2h', [P2hSessionController::class, 'index'])->name('p2h.index');
         Route::get('/p2h/form', [P2hSessionController::class, 'create'])->name('p2h.create');
         Route::post('/p2h', [P2hSessionController::class, 'store'])->name('p2h.store');
+        Route::get('/p2h/terkirim/{entry}', [P2hSessionController::class, 'submitted'])->name('p2h.submitted');
 
         // AJAX — cek slot unit hari ini
         Route::get('/api/p2h/check-slot', [P2hSessionController::class, 'checkSlot'])->name('p2h.check-slot');

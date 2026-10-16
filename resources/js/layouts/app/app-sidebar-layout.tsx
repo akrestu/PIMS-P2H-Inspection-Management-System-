@@ -15,7 +15,9 @@ export default function AppSidebarLayout({
     breadcrumbs = [],
 }: AppLayoutProps) {
     const { currentUrl } = useCurrentUrl();
-    const fullscreenFlow = currentUrl.startsWith('/p2h/form');
+    const fullscreenFlow = 
+        currentUrl.startsWith('/p2h/form') ||
+        currentUrl.startsWith('/p2h/terkirim/');
     // Beranda driver punya header sapaan + avatar sendiri (BerandaDriver.png)
     const ownHeader = currentUrl.startsWith('/driver/dashboard');
 

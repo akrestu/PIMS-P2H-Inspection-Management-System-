@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import {
     AlertTriangle,
@@ -231,97 +231,6 @@ function StepIndicator({
             total={total}
             label={STEPS[current - 1].label}
         />
-    );
-}
-
-// ─── Layar sukses ─────────────────────────────────────────────────────────────
-// Lingkaran pop + centang digambar (stroke-dashoffset); gerak mati bila "Kurangi gerakan".
-function SubmitSuccess({
-    unit,
-    layak,
-    pic,
-    findings,
-    homeHref,
-}: {
-    unit: string;
-    layak: boolean;
-    pic: string | null;
-    findings: string[];
-    homeHref: string;
-}) {
-    return (
-        <div className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-10 text-center">
-            <div
-                className={cn(
-                    'grid size-28 animate-pop place-items-center rounded-full',
-                    layak
-                        ? 'bg-success-soft text-success'
-                        : 'bg-danger-soft text-danger',
-                )}
-            >
-                <svg viewBox="0 0 52 52" className="size-16" aria-hidden>
-                    <path
-                        d={
-                            layak
-                                ? 'M14 27 L23 36 L39 18'
-                                : 'M17 17 L35 35 M35 17 L17 35'
-                        }
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="[stroke-dasharray:60] [stroke-dashoffset:60] motion-safe:animate-[pims-draw_500ms_var(--ease-out)_250ms_forwards] motion-reduce:[stroke-dashoffset:0]"
-                    />
-                </svg>
-            </div>
-            <div className="space-y-2" role="status">
-                <h1 className="text-2xl font-semibold tracking-[-0.02em]">
-                    P2H terkirim · {layak ? 'Layak Pakai' : 'Tidak Layak'}
-                </h1>
-                <p className="text-[15px] text-muted-foreground">
-                    {layak
-                        ? `${unit} siap dioperasikan.`
-                        : `${unit} tercatat BD. Pengawas sudah diberi tahu.`}
-                </p>
-                {pic && (
-                    <p className="text-[15px] text-muted-foreground">
-                        Diteruskan ke{' '}
-                        <span className="font-semibold text-foreground">
-                            {pic}
-                        </span>{' '}
-                        untuk persetujuan.
-                    </p>
-                )}
-            </div>
-            {findings.length > 0 && (
-                <ul className="w-full max-w-sm divide-y rounded-[14px] border-(length:--bw) bg-card text-left">
-                    <li className="px-4 py-2.5 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
-                        {findings.length} temuan Tidak Layak
-                    </li>
-                    {findings.map((f) => (
-                        <li
-                            key={f}
-                            className="flex items-center gap-2 px-4 py-2.5 text-[15px]"
-                        >
-                            <span
-                                className="size-1.5 shrink-0 rounded-full bg-danger"
-                                aria-hidden
-                            />
-                            {f}
-                        </li>
-                    ))}
-                </ul>
-            )}
-            <div className="flex w-full max-w-sm flex-col gap-2">
-                <Button asChild size="xl">
-                    <Link href={homeHref}>Kembali ke Beranda</Link>
-                </Button>
-                <Button asChild variant="outline" size="xl">
-                    <Link href="/p2h">Lihat riwayat</Link>
-                </Button>
-            </div>
-        </div>
     );
 }
 
@@ -980,12 +889,6 @@ export default function P2hForm({
     >({});
     const [submitting, setSubmitting] = useState(false);
     const [uploadPct, setUploadPct] = useState<number | null>(null);
-    const [submitted, setSubmitted] = useState<{
-        unit: string;
-        layak: boolean;
-        pic: string | null;
-        findings: string[];
-    } | null>(null);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
     const [hasDraft] = useState(() => Boolean(draft.selectedUnitId));
@@ -1506,7 +1409,7 @@ export default function P2hForm({
                     ),
                 onFinish: () => setUploadPct(null),
                 onSuccess: () => {
-                    // Layar sukses (docs/screens/driver.md §7) sebelum kembali
+                    // Server mengarahkan ke layar "P2H terkirim" (p2h/submitted)
                     try {
                         navigator.vibrate?.([10, 30, 10]);
                     } catch {
@@ -1514,15 +1417,6 @@ export default function P2hForm({
                     }
 
                     setSubmitting(false);
-                    setSubmitted({
-                        unit: selectedUnit?.no_unit ?? 'Unit',
-                        layak: kondisiAkhir !== 'BD',
-                        findings: tlItems.map((item) => item.nama_item),
-                        pic:
-                            staffUsers.find(
-                                (u) => String(u.id) === picApproverId,
-                            )?.name ?? null,
-                    });
                 },
                 onError: (errors) => {
                     setSubmitting(false);
@@ -1574,15 +1468,6 @@ export default function P2hForm({
             },
         );
     };
-
-    if (submitted) {
-        return (
-            <>
-                <Head title="P2H terkirim" />
-                <SubmitSuccess {...submitted} homeHref={homeHref} />
-            </>
-        );
-    }
 
     return (
         <>

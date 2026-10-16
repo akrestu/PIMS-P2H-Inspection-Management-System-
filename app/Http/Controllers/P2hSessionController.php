@@ -419,46 +419,30 @@ class P2hSessionController extends Controller
             ]);
         }
 
-        $session = P2hSession::where('unit_id', $data['unit_id'])
-            ->whereDate('tanggal', today())
-            ->with('unit')
-            ->first();
+        // Layar sukses (docs/screens/driver.md §7) — halaman sendiri agar tetap tampil
+        // setelah redirect; isinya diambil ulang dari entry yang baru disimpan.
+        return redirect()->route('p2h.submitted', $createdEntry);
+    }
 
-        $slotTerisi = $session->userEntries()->count();
-        $hasCritical = $session->userEntries()
-            ->with('answers.inspectionItem')
-            ->get()
-            ->flatMap(fn ($e) => $e->answers)
-            ->where('kondisi', 'Tidak Layak')
-            ->filter(fn ($a) => $a->inspectionItem?->kode_bahaya === 'AA')
-            ->isNotEmpty();
+    /**
+     * Layar "P2H terkirim" untuk entry milik driver sendiri: hasil (Layak / Tidak
+     * Layak), temuan Tidak Layak, dan PIC persetujuan bila menunggu.
+     */
+    public function submitted(Request $request, P2hUserEntry $entry): Response
+    {
+        abort_unless($entry->user_id === $request->user()->id, 403);
 
-        // Cek apakah entry ini pending approval
-        $latestEntry = $session->userEntries()->with('pic')->latest()->first();
-        $isPendingApproval = $latestEntry?->approval_status === 'pending';
+        $entry->load(['session.unit:id,no_unit', 'pic:id,name', 'answers.inspectionItem:id,kode_bahaya']);
+        $findings = $entry->answers->where('kondisi', 'Tidak Layak');
 
-        if ($hasCritical) {
-            Inertia::flash('toast', [
-                'type' => 'error',
-                'message' => 'P2H disimpan — Ada item Critical TL!',
-                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item kode bahaya AA (Stop) yang tidak layak. Admin telah diberitahu.",
-            ]);
-        } elseif ($isPendingApproval) {
-            $picName = $latestEntry?->pic?->name ?? 'PIC yang dipilih';
-            Inertia::flash('toast', [
-                'type' => 'warning',
-                'message' => 'P2H disubmit — Menunggu Verifikasi',
-                'description' => "P2H unit {$session->unit->no_unit} menunggu persetujuan dari {$picName}.",
-            ]);
-        } else {
-            Inertia::flash('toast', [
-                'type' => 'success',
-                'message' => 'P2H berhasil disimpan',
-                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}.",
-            ]);
-        }
-
-        return redirect()->route('p2h.index');
+        return Inertia::render('p2h/submitted', [
+            'unit' => $entry->session?->unit?->no_unit ?? 'Unit',
+            'sessionId' => $entry->p2h_session_id,
+            'layak' => $entry->kondisi_akhir !== 'BD',
+            'pic' => $entry->approval_status === 'pending' ? $entry->pic?->name : null,
+            'critical' => $findings->contains(fn ($a) => $a->inspectionItem?->kode_bahaya === 'AA'),
+            'findings' => $findings->pluck('item_nama')->filter()->values(),
+        ]);
     }
 
     public function destroy(P2hSession $session): RedirectResponse
