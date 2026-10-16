@@ -898,161 +898,252 @@ function BulkApproveDialog({
 }
 
 /* ──────────────── Entry Card ────────────────────────────────── */
+/**
+ * Geser kartu (docs/03): kanan = buka tinjau & setujui (tanda tangan tetap wajib),
+ * kiri = tolak. Ambang 96px; hanya sentuhan, tombol tetap tersedia sebagai alternatif.
+ */
+function useSwipe(onRight: () => void, onLeft: () => void, enabled: boolean) {
+    const start = useRef<{ x: number; y: number } | null>(null);
+    const [dx, setDx] = useState(0);
+
+    if (!enabled) {
+        return { dx: 0, handlers: {} };
+    }
+
+    return {
+        dx,
+        handlers: {
+            onPointerDown: (e: React.PointerEvent) => {
+                if (e.pointerType === 'touch') {
+                    start.current = { x: e.clientX, y: e.clientY };
+                }
+            },
+            onPointerMove: (e: React.PointerEvent) => {
+                if (!start.current) {
+                    return;
+                }
+
+                const x = e.clientX - start.current.x;
+                const y = e.clientY - start.current.y;
+
+                if (Math.abs(y) > Math.abs(x)) {
+                    return;
+                }
+
+                setDx(Math.max(-140, Math.min(140, x)));
+            },
+            onPointerUp: () => {
+                if (dx >= 96) {
+                    onRight();
+                } else if (dx <= -96) {
+                    onLeft();
+                }
+
+                start.current = null;
+                setDx(0);
+            },
+            onPointerCancel: () => {
+                start.current = null;
+                setDx(0);
+            },
+        },
+    };
+}
+
 function EntryCard({
     entry,
     onReview,
+    onReject,
+    active = false,
 }: {
     entry: ApprovalEntry;
     onReview: (e: ApprovalEntry) => void;
+    onReject: (e: ApprovalEntry) => void;
+    active?: boolean;
 }) {
+    const pending = entry.approval_status === 'pending';
+    const { dx, handlers } = useSwipe(
+        () => onReview(entry),
+        () => onReject(entry),
+        pending,
+    );
+
     return (
-        <div
-            className={`flex flex-col gap-3 rounded-xl border p-4 transition-shadow hover:shadow-sm ${
-                entry.has_critical ? 'border-danger/40' : 'border-border'
-            }`}
-        >
-            {/* Critical banner */}
-            {entry.has_critical && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-danger/40 bg-danger-soft px-3 py-1.5 text-xs font-medium text-danger">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    Ada item Critical (AA) Tidak Layak — perlu perhatian khusus
-                </div>
-            )}
-
-            {/* Escalation banner */}
-            {entry.escalated && entry.approval_status === 'pending' && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-warning/40 bg-warning-soft px-3 py-1.5 text-xs font-medium text-warning">
-                    <Clock className="h-3.5 w-3.5 shrink-0" />
-                    Dieskalasi ke admin — PIC belum merespons sampai akhir shift
-                </div>
-            )}
-
-            {/* Header row */}
-            <div className="flex items-start justify-between gap-2">
-                <div>
-                    <p className="text-base leading-tight font-bold">
-                        {entry.no_unit}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        {entry.department}
-                    </p>
-                </div>
-                <ApprovalStatusBadge status={entry.approval_status} />
-            </div>
-
-            {/* Info grid */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div>
-                    <p className="text-xs text-muted-foreground">Driver</p>
-                    <p className="truncate font-medium">{entry.driver_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {entry.driver_jabatan}
-                    </p>
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground">
-                        Tanggal · Shift
-                    </p>
-                    <p className="font-medium">{entry.tanggal}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {entry.shift ?? '-'}
-                    </p>
-                </div>
-            </div>
-
-            {/* Score + kondisi bar */}
-            <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                <div className="flex-1 text-center">
-                    <p
-                        className={`text-lg font-semibold tabular-nums ${entry.score < 80 ? 'text-danger' : 'text-success'}`}
-                    >
-                        {entry.score}%
-                    </p>
-                    <p className="text-xs text-muted-foreground">Skor</p>
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <div className="flex-1 text-center">
-                    <p
-                        className={`text-lg font-semibold tabular-nums ${entry.tl_count > 0 ? 'text-warning' : 'text-success'}`}
-                    >
-                        {entry.tl_count}
-                    </p>
-                    <p className="text-xs text-muted-foreground">TL</p>
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <div className="flex-1 text-center">
-                    <p
-                        className={`text-sm font-bold ${entry.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
-                    >
-                        {entry.kondisi_akhir ?? '-'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Kondisi</p>
-                </div>
-            </div>
-
-            {/* Catatan approval/rejection */}
-            {entry.catatan_approval && (
+        <div className="relative overflow-hidden rounded-xl">
+            {dx !== 0 && (
                 <div
-                    className={`rounded-lg border p-2.5 ${
-                        entry.approval_status === 'rejected'
-                            ? 'border-danger/40 bg-danger-soft'
-                            : 'border-success/40 bg-success-soft'
+                    aria-hidden
+                    className={`absolute inset-0 flex items-center px-6 text-sm font-semibold ${
+                        dx > 0
+                            ? 'justify-start bg-success-soft text-success'
+                            : 'justify-end bg-danger-soft text-danger'
                     }`}
                 >
-                    <p
-                        className={`text-xs ${entry.approval_status === 'rejected' ? 'text-danger' : 'text-success'}`}
-                    >
-                        <span className="font-semibold">Catatan:</span>{' '}
-                        {entry.catatan_approval}
-                    </p>
+                    {dx > 0 ? 'Tinjau & setujui' : 'Tolak'}
                 </div>
             )}
-
-            {/* Approver info */}
-            {entry.approver_name && (
-                <div className="flex items-center gap-2">
-                    <div className="flex-1 text-xs text-muted-foreground">
-                        {entry.approval_status === 'approved' ? (
-                            <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-success" />
-                        ) : (
-                            <XCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-danger" />
-                        )}
-                        {entry.approval_status === 'approved'
-                            ? 'Disetujui'
-                            : 'Ditolak'}{' '}
-                        oleh{' '}
-                        <span className="font-medium text-foreground">
-                            {entry.approver_name}
-                        </span>
-                        {entry.approved_at && <> · {entry.approved_at}</>}
+            <div
+                data-active={active || undefined}
+                {...handlers}
+                style={dx ? { transform: `translateX(${dx}px)` } : undefined}
+                className={`relative flex touch-pan-y flex-col gap-3 rounded-xl border bg-card p-4 transition-[box-shadow,transform] duration-200 hover:shadow-sm data-[active]:ring-2 data-[active]:ring-ring ${
+                    entry.has_critical ? 'border-danger/40' : 'border-border'
+                }`}
+            >
+                {/* Critical banner */}
+                {entry.has_critical && (
+                    <div className="flex items-center gap-1.5 rounded-lg border border-danger/40 bg-danger-soft px-3 py-1.5 text-xs font-medium text-danger">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        Ada item Critical (AA) Tidak Layak — perlu perhatian
+                        khusus
                     </div>
-                    {entry.approver_signature_url && (
-                        <div className="rounded-lg border bg-white p-1">
-                            <img
-                                src={entry.approver_signature_url}
-                                alt="TTD"
-                                className="h-8 object-contain"
-                            />
+                )}
+
+                {/* Escalation banner */}
+                {entry.escalated && entry.approval_status === 'pending' && (
+                    <div className="flex items-center gap-1.5 rounded-lg border border-warning/40 bg-warning-soft px-3 py-1.5 text-xs font-medium text-warning">
+                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                        Dieskalasi ke admin — PIC belum merespons sampai akhir
+                        shift
+                    </div>
+                )}
+
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-2">
+                    <div>
+                        <p className="text-base leading-tight font-bold">
+                            {entry.no_unit}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            {entry.department}
+                        </p>
+                    </div>
+                    <ApprovalStatusBadge status={entry.approval_status} />
+                </div>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div>
+                        <p className="text-xs text-muted-foreground">Driver</p>
+                        <p className="truncate font-medium">
+                            {entry.driver_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            {entry.driver_jabatan}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">
+                            Tanggal · Shift
+                        </p>
+                        <p className="font-medium">{entry.tanggal}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {entry.shift ?? '-'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Score + kondisi bar */}
+                <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                    <div className="flex-1 text-center">
+                        <p
+                            className={`text-lg font-semibold tabular-nums ${entry.score < 80 ? 'text-danger' : 'text-success'}`}
+                        >
+                            {entry.score}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">Skor</p>
+                    </div>
+                    <div className="h-8 w-px bg-border" />
+                    <div className="flex-1 text-center">
+                        <p
+                            className={`text-lg font-semibold tabular-nums ${entry.tl_count > 0 ? 'text-warning' : 'text-success'}`}
+                        >
+                            {entry.tl_count}
+                        </p>
+                        <p className="text-xs text-muted-foreground">TL</p>
+                    </div>
+                    <div className="h-8 w-px bg-border" />
+                    <div className="flex-1 text-center">
+                        <p
+                            className={`text-sm font-bold ${entry.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
+                        >
+                            {entry.kondisi_akhir ?? '-'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Kondisi</p>
+                    </div>
+                </div>
+
+                {/* Catatan approval/rejection */}
+                {entry.catatan_approval && (
+                    <div
+                        className={`rounded-lg border p-2.5 ${
+                            entry.approval_status === 'rejected'
+                                ? 'border-danger/40 bg-danger-soft'
+                                : 'border-success/40 bg-success-soft'
+                        }`}
+                    >
+                        <p
+                            className={`text-xs ${entry.approval_status === 'rejected' ? 'text-danger' : 'text-success'}`}
+                        >
+                            <span className="font-semibold">Catatan:</span>{' '}
+                            {entry.catatan_approval}
+                        </p>
+                    </div>
+                )}
+
+                {/* Approver info */}
+                {entry.approver_name && (
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 text-xs text-muted-foreground">
+                            {entry.approval_status === 'approved' ? (
+                                <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-success" />
+                            ) : (
+                                <XCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-danger" />
+                            )}
+                            {entry.approval_status === 'approved'
+                                ? 'Disetujui'
+                                : 'Ditolak'}{' '}
+                            oleh{' '}
+                            <span className="font-medium text-foreground">
+                                {entry.approver_name}
+                            </span>
+                            {entry.approved_at && <> · {entry.approved_at}</>}
                         </div>
+                        {entry.approver_signature_url && (
+                            <div className="rounded-lg border bg-white p-1">
+                                <img
+                                    src={entry.approver_signature_url}
+                                    alt="TTD"
+                                    className="h-8 object-contain"
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 border-t pt-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="flex-1"
+                    >
+                        <Link href={`/p2h/${entry.session_id}`}>
+                            Lihat Detail
+                        </Link>
+                    </Button>
+                    {entry.approval_status === 'pending' && (
+                        <Button
+                            size="sm"
+                            className="flex-1 bg-primary text-primary-foreground"
+                            onClick={() => onReview(entry)}
+                        >
+                            <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
+                            Review & Setujui
+                        </Button>
                     )}
                 </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 border-t pt-3">
-                <Button variant="outline" size="sm" asChild className="flex-1">
-                    <Link href={`/p2h/${entry.session_id}`}>Lihat Detail</Link>
-                </Button>
-                {entry.approval_status === 'pending' && (
-                    <Button
-                        size="sm"
-                        className="flex-1 bg-primary text-primary-foreground"
-                        onClick={() => onReview(entry)}
-                    >
-                        <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
-                        Review & Setujui
-                    </Button>
-                )}
             </div>
         </div>
     );
@@ -1100,6 +1191,7 @@ export default function P2hApprovals({
     const [reviewOpen, setReviewOpen] = useState(false);
 
     const activeStatus = filters.status ?? 'pending';
+    const [activeIndex, setActiveIndex] = useState(0);
 
     const openReview = (entry: ApprovalEntry) => {
         setReviewEntry(entry);
@@ -1110,6 +1202,64 @@ export default function P2hApprovals({
         setReviewOpen(false);
         setTimeout(() => setRejectEntry(reviewEntry), 150);
     };
+
+    // Pintasan keyboard desktop (docs/03): ↑/↓ atau k/j pilih, A/Enter tinjau, R tolak
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            const t = e.target as HTMLElement | null;
+
+            if (
+                reviewOpen ||
+                rejectEntry ||
+                bulkOpen ||
+                e.metaKey ||
+                e.ctrlKey ||
+                e.altKey ||
+                (t &&
+                    (t.isContentEditable ||
+                        ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)))
+            ) {
+                return;
+            }
+
+            const list = entries.data;
+
+            if (list.length === 0) {
+                return;
+            }
+
+            const current = list[Math.min(activeIndex, list.length - 1)];
+            const key = e.key.toLowerCase();
+
+            if (key === 'arrowdown' || key === 'j') {
+                e.preventDefault();
+                setActiveIndex((i) => Math.min(i + 1, list.length - 1));
+            } else if (key === 'arrowup' || key === 'k') {
+                e.preventDefault();
+                setActiveIndex((i) => Math.max(i - 1, 0));
+            } else if ((key === 'a' || key === 'enter') && current) {
+                e.preventDefault();
+                openReview(current);
+            } else if (
+                key === 'r' &&
+                current &&
+                current.approval_status === 'pending'
+            ) {
+                e.preventDefault();
+                setRejectEntry(current);
+            }
+        };
+
+        window.addEventListener('keydown', onKey);
+
+        return () => window.removeEventListener('keydown', onKey);
+    });
+
+    useEffect(() => {
+        document
+            .querySelector('[data-active="true"]')
+            ?.scrollIntoView({ block: 'nearest' });
+    }, [activeIndex]);
 
     const setStatus = (s: string) => {
         router.get(
@@ -1162,6 +1312,10 @@ export default function P2hApprovals({
                     }
                 />
 
+                <p className="-mt-2 hidden font-mono text-xs text-muted-foreground lg:block">
+                    ↑↓ pilih · A tinjau &amp; setujui · R tolak
+                </p>
+
                 {/* ── Status filter ── */}
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-1 rounded-xl bg-muted/60 p-1">
@@ -1209,11 +1363,13 @@ export default function P2hApprovals({
                     </div>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {entries.data.map((entry) => (
+                        {entries.data.map((entry, i) => (
                             <EntryCard
                                 key={entry.id}
                                 entry={entry}
                                 onReview={openReview}
+                                onReject={setRejectEntry}
+                                active={i === activeIndex}
                             />
                         ))}
                     </div>

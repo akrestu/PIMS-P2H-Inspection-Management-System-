@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
     ChevronRight,
     Download,
@@ -11,6 +11,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { SessionDrawer } from '@/components/P2h/session-drawer';
 import { PageButtons } from '@/components/pagination-bar';
 import { FilterChips } from '@/components/pims/filter-chips';
 import { ListCard } from '@/components/pims/list-card';
@@ -337,6 +338,7 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
     const [form, setForm] = useState<Filters>(filters);
     const [showFilter, setShowFilter] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<P2hRow | null>(null);
+    const [drawerId, setDrawerId] = useState<number | null>(null);
 
     const hasActiveFilters = Object.values(form).some(Boolean);
     const activeCount = Object.values(form).filter(Boolean).length;
@@ -790,16 +792,14 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                                             <TableCell>
                                                 <div className="flex justify-end gap-1.5">
                                                     <Button
-                                                        asChild
                                                         size="sm"
                                                         variant="outline"
+                                                        onClick={() =>
+                                                            setDrawerId(row.id)
+                                                        }
                                                     >
-                                                        <Link
-                                                            href={`/p2h/${row.id}`}
-                                                        >
-                                                            Detail
-                                                            <ChevronRight />
-                                                        </Link>
+                                                        Detail
+                                                        <ChevronRight />
                                                     </Button>
                                                     {isAdmin && (
                                                         <Button
@@ -842,6 +842,11 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                     </>
                 )}
             </div>
+
+            <SessionDrawer
+                sessionId={drawerId}
+                onClose={() => setDrawerId(null)}
+            />
 
             <DeleteDialog
                 row={deleteTarget}
