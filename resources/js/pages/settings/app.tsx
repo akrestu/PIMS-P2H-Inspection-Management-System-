@@ -159,11 +159,11 @@ export default function AppSettingsPage({ settings }: Props) {
     return (
         <>
             <Head title="Pengaturan Aplikasi" />
-            <div className="flex max-w-2xl flex-col gap-6 p-4 md:p-6">
+            <div className="flex max-w-2xl flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <div className="flex items-center gap-3">
                     <Settings2 className="h-6 w-6 text-muted-foreground" />
                     <div>
-                        <h1 className="text-xl font-bold">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Pengaturan Aplikasi
                         </h1>
                         <p className="text-sm text-muted-foreground">

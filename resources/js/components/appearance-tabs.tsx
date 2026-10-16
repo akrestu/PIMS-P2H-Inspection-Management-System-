@@ -27,7 +27,7 @@ export default function AppearanceToggleTab({
             role="radiogroup"
             aria-label="Tema"
             className={cn(
-                'inline-flex flex-wrap gap-1 rounded-lg bg-muted p-1',
+                'grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:inline-flex',
                 className,
             )}
             {...props}

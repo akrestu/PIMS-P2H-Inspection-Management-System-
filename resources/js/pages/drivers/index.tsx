@@ -91,14 +91,14 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-    'bg-blue-500',
-    'bg-purple-500',
-    'bg-emerald-500',
-    'bg-orange-500',
-    'bg-rose-500',
+    'bg-info',
+    'bg-info',
+    'bg-success',
+    'bg-warning',
+    'bg-danger',
     'bg-cyan-500',
-    'bg-indigo-500',
-    'bg-teal-500',
+    'bg-info',
+    'bg-success',
 ];
 function avatarColor(name: string) {
     let h = 0;
@@ -698,11 +698,11 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
     return (
         <TooltipProvider>
             <Head title="Manajemen Driver" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Manajemen Driver
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -722,21 +722,21 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                         value={stats.total}
                         icon={Users}
                         sub="Terdaftar di sistem"
-                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        colorClass="bg-info-soft text-info  "
                     />
                     <StatCard
                         title="Halaman Ini"
                         value={drivers.data.length}
                         icon={User}
                         sub={`Halaman ${drivers.current_page} dari ${drivers.last_page}`}
-                        colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        colorClass="bg-info-soft text-info  "
                     />
                     <StatCard
                         title="Department"
                         value={stats.departments.length}
                         icon={Building2}
                         sub="Divisi terdaftar"
-                        colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        colorClass="bg-success-soft text-success  "
                     />
                 </div>
 

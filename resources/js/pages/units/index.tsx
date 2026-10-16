@@ -316,14 +316,14 @@ function UnitFormDialog({
                             <SelectContent>
                                 <SelectItem value="active">
                                     <span className="flex items-center gap-2">
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                        Active
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                                        Aktif
                                     </span>
                                 </SelectItem>
                                 <SelectItem value="inactive">
                                     <span className="flex items-center gap-2">
-                                        <XCircle className="h-3.5 w-3.5 text-red-400" />
-                                        Inactive
+                                        <XCircle className="h-3.5 w-3.5 text-danger" />
+                                        Nonaktif
                                     </span>
                                 </SelectItem>
                             </SelectContent>
@@ -680,18 +680,18 @@ const downtimeConfig: Record<
 > = {
     BD: {
         label: 'BD',
-        cls: 'border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400',
-        dot: 'bg-red-500',
+        cls: 'border-danger/40 bg-danger-soft text-danger   ',
+        dot: 'bg-danger',
     },
     PM: {
         label: 'PM',
-        cls: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-        dot: 'bg-blue-500',
+        cls: 'border-info/40 bg-info-soft text-info   ',
+        dot: 'bg-info',
     },
     'Servis Berkala': {
         label: 'Servis',
-        cls: 'border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-        dot: 'bg-purple-500',
+        cls: 'border-info/40 bg-info-soft text-info   ',
+        dot: 'bg-info',
     },
 };
 
@@ -706,9 +706,9 @@ function OperationalStatusBadge({
         return (
             <Badge
                 variant="outline"
-                className="border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+                className="border-success/40 bg-success-soft text-success"
             >
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-success" />
                 Ready
             </Badge>
         );
@@ -953,11 +953,11 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
     return (
         <TooltipProvider>
             <Head title="Manajemen Unit" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Manajemen Unit
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -1119,8 +1119,8 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                     className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                                         statusFilter === s
                                             ? s === 'active'
-                                                ? 'border-green-500 bg-green-500 text-white'
-                                                : 'border-red-500 bg-red-500 text-white'
+                                                ? 'border-success bg-success text-white'
+                                                : 'border-danger bg-danger text-white'
                                             : 'border-border hover:border-primary/60'
                                     }`}
                                 >
@@ -1129,7 +1129,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                     ) : (
                                         <XCircle className="h-3 w-3" />
                                     )}
-                                    {s === 'active' ? 'Active' : 'Inactive'}
+                                    {s === 'active' ? 'Aktif' : 'Nonaktif'}
                                 </button>
                             ))}
                         </div>
@@ -1285,9 +1285,9 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                     <span className="inline-flex items-center gap-1.5 text-sm">
                                                         {unit.jenis_unit ===
                                                         'Bus' ? (
-                                                            <Bus className="h-4 w-4 shrink-0 text-orange-500" />
+                                                            <Bus className="h-4 w-4 shrink-0 text-warning" />
                                                         ) : (
-                                                            <Car className="h-4 w-4 shrink-0 text-purple-500" />
+                                                            <Car className="h-4 w-4 shrink-0 text-info" />
                                                         )}
                                                         {unit.jenis_unit}
                                                     </span>
@@ -1332,17 +1332,17 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                         className={
                                                             unit.status ===
                                                             'active'
-                                                                ? 'border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                                : 'border-red-200 bg-red-100 text-red-600 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                                ? 'border-success/40 bg-success-soft text-success'
+                                                                : 'border-border bg-muted text-muted-foreground'
                                                         }
                                                     >
                                                         <span
-                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`}
+                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-success' : 'bg-muted-foreground'}`}
                                                         />
                                                         {unit.status ===
                                                         'active'
-                                                            ? 'Active'
-                                                            : 'Inactive'}
+                                                            ? 'Aktif'
+                                                            : 'Nonaktif'}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>

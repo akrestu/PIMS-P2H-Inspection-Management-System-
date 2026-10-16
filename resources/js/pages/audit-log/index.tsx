@@ -56,20 +56,17 @@ const LOG_BADGE: Record<
 > = {
     user: {
         label: 'User',
-        className:
-            'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400',
+        className: 'border-info/40 bg-info-soft text-info   ',
         icon: User,
     },
     unit: {
         label: 'Unit',
-        className:
-            'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400',
+        className: 'border-success/40 bg-success-soft text-success   ',
         icon: Shield,
     },
     p2h: {
         label: 'P2H',
-        className:
-            'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400',
+        className: 'border-warning/40 bg-warning-soft text-warning   ',
         icon: Trash2,
     },
 };
@@ -98,10 +95,10 @@ export default function AuditLogIndex({ logs, filters }: Props) {
     return (
         <>
             <Head title="Audit Log" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* Header */}
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">
+                    <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                         Audit Log
                     </h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">

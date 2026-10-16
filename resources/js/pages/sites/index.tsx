@@ -76,7 +76,8 @@ interface PaginatedData {
 interface Filters {
     search?: string;
     status?: string;
-}interface Props {
+}
+interface Props {
     sites: PaginatedData;
     filters: Filters;
 }
@@ -174,14 +175,14 @@ function SiteFormDialog({
                             <SelectContent>
                                 <SelectItem value="active">
                                     <span className="flex items-center gap-2">
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                        Active
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                                        Aktif
                                     </span>
                                 </SelectItem>
                                 <SelectItem value="inactive">
                                     <span className="flex items-center gap-2">
-                                        <XCircle className="h-3.5 w-3.5 text-red-400" />
-                                        Inactive
+                                        <XCircle className="h-3.5 w-3.5 text-danger" />
+                                        Nonaktif
                                     </span>
                                 </SelectItem>
                             </SelectContent>
@@ -436,11 +437,11 @@ export default function SitesIndex({ sites, filters }: Props) {
     return (
         <TooltipProvider>
             <Head title="Manajemen Site" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Manajemen Site
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -538,8 +539,8 @@ export default function SitesIndex({ sites, filters }: Props) {
                                     className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                                         statusFilter === s
                                             ? s === 'active'
-                                                ? 'border-green-500 bg-green-500 text-white'
-                                                : 'border-red-500 bg-red-500 text-white'
+                                                ? 'border-success bg-success text-white'
+                                                : 'border-danger bg-danger text-white'
                                             : 'border-border hover:border-primary/60'
                                     }`}
                                 >
@@ -548,7 +549,7 @@ export default function SitesIndex({ sites, filters }: Props) {
                                     ) : (
                                         <XCircle className="h-3 w-3" />
                                     )}
-                                    {s === 'active' ? 'Active' : 'Inactive'}
+                                    {s === 'active' ? 'Aktif' : 'Nonaktif'}
                                 </button>
                             ))}
                         </div>
@@ -710,17 +711,17 @@ export default function SitesIndex({ sites, filters }: Props) {
                                                         className={
                                                             site.status ===
                                                             'active'
-                                                                ? 'border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                                : 'border-red-200 bg-red-100 text-red-600 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                                ? 'border-success/40 bg-success-soft text-success'
+                                                                : 'border-border bg-muted text-muted-foreground'
                                                         }
                                                     >
                                                         <span
-                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${site.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`}
+                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${site.status === 'active' ? 'bg-success' : 'bg-muted-foreground'}`}
                                                         />
                                                         {site.status ===
                                                         'active'
-                                                            ? 'Active'
-                                                            : 'Inactive'}
+                                                            ? 'Aktif'
+                                                            : 'Nonaktif'}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">

@@ -236,7 +236,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
     return (
         <TooltipProvider>
             <Head title="Sampah Site" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ export default function SitesTrashed({ sites, filters }: Props) {
                                 </Button>
                             </a>
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Sampah Site
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">

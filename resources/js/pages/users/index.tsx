@@ -128,14 +128,14 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-    'bg-blue-500',
-    'bg-purple-500',
-    'bg-emerald-500',
-    'bg-orange-500',
-    'bg-rose-500',
+    'bg-info',
+    'bg-info',
+    'bg-success',
+    'bg-warning',
+    'bg-danger',
     'bg-cyan-500',
-    'bg-indigo-500',
-    'bg-teal-500',
+    'bg-info',
+    'bg-success',
 ];
 function avatarColor(name: string) {
     let h = 0;
@@ -158,20 +158,17 @@ const ROLE_META: Record<
     admin: {
         label: 'Admin',
         icon: ShieldCheck,
-        badgeClass:
-            'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400',
+        badgeClass: 'bg-danger-soft text-danger border-danger/40  ',
     },
     manager: {
         label: 'Manager',
         icon: Shield,
-        badgeClass:
-            'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400',
+        badgeClass: 'bg-warning-soft text-warning border-warning/40  ',
     },
     driver: {
         label: 'Driver',
         icon: UserCheck,
-        badgeClass:
-            'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400',
+        badgeClass: 'bg-info-soft text-info border-info/40  ',
     },
 };
 
@@ -225,10 +222,8 @@ function RoleSelect({
 /* ─────────────────── JabatanSelect ─────────────────────────── */
 const JABATAN_LIST: Jabatan[] = ['Approval', 'User LV 2', 'User LV 1'];
 const JABATAN_META: Record<Jabatan, string> = {
-    Approval:
-        'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400',
-    'User LV 2':
-        'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400',
+    Approval: 'bg-info-soft text-info border-info/40  ',
+    'User LV 2': 'bg-success-soft text-success border-success/40  ',
     'User LV 1':
         'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400',
 };
@@ -911,8 +906,8 @@ function DeleteDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
-                        <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-danger-soft">
+                        <Trash2 className="h-5 w-5 text-danger" />
                     </div>
                     <DialogTitle className="text-center">
                         Hapus User?
@@ -991,8 +986,8 @@ function BatchDeleteDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
-                        <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-danger-soft">
+                        <Trash2 className="h-5 w-5 text-danger" />
                     </div>
                     <DialogTitle className="text-center">
                         Hapus {count} User?
@@ -1174,12 +1169,7 @@ function ImportSheet({
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UsersIndex({
-    users,
-    filters,
-    units,
-    sites,
-}: Props) {
+export default function UsersIndex({ users, filters, units, sites }: Props) {
     const { auth } = usePage<{ auth: { user: { id: number } } }>().props;
     const currentUserId = auth.user.id;
 
@@ -1278,11 +1268,11 @@ export default function UsersIndex({
     return (
         <TooltipProvider>
             <Head title="Manajemen User" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Manajemen User
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
