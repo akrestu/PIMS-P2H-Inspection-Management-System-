@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Data contoh untuk pengembangan & cek visual terhadap mockup (pims-redesign/).
@@ -123,6 +124,8 @@ class DemoSeeder extends Seeder
             }
         }
 
+        $this->notifications($manager);
+
         // Satu unit sedang PM, satu servis (manual).
         UnitDowntimeLog::firstOrCreate(
             ['unit_id' => $units[12]->id, 'tipe' => 'PM'],
@@ -132,6 +135,35 @@ class DemoSeeder extends Seeder
             ['unit_id' => $units[13]->id, 'tipe' => 'Servis Berkala'],
             ['jam_mulai' => $today->copy()->subDay()->setTime(14, 20), 'keterangan' => 'Ganti ban', 'created_by' => $manager->id],
         );
+    }
+
+    /** Contoh notifikasi untuk halaman Notifikasi (payload sama dengan kelas di app/Notifications). */
+    private function notifications(User $manager): void
+    {
+        if ($manager->notifications()->exists()) {
+            return;
+        }
+
+        $samples = [
+            [25, null, ['type' => 'lv_approval_escalation', 'no_unit' => 'LV-035', 'submitter' => 'Dedi Kurniawan', 'pic_name' => 'Hendra Wijaya', 'shift' => 'Shift I']],
+            [50, null, ['type' => 'critical_alert', 'no_unit' => 'LV-037', 'driver_name' => 'Hendro Purnomo', 'critical_items' => [['nama_item' => 'Fungsi Brake', 'keterangan' => 'Rem kurang pakem']]]],
+            [70, null, ['type' => 'lv_approval_request', 'no_unit' => 'LV-033', 'submitter' => 'Sari Maharani', 'shift' => 'Shift I', 'tanggal' => today()->format('d/m/Y')]],
+            [90, null, ['type' => 'finding_overdue', 'no_unit' => 'LV-032', 'item_nama' => 'Lampu Rotary (Strobe lamp)', 'pic_name' => 'Hendra Wijaya', 'hari_terlambat' => 1]],
+            [120, now()->subMinutes(100), ['type' => 'finding_assigned', 'no_unit' => 'BUS-12', 'item_nama' => 'Fungsi Brake', 'assigned_by' => 'Rina Anggraini', 'target_selesai' => today()->addDay()->toDateString()]],
+            [150, null, ['type' => 'p2h_missing', 'no_unit' => 'BUS-11, BUS-12, LV-040', 'jumlah' => 3, 'tanggal' => today()->toDateString()]],
+            [200, now()->subMinutes(180), ['type' => 'lv_approval_result', 'no_unit' => 'LV-031', 'status' => 'approved', 'approver' => 'Hendra Wijaya']],
+        ];
+
+        foreach ($samples as [$minutesAgo, $readAt, $data]) {
+            $manager->notifications()->create([
+                'id' => (string) Str::uuid(),
+                'type' => 'App\\Notifications\\Demo',
+                'data' => $data,
+                'read_at' => $readAt,
+                'created_at' => now()->subMinutes($minutesAgo),
+                'updated_at' => now()->subMinutes($minutesAgo),
+            ]);
+        }
     }
 
     private function user(string $name, string $nik, string $role, string $jabatan, Site $site, ?string $email = null): User

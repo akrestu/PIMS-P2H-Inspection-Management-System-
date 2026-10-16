@@ -9,6 +9,9 @@ use Inertia\Response;
 
 class NotificationController extends Controller
 {
+    /** Jenis notifikasi yang meminta tindakan (Notifikasi.png · "Butuh tindakan"). */
+    public const ACTION_TYPES = ['critical_alert', 'lv_approval_escalation', 'lv_approval_request'];
+
     public function index(Request $request): Response
     {
         $filter = $request->input('filter', 'all');
@@ -19,17 +22,21 @@ class NotificationController extends Controller
             $query->whereNull('read_at');
         } elseif ($filter === 'read') {
             $query->whereNotNull('read_at');
+        } elseif ($filter === 'action') {
+            $this->needsAction($query);
         }
 
         $notifications = $query->paginate(15)->withQueryString();
 
         $unreadCount = $request->user()->unreadNotifications()->count();
         $totalCount = $request->user()->notifications()->count();
+        $actionCount = $this->needsAction($request->user()->unreadNotifications())->count();
 
         return Inertia::render('notifications/index', [
             'notifications' => $notifications,
             'unread_count' => $unreadCount,
             'total_count' => $totalCount,
+            'action_count' => $actionCount,
             'filter' => $filter,
         ]);
     }
@@ -120,5 +127,18 @@ class NotificationController extends Controller
         ]);
 
         return back();
+    }
+
+    /**
+     * Filter notifikasi "butuh tindakan". Kolom data berupa teks JSON, jadi
+     * dicocokkan per tipe dengan LIKE agar sama di SQLite, MySQL, dan PostgreSQL.
+     */
+    private function needsAction($query)
+    {
+        return $query->where(function ($q) {
+            foreach (self::ACTION_TYPES as $type) {
+                $q->orWhere('data', 'like', '%"type":"'.$type.'"%');
+            }
+        });
     }
 }

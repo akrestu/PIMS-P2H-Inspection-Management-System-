@@ -1,24 +1,22 @@
 import { Head, router } from '@inertiajs/react';
 import {
-    AlarmClock,
-    ClipboardX,
     AlertTriangle,
+    ArrowUp,
     Bell,
     BellOff,
+    Check,
     CheckCheck,
-    CheckCircle,
-    ClipboardCheck,
-    ExternalLink,
+    Clock,
     Inbox,
     Loader2,
     MailCheck,
-    Timer,
     Trash2,
-    Wrench,
+    UserRound,
     XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { Segmented } from '@/components/pims/segmented';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,7 +27,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Tooltip,
@@ -41,6 +38,7 @@ import { cn } from '@/lib/utils';
 import type { PimsNotification } from '@/types/pims';
 
 /* ─────────────────────────── Types ─────────────────────────── */
+type FilterValue = 'all' | 'unread' | 'read' | 'action';
 interface PaginatedData {
     data: PimsNotification[];
     current_page: number;
@@ -53,7 +51,8 @@ interface Props {
     notifications: PaginatedData;
     unread_count: number;
     total_count: number;
-    filter: 'all' | 'unread' | 'read';
+    action_count: number;
+    filter: FilterValue;
 }
 
 /* ─────────────────── Time Helpers ──────────────────────────── */
@@ -96,207 +95,107 @@ function fullDateTime(dateStr: string): string {
     });
 }
 
-function getDateGroupLabel(dateStr: string): string {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const todayStart = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-    );
-    const yesterdayStart = new Date(todayStart.getTime() - 86400000);
-    const weekStart = new Date(todayStart.getTime() - 6 * 86400000);
+/* ─────────────────── Isi baris (Notifikasi-Desktop.png) ─────── */
+type Group = 'Butuh tindakan' | 'Temuan' | 'Info';
 
-    if (date >= todayStart) {
-        return 'Hari ini';
+const ACTION_TYPES = ['critical_alert', 'lv_approval_escalation', 'lv_approval_request'];
+
+function groupOf(data: PimsNotification['data']): Group {
+    const type = data.type ?? 'critical_alert';
+
+    if (ACTION_TYPES.includes(type)) {
+        return 'Butuh tindakan';
     }
 
-    if (date >= yesterdayStart) {
-        return 'Kemarin';
-    }
-
-    if (date >= weekStart) {
-        return 'Minggu ini';
-    }
-
-    return 'Lebih lama';
+    return type.startsWith('finding_') ? 'Temuan' : 'Info';
 }
 
-/* ─────────── Notification type config ─────────────────────── */
-type NotifType =
-    | 'critical_alert'
-    | 'lv_approval_request'
-    | 'lv_approval_escalation'
-    | 'lv_approval_result'
-    | 'finding_assigned'
-    | 'finding_overdue'
-    | 'p2h_missing';
+function describe(data: PimsNotification['data']): {
+    kind: string;
+    title: string;
+    body: string;
+    icon: typeof AlertTriangle;
+    tone: 'danger' | 'warning' | 'neutral';
+} {
+    const unit = data.no_unit ?? '—';
 
-function getTypeConfig(data: PimsNotification['data']) {
-    const type = (data.type ?? 'critical_alert') as NotifType;
-
-    if (type === 'finding_assigned') {
-        return {
-            icon: Wrench,
-            iconClass: 'bg-info-soft text-info  ',
-            borderColor: 'border-l-blue-400',
-            bgUnread: 'bg-info-soft ',
-            badge: (
-                <Badge
-                    variant="secondary"
-                    className="gap-1 border-info/40 bg-info-soft text-xs font-medium text-info"
-                >
-                    <Wrench className="h-3 w-3" />
-                    Tugas Perbaikan
-                </Badge>
-            ),
-            actionHint: 'Lihat temuan',
-        };
+    switch (data.type) {
+        case 'lv_approval_escalation':
+            return {
+                kind: 'Eskalasi persetujuan',
+                title: `P2H ${unit} belum disetujui`,
+                body: `PIC ${data.pic_name ?? '—'} belum merespons sampai akhir shift · ${data.submitter ?? ''}`,
+                icon: ArrowUp,
+                tone: 'danger',
+            };
+        case 'lv_approval_request':
+            return {
+                kind: 'Permintaan persetujuan',
+                title: `P2H ${unit} menunggu persetujuan`,
+                body: [data.submitter, data.tanggal, data.shift].filter(Boolean).join(' · '),
+                icon: Check,
+                tone: 'neutral',
+            };
+        case 'lv_approval_result':
+            return {
+                kind: 'Hasil persetujuan',
+                title: `P2H ${unit} ${data.status === 'approved' ? 'disetujui' : 'ditolak'}`,
+                body: `oleh ${data.approver ?? '—'}${data.catatan ? ` — “${data.catatan}”` : ''}`,
+                icon: data.status === 'approved' ? Check : XCircle,
+                tone: data.status === 'approved' ? 'neutral' : 'danger',
+            };
+        case 'finding_assigned':
+            return {
+                kind: 'Temuan ditugaskan',
+                title: `${data.item_nama ?? 'Temuan'} · ${unit}`,
+                body: [
+                    data.assigned_by && `ditugaskan oleh ${data.assigned_by}`,
+                    data.target_selesai && `target ${data.target_selesai}`,
+                ]
+                    .filter(Boolean)
+                    .join(' · '),
+                icon: UserRound,
+                tone: 'neutral',
+            };
+        case 'finding_overdue':
+            return {
+                kind: 'Temuan lewat tenggat',
+                title: `${data.item_nama ?? 'Temuan'} · lewat ${data.hari_terlambat ?? 0} hari`,
+                body: `${unit} · PIC ${data.pic_name ?? 'belum ditunjuk'}`,
+                icon: Clock,
+                tone: 'warning',
+            };
+        case 'p2h_missing':
+            return {
+                kind: 'Pengingat belum P2H',
+                title: `${data.jumlah ?? 0} unit belum P2H`,
+                body: unit,
+                icon: Clock,
+                tone: 'warning',
+            };
+        default:
+            return {
+                kind: 'Item kritis rusak',
+                title: `${unit} · ${(data.critical_items ?? []).map((i) => i.nama_item).join(', ') || 'item kritis'}`,
+                body: `P2H Tidak Layak oleh ${data.driver_name ?? '—'}. Unit otomatis BD.`,
+                icon: AlertTriangle,
+                tone: 'danger',
+            };
     }
-
-    if (type === 'p2h_missing') {
-        return {
-            icon: ClipboardX,
-            iconClass: 'bg-warning-soft text-warning  ',
-            borderColor: 'border-l-amber-500',
-            bgUnread: 'bg-warning-soft ',
-            badge: (
-                <Badge
-                    variant="secondary"
-                    className="gap-1 border-warning/40 bg-warning-soft text-xs font-medium text-warning"
-                >
-                    <ClipboardX className="h-3 w-3" />
-                    Belum P2H ({data.jumlah ?? 0} unit)
-                </Badge>
-            ),
-            actionHint: 'Lihat unit yang belum P2H',
-        };
-    }
-
-    if (type === 'finding_overdue') {
-        return {
-            icon: AlarmClock,
-            iconClass: 'bg-danger-soft text-danger  ',
-            borderColor: 'border-l-red-500',
-            bgUnread: 'bg-danger-soft ',
-            badge: (
-                <Badge
-                    variant="destructive"
-                    className="gap-1 text-xs font-medium"
-                >
-                    <AlarmClock className="h-3 w-3" />
-                    Lewat Target
-                </Badge>
-            ),
-            actionHint: 'Lihat temuan',
-        };
-    }
-
-    if (type === 'lv_approval_escalation') {
-        return {
-            icon: Timer,
-            iconClass: 'bg-warning-soft text-warning  ',
-            borderColor: 'border-l-orange-500',
-            bgUnread: 'bg-warning-soft ',
-            badge: (
-                <Badge
-                    variant="secondary"
-                    className="gap-1 border-warning/40 bg-warning-soft text-xs font-medium text-warning"
-                >
-                    <Timer className="h-3 w-3" />
-                    Eskalasi Persetujuan
-                </Badge>
-            ),
-            actionHint: 'Tinjau & putuskan',
-        };
-    }
-
-    if (type === 'lv_approval_request') {
-        return {
-            icon: ClipboardCheck,
-            iconClass: 'bg-warning-soft text-warning  ',
-            borderColor: 'border-l-amber-400',
-            bgUnread: 'bg-warning-soft ',
-            badge: (
-                <Badge
-                    variant="secondary"
-                    className="gap-1 border-warning/40 bg-warning-soft text-xs font-medium text-warning"
-                >
-                    <ClipboardCheck className="h-3 w-3" />
-                    Permintaan Persetujuan
-                </Badge>
-            ),
-            actionHint: 'Tinjau & setujui',
-        };
-    }
-
-    if (type === 'lv_approval_result') {
-        const approved = data.status === 'approved';
-
-        return {
-            icon: approved ? CheckCircle : XCircle,
-            iconClass: approved
-                ? 'bg-success-soft text-success  '
-                : 'bg-danger-soft text-danger  ',
-            borderColor: approved ? 'border-l-green-400' : 'border-l-red-400',
-            bgUnread: approved ? 'bg-success-soft ' : 'bg-danger-soft ',
-            badge: approved ? (
-                <Badge
-                    variant="secondary"
-                    className="gap-1 border-success/40 bg-success-soft text-xs font-medium text-success"
-                >
-                    <CheckCircle className="h-3 w-3" />
-                    Disetujui
-                </Badge>
-            ) : (
-                <Badge
-                    variant="destructive"
-                    className="gap-1 text-xs font-medium"
-                >
-                    <XCircle className="h-3 w-3" />
-                    Ditolak
-                </Badge>
-            ),
-            actionHint: 'Lihat detail P2H',
-        };
-    }
-
-    return {
-        icon: AlertTriangle,
-        iconClass: 'bg-danger-soft text-danger  ',
-        borderColor: 'border-l-red-500',
-        bgUnread: 'bg-danger-soft ',
-        badge: (
-            <Badge variant="destructive" className="gap-1 text-xs font-medium">
-                <AlertTriangle className="h-3 w-3" />
-                Critical Alert
-            </Badge>
-        ),
-        actionHint: 'Lihat sesi P2H',
-    };
 }
 
-/* ─────────────────── NotificationCard ─────────────────────── */
-function NotificationCard({ notif }: { notif: PimsNotification }) {
+const TONE: Record<'danger' | 'warning' | 'neutral', string> = {
+    danger: 'bg-danger-soft text-danger',
+    warning: 'bg-warning-soft text-warning',
+    neutral: 'bg-muted text-foreground',
+};
+
+function NotificationRow({ notif }: { notif: PimsNotification }) {
     const isUnread = !notif.read_at;
-    const config = getTypeConfig(notif.data);
-    const Icon = config.icon;
-
-    const handleClick = () => {
-        router.patch(`/notifications/${notif.id}/read`);
-    };
-
-    const handleMarkRead = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        router.patch(
-            `/notifications/${notif.id}/read`,
-            {},
-            { preserveScroll: true },
-        );
-    };
-
-    // Hapus dua langkah: klik pertama meminta konfirmasi, klik kedua menghapus
+    const d = describe(notif.data);
+    const Icon = d.icon;
     const [confirmDelete, setConfirmDelete] = useState(false);
+
     useEffect(() => {
         if (!confirmDelete) {
             return;
@@ -307,272 +206,99 @@ function NotificationCard({ notif }: { notif: PimsNotification }) {
         return () => clearTimeout(timer);
     }, [confirmDelete]);
 
-    const handleDelete = (e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        if (!confirmDelete) {
-            setConfirmDelete(true);
-
-            return;
-        }
-
-        router.delete(`/notifications/${notif.id}`, { preserveScroll: true });
-    };
+    const open = () => router.patch(`/notifications/${notif.id}/read`);
 
     return (
-        <div
-            className={cn(
-                'group relative flex cursor-pointer gap-3 rounded-xl border border-l-4 p-4 transition-all duration-150',
-                'hover:shadow-sm',
-                isUnread
-                    ? cn(
-                          config.borderColor,
-                          config.bgUnread,
-                          'hover:brightness-[0.97] dark:hover:brightness-110',
-                      )
-                    : 'border-l-border bg-card hover:bg-muted/30',
-            )}
-            onClick={handleClick}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleClick()}
-        >
-            {/* Icon */}
-            <div className="shrink-0 pt-0.5">
-                <div
+        <li className="group relative border-t-(length:--bw) first:border-t-0">
+            <button
+                type="button"
+                onClick={open}
+                className="flex w-full gap-3 px-4 py-4 text-left hover:bg-muted/50 focus-visible:bg-muted/50"
+            >
+                <span
                     className={cn(
-                        'flex h-9 w-9 items-center justify-center rounded-full',
-                        isUnread
-                            ? config.iconClass
-                            : 'bg-muted text-muted-foreground',
+                        'grid size-9 shrink-0 place-items-center rounded-[10px]',
+                        TONE[d.tone],
                     )}
+                    aria-hidden
                 >
-                    <Icon className="h-[18px] w-[18px]" />
-                </div>
-            </div>
-
-            {/* Body */}
-            <div className="min-w-0 flex-1 space-y-1.5">
-                {/* Badges row */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {config.badge}
-                    {isUnread && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-info/40 bg-info-soft px-2 py-0.5 text-xs font-medium text-info">
-                            <span className="h-1.5 w-1.5 rounded-full bg-info" />
-                            Belum dibaca
-                        </span>
-                    )}
-                </div>
-
-                {/* Unit + submitter row */}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
-                    <span className="font-semibold">
-                        Unit {notif.data.no_unit}
-                    </span>
-                    {notif.data.tanggal && (
-                        <span className="text-muted-foreground">
-                            · {notif.data.tanggal}
-                        </span>
-                    )}
-                    {notif.data.shift && (
-                        <span className="text-muted-foreground">
-                            · {notif.data.shift}
-                        </span>
-                    )}
-                    {(notif.data.driver_name || notif.data.submitter) && (
-                        <span className="text-muted-foreground">
-                            ·{' '}
-                            {notif.data.driver_name ? (
-                                <>
-                                    Driver:{' '}
-                                    <span className="font-medium text-foreground">
-                                        {notif.data.driver_name}
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    Oleh:{' '}
-                                    <span className="font-medium text-foreground">
-                                        {notif.data.submitter}
-                                    </span>
-                                </>
-                            )}
-                        </span>
-                    )}
-                </div>
-
-                {/* Approval result details */}
-                {notif.data.type === 'lv_approval_result' &&
-                    notif.data.approver && (
-                        <div className="text-sm text-muted-foreground">
-                            Diproses oleh:{' '}
-                            <span className="font-medium text-foreground">
-                                {notif.data.approver}
-                            </span>
-                            {notif.data.catatan && (
-                                <span className="ml-1 italic">
-                                    — "{notif.data.catatan}"
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                {/* Approval escalation details */}
-                {notif.data.type === 'lv_approval_escalation' && (
-                    <div className="text-sm text-muted-foreground">
-                        PIC{' '}
-                        <span className="font-medium text-foreground">
-                            {notif.data.pic_name ?? '-'}
-                        </span>{' '}
-                        belum merespons sampai akhir shift.
-                    </div>
-                )}
-
-                {/* Finding assignment / overdue details */}
-                {(notif.data.type === 'finding_assigned' ||
-                    notif.data.type === 'finding_overdue') && (
-                    <div className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">
-                            {notif.data.item_nama}
-                        </span>
-                        {notif.data.keterangan && ` — ${notif.data.keterangan}`}
-                        {notif.data.type === 'finding_assigned' &&
-                            notif.data.assigned_by &&
-                            ` · ditugaskan oleh ${notif.data.assigned_by}`}
-                        {notif.data.type === 'finding_overdue' &&
-                            ` · terlambat ${notif.data.hari_terlambat ?? 0} hari (PIC: ${notif.data.pic_name ?? 'belum ditunjuk'})`}
-                        {notif.data.target_selesai &&
-                            notif.data.type === 'finding_assigned' &&
-                            ` · target ${notif.data.target_selesai}`}
-                    </div>
-                )}
-
-                {/* Critical items */}
-                {(notif.data.critical_items?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {notif.data.critical_items!.map((item, idx) => (
-                            <div
-                                key={idx}
-                                className="inline-flex items-start gap-1.5 rounded-md border border-danger/40 bg-danger-soft px-2 py-1"
-                            >
-                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
-                                <span className="text-xs text-danger">
-                                    <span className="font-medium">
-                                        {item.nama_item}
-                                    </span>
-                                    {item.keterangan && (
-                                        <span className="text-danger">
-                                            {' '}
-                                            — {item.keterangan}
-                                        </span>
-                                    )}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Footer: timestamp + action hint */}
-                <div className="flex items-center justify-between pt-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <time className="cursor-default text-xs text-muted-foreground tabular-nums">
-                                {relativeTime(notif.created_at)}
-                            </time>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                            {fullDateTime(notif.created_at)}
-                        </TooltipContent>
-                    </Tooltip>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                        {isUnread ? config.actionHint : 'Lihat detail'}
-                        <ExternalLink className="h-3 w-3" />
-                    </span>
-                </div>
-            </div>
-
-            {/* Right column: unread dot + actions (visible on hover) */}
-            <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
-                {isUnread && (
-                    <span className="h-2.5 w-2.5 rounded-full bg-info ring-2 ring-background" />
-                )}
-                <div
-                    className={cn(
-                        'flex flex-col gap-1 transition-opacity',
-                        confirmDelete && 'md:opacity-100',
-                        'md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100',
-                    )}
-                >
-                    {isUnread && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={handleMarkRead}
-                                    className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:h-7 md:w-7"
-                                    aria-label="Tandai sudah dibaca"
-                                >
-                                    <MailCheck className="h-3.5 w-3.5" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                                Tandai sudah dibaca
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <button
-                                onClick={handleDelete}
-                                className={cn(
-                                    'flex h-9 min-w-9 items-center justify-center gap-1 rounded-md px-2 transition-colors md:h-7 md:min-w-7',
-                                    confirmDelete
-                                        ? 'bg-destructive text-xs font-medium text-white'
-                                        : 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
-                                )}
-                                aria-label={
-                                    confirmDelete
-                                        ? 'Konfirmasi hapus notifikasi'
-                                        : 'Hapus notifikasi'
-                                }
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                {confirmDelete && 'Hapus?'}
-                            </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left">
-                            {confirmDelete
-                                ? 'Klik sekali lagi untuk menghapus'
-                                : 'Hapus notifikasi'}
-                        </TooltipContent>
-                    </Tooltip>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ─────────────────── Date Group ────────────────────────────── */
-function DateGroup({
-    label,
-    notifications,
-}: {
-    label: string;
-    notifications: PimsNotification[];
-}) {
-    return (
-        <div className="space-y-2">
-            <div className="flex items-center gap-2.5">
-                <span className="text-xs font-semibold tracking-wider text-muted-foreground/70 uppercase">
-                    {label}
+                    <Icon className="size-[18px]" />
                 </span>
-                <div className="flex-1 border-t border-dashed" />
+                <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {d.kind}
+                        {isUnread && (
+                            <span className="size-1.5 rounded-full bg-info">
+                                <span className="sr-only">belum dibaca</span>
+                            </span>
+                        )}
+                    </span>
+                    <span
+                        className={cn(
+                            'mt-0.5 block text-[15px] leading-snug',
+                            isUnread ? 'font-semibold' : 'font-medium',
+                        )}
+                    >
+                        {d.title}
+                    </span>
+                    {d.body && (
+                        <span className="mt-0.5 block text-sm text-muted-foreground">
+                            {d.body}
+                        </span>
+                    )}
+                </span>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <time className="shrink-0 text-xs text-muted-foreground tnum">
+                            {relativeTime(notif.created_at)}
+                        </time>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                        {fullDateTime(notif.created_at)}
+                    </TooltipContent>
+                </Tooltip>
+            </button>
+
+            {/* Aksi saat hover/fokus (docs/screens/manager-ops.md · Notifikasi) */}
+            <div className="absolute right-3 bottom-3 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+                {isUnread && (
+                    <button
+                        type="button"
+                        onClick={() =>
+                            router.patch(
+                                `/notifications/${notif.id}/read`,
+                                {},
+                                { preserveScroll: true },
+                            )
+                        }
+                        className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                        <MailCheck className="size-3.5" />
+                        Tandai dibaca
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={() =>
+                        confirmDelete
+                            ? router.delete(`/notifications/${notif.id}`, {
+                                  preserveScroll: true,
+                              })
+                            : setConfirmDelete(true)
+                    }
+                    className={cn(
+                        'inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs',
+                        confirmDelete
+                            ? 'bg-danger font-medium text-white'
+                            : 'text-muted-foreground hover:bg-danger-soft hover:text-danger',
+                    )}
+                    aria-label={confirmDelete ? 'Konfirmasi hapus notifikasi' : 'Hapus notifikasi'}
+                >
+                    <Trash2 className="size-3.5" />
+                    {confirmDelete ? 'Hapus?' : 'Hapus'}
+                </button>
             </div>
-            <div className="space-y-2">
-                {notifications.map((notif) => (
-                    <NotificationCard key={notif.id} notif={notif} />
-                ))}
-            </div>
-        </div>
+        </li>
     );
 }
 
@@ -609,49 +335,6 @@ function EmptyState({ tab }: { tab: string }) {
                 </p>
             </div>
         </div>
-    );
-}
-
-/* ─────────────────── Filter Tab ─────────────────────────────── */
-type FilterValue = 'all' | 'unread' | 'read';
-
-function FilterTab({
-    active,
-    label,
-    count,
-    accent,
-    onClick,
-}: {
-    active: boolean;
-    label: string;
-    count?: number;
-    accent?: 'red' | 'blue';
-    onClick: () => void;
-}) {
-    return (
-        <button
-            onClick={onClick}
-            className={cn(
-                'flex min-h-10 flex-1 press items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium whitespace-nowrap sm:px-3 sm:text-sm',
-                active
-                    ? 'bg-background text-foreground shadow-sm ring-1 ring-border/60'
-                    : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
-            )}
-        >
-            {label}
-            {count !== undefined && count > 0 && (
-                <span
-                    className={cn(
-                        'rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums',
-                        accent === 'red'
-                            ? 'bg-danger-soft text-danger'
-                            : 'bg-muted text-muted-foreground',
-                    )}
-                >
-                    {count}
-                </span>
-            )}
-        </button>
     );
 }
 
@@ -695,6 +378,7 @@ export default function NotificationsIndex({
     notifications,
     unread_count,
     total_count,
+    action_count,
     filter,
 }: Props) {
     const [markingAll, setMarkingAll] = useState(false);
@@ -743,28 +427,24 @@ export default function NotificationsIndex({
         });
     };
 
-    const readCount = total_count - unread_count;
 
     const grouped = notifications.data.reduce<
-        Record<string, PimsNotification[]>
-    >((acc, notif) => {
-        const label = getDateGroupLabel(notif.created_at);
+        Record<Group, PimsNotification[]>
+    >(
+        (acc, notif) => {
+            acc[groupOf(notif.data)].push(notif);
 
-        if (!acc[label]) {
-            acc[label] = [];
-        }
+            return acc;
+        },
+        { 'Butuh tindakan': [], Temuan: [], Info: [] },
+    );
 
-        acc[label].push(notif);
-
-        return acc;
-    }, {});
-
-    const groupOrder = ['Hari ini', 'Kemarin', 'Minggu ini', 'Lebih lama'];
+    const groupOrder: Group[] = ['Butuh tindakan', 'Temuan', 'Info'];
 
     return (
         <TooltipProvider>
             <Head title="Notifikasi" />
-            <div className="mx-auto w-full max-w-3xl space-y-5 px-4 pt-5 pb-8 lg:pt-8">
+            <div className="w-full max-w-[820px] space-y-5 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -773,19 +453,9 @@ export default function NotificationsIndex({
                                 Notifikasi
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                {unread_count > 0 ? (
-                                    <>
-                                        <span className="font-semibold text-foreground">
-                                            {unread_count}
-                                        </span>{' '}
-                                        belum dibaca · {total_count} total
-                                    </>
-                                ) : (
-                                    <>
-                                        {total_count} notifikasi · semua sudah
-                                        dibaca
-                                    </>
-                                )}
+                                {unread_count > 0
+                                    ? `${unread_count} belum dibaca · ${action_count} butuh tindakan`
+                                    : `${total_count} notifikasi · semua sudah dibaca`}
                             </p>
                         </div>
                     </div>
@@ -795,10 +465,8 @@ export default function NotificationsIndex({
                             {unread_count > 0 && (
                                 <Button
                                     variant="outline"
-                                    size="sm"
                                     onClick={handleMarkAllRead}
                                     disabled={markingAll}
-                                    className="h-8 gap-1.5 text-xs"
                                 >
                                     {markingAll ? (
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -807,7 +475,7 @@ export default function NotificationsIndex({
                                     )}
                                     {markingAll
                                         ? 'Memproses…'
-                                        : 'Tandai Semua Dibaca'}
+                                        : 'Tandai semua dibaca'}
                                 </Button>
                             )}
                             <Button
@@ -822,49 +490,48 @@ export default function NotificationsIndex({
                                 ) : (
                                     <Trash2 className="h-3.5 w-3.5" />
                                 )}
-                                {clearingAll ? 'Menghapus…' : 'Hapus Semua'}
+                                {clearingAll ? 'Menghapus…' : 'Hapus semua'}
                             </Button>
                         </div>
                     )}
                 </div>
 
-                {/* ── Filter tabs ── */}
-                <div className="flex items-center gap-1 rounded-xl border bg-muted/50 p-1">
-                    <FilterTab
-                        active={filter === 'all'}
-                        label="Semua"
-                        count={total_count}
-                        onClick={() => handleFilterChange('all')}
-                    />
-                    <FilterTab
-                        active={filter === 'unread'}
-                        label="Belum Dibaca"
-                        count={unread_count}
-                        accent="red"
-                        onClick={() => handleFilterChange('unread')}
-                    />
-                    <FilterTab
-                        active={filter === 'read'}
-                        label="Sudah Dibaca"
-                        count={readCount}
-                        onClick={() => handleFilterChange('read')}
-                    />
-                </div>
+                {/* ── Tab ── */}
+                <Segmented
+                    label="Filter notifikasi"
+                    value={filter}
+                    onChange={handleFilterChange}
+                    options={[
+                        { value: 'all', label: `Semua · ${total_count}` },
+                        { value: 'unread', label: `Belum dibaca · ${unread_count}` },
+                        { value: 'action', label: `Butuh tindakan · ${action_count}` },
+                    ]}
+                />
 
                 {/* ── Content ── */}
                 {notifications.data.length === 0 ? (
                     <EmptyState tab={filter} />
                 ) : (
-                    <div className="space-y-6">
-                        {groupOrder
-                            .filter((label) => grouped[label]?.length)
-                            .map((label) => (
-                                <DateGroup
-                                    key={label}
-                                    label={label}
-                                    notifications={grouped[label]}
-                                />
-                            ))}
+                    <div className="space-y-4">
+                        <div className="overflow-hidden rounded-[14px] border-(length:--bw) bg-card">
+                            {groupOrder
+                                .filter((label) => grouped[label].length)
+                                .map((label) => (
+                                    <section key={label}>
+                                        <h2 className="border-y-(length:--bw) bg-muted-2 px-4 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase first:border-t-0">
+                                            {label}
+                                        </h2>
+                                        <ul>
+                                            {grouped[label].map((notif) => (
+                                                <NotificationRow
+                                                    key={notif.id}
+                                                    notif={notif}
+                                                />
+                                            ))}
+                                        </ul>
+                                    </section>
+                                ))}
+                        </div>
 
                         {notifications.last_page > 1 ? (
                             <Pagination
