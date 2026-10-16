@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChartLegend } from '@/components/pims/chart-card';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export type TimelineLog = {
@@ -27,10 +27,14 @@ export function DowntimeTimeline({
     logs,
     dateFrom,
     dateTo,
+    title = 'Linimasa downtime',
+    footnote,
 }: {
     logs: TimelineLog[];
     dateFrom?: string;
     dateTo?: string;
+    title?: string;
+    footnote?: string;
 }) {
     // Diambil sekali saat render pertama (render harus murni)
     const [now] = useState(() => Date.now());
@@ -44,10 +48,14 @@ export function DowntimeTimeline({
 
     const units = [...new Set(logs.map((l) => l.no_unit))].sort();
     const days = Math.ceil(span / DAY);
-    const tickEvery = days > 14 ? Math.ceil(days / 10) : 1;
+    // Satu hari → sumbu jam tiap 2 jam (Downtime-Desktop.png), selain itu per hari
+    const singleDay = days <= 1;
+    const tickStep = singleDay
+        ? 2 * 3_600_000
+        : (days > 14 ? Math.ceil(days / 10) : 1) * DAY;
     const ticks = Array.from(
-        { length: Math.floor(days / tickEvery) + 1 },
-        (_, i) => start + i * tickEvery * DAY,
+        { length: Math.floor(span / tickStep) + 1 },
+        (_, i) => start + i * tickStep,
     );
     const nowPct = now >= start && now <= end ? pct(now) : null;
 
@@ -61,7 +69,7 @@ export function DowntimeTimeline({
             aria-label={`Linimasa downtime ${units.length} unit, ${formatDate(start)} sampai ${formatDate(end)}`}
         >
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-[15px] font-semibold">Linimasa downtime</h3>
+                <h3 className="text-[15px] font-semibold">{title}</h3>
                 <ChartLegend
                     items={[
                         { label: 'BD', color: 'danger' },
@@ -85,7 +93,9 @@ export function DowntimeTimeline({
                                 className="absolute -translate-x-1/2 whitespace-nowrap"
                                 style={{ left: `${pct(t)}%` }}
                             >
-                                {formatDate(t, { withYear: false })}
+                                {singleDay
+                                    ? formatTime(t)
+                                    : formatDate(t, { withYear: false })}
                             </span>
                         ))}
                     </div>
@@ -164,8 +174,8 @@ export function DowntimeTimeline({
                 </div>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-                Menampilkan {logs.length} catatan di halaman ini. Batang
-                bergaris = masih berlangsung.
+                {footnote ??
+                    `Menampilkan ${logs.length} catatan di halaman ini. Batang bergaris = masih berlangsung.`}
             </p>
         </section>
     );
