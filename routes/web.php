@@ -5,6 +5,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\DriverDashboardController;
+use App\Http\Controllers\LiveMonitoringController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\P2hApprovalController;
@@ -136,6 +137,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/monitoring', [MonitoringController::class, 'index'])
         ->middleware(['role:admin|manager|driver'])
         ->name('monitoring.index');
+
+    // Monitoring P2H hari ini (live) — data unit dibatasi di controller
+    Route::get('/monitoring-p2h', [LiveMonitoringController::class, 'index'])
+        ->middleware(['role:admin|manager|driver'])
+        ->name('monitoring-p2h.index');
 
     // Monitoring P2H — admin, manager, dan driver dengan jabatan Approval/User LV 2
     Route::get('/p2h-compliance', [P2hComplianceController::class, 'index'])

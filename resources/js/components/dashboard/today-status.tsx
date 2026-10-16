@@ -282,7 +282,12 @@ export function TodayTable({
 
     return (
         <div className="overflow-x-auto rounded-[14px] border-(length:--bw)">
-            <table className="w-full min-w-[900px] text-sm">
+            <table
+                className={cn(
+                    'w-full text-sm',
+                    showJenis ? 'min-w-[900px]' : 'min-w-[720px]',
+                )}
+            >
                 <thead className="bg-muted-2">
                     <tr>
                         <th className={th} aria-sort={ariaSort('no_unit')}>

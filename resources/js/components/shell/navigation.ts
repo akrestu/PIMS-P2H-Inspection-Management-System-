@@ -14,6 +14,7 @@ import {
     LayoutGrid,
     MapPin,
     MessageSquareText,
+    Radio,
     Settings2,
     ShieldCheck,
     Timer,
@@ -89,6 +90,11 @@ export function useShellNavigation() {
             href: homeHref,
             icon: isManager ? LayoutGrid : House,
         },
+        live: {
+            title: 'Monitoring P2H',
+            href: '/monitoring-p2h',
+            icon: Radio,
+        },
         monitoring: {
             title: 'Kepatuhan',
             href: '/p2h-compliance',
@@ -150,7 +156,7 @@ export function useShellNavigation() {
         {
             items: [
                 item.home,
-                ...(showMonitoring ? [item.monitoring] : []),
+                ...(showMonitoring ? [item.live, item.monitoring] : []),
                 item.history,
                 ...(canApprove ? [item.approvals] : []),
                 item.findings,
@@ -195,7 +201,7 @@ export function useShellNavigation() {
     if (isManager) {
         bottom = [
             { ...item.home, title: 'Beranda' },
-            { ...item.monitoring, title: 'Monitoring' },
+            { ...item.live, title: 'Monitoring' },
             item.findings,
             canApprove ? item.approvals : item.history,
         ];
@@ -213,7 +219,7 @@ export function useShellNavigation() {
         if (canApprove || canMonitor) {
             more = [
                 ...(canApprove ? [item.approvals] : []),
-                ...(canMonitor ? [item.monitoring, item.pa] : []),
+                ...(canMonitor ? [item.live, item.monitoring, item.pa] : []),
                 item.findings,
                 item.account,
             ];
