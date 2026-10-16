@@ -43,7 +43,7 @@ createInertiaApp({
         }
     },
     progress: {
-        color: '#4B5563',
+        color: '#F4D435', // brand — indikator aktif (docs/01)
     },
 });
 

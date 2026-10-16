@@ -127,26 +127,6 @@ function getInitials(name: string) {
         .join('');
 }
 
-const AVATAR_COLORS = [
-    'bg-info',
-    'bg-info',
-    'bg-success',
-    'bg-warning',
-    'bg-danger',
-    'bg-cyan-500',
-    'bg-info',
-    'bg-success',
-];
-function avatarColor(name: string) {
-    let h = 0;
-
-    for (let i = 0; i < name.length; i++) {
-        h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-    }
-
-    return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-
 function userRole(user: UserRow | null): Role | null {
     return (user?.roles[0]?.name as Role) ?? null;
 }
@@ -818,11 +798,9 @@ function EditUserDialog({
             <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0 sm:max-w-lg">
                 <DialogHeader className="border-b px-6 py-4">
                     <div className="flex items-center gap-3 pb-1">
-                        <Avatar
-                            className={`h-10 w-10 ${avatarColor(user.name)}`}
-                        >
+                        <Avatar className={`h-10 w-10 bg-muted`}>
                             <AvatarFallback
-                                className={`text-sm font-bold text-white ${avatarColor(user.name)}`}
+                                className={`bg-muted text-sm font-bold text-foreground`}
                             >
                                 {getInitials(user.name)}
                             </AvatarFallback>
@@ -1595,10 +1573,10 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                                 <TableCell>
                                                     <div className="flex min-w-0 items-center gap-2.5">
                                                         <Avatar
-                                                            className={`h-8 w-8 shrink-0 ${avatarColor(u.name)}`}
+                                                            className={`h-8 w-8 shrink-0 bg-muted`}
                                                         >
                                                             <AvatarFallback
-                                                                className={`text-xs font-bold text-white ${avatarColor(u.name)}`}
+                                                                className={`bg-muted text-xs font-bold text-foreground`}
                                                             >
                                                                 {getInitials(
                                                                     u.name,
@@ -1773,7 +1751,10 @@ export default function UsersIndex({ users, filters, units, sites }: Props) {
                                         value={perPage}
                                         onValueChange={handlePerPage}
                                     >
-                                        <SelectTrigger className="h-8 w-32 text-xs">
+                                        <SelectTrigger
+                                            aria-label="Baris per halaman"
+                                            className="h-8 w-32 text-xs"
+                                        >
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent

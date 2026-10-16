@@ -863,7 +863,7 @@ export default function DowntimeIndex({
                                                         className={cn(
                                                             'transition-colors hover:bg-muted/20',
                                                             isOngoing &&
-                                                                'bg-danger-soft',
+                                                                'bg-danger-soft/50',
                                                         )}
                                                     >
                                                         <td className="px-4 py-3">

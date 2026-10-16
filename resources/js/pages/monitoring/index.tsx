@@ -368,6 +368,7 @@ function UnitPACard({ unit }: { unit: UnitPA }) {
                     </div>
                     {unit.has_time_data ? (
                         <Progress
+                            aria-label="PA aktual"
                             value={unit.actual_pa ?? 0}
                             className={cn('h-2', progressColor(unit.actual_pa))}
                         />
@@ -842,7 +843,10 @@ export default function MonitoringIndex({
                             value={sortBy}
                             onValueChange={(v) => setSortBy(v as typeof sortBy)}
                         >
-                            <SelectTrigger className="h-8 w-44 text-xs">
+                            <SelectTrigger
+                                aria-label="Urutkan"
+                                className="h-8 w-44 text-xs"
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

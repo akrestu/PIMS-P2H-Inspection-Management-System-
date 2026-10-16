@@ -221,7 +221,10 @@ export default function DailySummary({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-44">
+                                <SelectTrigger
+                                    aria-label="Jenis unit"
+                                    className="h-9 w-44"
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -250,7 +253,10 @@ export default function DailySummary({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-44">
+                                <SelectTrigger
+                                    aria-label="Site"
+                                    className="h-9 w-44"
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -298,6 +304,7 @@ export default function DailySummary({
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Textarea
+                                aria-label="Teks WhatsApp"
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
                                 className="min-h-[420px] font-mono text-xs leading-relaxed"
@@ -455,5 +462,7 @@ function FindingRow({
 }
 
 DailySummary.layout = {
-    breadcrumbs: [{ title: 'Ringkasan Harian P2H', href: '/p2h/daily-summary' }],
+    breadcrumbs: [
+        { title: 'Ringkasan Harian P2H', href: '/p2h/daily-summary' },
+    ],
 };

@@ -130,7 +130,7 @@ export default function SignaturePad({ onEnd, onClear, sigPadRef }: Props) {
             <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                     {hasSig ? (
-                        <span className="font-medium text-green-600 dark:text-green-400">
+                        <span className="font-medium text-success">
                             Tanda tangan tersimpan
                         </span>
                     ) : (

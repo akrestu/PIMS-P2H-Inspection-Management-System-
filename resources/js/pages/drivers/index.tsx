@@ -90,26 +90,6 @@ function getInitials(name: string) {
         .join('');
 }
 
-const AVATAR_COLORS = [
-    'bg-info',
-    'bg-info',
-    'bg-success',
-    'bg-warning',
-    'bg-danger',
-    'bg-cyan-500',
-    'bg-info',
-    'bg-success',
-];
-function avatarColor(name: string) {
-    let h = 0;
-
-    for (let i = 0; i < name.length; i++) {
-        h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-    }
-
-    return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-
 /* ─────────────────── AddDriverSheet ────────────────────────── */
 function AddDriverSheet({
     open,
@@ -391,10 +371,10 @@ function EditDriverSheet({
                     {/* Driver preview */}
                     <div className="flex items-center gap-3 pb-2">
                         <Avatar
-                            className={`h-10 w-10 text-white ${avatarColor(driver.nama)}`}
+                            className={`h-10 w-10 bg-muted text-foreground`}
                         >
                             <AvatarFallback
-                                className={`text-sm font-bold text-white ${avatarColor(driver.nama)}`}
+                                className={`bg-muted text-sm font-bold text-foreground`}
                             >
                                 {getInitials(driver.nama)}
                             </AvatarFallback>
@@ -545,10 +525,10 @@ function ViewDriverDialog({
                 <DialogHeader>
                     <div className="flex flex-col items-center gap-3 pb-2">
                         <Avatar
-                            className={`h-16 w-16 text-white ${avatarColor(driver.nama)}`}
+                            className={`h-16 w-16 bg-muted text-foreground`}
                         >
                             <AvatarFallback
-                                className={`text-xl font-bold text-white ${avatarColor(driver.nama)}`}
+                                className={`bg-muted text-xl font-bold text-foreground`}
                             >
                                 {getInitials(driver.nama)}
                             </AvatarFallback>
@@ -899,10 +879,10 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar
-                                                            className={`h-8 w-8 shrink-0 ${avatarColor(driver.nama)}`}
+                                                            className={`h-8 w-8 shrink-0 bg-muted`}
                                                         >
                                                             <AvatarFallback
-                                                                className={`text-xs font-bold text-white ${avatarColor(driver.nama)}`}
+                                                                className={`bg-muted text-xs font-bold text-foreground`}
                                                             >
                                                                 {getInitials(
                                                                     driver.nama,

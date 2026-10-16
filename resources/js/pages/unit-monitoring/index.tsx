@@ -1,10 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    CheckCircle2,
-    FileSpreadsheet,
-    Search,
-    XCircle,
-} from 'lucide-react';
+import { CheckCircle2, FileSpreadsheet, Search, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
@@ -211,7 +206,10 @@ export default function UnitMonitoring({
                                 })
                             }
                         >
-                            <SelectTrigger className="h-9 w-40">
+                            <SelectTrigger
+                                aria-label="Jenis unit"
+                                className="h-9 w-40"
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -237,7 +235,10 @@ export default function UnitMonitoring({
                                 })
                             }
                         >
-                            <SelectTrigger className="h-9 w-40">
+                            <SelectTrigger
+                                aria-label="Site"
+                                className="h-9 w-40"
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

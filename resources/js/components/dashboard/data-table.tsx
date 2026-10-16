@@ -14,6 +14,8 @@ import {
 } from '@tanstack/react-table';
 import { ChevronLeft, ChevronRight, ClipboardList, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { ChipOption } from '@/components/pims/filter-chips';
+import { FilterChips } from '@/components/pims/filter-chips';
 import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,7 +35,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export interface RecentP2h {
     id: number;
@@ -233,36 +234,35 @@ export function DataTable({ data }: { data: RecentP2h[] }) {
                     </div>
                 </div>
 
-                <Tabs value={tab} onValueChange={(v) => setTab(v as FilterTab)}>
-                    <TabsList className="h-8">
-                        <TabsTrigger value="semua" className="px-3 text-xs">
-                            Semua
-                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
-                                {counts.semua}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="selesai" className="px-3 text-xs">
-                            Selesai
-                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
-                                {counts.selesai}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="open" className="px-3 text-xs">
-                            Open
-                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
-                                {counts.open}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="ada_tl" className="px-3 text-xs">
-                            Ada TL
-                            {counts.ada_tl > 0 && (
-                                <span className="ml-1.5 rounded-full bg-danger-soft px-1.5 py-0.5 text-xs font-semibold text-danger">
-                                    {counts.ada_tl}
-                                </span>
-                            )}
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                <FilterChips
+                    label="Filter P2H terbaru"
+                    value={tab}
+                    onChange={(v) => setTab(v)}
+                    options={
+                        [
+                            {
+                                value: 'semua',
+                                label: 'Semua',
+                                count: counts.semua,
+                            },
+                            {
+                                value: 'selesai',
+                                label: 'Selesai',
+                                count: counts.selesai,
+                            },
+                            {
+                                value: 'open',
+                                label: 'Open',
+                                count: counts.open,
+                            },
+                            {
+                                value: 'ada_tl',
+                                label: 'Ada TL',
+                                count: counts.ada_tl,
+                            },
+                        ] satisfies ChipOption<FilterTab>[]
+                    }
+                />
             </CardHeader>
 
             <CardContent className="p-0">

@@ -138,7 +138,10 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-full">
+                                <SelectTrigger
+                                    aria-label="Filter modul"
+                                    className="h-9 w-full"
+                                >
                                     <SelectValue placeholder="Semua kategori" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -153,6 +156,7 @@ export default function AuditLogIndex({ logs, filters }: Props) {
 
                             <Input
                                 type="date"
+                                aria-label="Dari tanggal"
                                 defaultValue={filters.date_from}
                                 onChange={(e) =>
                                     applyFilter({
@@ -163,6 +167,7 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                             />
                             <Input
                                 type="date"
+                                aria-label="Sampai tanggal"
                                 defaultValue={filters.date_to}
                                 onChange={(e) =>
                                     applyFilter({

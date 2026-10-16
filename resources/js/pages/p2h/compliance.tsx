@@ -528,7 +528,7 @@ function MatrixLegend() {
             label: 'Servis Berkala',
             cls: 'bg-info-soft text-info  ',
         },
-        { label: 'Tidak ada P2H', cls: 'bg-muted/40 text-muted-foreground/40' },
+        { label: 'Tidak ada P2H', cls: 'bg-muted text-muted-foreground' },
     ];
 
     return (
@@ -539,6 +539,7 @@ function MatrixLegend() {
             {items.map((item) => (
                 <span key={item.label} className="flex items-center gap-1.5">
                     <span
+                        aria-hidden
                         className={cn(
                             'flex h-5 w-7 items-center justify-center rounded text-[9px] font-bold',
                             item.cls,

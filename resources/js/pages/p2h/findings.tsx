@@ -835,7 +835,10 @@ export default function P2hFindings({
                             applyFilter({ status: v, page: 1 })
                         }
                     >
-                        <SelectTrigger className="h-12 w-full sm:h-10 sm:w-44">
+                        <SelectTrigger
+                            aria-label="Filter status temuan"
+                            className="h-12 w-full sm:h-10 sm:w-44"
+                        >
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -865,6 +868,7 @@ export default function P2hFindings({
                         }
                     >
                         <SelectTrigger
+                            aria-label="Filter site"
                             className={cn(
                                 'h-12 w-full sm:h-10 sm:w-44',
                                 !canManage && 'hidden',

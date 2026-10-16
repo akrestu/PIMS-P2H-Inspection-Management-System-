@@ -205,7 +205,10 @@ export default function PeriodReport({
                                         : applyFilter({ period: v as Period })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger
+                                    aria-label="Periode"
+                                    className="h-9 w-40"
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -275,7 +278,10 @@ export default function PeriodReport({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger
+                                    aria-label="Jenis unit"
+                                    className="h-9 w-40"
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -304,7 +310,10 @@ export default function PeriodReport({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger
+                                    aria-label="Site"
+                                    className="h-9 w-40"
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -352,6 +361,7 @@ export default function PeriodReport({
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Textarea
+                                aria-label="Teks laporan"
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
                                 className="min-h-[420px] font-mono text-xs leading-relaxed"
