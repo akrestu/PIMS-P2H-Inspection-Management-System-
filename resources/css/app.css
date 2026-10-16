@@ -300,6 +300,29 @@
 }
 [data-motion="reduced"] *, [data-motion="reduced"] *::before, [data-motion="reduced"] *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
 
+/* Layar masuk — kartu kaca di atas motif topo (docs/screens/auth.md) */
+:root, [data-theme="light"] {
+  --auth-bg: #F7F7F5;
+  --auth-topo-opacity: .22;
+  --auth-card: rgba(255,255,255,.78);
+  --auth-card-border: rgba(10,10,10,.07);
+  --auth-card-shadow: 0 40px 80px -32px rgba(10,10,10,.22), inset 0 1px 0 rgba(255,255,255,.9);
+}
+[data-theme="dark"] {
+  --auth-bg: #0A0A0A;
+  --auth-topo-opacity: .16;
+  --auth-card: rgba(22,22,24,.62);
+  --auth-card-border: rgba(255,255,255,.08);
+  --auth-card-shadow: 0 40px 80px -24px rgba(0,0,0,.8);
+}
+[data-theme="hc"] {
+  --auth-bg: #FFFFFF;
+  --auth-topo-opacity: 0;
+  --auth-card: #FFFFFF;
+  --auth-card-border: #000000;
+  --auth-card-shadow: none;
+}
+
 /* ---------- utilitas khusus aplikasi ---------- */
 
 .loader {

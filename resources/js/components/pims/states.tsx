@@ -31,7 +31,7 @@ export function EmptyState({
             {topo && (
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 bg-[url(/topo-motif.png)] bg-cover bg-center opacity-20 dark:opacity-10 dark:invert"
+                    className="pointer-events-none absolute inset-0 bg-[url(/topo-motif.png)] bg-cover bg-center opacity-20 dark:opacity-10"
                 />
             )}
             <div className="relative flex flex-col items-center gap-2">

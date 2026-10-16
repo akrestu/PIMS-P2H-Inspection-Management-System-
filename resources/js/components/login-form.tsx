@@ -1,130 +1,69 @@
-import { Form } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
+import { Form, Link } from '@inertiajs/react';
+import { AlertCircle, Eye, EyeOff, IdCard, Lock } from 'lucide-react';
+import type { FormEvent, KeyboardEvent } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { store } from '@/routes/login';
+import { request } from '@/routes/password';
 
-const GREETINGS = [
-    'Selamat datang!',
-    'Welcome!',
-    'Sugeng rawuh!',
-    'Wilujeng sumping!',
-];
+/**
+ * Form masuk NRP + kata sandi (docs/screens/auth.md · LoginNRPForm).
+ * Field backend tetap `nik` (Fortify::username) — di UI disebut "NRP".
+ */
+const fieldShell =
+    'field flex h-14 items-center gap-3 rounded-[14px] border-(length:--bw) border-input bg-background px-4 transition-[border-color,box-shadow] duration-150';
 
-const TYPING_SPEED = 65;
-const DELETING_SPEED = 35;
-const PAUSE_AFTER_TYPE = 1800;
-const PAUSE_AFTER_DELETE = 350;
+export function LoginForm({ status }: { status?: string }) {
+    const [nik, setNik] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [capsLock, setCapsLock] = useState(false);
+    const [remember, setRemember] = useState(true);
+    const [clientErrors, setClientErrors] = useState<{
+        nik?: string;
+        password?: string;
+    }>({});
 
-function useTypingGreeting(words: string[]) {
-    const [prefersReducedMotion] = useState(
-        () =>
-            typeof window !== 'undefined' &&
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    );
-    const [displayed, setDisplayed] = useState(
-        prefersReducedMotion ? words[0] : '',
-    );
-    const [wordIndex, setWordIndex] = useState(0);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+    const validate = (e: FormEvent<HTMLFormElement>) => {
+        const next: typeof clientErrors = {};
 
-    useEffect(() => {
-        if (prefersReducedMotion) {
-            return;
+        if (!nik) {
+            next.nik = 'Masukkan NRP.';
         }
 
-        const currentWord = words[wordIndex];
-        const wordIsComplete = displayed === currentWord;
-        const wordIsDeleted = displayed === '';
+        if (!password) {
+            next.password = 'Masukkan kata sandi.';
+        }
 
-        const delay = wordIsComplete
-            ? PAUSE_AFTER_TYPE
-            : isDeleting && wordIsDeleted
-              ? PAUSE_AFTER_DELETE
-              : isDeleting
-                ? DELETING_SPEED
-                : TYPING_SPEED;
+        setClientErrors(next);
 
-        timeoutRef.current = setTimeout(() => {
-            if (!isDeleting && wordIsComplete) {
-                setIsDeleting(true);
+        if (next.nik || next.password) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById(next.nik ? 'nik' : 'password')?.focus();
+        }
+    };
 
-                return;
-            }
-
-            if (isDeleting && wordIsDeleted) {
-                setIsDeleting(false);
-                setWordIndex((index) => (index + 1) % words.length);
-
-                return;
-            }
-
-            setDisplayed(
-                isDeleting
-                    ? currentWord.slice(0, displayed.length - 1)
-                    : currentWord.slice(0, displayed.length + 1),
-            );
-        }, delay);
-
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, [displayed, isDeleting, prefersReducedMotion, wordIndex, words]);
-
-    return displayed;
-}
-
-interface LoginFormProps {
-    status?: string;
-}
-
-export function LoginForm({ status }: LoginFormProps) {
-    const greeting = useTypingGreeting(GREETINGS);
-    const [remember, setRemember] = useState(false);
+    const trackCaps = (e: KeyboardEvent<HTMLInputElement>) =>
+        setCapsLock(e.getModifierState?.('CapsLock') ?? false);
 
     return (
-        <div className="flex flex-col items-center gap-8">
-            <div className="flex flex-col items-center gap-3">
-                <div className="flex size-14 items-center justify-center overflow-hidden rounded-2xl">
-                    <img
-                        src="/logo.png"
-                        alt="Logo PIMS"
-                        className="size-14 object-contain"
-                    />
-                </div>
-                <span className="text-sm font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-                    PIMS
-                </span>
-            </div>
-
-            <div className="space-y-1.5 text-center">
-                <h1
-                    className="inline-flex min-h-9 items-center text-3xl font-semibold tracking-tight text-foreground"
-                    aria-label="Selamat datang!"
-                >
-                    <span aria-hidden="true">{greeting}</span>
-                    <span
-                        aria-hidden="true"
-                        className="ml-0.5 inline-block h-[1.15em] w-0.5 animate-pulse rounded-full bg-foreground align-middle motion-reduce:hidden"
-                    />
+        <div>
+            <div className="mb-6">
+                <h1 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] lg:text-[30px]">
+                    Masuk ke PIMS
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                    Masuk menggunakan NIK karyawan
+                <p className="mt-1.5 text-[15px] text-muted-foreground">
+                    Gunakan NRP dan kata sandi Anda.
                 </p>
             </div>
 
             {status && (
                 <div
                     role="status"
-                    className="w-full rounded-xl bg-green-50 px-4 py-3 text-center text-sm font-medium text-green-700 dark:bg-green-950 dark:text-green-300"
+                    className="mb-4 rounded-xl bg-success-soft px-4 py-3 text-sm font-medium text-success"
                 >
                     {status}
                 </div>
@@ -133,91 +72,205 @@ export function LoginForm({ status }: LoginFormProps) {
             <Form
                 action={store.url()}
                 method="post"
-                resetOnSuccess={['password']}
-                className="w-full space-y-4"
+                resetOnError={['password']}
+                onSubmitCapture={validate}
+                noValidate
+                className="space-y-4"
             >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="space-y-1.5">
-                            <Label
-                                htmlFor="nik"
-                                className="block text-center text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                            >
-                                NIK
-                            </Label>
-                            <Input
-                                id="nik"
-                                type="text"
-                                name="nik"
-                                required
-                                autoFocus
-                                tabIndex={1}
-                                autoComplete="username"
-                                inputMode="numeric"
-                                placeholder="Nomor Induk Karyawan"
-                                className="h-11 rounded-xl border-0 bg-muted/50 px-4 text-left focus-visible:ring-2 focus-visible:ring-ring"
-                            />
-                            <InputError message={errors.nik} />
-                        </div>
+                {({ processing, errors }) => {
+                    // Kegagalan login & throttle dikembalikan Fortify pada field username
+                    const serverError = errors.nik;
 
-                        <div className="space-y-1.5">
-                            <Label
-                                htmlFor="password"
-                                className="block text-center text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                            >
-                                Password
-                            </Label>
-                            <PasswordInput
-                                id="password"
-                                name="password"
-                                required
-                                tabIndex={2}
-                                autoComplete="current-password"
-                                placeholder="Masukkan password"
-                                className="h-11 rounded-xl border-0 bg-muted/50 px-4 pr-10 text-left focus-visible:ring-2 focus-visible:ring-ring"
-                            />
-                            <InputError message={errors.password} />
-                        </div>
+                    return (
+                        <>
+                            {serverError && (
+                                <div
+                                    role="alert"
+                                    className="flex items-start gap-2.5 rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger hc:border-2 hc:border-danger"
+                                >
+                                    <AlertCircle
+                                        className="mt-0.5 size-4 shrink-0"
+                                        aria-hidden
+                                    />
+                                    {serverError}
+                                </div>
+                            )}
 
-                        <div className="flex items-center justify-center gap-2 pt-1">
-                            <Checkbox
-                                id="remember"
-                                name="remember"
-                                checked={remember}
-                                onCheckedChange={(value) =>
-                                    setRemember(value === true)
-                                }
-                                tabIndex={3}
-                            />
-                            <Label
-                                htmlFor="remember"
-                                className="cursor-pointer text-sm font-normal text-muted-foreground"
-                            >
-                                Ingat saya
-                            </Label>
-                        </div>
+                            <div className="space-y-1.5">
+                                <label
+                                    htmlFor="nik"
+                                    className="text-sm font-medium"
+                                >
+                                    NRP
+                                </label>
+                                <div
+                                    className={fieldShell}
+                                    data-invalid={!!clientErrors.nik}
+                                >
+                                    <IdCard
+                                        className="size-5 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
+                                    <input
+                                        id="nik"
+                                        name="nik"
+                                        type="text"
+                                        inputMode="numeric"
+                                        autoComplete="username"
+                                        autoFocus
+                                        maxLength={16}
+                                        placeholder="Nomor induk, hanya angka"
+                                        value={nik}
+                                        onChange={(e) => {
+                                            setNik(
+                                                e.target.value.replace(
+                                                    /\D/g,
+                                                    '',
+                                                ),
+                                            );
+                                            setClientErrors((c) => ({
+                                                ...c,
+                                                nik: undefined,
+                                            }));
+                                        }}
+                                        aria-invalid={
+                                            !!clientErrors.nik || undefined
+                                        }
+                                        aria-describedby={
+                                            clientErrors.nik
+                                                ? 'nik-error'
+                                                : undefined
+                                        }
+                                        className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground lg:text-[15px]"
+                                    />
+                                </div>
+                                {clientErrors.nik && (
+                                    <p
+                                        id="nik-error"
+                                        className="text-[13px] font-medium text-danger"
+                                    >
+                                        {clientErrors.nik}
+                                    </p>
+                                )}
+                            </div>
 
-                        <Button
-                            type="submit"
-                            size="lg"
-                            className="mt-2 w-full rounded-xl"
-                            tabIndex={4}
-                            disabled={processing}
-                            data-test="login-button"
-                        >
-                            {processing && <Spinner />}
-                            {processing ? 'Memproses…' : 'Masuk'}
-                        </Button>
-                    </>
-                )}
+                            <div className="space-y-1.5">
+                                <label
+                                    htmlFor="password"
+                                    className="text-sm font-medium"
+                                >
+                                    Kata sandi
+                                </label>
+                                <div
+                                    className={cn(fieldShell, 'pr-1.5')}
+                                    data-invalid={
+                                        !!clientErrors.password ||
+                                        !!errors.password ||
+                                        !!serverError
+                                    }
+                                >
+                                    <Lock
+                                        className="size-5 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type={
+                                            showPassword ? 'text' : 'password'
+                                        }
+                                        autoComplete="current-password"
+                                        placeholder="Kata sandi"
+                                        value={password}
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            setClientErrors((c) => ({
+                                                ...c,
+                                                password: undefined,
+                                            }));
+                                        }}
+                                        onKeyDown={trackCaps}
+                                        onKeyUp={trackCaps}
+                                        aria-invalid={
+                                            !!clientErrors.password || undefined
+                                        }
+                                        aria-describedby="password-msg"
+                                        className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground lg:text-[15px]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowPassword((v) => !v)
+                                        }
+                                        aria-pressed={showPassword}
+                                        aria-label={
+                                            showPassword
+                                                ? 'Sembunyikan kata sandi'
+                                                : 'Tampilkan kata sandi'
+                                        }
+                                        className="grid size-11 press place-items-center rounded-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="size-5" />
+                                        ) : (
+                                            <Eye className="size-5" />
+                                        )}
+                                    </button>
+                                </div>
+                                <div id="password-msg" aria-live="polite">
+                                    {(clientErrors.password ||
+                                        errors.password) && (
+                                        <p className="text-[13px] font-medium text-danger">
+                                            {clientErrors.password ??
+                                                errors.password}
+                                        </p>
+                                    )}
+                                    {capsLock && (
+                                        <p className="text-[13px] font-medium text-warning">
+                                            Caps Lock aktif
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3">
+                                <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm">
+                                    <Checkbox
+                                        name="remember"
+                                        checked={remember}
+                                        onCheckedChange={(v) =>
+                                            setRemember(v === true)
+                                        }
+                                        value="on"
+                                        className="size-5"
+                                    />
+                                    Ingat perangkat ini
+                                </label>
+                                <Link
+                                    href={request()}
+                                    className="text-sm font-semibold underline-offset-4 hover:underline"
+                                >
+                                    Lupa kata sandi?
+                                </Link>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                variant="brand"
+                                size="xl"
+                                className="w-full"
+                                loading={processing}
+                                data-test="login-button"
+                            >
+                                {processing ? 'Memeriksa…' : 'Masuk'}
+                            </Button>
+                        </>
+                    );
+                }}
             </Form>
 
-            <p className="w-10/12 text-center text-xs leading-relaxed text-muted-foreground">
-                Belum memiliki akses? Hubungi{' '}
-                <span className="font-medium text-foreground">
-                    administrator
-                </span>{' '}
-                untuk mendapatkan akun.
+            <p className="mt-6 text-center text-[13px] leading-relaxed text-muted-foreground">
+                Belum punya akun atau NRP terkunci? Hubungi admin site Anda.
             </p>
         </div>
     );
