@@ -7,9 +7,11 @@ use App\Models\Site;
 use App\Models\Unit;
 use App\Support\AiText;
 use App\Support\PeriodP2hReport;
+use App\Support\PeriodReportCharts;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -23,6 +25,12 @@ class P2hPeriodReportController extends Controller
 
         return Inertia::render('p2h/period-report', [
             'report' => $report,
+            'charts' => PeriodReportCharts::build(
+                Carbon::parse($filters['start']),
+                Carbon::parse($filters['end']),
+                $filters['site_id'],
+                $filters['jenis_unit'],
+            ),
             'template' => PeriodP2hReport::toWhatsApp($report),
             'filters' => $filters,
             'jenisOptions' => Unit::distinct()->orderBy('jenis_unit')->pluck('jenis_unit'),
@@ -58,14 +66,14 @@ class P2hPeriodReportController extends Controller
     private function report(Request $request): array
     {
         $validated = $request->validate([
-            'period' => ['nullable', 'in:this_week,last_week,this_month,last_month,custom'],
+            'period' => ['nullable', 'in:last_7,last_30,this_week,last_week,this_month,last_month,custom'],
             'start' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d', 'before_or_equal:today'],
             'end' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d', 'after_or_equal:start', 'before_or_equal:today'],
             'site_id' => ['nullable', 'integer', 'exists:sites,id'],
             'jenis_unit' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $period = $validated['period'] ?? 'this_week';
+        $period = $validated['period'] ?? 'last_7';
         [$start, $end] = PeriodP2hReport::resolvePeriod($period, $validated['start'] ?? null, $validated['end'] ?? null);
 
         if ($start->diffInDays($end) > 365) {

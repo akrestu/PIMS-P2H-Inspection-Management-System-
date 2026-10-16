@@ -24,6 +24,8 @@ class PeriodP2hReport
         $today = today();
 
         return match ($period) {
+            'last_7' => [$today->copy()->subDays(6), $today->copy()],
+            'last_30' => [$today->copy()->subDays(29), $today->copy()],
             'last_week' => [$today->copy()->subWeek()->startOfWeek(), $today->copy()->subWeek()->endOfWeek()->startOfDay()],
             'this_month' => [$today->copy()->startOfMonth(), $today->copy()],
             'last_month' => [$today->copy()->subMonthNoOverflow()->startOfMonth(), $today->copy()->subMonthNoOverflow()->endOfMonth()->startOfDay()],
