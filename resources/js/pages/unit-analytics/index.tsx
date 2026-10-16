@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, Fuel, Gauge, Wrench } from 'lucide-react';
+import { AlertTriangle, Fuel, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
 import { SortableHead, useClientSort } from '@/components/sortable-head';
@@ -84,18 +84,15 @@ const SERVICE_STATUS: Record<
 > = {
     overdue: {
         label: 'Terlambat',
-        className:
-            'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+        className: 'bg-danger-soft text-danger border-danger/40   ',
     },
     due_soon: {
         label: 'Segera',
-        className:
-            'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+        className: 'bg-warning-soft text-warning border-warning/40   ',
     },
     ok: {
         label: 'Aman',
-        className:
-            'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+        className: 'bg-success-soft text-success border-success/40   ',
     },
     unknown: {
         label: 'Belum ada data',
@@ -162,12 +159,11 @@ export default function UnitAnalytics({
     return (
         <>
             <Head title="Analitik Unit" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="unitPerformance" />
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <Gauge className="h-6 w-6 text-primary" />
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Analitik Unit
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -281,7 +277,7 @@ export default function UnitAnalytics({
                         <TabsTrigger value="service" className="gap-1.5">
                             <Wrench className="h-4 w-4" /> Servis Berkala
                             {dueCount > 0 && (
-                                <Badge className="ml-1 h-5 bg-red-600 px-1.5 hover:bg-red-600">
+                                <Badge className="ml-1 h-5 bg-danger px-1.5 hover:bg-danger">
                                     {dueCount}
                                 </Badge>
                             )}
@@ -330,7 +326,7 @@ export default function UnitAnalytics({
                                                     className={cn(
                                                         'text-right font-semibold tabular-nums',
                                                         u.boros &&
-                                                            'text-red-600',
+                                                            'text-danger',
                                                     )}
                                                 >
                                                     {num(u.km_per_liter, 2)}
@@ -368,7 +364,7 @@ export default function UnitAnalytics({
                                             {u.boros && (
                                                 <Badge
                                                     variant="outline"
-                                                    className="border-red-300 text-red-700"
+                                                    className="border-danger/40 text-danger"
                                                 >
                                                     Boros (rata-rata{' '}
                                                     {num(u.rata_rata_jenis, 2)})
@@ -377,7 +373,7 @@ export default function UnitAnalytics({
                                             {u.anomali.map((a, i) => (
                                                 <p
                                                     key={i}
-                                                    className="text-xs text-amber-700 dark:text-amber-400"
+                                                    className="text-xs text-warning"
                                                 >
                                                     <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
                                                     {a.tanggal}: isi{' '}
@@ -487,7 +483,7 @@ export default function UnitAnalytics({
                                                         className={cn(
                                                             'px-4 py-3 text-right font-medium tabular-nums',
                                                             u.boros &&
-                                                                'text-red-600',
+                                                                'text-danger',
                                                         )}
                                                     >
                                                         {num(u.km_per_liter, 2)}
@@ -496,7 +492,7 @@ export default function UnitAnalytics({
                                                         {u.boros && (
                                                             <Badge
                                                                 variant="outline"
-                                                                className="border-red-300 text-red-700"
+                                                                className="border-danger/40 text-danger"
                                                             >
                                                                 Boros (rata-rata{' '}
                                                                 {num(
@@ -510,7 +506,7 @@ export default function UnitAnalytics({
                                                             (a, i) => (
                                                                 <p
                                                                     key={i}
-                                                                    className="mt-1 text-amber-700 dark:text-amber-400"
+                                                                    className="mt-1 text-warning"
                                                                 >
                                                                     <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
                                                                     {a.tanggal}:
@@ -622,7 +618,7 @@ export default function UnitAnalytics({
                                                             'tabular-nums',
                                                             s.status ===
                                                                 'overdue' &&
-                                                                'font-medium text-red-600',
+                                                                'font-medium text-danger',
                                                         )}
                                                     >
                                                         {s.sisa_km !== null
@@ -736,7 +732,7 @@ export default function UnitAnalytics({
                                                             'px-4 py-3 text-right tabular-nums',
                                                             s.status ===
                                                                 'overdue' &&
-                                                                'font-medium text-red-600',
+                                                                'font-medium text-danger',
                                                         )}
                                                     >
                                                         {s.sisa_km !== null

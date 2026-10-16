@@ -7,7 +7,6 @@ import {
     RotateCcw,
     Send,
     Sparkles,
-    TrendingUp,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -178,15 +177,14 @@ export default function PeriodReport({
 
     return (
         <>
-            <Head title="Periodic Report P2H" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <Head title="Laporan Periode P2H" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="p2hReport" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <TrendingUp className="h-6 w-6 text-primary" />
-                            Periodic Report P2H
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                            Laporan Periode P2H
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Evaluasi mingguan / bulanan: kepatuhan, tren temuan,
@@ -482,13 +480,13 @@ function RankCard({
                                     <p className="flex items-center gap-1.5 truncate">
                                         {r.icon === 'berulang' && (
                                             <Repeat
-                                                className="h-3.5 w-3.5 shrink-0 text-amber-600"
+                                                className="h-3.5 w-3.5 shrink-0 text-warning"
                                                 aria-label="Berulang"
                                             />
                                         )}
                                         {r.icon === 'overdue' && (
                                             <AlarmClock
-                                                className="h-3.5 w-3.5 shrink-0 text-red-600"
+                                                className="h-3.5 w-3.5 shrink-0 text-danger"
                                                 aria-label="Lewat target"
                                             />
                                         )}
@@ -515,5 +513,5 @@ function RankCard({
 }
 
 PeriodReport.layout = {
-    breadcrumbs: [{ title: 'Periodic Report P2H', href: '/p2h/period-report' }],
+    breadcrumbs: [{ title: 'Laporan Periode P2H', href: '/p2h/period-report' }],
 };

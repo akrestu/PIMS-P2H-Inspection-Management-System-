@@ -2,7 +2,6 @@ import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import {
     AlarmClock,
     ClipboardCopy,
-    MessageSquareText,
     Repeat,
     RotateCcw,
     Send,
@@ -94,10 +93,9 @@ interface AiResponse {
 }
 
 const STATUS_BADGE: Record<Finding['status'], string> = {
-    open: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-    progress:
-        'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
-    closed: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+    open: 'bg-danger-soft text-danger border-danger/40   ',
+    progress: 'bg-warning-soft text-warning border-warning/40   ',
+    closed: 'bg-success-soft text-success border-success/40   ',
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -161,15 +159,14 @@ export default function DailySummary({
 
     return (
         <>
-            <Head title="Daily Report P2H" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <Head title="Ringkasan Harian P2H" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="p2hReport" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <MessageSquareText className="h-6 w-6 text-primary" />
-                            Daily Report P2H
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                            Ringkasan Harian P2H
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Laporan monitoring P2H siap kirim ke WhatsApp:
@@ -418,7 +415,7 @@ function FindingRow({
                     )}
                     {unit} · {finding.item}
                     {finding.kode_bahaya === 'AA' && (
-                        <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
+                        <Badge className="ml-2 bg-danger text-white hover:bg-danger">
                             AA
                         </Badge>
                     )}
@@ -439,14 +436,14 @@ function FindingRow({
                 Tindakan: {finding.tindakan || 'Belum ditentukan'} · PIC:{' '}
                 {finding.pic || 'Belum ditunjuk'}
                 {finding.overdue && (
-                    <span className="font-medium text-red-600 dark:text-red-400">
+                    <span className="font-medium text-danger">
                         {' · '}
                         <AlarmClock className="mr-0.5 inline h-3 w-3 align-[-1px]" />
                         lewat target
                     </span>
                 )}
                 {finding.berulang && (
-                    <span className="font-medium text-amber-600 dark:text-amber-400">
+                    <span className="font-medium text-warning">
                         {' · '}
                         <Repeat className="mr-0.5 inline h-3 w-3 align-[-1px]" />
                         berulang {finding.berulang}x
@@ -458,5 +455,5 @@ function FindingRow({
 }
 
 DailySummary.layout = {
-    breadcrumbs: [{ title: 'Daily Report P2H', href: '/p2h/daily-summary' }],
+    breadcrumbs: [{ title: 'Ringkasan Harian P2H', href: '/p2h/daily-summary' }],
 };

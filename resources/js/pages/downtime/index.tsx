@@ -92,20 +92,17 @@ function tipeConfig(tipe: DowntimeLog['tipe']) {
         case 'BD':
             return {
                 label: 'Breakdown',
-                badgeClass:
-                    'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+                badgeClass: 'bg-danger-soft text-danger border-danger/40   ',
             };
         case 'PM':
             return {
                 label: 'Preventive Maintenance',
-                badgeClass:
-                    'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
+                badgeClass: 'bg-info-soft text-info border-info/40   ',
             };
         case 'Servis Berkala':
             return {
                 label: 'Servis Berkala',
-                badgeClass:
-                    'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800',
+                badgeClass: 'bg-info-soft text-info border-info/40   ',
             };
     }
 }
@@ -479,15 +476,14 @@ export default function DowntimeIndex({
 
     return (
         <>
-            <Head title="Downtime Log" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <Head title="Downtime" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="unitPerformance" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <Wrench className="h-6 w-6 text-primary" />
-                            Downtime Log
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                            Downtime
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Catat dan pantau waktu downtime unit · PA = W / (W +
@@ -518,9 +514,9 @@ export default function DowntimeIndex({
 
                 {/* ── Ongoing Alert ── */}
                 {ongoingCount > 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950/20">
-                        <AlertTriangle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                        <p className="text-sm text-red-700 dark:text-red-300">
+                    <div className="flex items-center gap-3 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3">
+                        <AlertTriangle className="h-5 w-5 shrink-0 text-danger" />
+                        <p className="text-sm text-danger">
                             <strong>{ongoingCount} unit</strong> sedang dalam
                             kondisi downtime (belum ditutup). Segera tutup
                             setelah perbaikan selesai.
@@ -682,7 +678,7 @@ export default function DowntimeIndex({
                                                 className={cn(
                                                     'space-y-2 p-4',
                                                     isOngoing &&
-                                                        'bg-red-50/40 dark:bg-red-950/10',
+                                                        'bg-danger-soft',
                                                 )}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
@@ -720,7 +716,7 @@ export default function DowntimeIndex({
                                                             Selesai
                                                         </p>
                                                         {isOngoing ? (
-                                                            <p className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+                                                            <p className="flex items-center gap-1 font-medium text-danger">
                                                                 <Timer className="h-3 w-3" />
                                                                 Sedang BD
                                                             </p>
@@ -750,7 +746,7 @@ export default function DowntimeIndex({
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-10 flex-1 gap-1 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400"
+                                                            className="h-10 flex-1 gap-1 border-success/40 text-success"
                                                             onClick={() => {
                                                                 setCloseOnlyLog(
                                                                     log,
@@ -867,7 +863,7 @@ export default function DowntimeIndex({
                                                         className={cn(
                                                             'transition-colors hover:bg-muted/20',
                                                             isOngoing &&
-                                                                'bg-red-50/40 dark:bg-red-950/10',
+                                                                'bg-danger-soft',
                                                         )}
                                                     >
                                                         <td className="px-4 py-3">
@@ -876,14 +872,14 @@ export default function DowntimeIndex({
                                                                     className={cn(
                                                                         'flex h-7 w-7 items-center justify-center rounded-md',
                                                                         isLV
-                                                                            ? 'bg-blue-100 dark:bg-blue-950/40'
-                                                                            : 'bg-purple-100 dark:bg-purple-950/40',
+                                                                            ? 'bg-info-soft'
+                                                                            : 'bg-info-soft',
                                                                     )}
                                                                 >
                                                                     {isLV ? (
-                                                                        <Car className="h-3.5 w-3.5 text-blue-600" />
+                                                                        <Car className="h-3.5 w-3.5 text-info" />
                                                                     ) : (
-                                                                        <Bus className="h-3.5 w-3.5 text-purple-600" />
+                                                                        <Bus className="h-3.5 w-3.5 text-info" />
                                                                     )}
                                                                 </div>
                                                                 <div>
@@ -923,14 +919,14 @@ export default function DowntimeIndex({
                                                             {isOngoing ? (
                                                                 <Badge
                                                                     variant="outline"
-                                                                    className="gap-1 border-red-200 bg-red-50 text-xs text-red-600 dark:bg-red-950/20 dark:text-red-400"
+                                                                    className="gap-1 border-danger/40 bg-danger-soft text-xs text-danger"
                                                                 >
                                                                     <Timer className="h-3 w-3 animate-pulse" />
                                                                     Sedang BD
                                                                 </Badge>
                                                             ) : (
                                                                 <div className="flex items-center gap-1">
-                                                                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                                                    <CheckCircle2 className="h-3 w-3 text-success" />
                                                                     {formatDatetime(
                                                                         log.jam_selesai,
                                                                     )}
@@ -948,7 +944,7 @@ export default function DowntimeIndex({
                                                                         log.duration_hours &&
                                                                             log.duration_hours >
                                                                                 8
-                                                                            ? 'text-red-600 dark:text-red-400'
+                                                                            ? 'text-danger'
                                                                             : '',
                                                                     )}
                                                                 >
@@ -974,7 +970,7 @@ export default function DowntimeIndex({
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        className="h-8 gap-1 border-emerald-300 px-2.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400"
+                                                                        className="h-8 gap-1 border-success/40 px-2.5 text-xs text-success hover:bg-success-soft"
                                                                         onClick={() => {
                                                                             setCloseOnlyLog(
                                                                                 log,
@@ -1091,5 +1087,5 @@ export default function DowntimeIndex({
 }
 
 DowntimeIndex.layout = {
-    breadcrumbs: [{ title: 'Downtime Log', href: '/downtime' }],
+    breadcrumbs: [{ title: 'Downtime', href: '/downtime' }],
 };

@@ -40,17 +40,17 @@ const STATUS: Record<
     layak: {
         code: 'L',
         label: 'P2H, layak',
-        cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+        cls: 'bg-success-soft text-success  ',
     },
     temuan: {
         code: 'T',
         label: 'P2H, ada temuan',
-        cls: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+        cls: 'bg-warning-soft text-warning  ',
     },
     bd: {
         code: 'BD',
         label: 'P2H, breakdown',
-        cls: 'bg-red-600 text-white dark:bg-red-700',
+        cls: 'bg-danger text-white ',
     },
     downtime: {
         code: 'D',
@@ -60,7 +60,7 @@ const STATUS: Record<
     kosong: {
         code: '–',
         label: 'Tidak P2H',
-        cls: 'bg-background text-red-500 ring-1 ring-red-200 ring-inset dark:ring-red-900',
+        cls: 'bg-background text-danger ring-1 ring-danger/40 ring-inset ',
     },
 };
 
@@ -121,7 +121,7 @@ export default function PublicP2hReport({
                             <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                 PIMS · P2H Management System
                             </p>
-                            <h1 className="text-xl font-bold md:text-2xl">
+                            <h1 className="text-2xl font-semibold tracking-[-0.02em] lg:text-[28px]">
                                 Rekap P2H {bulanLabel}
                             </h1>
                             <p className="text-sm text-muted-foreground">
@@ -272,7 +272,7 @@ export default function PublicP2hReport({
                                             scope="col"
                                             className={cn(
                                                 'min-w-8 px-0.5 py-2 text-center font-medium tabular-nums',
-                                                d.sunday && 'text-red-500',
+                                                d.sunday && 'text-danger',
                                             )}
                                         >
                                             {d.day}
@@ -320,7 +320,7 @@ export default function PublicP2hReport({
                                             className={cn(
                                                 'border-l px-3 py-1.5 text-right font-semibold whitespace-nowrap tabular-nums',
                                                 r.hari_p2h < hariBerjalan &&
-                                                    'text-red-600 dark:text-red-400',
+                                                    'text-danger',
                                             )}
                                         >
                                             {r.hari_p2h}/{hariBerjalan}
