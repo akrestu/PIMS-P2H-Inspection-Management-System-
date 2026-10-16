@@ -1,9 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     AlertCircle,
     AlertTriangle,
     CheckCircle2,
-    ClipboardCheck,
     ClipboardList,
     Clock,
     Gauge,
@@ -132,41 +131,6 @@ const SECTION_LABELS: Record<string, string> = {
     B: 'Seksi B — Pemeriksaan Dalam Kabin',
     C: 'Seksi C — Perlengkapan Tambahan',
 };
-
-/* ─────────────────── Status Badge ──────────────────────────── */
-function ApprovalStatusBadge({ status }: { status: ApprovalStatus | null }) {
-    if (!status) {
-        return null;
-    }
-
-    const config = {
-        pending: {
-            label: 'Menunggu',
-            icon: Clock,
-            cls: 'bg-warning-soft text-warning border-warning/40   ',
-        },
-        approved: {
-            label: 'Disetujui',
-            icon: CheckCircle2,
-            cls: 'bg-success-soft text-success border-success/40   ',
-        },
-        rejected: {
-            label: 'Ditolak',
-            icon: XCircle,
-            cls: 'bg-danger-soft text-danger border-danger/40   ',
-        },
-    };
-    const { label, icon: Icon, cls } = config[status];
-
-    return (
-        <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
-        >
-            <Icon className="h-3 w-3" />
-            {label}
-        </span>
-    );
-}
 
 /* ─────────────── Reject Dialog ─────────────────────────────── */
 function RejectDialog({
@@ -931,6 +895,8 @@ function EntryCard({
     active?: boolean;
 }) {
     const pending = entry.approval_status === 'pending';
+    const bd = entry.kondisi_akhir === 'BD';
+    const age = pending ? minutesSince(entry.submitted_at) : null;
     const { dx, handlers } = useSwipe(
         () => onReview(entry),
         () => onReject(entry),
@@ -955,164 +921,69 @@ function EntryCard({
                 data-active={active || undefined}
                 {...handlers}
                 style={dx ? { transform: `translateX(${dx}px)` } : undefined}
-                className={`relative flex touch-pan-y flex-col gap-3 rounded-xl border bg-card p-4 transition-[box-shadow,transform] duration-200 hover:shadow-sm data-[active]:ring-2 data-[active]:ring-ring ${
-                    entry.has_critical ? 'border-danger/40' : 'border-border'
-                }`}
+                className="relative touch-pan-y rounded-[14px] border-(length:--bw) bg-card px-4 py-3.5 transition-[box-shadow,transform] duration-200 data-[active]:ring-2 data-[active]:ring-ring"
             >
-                {/* Critical banner */}
-                {entry.has_critical && (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-danger/40 bg-danger-soft px-3 py-1.5 text-xs font-medium text-danger">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                        Ada item Critical (AA) Tidak Layak — perlu perhatian
-                        khusus
-                    </div>
-                )}
-
-                {/* Escalation banner */}
-                {entry.escalated && entry.approval_status === 'pending' && (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-warning/40 bg-warning-soft px-3 py-1.5 text-xs font-medium text-warning">
-                        <Clock className="h-3.5 w-3.5 shrink-0" />
-                        Dieskalasi ke admin — PIC belum merespons sampai akhir
-                        shift
-                    </div>
-                )}
-
-                {/* Header row */}
-                <div className="flex items-start justify-between gap-2">
-                    <div>
-                        <p className="text-base leading-tight font-bold">
+                {/* Kartu ringkas (Persetujuan.png): ketuk = tinjau, geser = setujui/tolak */}
+                <button
+                    type="button"
+                    onClick={() =>
+                        pending
+                            ? onReview(entry)
+                            : router.visit(`/p2h/${entry.session_id}`)
+                    }
+                    className="flex w-full flex-col gap-1.5 text-left"
+                >
+                    <span className="flex items-baseline gap-2">
+                        <span className="text-[17px] font-semibold tnum">
                             {entry.no_unit}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            {entry.department}
-                        </p>
-                    </div>
-                    <ApprovalStatusBadge status={entry.approval_status} />
-                </div>
-
-                {/* Info grid */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div>
-                        <p className="text-xs text-muted-foreground">Driver</p>
-                        <p className="truncate font-medium">
-                            {entry.driver_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            {entry.driver_jabatan}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">
-                            Tanggal · Shift
-                        </p>
-                        <p className="font-medium">{entry.tanggal}</p>
-                        <p className="text-xs text-muted-foreground">
-                            {entry.shift ?? '-'}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Score + kondisi bar */}
-                <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                    <div className="flex-1 text-center">
-                        <p
-                            className={`text-lg font-semibold tabular-nums ${entry.score < 80 ? 'text-danger' : 'text-success'}`}
-                        >
-                            {entry.score}%
-                        </p>
-                        <p className="text-xs text-muted-foreground">Skor</p>
-                    </div>
-                    <div className="h-8 w-px bg-border" />
-                    <div className="flex-1 text-center">
-                        <p
-                            className={`text-lg font-semibold tabular-nums ${entry.tl_count > 0 ? 'text-warning' : 'text-success'}`}
-                        >
-                            {entry.tl_count}
-                        </p>
-                        <p className="text-xs text-muted-foreground">TL</p>
-                    </div>
-                    <div className="h-8 w-px bg-border" />
-                    <div className="flex-1 text-center">
-                        <p
-                            className={`text-sm font-bold ${entry.kondisi_akhir === 'BD' ? 'text-danger' : 'text-success'}`}
-                        >
-                            {entry.kondisi_akhir ?? '-'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Kondisi</p>
-                    </div>
-                </div>
-
-                {/* Catatan approval/rejection */}
-                {entry.catatan_approval && (
-                    <div
-                        className={`rounded-lg border p-2.5 ${
-                            entry.approval_status === 'rejected'
-                                ? 'border-danger/40 bg-danger-soft'
-                                : 'border-success/40 bg-success-soft'
-                        }`}
-                    >
-                        <p
-                            className={`text-xs ${entry.approval_status === 'rejected' ? 'text-danger' : 'text-success'}`}
-                        >
-                            <span className="font-semibold">Catatan:</span>{' '}
-                            {entry.catatan_approval}
-                        </p>
-                    </div>
-                )}
-
-                {/* Approver info */}
-                {entry.approver_name && (
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 text-xs text-muted-foreground">
-                            {entry.approval_status === 'approved' ? (
-                                <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-success" />
-                            ) : (
-                                <XCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-danger" />
-                            )}
-                            {entry.approval_status === 'approved'
-                                ? 'Disetujui'
-                                : 'Ditolak'}{' '}
-                            oleh{' '}
-                            <span className="font-medium text-foreground">
-                                {entry.approver_name}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground tnum">
+                            {[entry.shift, submittedTime(entry.submitted_at)]
+                                .filter(Boolean)
+                                .join(' · ')}
+                        </span>
+                        {age !== null && age < 600 && (
+                            <span
+                                className={cn(
+                                    'text-xs font-semibold tnum',
+                                    age > 15
+                                        ? 'text-danger'
+                                        : 'text-muted-foreground',
+                                )}
+                            >
+                                {age} mnt
                             </span>
-                            {entry.approved_at && <> · {entry.approved_at}</>}
-                        </div>
-                        {entry.approver_signature_url && (
-                            <div className="rounded-lg border bg-white p-1">
-                                <img
-                                    src={entry.approver_signature_url}
-                                    alt="TTD"
-                                    className="h-8 object-contain"
-                                />
-                            </div>
                         )}
-                    </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 border-t pt-3">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="flex-1"
-                    >
-                        <Link href={`/p2h/${entry.session_id}`}>
-                            Lihat Detail
-                        </Link>
-                    </Button>
-                    {entry.approval_status === 'pending' && (
-                        <Button
+                    </span>
+                    <span className="truncate text-sm text-muted-foreground">
+                        {entry.driver_name} ·{' '}
+                        {entry.tl_count > 0
+                            ? `${entry.tl_count} rusak`
+                            : 'semua baik'}
+                    </span>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                        <StatusPill
+                            status={bd ? 'tidak-layak' : 'layak'}
+                            label={bd ? 'Tidak Layak' : 'Layak Pakai'}
                             size="sm"
-                            className="flex-1 bg-primary text-primary-foreground"
-                            onClick={() => onReview(entry)}
-                        >
-                            <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
-                            Review & Setujui
-                        </Button>
-                    )}
-                </div>
+                        />
+                        {entry.has_critical && <KritisTag />}
+                        {entry.escalated && pending && (
+                            <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-semibold text-warning">
+                                ↓ Eskalasi
+                            </span>
+                        )}
+                        {!pending && entry.approver_name && (
+                            <span className="text-xs text-muted-foreground">
+                                {entry.approval_status === 'approved'
+                                    ? 'Disetujui'
+                                    : 'Ditolak'}{' '}
+                                {entry.approver_name}
+                                {entry.approved_at && ` · ${entry.approved_at}`}
+                            </span>
+                        )}
+                    </span>
+                </button>
             </div>
         </div>
     );
@@ -1665,7 +1536,7 @@ export default function P2hApprovals({
 
     return (
         <>
-            <Head title="Persetujuan P2H LV" />
+            <Head title="Persetujuan" />
 
             <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageHeader
@@ -1830,8 +1701,22 @@ export default function P2hApprovals({
                         </div>
                     </div>
                 ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {entries.data.map((entry, i) => (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                        <FilterChips
+                            label="Filter antrean"
+                            className="-mx-4 px-4 sm:col-span-2"
+                            value={queueFilter}
+                            onChange={(v) => {
+                                setQueueFilter(v);
+                                setActiveIndex(0);
+                            }}
+                            options={[
+                                { value: 'semua', label: 'Semua', count: entries.data.length },
+                                { value: 'eskalasi', label: 'Eskalasi', count: escalatedCount },
+                                { value: 'rusak', label: 'Ada rusak', count: entries.data.filter((e) => e.tl_count > 0).length },
+                            ]}
+                        />
+                        {queue.map((entry, i) => (
                             <EntryCard
                                 key={entry.id}
                                 entry={entry}
@@ -1894,6 +1779,6 @@ export default function P2hApprovals({
 P2hApprovals.layout = {
     breadcrumbs: [
         { title: 'P2H', href: '/p2h' },
-        { title: 'Persetujuan LV', href: '/p2h/approvals' },
+        { title: 'Persetujuan', href: '/p2h/approvals' },
     ],
 };

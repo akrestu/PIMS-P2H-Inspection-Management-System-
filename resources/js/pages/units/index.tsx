@@ -1492,5 +1492,5 @@ export default function UnitsIndex({
 }
 
 UnitsIndex.layout = {
-    breadcrumbs: [{ title: 'Unit', href: '/units' }],
+    breadcrumbs: [{ title: 'Master unit', href: '/units' }],
 };

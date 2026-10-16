@@ -990,5 +990,5 @@ export default function UnitAnalytics({
 }
 
 UnitAnalytics.layout = {
-    breadcrumbs: [{ title: 'Analitik Unit', href: '/unit-analytics' }],
+    breadcrumbs: [{ title: 'Analitik unit', href: '/unit-analytics' }],
 };

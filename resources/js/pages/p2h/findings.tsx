@@ -1282,5 +1282,5 @@ function FindingCard({
 }
 
 P2hFindings.layout = {
-    breadcrumbs: [{ title: 'Temuan P2H', href: '/p2h/findings' }],
+    breadcrumbs: [{ title: 'Temuan', href: '/p2h/findings' }],
 };

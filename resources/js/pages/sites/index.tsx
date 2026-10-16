@@ -863,5 +863,5 @@ export default function SitesIndex({
 }
 
 SitesIndex.layout = {
-    breadcrumbs: [{ title: 'Site', href: '/sites' }],
+    breadcrumbs: [{ title: 'Master site', href: '/sites' }],
 };
