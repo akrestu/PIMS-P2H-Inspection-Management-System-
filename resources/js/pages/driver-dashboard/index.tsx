@@ -487,8 +487,9 @@ export default function DriverDashboardIndex({
                     entry={currentEntry}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="flex min-w-0 flex-col">
+                {/* Dua kartu statistik — berpadding agar tidak menempel ke tepi */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="flex min-w-0 flex-col rounded-xl border-(length:--bw) bg-card p-4 shadow-sm">
                         <KpiCard
                             variant="plain"
                             label="P2H bulan ini"
@@ -497,6 +498,7 @@ export default function DriverDashboardIndex({
                         <WeekStrip week={stats.week} />
                     </div>
                     <KpiCard
+                        className="rounded-xl border-(length:--bw) bg-card p-4 shadow-sm"
                         variant="plain"
                         label="Temuan aktif"
                         value={unitFindings.count}
