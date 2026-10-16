@@ -632,7 +632,7 @@ function FilterTab({
         <button
             onClick={onClick}
             className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150',
+                'press flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium whitespace-nowrap sm:px-3 sm:text-sm',
                 active
                     ? 'bg-background text-foreground shadow-sm ring-1 ring-border/60'
                     : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
@@ -764,18 +764,15 @@ export default function NotificationsIndex({
     return (
         <TooltipProvider>
             <Head title="Notifikasi" />
-            <div className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-3xl space-y-5 px-4 pt-5 pb-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                            <Bell className="h-5 w-5" />
-                        </div>
                         <div>
-                            <h1 className="text-xl font-bold tracking-tight">
+                            <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                                 Notifikasi
                             </h1>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                                 {unread_count > 0 ? (
                                     <>
                                         <span className="font-semibold text-foreground">

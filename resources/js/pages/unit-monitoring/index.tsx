@@ -1,6 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    CalendarDays,
     CheckCircle2,
     FileSpreadsheet,
     Search,
@@ -145,13 +144,12 @@ export default function UnitMonitoring({
     return (
         <>
             <Head title="Monitoring Harian Unit" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="p2hMonitoring" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <CalendarDays className="h-6 w-6 text-primary" />
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Monitoring Harian Unit
                         </h1>
                         <p className="text-sm text-muted-foreground">

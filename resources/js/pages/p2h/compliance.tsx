@@ -584,12 +584,11 @@ export default function P2hCompliancePage({
     return (
         <>
             <Head title="Monitoring P2H — Compliance Matrix" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="p2hMonitoring" />
                 {/* ── Page Header ── */}
                 <div className="flex flex-col gap-1">
-                    <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                        <CalendarCheck className="h-6 w-6 text-primary" />
+                    <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                         Monitoring P2H
                     </h1>
                     <p className="text-sm text-muted-foreground">

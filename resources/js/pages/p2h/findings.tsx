@@ -7,7 +7,6 @@ import {
     Repeat,
     Search,
     Sparkles,
-    Wrench,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +16,8 @@ import {
 } from '@/actions/App/Http/Controllers/P2hFindingController';
 import InputError from '@/components/input-error';
 import { PageButtons } from '@/components/pagination-bar';
+import type { StatusKey } from '@/components/pims/status-pill';
+import { StatusPill } from '@/components/pims/status-pill';
 import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -100,17 +101,30 @@ interface FindingForm {
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
     open: {
         label: 'Open',
-        className: 'bg-danger-soft text-danger border-danger/40   ',
+        className: 'bg-info-soft text-info border-info/40',
     },
     progress: {
         label: 'On Progress',
-        className: 'bg-warning-soft text-warning border-warning/40   ',
+        className: 'bg-warning-soft text-warning border-warning/40',
     },
     closed: {
         label: 'Closed',
-        className: 'bg-success-soft text-success border-success/40   ',
+        className: 'bg-success-soft text-success border-success/40',
     },
 };
+
+/** Status temuan → StatusPill (Open = info, On Progress = warning, Closed = success). */
+function FindingStatusPill({ status }: { status: Status }) {
+    const key: Record<Status, StatusKey> = {
+        open: 'open',
+        progress: 'menunggu',
+        closed: 'closed',
+    };
+
+    return (
+        <StatusPill status={key[status]} label={STATUS_CONFIG[status].label} />
+    );
+}
 
 function formatDate(date: string | null): string {
     if (!date) {
@@ -759,11 +773,10 @@ export default function P2hFindings({
     return (
         <>
             <Head title={title} />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <Wrench className="h-6 w-6 text-primary" />
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             {title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -800,20 +813,20 @@ export default function P2hFindings({
                 )}
 
                 {/* ── Filters ── */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
                     <form
-                        className="relative"
+                        className="relative w-full sm:w-auto"
                         onSubmit={(e) => {
                             e.preventDefault();
                             applyFilter({ search: search || null, page: 1 });
                         }}
                     >
-                        <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Cari unit / item..."
-                            className="h-9 w-56 pl-8"
+                            className="w-full pl-9 sm:w-56"
                         />
                     </form>
                     <Select
@@ -822,7 +835,7 @@ export default function P2hFindings({
                             applyFilter({ status: v, page: 1 })
                         }
                     >
-                        <SelectTrigger className="h-9 w-44">
+                        <SelectTrigger className="h-12 w-full sm:h-10 sm:w-44">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -852,7 +865,10 @@ export default function P2hFindings({
                         }
                     >
                         <SelectTrigger
-                            className={cn('h-9 w-44', !canManage && 'hidden')}
+                            className={cn(
+                                'h-12 w-full sm:h-10 sm:w-44',
+                                !canManage && 'hidden',
+                            )}
                         >
                             <SelectValue />
                         </SelectTrigger>
@@ -1113,18 +1129,9 @@ export default function P2hFindings({
                                                 {formatDate(f.target_selesai)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge
-                                                    variant="outline"
-                                                    className={cn(
-                                                        STATUS_CONFIG[f.status]
-                                                            .className,
-                                                    )}
-                                                >
-                                                    {
-                                                        STATUS_CONFIG[f.status]
-                                                            .label
-                                                    }
-                                                </Badge>
+                                                <FindingStatusPill
+                                                    status={f.status}
+                                                />
                                                 {f.closed_by && (
                                                     <p className="mt-1 text-xs text-muted-foreground">
                                                         oleh {f.closed_by}
@@ -1228,7 +1235,7 @@ function FindingCard({
     onEdit: () => void;
 }) {
     return (
-        <Card className={cn(f.overdue && 'border-danger/40')}>
+        <Card className={cn('gap-0 py-0', f.overdue && 'border-danger')}>
             <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -1247,15 +1254,7 @@ function FindingCard({
                             {f.jenis_unit} · {formatDate(f.tanggal_temuan)}
                         </p>
                     </div>
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            'shrink-0',
-                            STATUS_CONFIG[f.status].className,
-                        )}
-                    >
-                        {STATUS_CONFIG[f.status].label}
-                    </Badge>
+                    <FindingStatusPill status={f.status} />
                 </div>
 
                 <div>

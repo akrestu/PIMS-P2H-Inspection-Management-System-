@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReactSignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 import { PageButtons } from '@/components/pagination-bar';
+import { PageHeader } from '@/components/pims/page-header';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -1140,37 +1141,26 @@ export default function P2hApprovals({
         <>
             <Head title="Persetujuan P2H LV" />
 
-            <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
-                {/* ── Header ── */}
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                            <ShieldCheck className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold tracking-tight">
-                                Persetujuan P2H Unit LV
-                            </h1>
-                            <p className="text-sm text-muted-foreground">
-                                {canSeeAllDept
-                                    ? 'P2H Light Vehicle yang memerlukan verifikasi'
-                                    : 'P2H LV dengan Anda sebagai PIC verifikasi'}
-                            </p>
-                        </div>
-                    </div>
-                    {/* Approve massal — khusus admin */}
-                    {bulkApprovable !== null &&
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
+                <PageHeader
+                    title="Persetujuan P2H"
+                    description={
+                        canSeeAllDept
+                            ? 'P2H Light Vehicle yang memerlukan verifikasi'
+                            : 'P2H LV dengan Anda sebagai PIC verifikasi'
+                    }
+                    actions={
+                        // Approve massal — khusus admin
+                        bulkApprovable !== null &&
                         activeStatus === 'pending' &&
                         bulkApprovable > 0 && (
-                            <Button
-                                className="bg-success text-white hover:bg-success"
-                                onClick={() => setBulkOpen(true)}
-                            >
-                                <ListChecks className="mr-1.5 h-4 w-4" />
-                                Setujui Semua ({bulkApprovable})
+                            <Button onClick={() => setBulkOpen(true)}>
+                                <ListChecks />
+                                Setujui semua ({bulkApprovable})
                             </Button>
-                        )}
-                </div>
+                        )
+                    }
+                />
 
                 {/* ── Status filter ── */}
                 <div className="space-y-1.5">
