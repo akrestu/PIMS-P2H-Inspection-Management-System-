@@ -13,8 +13,10 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DowntimeTimeline } from '@/components/downtime-timeline';
 import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
+import { Segmented } from '@/components/pims/segmented';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -451,6 +453,7 @@ export default function DowntimeIndex({
 }: Props) {
     const [form, setForm] = useState<Filters>(filters);
     const [showFilter, setShowFilter] = useState(false);
+    const [view, setView] = useState<'tabel' | 'linimasa'>('tabel');
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLog, setEditLog] = useState<DowntimeLog | null>(null);
@@ -646,8 +649,36 @@ export default function DowntimeIndex({
                     </Card>
                 )}
 
+                {/* ── Tampilan: tabel / linimasa ── */}
+                {logs.data.length > 0 && (
+                    <Segmented
+                        label="Tampilan downtime"
+                        value={view}
+                        onChange={setView}
+                        options={[
+                            { value: 'tabel', label: 'Tabel' },
+                            { value: 'linimasa', label: 'Linimasa' },
+                        ]}
+                        className="self-start"
+                    />
+                )}
+
+                {view === 'linimasa' && logs.data.length > 0 && (
+                    <DowntimeTimeline
+                        logs={logs.data}
+                        dateFrom={filters.date_from}
+                        dateTo={filters.date_to}
+                    />
+                )}
+
                 {/* ── Table ── */}
-                <Card>
+                <Card
+                    className={
+                        view === 'linimasa' && logs.data.length > 0
+                            ? 'hidden'
+                            : undefined
+                    }
+                >
                     <CardContent className="p-0">
                         {logs.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
