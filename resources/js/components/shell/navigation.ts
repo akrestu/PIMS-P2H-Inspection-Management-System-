@@ -90,7 +90,7 @@ export function useShellNavigation() {
             icon: isManager ? LayoutGrid : House,
         },
         monitoring: {
-            title: 'Monitoring P2H',
+            title: 'Kepatuhan',
             href: '/p2h-compliance',
             icon: CalendarCheck,
             activeMatch: PAGE_TAB_GROUPS.p2hMonitoring.map((t) => t.href),
@@ -155,7 +155,8 @@ export function useShellNavigation() {
                 ...(canApprove ? [item.approvals] : []),
                 item.findings,
                 item.notifications,
-                item.fill,
+                // Manager mengisi P2H dari Dashboard/Unit; driver lewat bottom nav
+                ...(isManager ? [] : [item.fill]),
             ],
         },
         ...(isManager

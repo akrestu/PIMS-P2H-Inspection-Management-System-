@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,7 +30,6 @@ function SidebarLink({
     item: ShellNavItem;
     active: boolean;
 }) {
-    const Icon = item.icon;
     const count = item.count ?? 0;
 
     return (
@@ -41,10 +39,10 @@ function SidebarLink({
                 prefetch
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                    'relative flex h-10 press items-center gap-3 rounded-[10px] px-3 text-sm',
+                    'relative flex h-10 press items-center gap-3 rounded-[10px] px-2.5 text-sm',
                     active
                         ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+                        : 'text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
                 )}
             >
                 {active && (
@@ -53,13 +51,6 @@ function SidebarLink({
                         className="absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand"
                     />
                 )}
-                <Icon
-                    className={cn(
-                        'size-[18px] shrink-0',
-                        active ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                    aria-hidden
-                />
                 <span className="flex-1 truncate">{item.title}</span>
                 {count > 0 &&
                     (item.alert ? (
@@ -68,7 +59,7 @@ function SidebarLink({
                             <span className="sr-only"> menunggu</span>
                         </span>
                     ) : (
-                        <span className="text-xs font-medium text-muted-foreground">
+                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-muted px-1.5 text-[11px] font-semibold text-muted-foreground">
                             {count > 99 ? '99+' : count}
                         </span>
                     ))}
@@ -88,7 +79,7 @@ export function ShellSidebar() {
 
     return (
         <aside className="sticky top-0 hidden h-svh w-[264px] shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground lg:flex">
-            <div className="flex h-16 items-center px-5">
+            <div className="flex h-[68px] items-center px-5">
                 <Link href={homeHref} aria-label="PIMS — beranda">
                     <ShellLogo />
                 </Link>
@@ -101,10 +92,10 @@ export function ShellSidebar() {
                 {groups.map((group, gi) => (
                     <div
                         key={group.label ?? gi}
-                        className={gi > 0 ? 'mt-5' : ''}
+                        className={gi > 0 ? 'mt-4' : ''}
                     >
                         {group.label && (
-                            <p className="mb-1.5 px-3 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                            <p className="mb-1 px-2.5 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
                                 {group.label}
                             </p>
                         )}
@@ -122,7 +113,7 @@ export function ShellSidebar() {
             </nav>
 
             {user && (
-                <div className="border-t p-3">
+                <div className="p-3">
                     <DropdownMenu>
                         <DropdownMenuTrigger className="flex w-full press items-center gap-3 rounded-[12px] p-2 text-left hover:bg-sidebar-accent">
                             <span
@@ -139,10 +130,6 @@ export function ShellSidebar() {
                                     {roleLabel}
                                 </span>
                             </span>
-                            <ChevronsUpDown
-                                className="size-4 text-muted-foreground"
-                                aria-hidden
-                            />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             side="top"
