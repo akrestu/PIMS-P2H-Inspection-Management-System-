@@ -461,7 +461,10 @@ function MonitoringCard({ row }: { row: Row }) {
             {row.terisi && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                     {row.kondisi === 'BD' && (
-                        <Badge variant="destructive" className="h-5">
+                        <Badge
+                            variant="outline"
+                            className="h-5 border-danger/40 bg-danger-soft text-danger"
+                        >
                             BD
                         </Badge>
                     )}
@@ -575,7 +578,10 @@ function MonitoringRow({ row }: { row: Row }) {
                                 </Link>
                             ) : null}
                             {row.kondisi === 'BD' && (
-                                <Badge variant="destructive" className="h-5">
+                                <Badge
+                                    variant="outline"
+                                    className="h-5 border-danger/40 bg-danger-soft text-danger"
+                                >
                                     BD
                                 </Badge>
                             )}
