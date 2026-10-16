@@ -1,4 +1,5 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
+import { APPEARANCE_OPTIONS } from '@/components/appearance-tabs';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -12,7 +13,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 /**
  * ThemeToggle
  *
- * Quick button to switch between Light / Dark / System theme.
+ * Quick button to switch between Terang / Gelap / Kontras tinggi / Sistem.
  * Uses the existing useAppearance hook (localStorage + cookie).
  * Icon animates between Sun and Moon based on resolved theme.
  *
@@ -30,11 +31,9 @@ export function ThemeToggle({
     const { appearance, resolvedAppearance, updateAppearance } =
         useAppearance();
 
-    const options = [
-        { value: 'light' as const, icon: Sun, label: 'Light' },
-        { value: 'dark' as const, icon: Moon, label: 'Dark' },
-        { value: 'system' as const, icon: Monitor, label: 'System' },
-    ];
+    const options = APPEARANCE_OPTIONS;
+    const currentLabel =
+        options.find((o) => o.value === resolvedAppearance)?.label ?? '';
 
     return (
         <DropdownMenu>
@@ -43,7 +42,7 @@ export function ThemeToggle({
                     variant={variant}
                     size={showLabel ? 'sm' : 'icon'}
                     className={`relative transition-colors ${showLabel ? 'gap-2 px-3' : 'h-8 w-8'} `}
-                    aria-label="Toggle theme"
+                    aria-label="Ganti tema"
                 >
                     {/* Sun — visible in light mode, hidden in dark */}
                     <Sun
@@ -62,11 +61,9 @@ export function ThemeToggle({
                         } `}
                     />
                     {showLabel && (
-                        <span className="text-sm">
-                            {resolvedAppearance === 'dark' ? 'Dark' : 'Light'}
-                        </span>
+                        <span className="text-sm">{currentLabel}</span>
                     )}
-                    <span className="sr-only">Toggle theme</span>
+                    <span className="sr-only">Ganti tema</span>
                 </Button>
             </DropdownMenuTrigger>
 
@@ -88,10 +85,10 @@ export function ThemeToggle({
                 <div className="px-2 py-1.5">
                     <p className="text-xs text-muted-foreground">
                         Saat ini:{' '}
-                        <span className="font-medium capitalize">
+                        <span className="font-medium">
                             {appearance === 'system'
-                                ? `System (${resolvedAppearance})`
-                                : appearance}
+                                ? `Sistem (${currentLabel})`
+                                : currentLabel}
                         </span>
                     </p>
                 </div>

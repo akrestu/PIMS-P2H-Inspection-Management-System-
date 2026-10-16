@@ -7,7 +7,7 @@ function Toaster({ ...props }: ToasterProps) {
 
     return (
         <Sonner
-            theme={resolvedAppearance}
+            theme={resolvedAppearance === 'dark' ? 'dark' : 'light'}
             className="toaster group"
             position="top-right"
             richColors
