@@ -31,10 +31,12 @@ class DriverDashboardController extends Controller
             default => today()->subDay()->setTime(18, 0),
         };
 
-        // Cek apakah driver sudah melakukan P2H sejak shift aktif dimulai
+        // Cek apakah driver sudah P2H untuk shift aktif. P2H pre-start boleh diisi
+        // sebelum shift mulai (mis. 05:48 untuk Shift I), jadi jendelanya dibuka 2 jam
+        // lebih awal; label shift pada entry tetap harus sama.
         $entryShiftIni = P2hUserEntry::where('user_id', $user->id)
             ->where('shift', $shiftAktif)
-            ->where('submitted_at', '>=', $shiftMulai)
+            ->where('submitted_at', '>=', $shiftMulai->copy()->subHours(2))
             ->whereHas('session')
             ->with(['session.unit:id,no_unit', 'pic:id,name'])
             ->latest('submitted_at')
@@ -51,6 +53,23 @@ class DriverDashboardController extends Controller
         $totalTidakLayak = P2hChecklistAnswer::whereHas('userEntry', fn ($q) => $q->where('user_id', $user->id))
             ->where('kondisi', 'Tidak Layak')
             ->count();
+
+        // Jejak 7 hari terakhir untuk strip mini di Beranda (BerandaDriver.png):
+        // bd = ada P2H Tidak Layak/BD, layak = P2H masuk, none = tidak ada P2H
+        $last7 = P2hUserEntry::where('user_id', $user->id)
+            ->notRejected()
+            ->where('submitted_at', '>=', today()->subDays(6))
+            ->get(['submitted_at', 'kondisi_akhir'])
+            ->groupBy(fn (P2hUserEntry $e) => $e->submitted_at->toDateString());
+        $week = collect(range(6, 0))->map(function (int $ago) use ($last7) {
+            $date = today()->subDays($ago)->toDateString();
+            $entries = $last7->get($date);
+
+            return [
+                'date' => $date,
+                'status' => ! $entries ? 'none' : ($entries->contains('kondisi_akhir', 'BD') ? 'bd' : 'layak'),
+            ];
+        });
 
         // History P2H driver — 10 terbaru untuk menjaga performa mobile
         $history = P2hUserEntry::where('user_id', $user->id)
@@ -106,6 +125,7 @@ class DriverDashboardController extends Controller
                 'total_p2h' => $totalP2hSelesai,
                 'total_p2h_bulan' => $totalP2hBulanIni,
                 'total_tidak_layak' => $totalTidakLayak,
+                'week' => $week,
             ],
             'history' => $history,
         ]);

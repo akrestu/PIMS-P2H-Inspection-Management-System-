@@ -12,6 +12,7 @@ use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Site;
 use App\Models\Unit;
+use App\Models\UnitDowntimeLog;
 use App\Models\User;
 use App\Notifications\CriticalItemAlert;
 use App\Notifications\LvP2hApprovalRequest;
@@ -23,6 +24,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -121,6 +123,7 @@ class P2hSessionController extends Controller
         } else {
             $units = collect();
         }
+        $units = $this->withPickerInfo($units, $assignedUnits->pluck('id'));
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
         // PIC approval LV hanya jabatan Approval; user jabatan Approval tidak perlu PIC
@@ -139,6 +142,50 @@ class P2hSessionController extends Controller
             'staffUsers' => $staffUsers,
             'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    /**
+     * Info tambahan untuk daftar pilih unit di Form P2H (FormP2H.png): unit yang
+     * ditugaskan, status operasional saat ini, site, dan jam P2H terakhir hari ini.
+     */
+    private function withPickerInfo(Collection $units, Collection $assignedIds): Collection
+    {
+        $ids = $units->pluck('id');
+        $sites = Unit::whereIn('id', $ids)->with('site:id,name')->get(['id', 'site_id'])->keyBy('id');
+
+        $downtimes = UnitDowntimeLog::whereIn('unit_id', $ids)
+            ->where('jam_mulai', '<=', now())
+            ->where(fn ($q) => $q->whereNull('jam_selesai')->orWhere('jam_selesai', '>', now()))
+            ->pluck('tipe', 'unit_id');
+
+        $lastToday = P2hUserEntry::query()
+            ->notRejected()
+            ->whereHas('session', fn ($q) => $q->whereDate('tanggal', today())->whereIn('unit_id', $ids))
+            ->with(['session:id,unit_id', 'user:id,name'])
+            ->latest('submitted_at')
+            ->get()
+            ->unique(fn (P2hUserEntry $e) => $e->session->unit_id)
+            ->keyBy(fn (P2hUserEntry $e) => $e->session->unit_id);
+
+        return $units->map(fn (Unit $unit) => [
+            'id' => $unit->id,
+            'no_unit' => $unit->no_unit,
+            'jenis_unit' => $unit->jenis_unit,
+            'department' => $unit->department,
+            'site_name' => $sites->get($unit->id)?->site?->name,
+            'assigned' => $assignedIds->contains($unit->id),
+            'unit_status' => match ($downtimes->get($unit->id)) {
+                'BD' => 'bd',
+                'PM' => 'pm',
+                'Servis Berkala' => 'servis',
+                default => 'ready',
+            },
+            'filled_at' => $lastToday->get($unit->id)?->submitted_at?->format('H:i'),
+            'filled_by' => $lastToday->get($unit->id)?->user?->name,
+        ])
+            // Unit yang ditugaskan di atas (FormP2H.png)
+            ->sortBy(fn ($u) => [$u['assigned'] ? 0 : 1, $u['no_unit']])
+            ->values();
     }
 
     public function checkSlot(Request $request): JsonResponse

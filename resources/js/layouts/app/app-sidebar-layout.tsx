@@ -16,6 +16,8 @@ export default function AppSidebarLayout({
 }: AppLayoutProps) {
     const { currentUrl } = useCurrentUrl();
     const fullscreenFlow = currentUrl.startsWith('/p2h/form');
+    // Beranda driver punya header sapaan + avatar sendiri (BerandaDriver.png)
+    const ownHeader = currentUrl.startsWith('/driver/dashboard');
 
     return (
         <div className="flex min-h-svh w-full bg-background">
@@ -23,7 +25,7 @@ export default function AppSidebarLayout({
             <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
                 <ShellTopBar
                     breadcrumbs={breadcrumbs}
-                    hideOnMobile={fullscreenFlow}
+                    hideOnMobile={fullscreenFlow || ownHeader}
                 />
                 <main
                     id="main-content"

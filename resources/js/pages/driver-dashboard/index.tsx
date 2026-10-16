@@ -12,7 +12,9 @@ import { SectionHeader } from '@/components/pims/page-header';
 import { EmptyState } from '@/components/pims/states';
 import type { StatusKey } from '@/components/pims/status-pill';
 import { KritisTag, StatusPill } from '@/components/pims/status-pill';
+import { ACCOUNT_HREF } from '@/components/shell/navigation';
 import { Button } from '@/components/ui/button';
+import { useInitials } from '@/hooks/use-initials';
 import { formatDate, formatHM } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes/driver';
@@ -84,6 +86,7 @@ interface Props {
         total_p2h: number;
         total_p2h_bulan: number;
         total_tidak_layak: number;
+        week: { date: string; status: 'layak' | 'bd' | 'none' }[];
     };
     history: HistoryItem[];
     todayUnit: TodayUnit | null;
@@ -410,6 +413,37 @@ function FindingRow({ finding }: { finding: UnitFindings['items'][number] }) {
     );
 }
 
+/** Strip 7 hari terakhir: kuning = P2H masuk, merah = Tidak Layak, abu = tidak ada. */
+function WeekStrip({ week }: { week: Props['stats']['week'] }) {
+    const done = week.filter((d) => d.status !== 'none').length;
+
+    return (
+        <div className="mt-2.5">
+            <div
+                className="flex gap-1"
+                role="img"
+                aria-label={`${done} dari 7 hari terakhir ada P2H`}
+            >
+                {week.map((d) => (
+                    <span
+                        key={d.date}
+                        title={formatDate(d.date, { withDay: true, withYear: false })}
+                        className={cn(
+                            'h-1.5 flex-1 rounded-full',
+                            d.status === 'layak' && 'bg-chart-1',
+                            d.status === 'bd' && 'bg-danger',
+                            d.status === 'none' && 'bg-muted',
+                        )}
+                    />
+                ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+                {done} dari 7 hari terakhir
+            </p>
+        </div>
+    );
+}
+
 export default function DriverDashboardIndex({
     assignment,
     shiftAktif,
@@ -420,6 +454,7 @@ export default function DriverDashboardIndex({
     unitFindings,
 }: Props) {
     const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
+    const getInitials = useInitials();
     const now = new Date();
     const today = `${new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(now)}, ${formatDate(now, { withYear: false })}`;
 
@@ -427,13 +462,22 @@ export default function DriverDashboardIndex({
         <>
             <Head title="Beranda" />
             <div className="mx-auto w-full max-w-[640px] space-y-8 px-4 pt-5 pb-8 lg:pt-8">
-                <header>
-                    <p className="text-[13px] text-muted-foreground">
-                        {today} · {shiftLabel(shiftAktif)}
-                    </p>
-                    <h1 className="mt-0.5 text-2xl font-semibold tracking-[-0.02em]">
-                        Halo, {firstName(auth.user.name)}
-                    </h1>
+                <header className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[13px] text-muted-foreground">
+                            {today} · {shiftLabel(shiftAktif)}
+                        </p>
+                        <h1 className="mt-0.5 text-2xl font-semibold tracking-[-0.02em]">
+                            Halo, {firstName(auth.user.name)}
+                        </h1>
+                    </div>
+                    <Link
+                        href={ACCOUNT_HREF}
+                        aria-label="Akun saya"
+                        className="grid size-12 shrink-0 press place-items-center rounded-full bg-muted text-sm font-semibold lg:hidden"
+                    >
+                        {getInitials(auth.user.name)}
+                    </Link>
                 </header>
 
                 <UnitCard
@@ -444,12 +488,14 @@ export default function DriverDashboardIndex({
                 />
 
                 <div className="grid grid-cols-2 gap-4">
-                    <KpiCard
-                        variant="plain"
-                        label="P2H bulan ini"
-                        value={stats.total_p2h_bulan}
-                        sub={`${stats.total_p2h} sepanjang waktu`}
-                    />
+                    <div className="flex min-w-0 flex-col">
+                        <KpiCard
+                            variant="plain"
+                            label="P2H bulan ini"
+                            value={stats.total_p2h_bulan}
+                        />
+                        <WeekStrip week={stats.week} />
+                    </div>
                     <KpiCard
                         variant="plain"
                         label="Temuan aktif"

@@ -12,9 +12,10 @@ import {
     Fuel,
     Gauge,
     ImagePlus,
+    Info,
     Loader2,
+    Lock,
     MapPin,
-    Moon,
     PenLine,
     Plus,
     Search,
@@ -34,6 +35,8 @@ import ChecklistGroup from '@/components/P2h/ChecklistGroup';
 import SignaturePad from '@/components/P2h/SignaturePad';
 import { PhotoPicker } from '@/components/pims/photo-picker';
 import { ChecklistProgress } from '@/components/pims/progress';
+import { Segmented } from '@/components/pims/segmented';
+import { StatusPill } from '@/components/pims/status-pill';
 import { useShellNavigation } from '@/components/shell/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -59,15 +62,27 @@ import {
 import { Separator } from '@/components/ui/separator';
 import {
     Sheet,
-    SheetClose,
     SheetContent,
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { AnswerState, P2hInspectionItem, Unit } from '@/types/pims';
+import type { AnswerState, P2hInspectionItem } from '@/types/pims';
+
+/** Unit di daftar pilih Form P2H (P2hSessionController::withPickerInfo). */
+type PickerUnit = {
+    id: number;
+    no_unit: string;
+    jenis_unit: string;
+    department: string | null;
+    site_name: string | null;
+    assigned: boolean;
+    unit_status: 'ready' | 'bd' | 'pm' | 'servis';
+    filled_at: string | null;
+    filled_by: string | null;
+};
 
 interface StaffUser {
     id: number;
@@ -82,7 +97,7 @@ interface SiteOption {
 }
 
 interface Props {
-    units: Unit[];
+    units: PickerUnit[];
     inspectionItems: P2hInspectionItem[];
     staffUsers: StaffUser[];
     sites: SiteOption[];
@@ -178,10 +193,10 @@ async function compressImage(
 }
 
 const STEPS = [
-    { id: 1, label: 'Unit & Shift', icon: Wrench },
-    { id: 2, label: 'Pemeriksaan', icon: ClipboardList },
-    { id: 3, label: 'Servis & BBM', icon: Droplets },
-    { id: 4, label: 'Konfirmasi', icon: PenLine },
+    { id: 1, label: 'Unit & Shift', title: 'Pilih unit & shift', icon: Wrench },
+    { id: 2, label: 'Pemeriksaan', title: 'Checklist pemeriksaan', icon: ClipboardList },
+    { id: 3, label: 'Servis & BBM', title: 'Servis & BBM', icon: Droplets },
+    { id: 4, label: 'Konfirmasi', title: 'Tinjau & tanda tangan', icon: PenLine },
 ] as const;
 
 /** Langkah form tempat field dari error validasi server berada. */
@@ -222,17 +237,13 @@ function StepIndicator({
     total?: number;
 }) {
     return (
-        <div>
-            <p className="mb-1 text-base font-semibold">
-                {STEPS[current - 1].label}
-            </p>
-            <ChecklistProgress
-                step={current}
-                totalSteps={STEPS.length}
-                done={done}
-                total={total}
-            />
-        </div>
+        <ChecklistProgress
+            step={current}
+            totalSteps={STEPS.length}
+            done={done}
+            total={total}
+            label={STEPS[current - 1].label}
+        />
     );
 }
 
@@ -836,13 +847,23 @@ export default function P2hForm({
     const [selectedUnitId, setSelectedUnitId] = useState<string>(
         draft.selectedUnitId ?? '',
     );
-    const [unitSheetOpen, setUnitSheetOpen] = useState(false);
+    const [unitQuery, setUnitQuery] = useState('');
     const [slotInfo, setSlotInfo] = useState<SlotInfo | null>(null);
     const [checkingSlot, setCheckingSlot] = useState(false);
     const [jobSite, setJobSite] = useState(draft.jobSite ?? '');
     const [lokasiKerja, setLokasiKerja] = useState(draft.lokasiKerja ?? '');
     const [kmAwal, setKmAwal] = useState(draft.kmAwal ?? '');
-    const [shift, setShift] = useState(draft.shift ?? '');
+    // Default = shift yang sedang berjalan (docs/screens/driver.md)
+    const [shift, setShift] = useState(
+        draft.shift ||
+            (shiftOptions.length === 2
+                ? shiftOptions[
+                      new Date().getHours() >= 6 && new Date().getHours() < 18
+                          ? 0
+                          : 1
+                  ]
+                : ''),
+    );
     const [picApproverId, setPicApproverId] = useState<string>(
         draft.picApproverId ?? '',
     );
@@ -896,6 +917,15 @@ export default function P2hForm({
     const [hasDraft] = useState(() => Boolean(draft.selectedUnitId));
 
     const selectedUnit = units.find((u) => u.id === Number(selectedUnitId));
+    const pickerUnits = useMemo(() => {
+        const q = unitQuery.trim().toLowerCase();
+
+        return q
+            ? units.filter((u) =>
+                  `${u.no_unit} ${u.jenis_unit}`.toLowerCase().includes(q),
+              )
+            : units;
+    }, [units, unitQuery]);
 
     // Jabatan Approval tidak memerlukan persetujuan PIC — User LV 1 & LV 2 tetap perlu
     const isApprover = auth?.user?.jabatan === 'Approval';
@@ -1473,16 +1503,19 @@ export default function P2hForm({
                                 <X className="size-5" />
                             </button>
                             <div className="min-w-0 flex-1">
-                                <h1 className="truncate text-lg font-semibold">
-                                    Form P2H
-                                    {selectedUnit
-                                        ? ` · ${selectedUnit.no_unit}`
-                                        : ''}
+                                <h1 className="truncate text-lg font-semibold tracking-[-0.01em]">
+                                    {STEPS[step - 1].title}
                                 </h1>
-                                <p className="truncate text-[13px] text-muted-foreground">
-                                    {selectedUnit
-                                        ? `${selectedUnit.jenis_unit}${slotInfo ? ` · Pengisian ke-${slotInfo.next_slot}` : ''}`
-                                        : 'Pemeriksaan & Perawatan Harian'}
+                                <p className="truncate text-[13px] text-muted-foreground tnum">
+                                    {[
+                                        selectedUnit?.no_unit ?? 'Form P2H',
+                                        shift,
+                                        formatDate(new Date(), {
+                                            withYear: false,
+                                        }),
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
                                 </p>
                             </div>
                         </div>
@@ -1525,476 +1558,320 @@ export default function P2hForm({
                     ══════════════════════════════════════════ */}
                     {step === 1 && (
                         <>
-                            {/* Pilih Unit */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">
-                                        Pilih Unit Kendaraan
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Pilih unit yang akan diperiksa hari ini
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 px-4">
-                                    {/* Unit picker — Sheet bottom drawer */}
-                                    {(() => {
-                                        const pickedUnit = units.find(
-                                            (u) =>
-                                                String(u.id) === selectedUnitId,
-                                        );
-
-                                        return (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setUnitSheetOpen(true)
-                                                    }
-                                                    className={cn(
-                                                        'flex w-full items-center justify-between rounded-xl border-2 px-4 py-3 text-left transition-colors',
-                                                        pickedUnit
-                                                            ? 'border-border bg-muted hover:border-foreground/30'
-                                                            : 'border-dashed border-muted-foreground/30 bg-muted/30 hover:border-muted-foreground/50',
-                                                    )}
-                                                >
-                                                    {pickedUnit ? (
-                                                        <div className="flex min-w-0 items-center gap-3">
-                                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                                                <Truck className="h-5 w-5 text-foreground" />
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <div className="truncate text-base font-bold">
-                                                                    {
-                                                                        pickedUnit.no_unit
-                                                                    }
-                                                                </div>
-                                                                <div className="text-xs text-muted-foreground">
-                                                                    {
-                                                                        pickedUnit.jenis_unit
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-sm text-muted-foreground">
-                                                            Ketuk untuk memilih
-                                                            unit kendaraan
-                                                        </span>
-                                                    )}
-                                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
-                                                </button>
-
-                                                <Sheet
-                                                    open={unitSheetOpen}
-                                                    onOpenChange={
-                                                        setUnitSheetOpen
-                                                    }
-                                                >
-                                                    <SheetContent
-                                                        side="bottom"
-                                                        className="max-h-[75dvh] rounded-t-2xl pb-safe"
-                                                    >
-                                                        <SheetHeader className="pb-2">
-                                                            <SheetTitle>
-                                                                Pilih Unit
-                                                                Kendaraan
-                                                            </SheetTitle>
-                                                        </SheetHeader>
-                                                        <div className="space-y-2 overflow-y-auto px-4 pb-4">
-                                                            {units.length ===
-                                                                0 && (
-                                                                <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
-                                                                    Belum ada
-                                                                    unit untuk
-                                                                    akun Anda.
-                                                                    Hubungi
-                                                                    admin site
-                                                                    untuk
-                                                                    penugasan
-                                                                    unit.
-                                                                </p>
-                                                            )}
-                                                            {units.map(
-                                                                (unit) => {
-                                                                    const isSelected =
-                                                                        String(
-                                                                            unit.id,
-                                                                        ) ===
-                                                                        selectedUnitId;
-
-                                                                    return (
-                                                                        <SheetClose
-                                                                            asChild
-                                                                            key={
-                                                                                unit.id
-                                                                            }
-                                                                        >
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    setSelectedUnitId(
-                                                                                        String(
-                                                                                            unit.id,
-                                                                                        ),
-                                                                                    );
-                                                                                    setPicApproverId(
-                                                                                        '',
-                                                                                    );
-                                                                                }}
-                                                                                className={cn(
-                                                                                    'flex w-full items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors',
-                                                                                    isSelected
-                                                                                        ? 'border-primary bg-muted'
-                                                                                        : 'border-border hover:border-foreground/30 hover:bg-muted/40',
-                                                                                )}
-                                                                            >
-                                                                                <div
-                                                                                    className={cn(
-                                                                                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
-                                                                                        isSelected
-                                                                                            ? 'bg-muted'
-                                                                                            : 'bg-muted',
-                                                                                    )}
-                                                                                >
-                                                                                    <Truck
-                                                                                        className={cn(
-                                                                                            'h-5 w-5',
-                                                                                            isSelected
-                                                                                                ? 'text-foreground'
-                                                                                                : 'text-muted-foreground',
-                                                                                        )}
-                                                                                    />
-                                                                                </div>
-                                                                                <div className="min-w-0 flex-1">
-                                                                                    <div className="text-base font-bold">
-                                                                                        {
-                                                                                            unit.no_unit
-                                                                                        }
-                                                                                    </div>
-                                                                                    <div className="text-xs text-muted-foreground">
-                                                                                        {
-                                                                                            unit.jenis_unit
-                                                                                        }
-                                                                                    </div>
-                                                                                </div>
-                                                                                {isSelected && (
-                                                                                    <CheckCircle2 className="h-5 w-5 shrink-0 text-foreground" />
-                                                                                )}
-                                                                            </button>
-                                                                        </SheetClose>
-                                                                    );
-                                                                },
-                                                            )}
-                                                        </div>
-                                                    </SheetContent>
-                                                </Sheet>
-                                            </>
-                                        );
-                                    })()}
-
-                                    {checkingSlot && (
-                                        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Memeriksa ketersediaan slot…
-                                        </div>
-                                    )}
-
-                                    {slotInfo && !checkingSlot && (
-                                        <Alert className="border-success/40 bg-success-soft">
-                                            <CheckCircle2 className="h-4 w-4 text-success" />
-                                            <AlertTitle className="text-success">
-                                                P2H Tersedia
-                                            </AlertTitle>
-                                            <AlertDescription className="text-xs text-success">
-                                                Anda akan melakukan{' '}
-                                                <strong>
-                                                    pengisian ke-
-                                                    {slotInfo.next_slot}
-                                                </strong>{' '}
-                                                hari ini
-                                                {slotInfo.slot_terisi > 0
-                                                    ? ` (${slotInfo.slot_terisi} pengisian sebelumnya)`
-                                                    : ''}
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            {/* Identitas Pengemudi */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">
-                                        Identitas Pengemudi
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Data diambil otomatis dari akun Anda
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-0 px-4">
-                                    <div className="flex items-center gap-3 py-3">
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                            <User className="h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm text-muted-foreground">
-                                                Nama
-                                            </p>
-                                            <p className="truncate text-base font-semibold">
-                                                {auth?.user?.name ?? '-'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Job Site & Lokasi Kerja */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <CardTitle className="text-base">
-                                        Lokasi Pekerjaan
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Isi job site dan lokasi kerja (opsional)
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 px-4">
-                                    <div className="space-y-1.5">
-                                        <Label
-                                            htmlFor="job-site"
-                                            className="text-sm font-medium"
-                                        >
-                                            Job Site
-                                        </Label>
-                                        <Select
-                                            value={jobSite}
-                                            onValueChange={setJobSite}
-                                        >
-                                            <SelectTrigger
-                                                id="job-site"
-                                                className="h-11 w-full text-sm"
-                                            >
-                                                <SelectValue placeholder="Pilih Job Site" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {jobSiteOptions.map((site) => (
-                                                    <SelectItem
-                                                        key={site}
-                                                        value={site}
-                                                    >
-                                                        {site}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm font-medium">
-                                            Lokasi Kerja
-                                        </Label>
-                                        <LokasiCombobox
-                                            value={lokasiKerja}
-                                            onChange={setLokasiKerja}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* KM Awal & Shift */}
-                            <Card>
-                                <CardHeader className="px-4 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            HM/KM Awal
-                                        </CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        Lihat odometer/hourmeter kendaraan
-                                        (opsional)
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2 px-4">
-                                    {slotInfo?.last_hm_km_akhir != null && (
-                                        <div className="flex items-center gap-2 rounded-lg border border-info/40 bg-info-soft px-3 py-2">
-                                            <Gauge className="h-4 w-4 shrink-0 text-info" />
-                                            <p className="text-xs text-info">
-                                                HM/KM Akhir sesi sebelumnya:{' '}
-                                                <strong>
-                                                    {slotInfo.last_hm_km_akhir.toLocaleString(
-                                                        'id-ID',
-                                                    )}
-                                                </strong>{' '}
-                                                — nilai awal tidak boleh lebih
-                                                rendah
-                                            </p>
-                                        </div>
-                                    )}
-                                    <Input
-                                        id="km-awal"
-                                        type="number"
-                                        inputMode="numeric"
-                                        min={slotInfo?.last_hm_km_akhir ?? 0}
-                                        value={kmAwal}
-                                        onChange={(e) =>
-                                            setKmAwal(e.target.value)
-                                        }
-                                        placeholder="Contoh: 12500"
-                                        className="h-14 text-xl font-semibold tracking-wide"
-                                    />
-                                    {kmAwal && (
-                                        <p className="text-xs text-muted-foreground">
-                                            ={' '}
-                                            {Number(kmAwal).toLocaleString(
-                                                'id-ID',
-                                            )}
-                                        </p>
-                                    )}
-                                    {kmAwal &&
-                                        slotInfo?.last_hm_km_akhir != null &&
-                                        Number(kmAwal) <
-                                            slotInfo.last_hm_km_akhir && (
-                                            <p className="text-xs font-medium text-destructive">
-                                                Nilai tidak boleh kurang dari{' '}
-                                                {slotInfo.last_hm_km_akhir.toLocaleString(
-                                                    'id-ID',
+                            {/* Shift — default shift berjalan (FormP2H.png) */}
+                            <section className="space-y-2">
+                                <h2 className="text-sm font-medium">Shift</h2>
+                                <Segmented
+                                    label="Shift"
+                                    size="lg"
+                                    className="grid w-full auto-cols-fr grid-flow-col"
+                                    value={shift}
+                                    onChange={setShift}
+                                    options={shiftOptions.map((s, i) => ({
+                                        value: s,
+                                        label: (
+                                            <span className="flex flex-col items-center leading-tight">
+                                                <span className="font-semibold">
+                                                    {s}
+                                                </span>
+                                                {shiftOptions.length === 2 && (
+                                                    <span className="text-xs font-normal text-muted-foreground">
+                                                        {i === 0
+                                                            ? '06:00–18:00'
+                                                            : '18:00–06:00'}
+                                                    </span>
                                                 )}
-                                            </p>
-                                        )}
-                                </CardContent>
+                                            </span>
+                                        ),
+                                    }))}
+                                />
+                            </section>
 
-                                <Separator className="mx-4 w-auto" />
-
-                                <CardHeader className="px-4 pt-0 pb-0">
-                                    <div className="flex items-center gap-2">
-                                        <Sun className="h-4 w-4 text-muted-foreground" />
-                                        <CardTitle className="text-base">
-                                            Pilih Shift
-                                        </CardTitle>
-                                        <span className="text-sm text-destructive">
-                                            *
-                                        </span>
-                                    </div>
-                                    <CardDescription>
-                                        Pilih shift kerja Anda saat ini
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="px-4">
-                                    <ToggleGroup
-                                        type="single"
-                                        value={shift}
-                                        onValueChange={(v) => {
-                                            if (v) {
-                                                setShift(v);
+                            {/* Unit — daftar pilih inline */}
+                            <section className="space-y-2">
+                                <h2 className="text-sm font-medium">Unit</h2>
+                                {units.length > 5 && (
+                                    <label className="field flex h-[52px] items-center gap-3 rounded-[12px] border-(length:--bw) border-input bg-background px-4">
+                                        <Search
+                                            className="size-5 shrink-0 text-muted-foreground"
+                                            aria-hidden
+                                        />
+                                        <input
+                                            type="search"
+                                            value={unitQuery}
+                                            onChange={(e) =>
+                                                setUnitQuery(e.target.value)
                                             }
-                                        }}
-                                        className={cn(
-                                            'grid w-full gap-2',
-                                            shiftOptions.length === 2
-                                                ? 'grid-cols-2'
-                                                : 'grid-cols-1 sm:grid-cols-3',
-                                        )}
+                                            placeholder="Cari kode atau jenis unit"
+                                            aria-label="Cari unit"
+                                            className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+                                        />
+                                    </label>
+                                )}
+                                {units.length === 0 ? (
+                                    <p className="rounded-[14px] bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                                        Belum ada unit untuk akun Anda.
+                                        Hubungi admin site untuk penugasan
+                                        unit.
+                                    </p>
+                                ) : (
+                                    <div
+                                        role="radiogroup"
+                                        aria-label="Pilih unit"
+                                        className="space-y-2"
                                     >
-                                        {shiftOptions.map((s, i) => {
-                                            const isDay = i === 0;
-                                            const Icon = isDay ? Sun : Moon;
+                                        {pickerUnits.map((unit) => {
+                                            const isSelected =
+                                                String(unit.id) ===
+                                                selectedUnitId;
+                                            const notReady =
+                                                unit.unit_status !== 'ready';
 
                                             return (
-                                                <ToggleGroupItem
-                                                    key={s}
-                                                    value={s}
+                                                <button
+                                                    key={unit.id}
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={isSelected}
+                                                    onClick={() => {
+                                                        setSelectedUnitId(
+                                                            String(unit.id),
+                                                        );
+                                                        setPicApproverId('');
+                                                    }}
                                                     className={cn(
-                                                        'h-20 flex-col gap-1.5 rounded-xl border-2 text-sm font-semibold',
-                                                        isDay
-                                                            ? 'data-[state=on]:border-warning data-[state=on]:bg-warning-soft data-[state=on]:text-warning'
-                                                            : 'data-[state=on]:border-info data-[state=on]:bg-info-soft data-[state=on]:text-info',
+                                                        'flex min-h-[72px] w-full press items-center gap-3 rounded-[14px] border-(length:--bw) bg-card px-4 py-3 text-left',
+                                                        isSelected
+                                                            ? 'border-foreground ring-1 ring-foreground'
+                                                            : 'hover:border-foreground/30',
+                                                        !isSelected &&
+                                                            (notReady ||
+                                                                unit.filled_at) &&
+                                                            'opacity-60',
                                                     )}
                                                 >
-                                                    <Icon className="h-6 w-6" />
-                                                    {s}
-                                                </ToggleGroupItem>
+                                                    <span
+                                                        aria-hidden
+                                                        className={cn(
+                                                            'grid size-6 shrink-0 place-items-center rounded-full border-2',
+                                                            isSelected
+                                                                ? 'border-foreground'
+                                                                : 'border-input',
+                                                        )}
+                                                    >
+                                                        {isSelected && (
+                                                            <span className="size-3 rounded-full bg-foreground" />
+                                                        )}
+                                                    </span>
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="flex items-center gap-2">
+                                                            <span className="text-[17px] font-semibold tnum">
+                                                                {unit.no_unit}
+                                                            </span>
+                                                            {unit.assigned && (
+                                                                <span className="rounded-md bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-black">
+                                                                    Ditugaskan
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                        <span className="block truncate text-[13px] text-muted-foreground">
+                                                            {unit.jenis_unit}
+                                                            {unit.site_name &&
+                                                                ` · ${unit.site_name}`}
+                                                        </span>
+                                                    </span>
+                                                    {unit.filled_at ? (
+                                                        <span
+                                                            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                                                            title={
+                                                                unit.filled_by
+                                                                    ? `Diisi ${unit.filled_by}`
+                                                                    : undefined
+                                                            }
+                                                        >
+                                                            <Lock
+                                                                className="size-3"
+                                                                aria-hidden
+                                                            />
+                                                            Terisi{' '}
+                                                            {unit.filled_at}
+                                                        </span>
+                                                    ) : (
+                                                        <StatusPill
+                                                            status={
+                                                                unit.unit_status
+                                                            }
+                                                            size="sm"
+                                                        />
+                                                    )}
+                                                </button>
                                             );
                                         })}
-                                    </ToggleGroup>
-                                </CardContent>
-                            </Card>
-                            {/* PIC Approver — muncul untuk semua driver yang mengisi unit LV */}
-                            {needsApproval && (
-                                <Card className="border-warning/40">
-                                    <CardHeader className="px-4 pb-0">
-                                        <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4 text-warning" />
-                                            <CardTitle className="text-base">
-                                                PIC Persetujuan
-                                            </CardTitle>
-                                            <span className="text-sm text-destructive">
-                                                *
-                                            </span>
-                                        </div>
-                                        <CardDescription>
-                                            P2H untuk unit Light Vehicle
-                                            memerlukan persetujuan. Pilih{' '}
-                                            {picJabatanLabel} yang akan
-                                            memeriksa dan menandatangani form
-                                            ini.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2 px-4">
-                                        <div className="rounded-lg border border-warning/40 bg-warning-soft px-3 py-2">
-                                            <p className="text-xs text-warning">
-                                                PIC yang dipilih akan mendapat
-                                                notifikasi dan wajib me-review
-                                                serta menandatangani P2H Anda
-                                                sebelum dinyatakan valid.
+                                        {pickerUnits.length === 0 && (
+                                            <p className="px-1 py-4 text-sm text-muted-foreground">
+                                                Tidak ada unit yang cocok
+                                                dengan “{unitQuery}”.
                                             </p>
-                                        </div>
-                                        {filteredStaffUsers.length === 0 ? (
-                                            <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-3 text-sm text-destructive">
-                                                Tidak ada {picJabatanLabel} dari
-                                                departemen{' '}
-                                                <strong>
-                                                    {selectedUnit?.department}
-                                                </strong>{' '}
-                                                yang terdaftar. Hubungi admin
-                                                untuk menambahkan PIC.
-                                            </div>
-                                        ) : (
-                                            <PicCombobox
-                                                staffUsers={filteredStaffUsers}
-                                                value={picApproverId}
-                                                onChange={setPicApproverId}
-                                            />
                                         )}
-                                        {picApproverId &&
-                                            (() => {
-                                                const pic = staffUsers.find(
-                                                    (s) =>
-                                                        String(s.id) ===
-                                                        picApproverId,
-                                                );
+                                    </div>
+                                )}
 
-                                                return pic ? (
-                                                    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted px-3 py-2">
-                                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                                                            <User className="h-4 w-4 text-foreground" />
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <p className="truncate text-sm font-semibold">
-                                                                {pic.name}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {pic.jabatan}
-                                                                {pic.department
-                                                                    ? ` · ${pic.department}`
-                                                                    : ''}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                ) : null;
-                                            })()}
-                                    </CardContent>
-                                </Card>
+                                {checkingSlot && (
+                                    <p className="flex items-center gap-2 px-1 text-[13px] text-muted-foreground">
+                                        <Loader2 className="size-4 animate-spin" />
+                                        Memeriksa ketersediaan slot…
+                                    </p>
+                                )}
+                                {slotInfo &&
+                                    !checkingSlot &&
+                                    slotInfo.slot_terisi > 0 && (
+                                        <p className="flex items-start gap-2 rounded-[12px] bg-info-soft px-3 py-2.5 text-[13px] text-info">
+                                            <Info className="mt-0.5 size-4 shrink-0" />
+                                            Unit ini sudah diisi{' '}
+                                            {slotInfo.slot_terisi}× hari ini.
+                                            Anda mengisi entry ke-
+                                            {slotInfo.next_slot} (pergantian
+                                            driver); setiap entry disetujui
+                                            terpisah.
+                                        </p>
+                                    )}
+                            </section>
+
+                            {/* HM/KM awal */}
+                            <section className="space-y-2">
+                                <Label
+                                    htmlFor="km-awal"
+                                    className="text-sm font-medium"
+                                >
+                                    HM/KM awal{' '}
+                                    <span className="font-normal text-muted-foreground">
+                                        (opsional)
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="km-awal"
+                                    type="number"
+                                    inputMode="numeric"
+                                    min={slotInfo?.last_hm_km_akhir ?? 0}
+                                    value={kmAwal}
+                                    onChange={(e) => setKmAwal(e.target.value)}
+                                    placeholder="Contoh: 12500"
+                                    aria-invalid={
+                                        (!!kmAwal &&
+                                            slotInfo?.last_hm_km_akhir !=
+                                                null &&
+                                            Number(kmAwal) <
+                                                slotInfo.last_hm_km_akhir) ||
+                                        undefined
+                                    }
+                                    className="h-[52px] rounded-[12px] text-base tnum"
+                                />
+                                {slotInfo?.last_hm_km_akhir != null && (
+                                    <p
+                                        className={cn(
+                                            'text-[13px]',
+                                            kmAwal &&
+                                                Number(kmAwal) <
+                                                    slotInfo.last_hm_km_akhir
+                                                ? 'font-medium text-danger'
+                                                : 'text-muted-foreground',
+                                        )}
+                                    >
+                                        HM/KM akhir sesi sebelumnya{' '}
+                                        {slotInfo.last_hm_km_akhir.toLocaleString(
+                                            'id-ID',
+                                        )}{' '}
+                                        — nilai awal tidak boleh lebih rendah.
+                                    </p>
+                                )}
+                            </section>
+
+                            {/* Lokasi */}
+                            <section className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="job-site"
+                                        className="text-sm font-medium"
+                                    >
+                                        Job site{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (opsional)
+                                        </span>
+                                    </Label>
+                                    <Select
+                                        value={jobSite}
+                                        onValueChange={setJobSite}
+                                    >
+                                        <SelectTrigger
+                                            id="job-site"
+                                            className="h-[52px] w-full rounded-[12px] text-base"
+                                        >
+                                            <SelectValue placeholder="Pilih job site" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {jobSiteOptions.map((site) => (
+                                                <SelectItem
+                                                    key={site}
+                                                    value={site}
+                                                >
+                                                    {site}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">
+                                        Lokasi kerja{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (opsional)
+                                        </span>
+                                    </Label>
+                                    <LokasiCombobox
+                                        value={lokasiKerja}
+                                        onChange={setLokasiKerja}
+                                    />
+                                </div>
+                            </section>
+
+                            {/* PIC persetujuan — unit LV */}
+                            {needsApproval && (
+                                <section className="space-y-2">
+                                    <h2 className="text-sm font-medium">
+                                        PIC persetujuan{' '}
+                                        <span className="text-danger">*</span>
+                                    </h2>
+                                    <p className="text-[13px] text-muted-foreground">
+                                        P2H Light Vehicle perlu disetujui.
+                                        Pilih {picJabatanLabel} yang akan
+                                        meninjau dan menandatangani P2H ini.
+                                    </p>
+                                    {filteredStaffUsers.length === 0 ? (
+                                        <p className="rounded-[12px] bg-danger-soft px-3 py-3 text-sm text-danger">
+                                            Tidak ada {picJabatanLabel} dari
+                                            departemen{' '}
+                                            <strong>
+                                                {selectedUnit?.department}
+                                            </strong>{' '}
+                                            yang terdaftar. Hubungi admin untuk
+                                            menambahkan PIC.
+                                        </p>
+                                    ) : (
+                                        <PicCombobox
+                                            staffUsers={filteredStaffUsers}
+                                            value={picApproverId}
+                                            onChange={setPicApproverId}
+                                        />
+                                    )}
+                                </section>
                             )}
+
+                            <p className="flex items-start gap-2 text-[13px] text-muted-foreground">
+                                <Info className="mt-0.5 size-4 shrink-0" />
+                                Pengemudi: {auth?.user?.name ?? '—'}. Satu
+                                sesi = satu unit per hari; pergantian driver
+                                tercatat sebagai entry terpisah.
+                            </p>
                         </>
                     )}
 

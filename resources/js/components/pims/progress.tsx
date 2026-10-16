@@ -1,13 +1,18 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-/** ChecklistProgress (docs/02): "Langkah 2 dari 6" + bar + "12/18 item". */
+/**
+ * ChecklistProgress (docs/02, FormP2H.png): bar bersegmen per langkah,
+ * "Langkah 2 dari 6" di kiri, nama langkah atau "12/18 item" di kanan.
+ * Segmen langkah berjalan terisi sesuai item yang sudah dijawab.
+ */
 export function ChecklistProgress({
     step,
     totalSteps,
     done,
     total,
     unit = 'item',
+    label,
     className,
 }: {
     step: number;
@@ -15,37 +20,54 @@ export function ChecklistProgress({
     done?: number;
     total?: number;
     unit?: string;
+    /** Nama langkah berjalan (tampil di kanan bila tidak ada hitungan item). */
+    label?: ReactNode;
     className?: string;
 }) {
-    const ratio =
-        done !== undefined && total
-            ? done / total
-            : Math.min(1, step / totalSteps);
+    const hasCount = done !== undefined && total !== undefined && total > 0;
+    const currentRatio = hasCount ? done / total : 1;
+    const overall = (step - 1 + currentRatio) / totalSteps;
 
     return (
         <div className={cn('space-y-2', className)}>
-            <div className="flex items-baseline justify-between text-[13px]">
-                <span className="text-muted-foreground">
-                    Langkah {step} dari {totalSteps}
-                </span>
-                {done !== undefined && total !== undefined && (
-                    <span className="font-semibold" aria-live="polite">
-                        {done}/{total} {unit}
-                    </span>
-                )}
-            </div>
             <div
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-valuenow={Math.round(ratio * 100)}
+                aria-valuenow={Math.round(overall * 100)}
                 aria-label="Kemajuan pengisian"
-                className="h-1.5 overflow-hidden rounded-full bg-muted hc:border hc:border-foreground"
+                className="flex gap-1"
             >
-                <div
-                    className="h-full rounded-full bg-brand transition-[width] duration-300 ease-out"
-                    style={{ width: ratio * 100 + '%' }}
-                />
+                {Array.from({ length: totalSteps }, (_, i) => {
+                    const fill =
+                        i < step - 1 ? 1 : i === step - 1 ? currentRatio : 0;
+
+                    return (
+                        <span
+                            key={i}
+                            className="h-1 flex-1 overflow-hidden rounded-full bg-muted hc:border hc:border-foreground"
+                        >
+                            <span
+                                className="block h-full rounded-full bg-brand transition-[width] duration-300 ease-out"
+                                style={{ width: fill * 100 + '%' }}
+                            />
+                        </span>
+                    );
+                })}
+            </div>
+            <div className="flex items-baseline justify-between gap-3 text-[13px]">
+                <span className="text-muted-foreground">
+                    Langkah {step} dari {totalSteps}
+                </span>
+                {hasCount ? (
+                    <span className="font-semibold tnum" aria-live="polite">
+                        {done}/{total} {unit}
+                    </span>
+                ) : (
+                    label && (
+                        <span className="truncate font-semibold">{label}</span>
+                    )
+                )}
             </div>
         </div>
     );

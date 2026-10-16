@@ -149,3 +149,18 @@ test('beranda without any assignment returns empty unit data', function () {
             ->where('unitFindings.count', 0)
         );
 });
+
+test('a pre-start P2H submitted before the shift begins counts for that shift', function () {
+    $this->travelTo(Carbon::parse('2026-10-16 07:00'));
+    $unit = Unit::create(['no_unit' => 'LV-PRE', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']);
+    $session = P2hSession::create(['unit_id' => $unit->id, 'tanggal' => '2026-10-16', 'status' => 'completed', 'created_by' => $this->driver->id]);
+    P2hUserEntry::create([
+        'p2h_session_id' => $session->id, 'user_id' => $this->driver->id, 'user_slot' => 1,
+        'shift' => 'Shift I', 'submitted_at' => '2026-10-16 05:48', 'kondisi_akhir' => 'Layak Pakai',
+    ]);
+
+    $this->actingAs($this->driver)->get(route('driver.dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('sudahP2hShiftIni', true)
+            ->where('currentEntry.submitted_at', '05:48'));
+});
