@@ -103,6 +103,14 @@ class P2hFindingController extends Controller
                 'open' => P2hFinding::where($scope)->where('status', FindingStatus::Open->value)->count(),
                 'progress' => P2hFinding::where($scope)->where('status', FindingStatus::Progress->value)->count(),
                 'overdue' => P2hFinding::where($scope)->unresolved()->whereDate('target_selesai', '<', today())->count(),
+                'critical' => P2hFinding::where($scope)->unresolved()->where('kode_bahaya', 'AA')->count(),
+                'due_today' => P2hFinding::where($scope)->unresolved()->whereDate('target_selesai', today())->count(),
+                'closed' => P2hFinding::where($scope)->where('status', FindingStatus::Closed->value)->count(),
+                'all' => P2hFinding::where($scope)->count(),
+                // Rata-rata umur temuan yang belum selesai, dalam hari (Temuan-Desktop.png)
+                'avg_age_days' => ($dates = P2hFinding::where($scope)->unresolved()->pluck('tanggal_temuan'))->isEmpty()
+                    ? null
+                    : round($dates->avg(fn ($d) => $d->diffInDays(today())), 1),
             ],
             'picOptions' => $canManage
                 ? User::whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'manager', 'driver']))->orderBy('name')->get(['id', 'name'])
