@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AppSetting;
 use App\Models\Site;
 use App\Models\Unit;
+use App\Support\DamageAnalytics;
 use App\Support\UnitUsageAnalytics;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -36,6 +37,7 @@ class UnitAnalyticsController extends Controller
         $jenisUnit = $validated['jenis_unit'] ?? null;
 
         return Inertia::render('unit-analytics/index', [
+            'damage' => DamageAnalytics::build(5, $siteId, $jenisUnit),
             'fuel' => UnitUsageAnalytics::fuel($start, $end, $siteId, $jenisUnit),
             'service' => UnitUsageAnalytics::serviceForecast($siteId, $jenisUnit),
             'filters' => [

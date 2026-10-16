@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Form masuk NRP (komponen)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.ln-bar{animation:ln-bar 1400ms var(--ease-out) both}
+@keyframes ln-bar{from{width:0}to{width:100%}}
+@media (prefers-reduced-motion: reduce){.ln-bar{animation-duration:1ms}}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 100%; max-width: 400px; color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; gap: 20px">
+
+  <sc-if value="{{ showForm }}" hint-placeholder-val="{{ true }}">
+    <form onSubmit="{{ submit }}" class="fade" style="display: flex; flex-direction: column; gap: 18px" novalidate aria-labelledby="ln-t">
+      <div style="display: flex; flex-direction: column; gap: 6px; text-align: {{ textAlign }}">
+        <h1 id="ln-t" style="margin: 0; font-size: 30px; line-height: 1.12; font-weight: 600; letter-spacing: -0.03em">Masuk ke PIMS</h1>
+        <p style="margin: 0; font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Gunakan NRP dan kata sandi Anda.</p>
+      </div>
+
+      <sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="fade" style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 14px; line-height: 20px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          <span class="tnum">{{ formErr }}</span>
+        </div>
+      </sc-if>
+
+      <label style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 500">NRP
+        <span class="field {{ shakeNrp }}" data-invalid="{{ nrpBad }}" style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px; border-radius: 14px; border: var(--bw) solid var(--input); background: {{ fieldBg }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground); flex-shrink: 0"><rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M15 9h3"/><path d="M15 13h3"/><path d="M6 16c.5-1.2 1.6-2 3-2s2.5.8 3 2"/></svg>
+          <input value="{{ nrp }}" onChange="{{ onNrp }}" name="username" autocomplete="username" inputmode="numeric" maxlength="8" placeholder="8 digit, mis. 20231045" aria-invalid="{{ nrpBad }}" aria-describedby="ln-nrp-e" class="tnum" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 17px; letter-spacing: .02em">
+          <sc-if value="{{ nrpOk }}" hint-placeholder-val="{{ false }}"><svg class="fade" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Format NRP benar" role="img"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+        </span>
+        <sc-if value="{{ nrpErr }}" hint-placeholder-val="{{ false }}"><span id="ln-nrp-e" style="font-size: 13px; color: var(--danger); font-weight: 500">{{ nrpErr }}</span></sc-if>
+      </label>
+
+      <label style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 500">Kata sandi
+        <span class="field {{ shakePw }}" data-invalid="{{ pwBad }}" style="display: flex; align-items: center; gap: 6px; height: 56px; padding: 0 6px 0 16px; border-radius: 14px; border: var(--bw) solid var(--input); background: {{ fieldBg }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground); flex-shrink: 0"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="{{ pwType }}" value="{{ pw }}" onChange="{{ onPw }}" onKeyUp="{{ capsCheck }}" onKeyDown="{{ capsCheck }}" name="password" autocomplete="current-password" aria-invalid="{{ pwBad }}" aria-describedby="ln-pw-e" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 17px">
+          <button type="button" onClick="{{ togglePw }}" aria-label="{{ eyeLabel }}" aria-pressed="{{ pwShown }}" style="width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--muted-foreground); display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <sc-if value="{{ pwHidden }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></sc-if>
+            <sc-if value="{{ pwShown }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.53 0 8.36 2.94 9.94 7a10.8 10.8 0 0 1-1.6 2.8"/><path d="M6.6 6.6A10.7 10.7 0 0 0 2.06 12a10.75 10.75 0 0 0 15.34 5.4"/><path d="m2 2 20 20"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/></svg></sc-if>
+          </button>
+        </span>
+        <sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><span id="ln-pw-e" style="font-size: 13px; color: var(--danger); font-weight: 500">{{ pwErr }}</span></sc-if>
+        <sc-if value="{{ caps }}" hint-placeholder-val="{{ false }}"><span class="fade" role="status" style="font-size: 13px; color: var(--warning); font-weight: 500">Caps Lock aktif</span></sc-if>
+      </label>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: -4px">
+        <label style="display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{ remember }}" onChange="{{ toggleRemember }}" style="width: 18px; height: 18px; accent-color: {{ accent }}">Ingat perangkat ini</label>
+        <a href="Auth.dc.html" style="font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px">Lupa kata sandi?</a>
+      </div>
+
+      <button type="submit" class="press" aria-disabled="{{ lockedS }}" style="height: 56px; border: 0; border-radius: 14px; background: {{ ctaBg }}; color: {{ ctaFg }}; font: inherit; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+        <sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg></sc-if>
+        <span class="tnum">{{ ctaLabel }}</span>
+      </button>
+
+      <p style="margin: 0; font-size: 13px; line-height: 19px; color: var(--muted-foreground); text-align: {{ textAlign }}">Belum punya akun atau NRP terkunci? Hubungi admin site Anda.</p>
+      <p class="tnum" style="margin: 0; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 12px; line-height: 18px; color: var(--muted-foreground)">Demo NRP:
+        <sc-for list="{{ demos }}" as="d" hint-placeholder-count="3"><button type="button" onClick="{{ d.fill }}" class="mono" style="padding: 0 2px; border: 0; background: none; color: var(--foreground); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">{{ d.nrp }}</button> {{ d.role }} </sc-for>· sandi apa saja, <span class="mono">salah</span> = error</p>
+    </form>
+  </sc-if>
+
+  <sc-if value="{{ ok }}" hint-placeholder-val="{{ false }}">
+    <div class="fade-up" role="status" style="display: flex; flex-direction: column; gap: 18px; align-items: {{ okAlign }}; text-align: {{ textAlign }}">
+      <span class="pop" style="position: relative; width: 72px; height: 72px; border-radius: 999px; background: var(--brand); color: #0A0A0A; display: flex; align-items: center; justify-content: center">
+        <span class="ring" style="position: absolute; inset: 0; border-radius: 999px; border: 3px solid var(--brand)"></span>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="draw" d="M20 6 9 17l-5-5"/></svg>
+      </span>
+      <div style="display: flex; flex-direction: column; gap: 6px"><h1 style="margin: 0; font-size: 30px; line-height: 1.12; font-weight: 600; letter-spacing: -0.03em">Selamat pagi, {{ who.first }}</h1><p style="margin: 0; font-size: 15px; line-height: 22px; color: var(--muted-foreground)">{{ okSub }}</p></div>
+      <span style="width: 100%; height: 4px; border-radius: 2px; background: var(--muted); overflow: hidden"><span class="ln-bar" style="display: block; height: 100%; background: var(--brand)"></span></span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: {{ okAlign }}">
+        <a href="{{ okHref }}" class="press" style="height: 48px; padding: 0 18px; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">{{ okCta }}</a>
+        <button type="button" onClick="{{ restart }}" class="press" style="height: 48px; padding: 0 16px; border-radius: 12px; border: var(--bw) solid var(--input); background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Ulangi demo</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"align":{"editor":"enum","options":["left","center"],"default":"left"},"$preview":{"width":420,"height":720}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.USERS = {
+      '20231045': { name: 'Budi Santoso', first: 'Budi', role: 'driver' },
+      '19870312': { name: 'Hendra Wijaya', first: 'Hendra', role: 'manager' },
+      '19850704': { name: 'Rina Anggraini', first: 'Rina', role: 'admin' }
+    };
+    this.state = { nrp: '', pw: '', show: false, caps: false, remember: true, tried: false, busy: false, fails: 0, lockUntil: 0, now: 0, formErr: '', shake: '', who: null };
+  }
+  componentWillUnmount() { clearTimeout(this.t1); clearTimeout(this.t2); clearInterval(this.lt); }
+  buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const center = (this.props.align ?? 'left') === 'center';
+    const nrpRaw = s.nrp.trim();
+    const nrpValid = /^\d{8}$/.test(nrpRaw);
+    const nrpErr = s.tried ? (!nrpRaw ? 'Masukkan NRP.' : !nrpValid ? 'NRP harus 8 digit angka.' : '') : '';
+    const pwErr = s.tried && !s.pw ? 'Masukkan kata sandi.' : '';
+    const locked = s.lockUntil > Date.now();
+    const left = Math.max(0, Math.ceil((s.lockUntil - s.now) / 1000));
+    const w = s.who || { first: '' };
+    const okSub = w.role === 'driver' ? 'Membuka Beranda · Shift 1 · DT-1045 menunggu P2H Anda.' : w.role === 'admin' ? 'Akun Admin wajib verifikasi 2 langkah. Lanjutkan dengan kode autentikator.' : 'Membuka Dashboard · Pit A · 5 P2H menunggu persetujuan.';
+    const shakeAll = (msg) => { this.buzz([20, 40, 20]); this.setState({ shake: 'shake', formErr: msg || '' }); clearTimeout(this.t2); this.t2 = setTimeout(() => this.setState({ shake: '' }), 480); };
+    return {
+      theme, textAlign: center ? 'center' : 'left', okAlign: center ? 'center' : 'flex-start',
+      fieldBg: theme === 'dark' ? 'rgba(255,255,255,.04)' : 'var(--background)', accent: theme === 'dark' ? '#F4D435' : '#0A0A0A',
+      showForm: !s.who, ok: !!s.who, who: w, okSub,
+      okHref: w.role === 'driver' ? 'BerandaDriver.dc.html' : w.role === 'admin' ? 'Auth.dc.html' : 'Dashboard.dc.html',
+      okCta: w.role === 'driver' ? 'Ke Beranda' : w.role === 'admin' ? 'Lanjut verifikasi' : 'Ke Dashboard',
+      nrp: s.nrp, onNrp: (e) => this.setState({ nrp: e.target.value.replace(/\D/g, '').slice(0, 8), formErr: '' }),
+      nrpOk: nrpValid, nrpErr, nrpBad: !!nrpErr, shakeNrp: nrpErr ? s.shake : '',
+      pw: s.pw, onPw: (e) => this.setState({ pw: e.target.value, formErr: '' }), pwErr, pwBad: !!pwErr || (!!s.formErr && !locked), shakePw: pwErr ? s.shake : '',
+      pwType: s.show ? 'text' : 'password', pwShown: s.show, pwHidden: !s.show, eyeLabel: s.show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi', togglePw: () => this.setState({ show: !s.show }),
+      caps: s.caps, capsCheck: (e) => { const c = !!(e.getModifierState && e.getModifierState('CapsLock')); if (c !== this.state.caps) this.setState({ caps: c }); },
+      remember: s.remember, toggleRemember: () => this.setState({ remember: !s.remember }),
+      formErr: locked ? 'Terlalu banyak percobaan. Coba lagi dalam ' + left + ' detik.' : s.formErr,
+      busy: s.busy, lockedS: locked, ctaLabel: locked ? 'Tunggu ' + left + ' dtk' : s.busy ? 'Memeriksa…' : 'Masuk',
+      ctaBg: locked ? 'var(--muted)' : 'var(--brand)', ctaFg: locked ? 'var(--muted-foreground)' : '#0A0A0A',
+      demos: [['20231045', 'driver'], ['19870312', 'manager'], ['19850704', 'admin']].map(([nrp, role]) => ({ nrp, role: '(' + role + ')', fill: () => this.setState({ nrp, pw: 'rahasia123', tried: false, formErr: '' }) })),
+      submit: (e) => {
+        e.preventDefault();
+        if (s.busy || locked) return;
+        if (!nrpValid || !s.pw) { this.setState({ tried: true }); shakeAll(''); return; }
+        this.setState({ busy: true, tried: true, formErr: '' });
+        clearTimeout(this.t1);
+        this.t1 = setTimeout(() => {
+          const u = this.USERS[nrpRaw];
+          if (!u || this.state.pw === 'salah') {
+            const fails = this.state.fails + 1;
+            if (fails >= 5) {
+              this.setState({ busy: false, fails: 0, lockUntil: Date.now() + 60000, now: Date.now(), pw: '', tried: false }); shakeAll('');
+              clearInterval(this.lt); this.lt = setInterval(() => { if (this.state.lockUntil <= Date.now()) { clearInterval(this.lt); this.setState({ lockUntil: 0, formErr: '' }); } else this.setState({ now: Date.now() }); }, 1000);
+            } else { this.setState({ busy: false, fails, pw: '', tried: false }); shakeAll('NRP atau kata sandi salah. Sisa ' + (5 - fails) + ' percobaan.'); }
+            return;
+          }
+          this.buzz([10, 30, 10]);
+          this.setState({ busy: false, who: u, fails: 0 });
+        }, 700);
+      },
+      restart: () => this.setState({ who: null, nrp: '', pw: '', tried: false, formErr: '', fails: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

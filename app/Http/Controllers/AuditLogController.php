@@ -48,6 +48,7 @@ class AuditLogController extends Controller
                 'causer_role' => $log->causer?->getRoleNames()->first() ?? '-',
                 'properties' => $log->properties,
                 'created_at' => $log->created_at->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s'),
+                'created_at_iso' => $log->created_at->toIso8601String(),
             ]);
 
         return Inertia::render('audit-log/index', [

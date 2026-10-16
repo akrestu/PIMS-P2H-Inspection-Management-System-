@@ -1,14 +1,6 @@
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import ChecklistItem from './ChecklistItem';
-import { Badge } from '@/components/ui/badge';
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
+import ChecklistItem from './ChecklistItem';
 
 interface Props {
     section: P2hInspectionItem['section'];
@@ -21,32 +13,21 @@ interface Props {
     compressingItems: Record<number, boolean>;
     onItemAttachmentChange: (id: number, files: FileList | null) => void;
     onRemoveItemAttachment: (id: number, idx: number) => void;
-    defaultOpen?: boolean;
+    /** Item yang gagal validasi "Lanjut" + pesannya. */
+    invalid?: { id: number; message: string } | null;
 }
 
-const sectionConfig = {
-    A: {
-        label: 'A — Pemeriksaan Keliling Unit / Di Luar Kabin',
-        headerClass:
-            'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900',
-        badgeClass: 'bg-blue-600 text-white hover:bg-blue-600',
-        dotClass: 'bg-blue-500',
-    },
-    B: {
-        label: 'B — Pemeriksaan Dari Dalam Kabin',
-        headerClass:
-            'bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900',
-        badgeClass: 'bg-indigo-600 text-white hover:bg-indigo-600',
-        dotClass: 'bg-indigo-500',
-    },
-    C: {
-        label: 'C — Kelengkapan Tambahan',
-        headerClass: 'bg-muted/30 border-border',
-        badgeClass: '',
-        dotClass: 'bg-muted-foreground',
-    },
+const SECTION_LABEL: Record<P2hInspectionItem['section'], string> = {
+    A: 'Keliling unit / luar kabin',
+    B: 'Dari dalam kabin',
+    C: 'Kelengkapan tambahan',
 };
 
+/**
+ * Satu kategori checklist (FormP2H.dc.html): judul 20px + hitungan "n/total"
+ * (hijau bila lengkap & semua layak, merah bila ada Tidak Layak), lalu baris item
+ * dipisah garis — tanpa kartu/akordeon agar semua item terlihat saat menggulir.
+ */
 export default function ChecklistGroup({
     section,
     items,
@@ -58,113 +39,57 @@ export default function ChecklistGroup({
     compressingItems,
     onItemAttachmentChange,
     onRemoveItemAttachment,
-    defaultOpen = false,
+    invalid,
 }: Props) {
-    const [open, setOpen] = useState(defaultOpen);
-    const config = sectionConfig[section];
-
-    const filledCount = items.filter(
-        (item) =>
-            answers[item.id]?.kondisi !== null &&
-            answers[item.id]?.kondisi !== undefined,
-    ).length;
+    const filledCount = items.filter((item) => !!answers[item.id]?.kondisi).length;
     const allFilled = filledCount === items.length;
     const hasTL = items.some(
         (item) => answers[item.id]?.kondisi === 'Tidak Layak',
     );
-    const hasAATL = items.some(
-        (item) =>
-            answers[item.id]?.kondisi === 'Tidak Layak' &&
-            item.kode_bahaya === 'AA',
-    );
 
     return (
-        <Collapsible open={open} onOpenChange={setOpen}>
-            <CollapsibleTrigger asChild>
-                <button
-                    type="button"
+        <section aria-labelledby={`seksi-${section}`} className="flex flex-col">
+            <div className="flex items-baseline justify-between gap-3 px-0.5 pb-2">
+                <h2
+                    id={`seksi-${section}`}
+                    className="text-xl font-semibold tracking-[-0.015em]"
+                >
+                    {SECTION_LABEL[section]}
+                </h2>
+                <span
                     className={cn(
-                        'flex w-full items-center justify-between rounded-lg border px-4 py-3 transition-colors',
-                        config.headerClass,
-                        hasAATL && 'border-red-400 dark:border-red-700',
-                        'hover:brightness-95 active:brightness-90',
+                        'shrink-0 text-sm font-semibold tnum',
+                        hasTL
+                            ? 'text-danger'
+                            : allFilled
+                              ? 'text-success'
+                              : 'text-muted-foreground',
                     )}
                 >
-                    <div className="flex items-center gap-2.5">
-                        <span
-                            className={cn(
-                                'h-2.5 w-2.5 shrink-0 rounded-full',
-                                config.dotClass,
-                            )}
-                        />
-                        <span className="text-base font-semibold">
-                            Seksi {config.label}
-                        </span>
-                        <Badge
-                            className={cn(
-                                'px-2 py-0 text-sm',
-                                config.badgeClass,
-                            )}
-                        >
-                            {items.length} item
-                        </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {hasAATL && (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400">
-                                Stop!
-                            </span>
-                        )}
-                        <span
-                            className={cn(
-                                'rounded-full px-2 py-0.5 text-xs font-medium',
-                                allFilled &&
-                                    !hasTL &&
-                                    'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
-                                allFilled &&
-                                    hasTL &&
-                                    'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
-                                !allFilled && 'bg-muted text-muted-foreground',
-                            )}
-                        >
-                            {filledCount}/{items.length}
-                        </span>
-                        <ChevronDown
-                            className={cn(
-                                'h-4 w-4 text-muted-foreground transition-transform duration-200',
-                                open && 'rotate-180',
-                            )}
-                        />
-                    </div>
-                </button>
-            </CollapsibleTrigger>
-
-            <CollapsibleContent className="overflow-hidden duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-1 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1">
-                <div className="mt-2 space-y-2">
-                    {items.map((item) => (
-                        <ChecklistItem
-                            key={item.id}
-                            item={item}
-                            answer={
-                                answers[item.id] ?? {
-                                    inspection_item_id: item.id,
-                                    kondisi: null,
-                                    keterangan: '',
-                                }
-                            }
-                            onChange={onChange}
-                            onKeteranganChange={onKeteranganChange}
-                            attachments={itemAttachments[item.id] ?? []}
-                            attachmentPreviews={
-                                itemAttachmentPreviews[item.id] ?? []
-                            }
-                            compressing={compressingItems[item.id] ?? false}
-                            onAttachmentChange={onItemAttachmentChange}
-                            onRemoveAttachment={onRemoveItemAttachment}
-                        />
-                    ))}
-                </div>
-            </CollapsibleContent>
-        </Collapsible>
+                    {filledCount}/{items.length}
+                </span>
+            </div>
+            {items.map((item) => (
+                <ChecklistItem
+                    key={item.id}
+                    item={item}
+                    answer={
+                        answers[item.id] ?? {
+                            inspection_item_id: item.id,
+                            kondisi: null,
+                            keterangan: '',
+                        }
+                    }
+                    onChange={onChange}
+                    onKeteranganChange={onKeteranganChange}
+                    attachments={itemAttachments[item.id] ?? []}
+                    attachmentPreviews={itemAttachmentPreviews[item.id] ?? []}
+                    compressing={compressingItems[item.id] ?? false}
+                    onAttachmentChange={onItemAttachmentChange}
+                    onRemoveAttachment={onRemoveItemAttachment}
+                    error={invalid?.id === item.id ? invalid.message : null}
+                />
+            ))}
+        </section>
     );
 }

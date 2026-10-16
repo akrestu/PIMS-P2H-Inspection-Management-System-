@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Notifikasi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 8px 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: var(--bw) solid var(--border)">
+    <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+      <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+      <span style="flex: 1; font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Notifikasi</span>
+      <button type="button" class="press" onClick="{{ readAll }}" disabled="{{ noUnread }}" style="height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; opacity: {{ readAllOp }}">Tandai semua dibaca</button>
+    </div>
+    <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 8px; padding: 3px; border-radius: 10px; background: var(--muted)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+        <button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 40px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 14px; font-weight: 600"><span class="tnum">{{ t.label }}</span></button>
+      </sc-for>
+    </div>
+  </header>
+
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 128px 0 40px">
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+      <section style="display: flex; flex-direction: column; padding-bottom: 12px">
+        <h2 style="margin: 0; padding: 12px 20px 6px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground)">{{ g.name }}</h2>
+        <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="2">
+          <div class="fade" style="position: relative; display: flex; align-items: flex-start; background: {{ n.bg }}">
+            <a href="{{ n.href }}" class="press hl" onClick="{{ n.open }}" style="flex: 1; min-width: 0; display: flex; gap: 12px; padding: 14px 4px 14px 20px; text-decoration: none; color: var(--foreground)">
+              <span style="position: relative; width: 40px; height: 40px; border-radius: 12px; background: {{ n.iconBg }}; color: {{ n.iconFg }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <sc-if value="{{ n.iEsc }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></sc-if>
+                <sc-if value="{{ n.iCrit }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></sc-if>
+                <sc-if value="{{ n.iAppr }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></sc-if>
+                <sc-if value="{{ n.iClock }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></sc-if>
+                <sc-if value="{{ n.iUser }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></sc-if>
+              </span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <span style="display: flex; gap: 8px; align-items: baseline">
+                  <span style="flex: 1; font-size: 15px; line-height: 21px; font-weight: {{ n.w }}"><sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span aria-label="Belum dibaca" style="display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: 2px; border-radius: 9px; background: var(--brand); box-shadow: 0 0 0 1.5px var(--foreground)"></span></sc-if>{{ n.title }}</span>
+                  <span class="tnum" style="font-size: 12px; color: var(--muted-foreground); white-space: nowrap">{{ n.time }}</span>
+                </span>
+                <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">{{ n.body }}</span>
+              </span>
+            </a>
+            <button type="button" class="press hl" onClick="{{ n.menu }}" aria-label="Opsi notifikasi {{ n.title }}" style="position: relative; width: 44px; height: 44px; margin: 12px 8px 0 0; border: 0; border-radius: 10px; background: transparent; color: var(--muted-foreground); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+            </button>
+          </div>
+        </sc-for>
+      </section>
+    </sc-for>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+      <div class="fade" style="position: relative; overflow: hidden; margin: 16px; padding: 40px 20px; border-radius: 20px; background: var(--muted-2); display: flex; flex-direction: column; gap: 8px">
+        <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -240px; top: -120px; width: 600px; opacity: .35; pointer-events: none">
+        <strong style="position: relative; font-size: 18px; font-weight: 600">Semua sudah dibaca</strong>
+        <span style="position: relative; font-size: 15px; color: var(--muted-foreground)">Notifikasi baru akan muncul di sini.</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ menuOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-label="Opsi notifikasi" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; padding: 0 12px 20px; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3); display: flex; flex-direction: column">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <span style="padding: 4px 8px 10px; font-size: 14px; color: var(--muted-foreground)">{{ menuTitle }}</span>
+      <button type="button" class="press hl" onClick="{{ mToggle }}" style="height: 56px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); font: inherit; font-size: 16px; text-align: left; padding: 0 8px">{{ mToggleLabel }}</button>
+      <button type="button" class="press hl" onClick="{{ mMute }}" style="height: 56px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); font: inherit; font-size: 16px; text-align: left; padding: 0 8px">Matikan jenis "{{ menuType }}"</button>
+      <button type="button" class="press hl" onClick="{{ mDelete }}" style="height: 56px; border: 0; border-radius: 12px; background: transparent; color: var(--danger); font: inherit; font-size: 16px; font-weight: 600; text-align: left; padding: 0 8px">Hapus notifikasi</button>
+      <button type="button" class="press" onClick="{{ mClose }}" style="margin-top: 8px; height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 24px; z-index: 12; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <span style="flex: 1">{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.ALL = [
+      { id: 'n1', g: 'Butuh tindakan', kind: 'esc', type: 'Eskalasi approval', title: 'P2H LV-031 belum disetujui 34 menit', body: 'Dieskalasi ke Anda dari Hendra W.', time: '06:26', href: 'Persetujuan.dc.html', unread: true },
+      { id: 'n2', g: 'Butuh tindakan', kind: 'crit', type: 'Item kritis rusak', title: 'EX-2003 · Rem parkir rusak', body: 'P2H Tidak Layak oleh Dedi K. Unit otomatis BD sejak 05:57.', time: '05:57', href: 'Temuan.dc.html', unread: true },
+      { id: 'n3', g: 'Butuh tindakan', kind: 'appr', type: 'Permintaan approval', title: '3 P2H baru menunggu persetujuan', body: 'DT-1045, DT-1088, LV-029', time: '06:06', href: 'Persetujuan.dc.html', unread: true },
+      { id: 'n4', g: 'Temuan', kind: 'clock', type: 'Temuan overdue', title: 'T-0231 lewat tenggat 1 hari', body: 'Rembesan oli selang hidrolik · DT-1045 · PJ Yanto', time: '06:00', href: 'Temuan.dc.html', unread: true },
+      { id: 'n5', g: 'Temuan', kind: 'user', type: 'Temuan ditugaskan', title: 'T-0235 ditugaskan ke Yanto', body: 'Rem parkir tidak menahan unit · EX-2003', time: '06:01', href: 'Temuan.dc.html', unread: false },
+      { id: 'n6', g: 'Info', kind: 'clock', type: 'Pengingat belum P2H', title: '6 unit belum P2H Shift 1', body: 'Batas 06:30. Ketuk untuk mengingatkan driver.', time: '06:12', href: 'Monitoring.dc.html', unread: true },
+      { id: 'n7', g: 'Info', kind: 'appr', type: 'Hasil approval', title: 'P2H DT-1022 disetujui', body: 'oleh Hendra W. · 06:20', time: '06:20', href: 'Monitoring.dc.html', unread: false }
+    ];
+    this.state = { read: {}, del: {}, tab: 'semua', menu: null, toast: null };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2400); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const live = this.ALL.filter((n) => !s.del[n.id]).map((n) => ({ ...n, unread: s.read[n.id] === false ? true : (n.unread && !s.read[n.id]) }));
+    const unreadN = live.filter((n) => n.unread).length;
+    const shown = live.filter((n) => s.tab === 'semua' || n.unread);
+    const K = { esc: ['var(--warning-soft)', 'var(--warning)'], crit: ['var(--danger-soft)', 'var(--danger)'], appr: ['var(--muted)', 'var(--foreground)'], clock: ['var(--warning-soft)', 'var(--warning)'], user: ['var(--info-soft)', 'var(--info)'] };
+    const names = ['Butuh tindakan', 'Temuan', 'Info'];
+    const groups = names.map((name) => ({ name, items: shown.filter((n) => n.g === name).map((n) => ({
+      ...n, iconBg: K[n.kind][0], iconFg: K[n.kind][1], iEsc: n.kind === 'esc', iCrit: n.kind === 'crit', iAppr: n.kind === 'appr', iClock: n.kind === 'clock', iUser: n.kind === 'user',
+      w: n.unread ? 600 : 400, bg: n.unread ? 'var(--muted-2)' : 'transparent', dotOp: n.unread ? 1 : 0,
+      open: () => this.setState({ read: { ...this.state.read, [n.id]: true } }),
+      menu: () => this.setState({ menu: n.id })
+    })) })).filter((g) => g.items.length);
+    const m = live.find((n) => n.id === s.menu);
+    const tabs = [['semua', 'Semua · ' + live.length], ['unread', 'Belum dibaca · ' + unreadN]].map(([k, label]) => ({ label, on: s.tab === k, bg: s.tab === k ? 'var(--card)' : 'transparent', shadow: s.tab === k ? 'var(--shadow-2)' : 'none', fg: s.tab === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ tab: k }) }));
+    const toastOn = !!s.toast;
+    return {
+      theme, tabs, groups, empty: groups.length === 0, noUnread: unreadN === 0, readAllOp: unreadN ? 1 : 0.4,
+      readAll: () => { const prev = s.read; const r = { ...prev }; live.forEach((n) => { r[n.id] = true; }); this.setState({ read: r }); this.toast(unreadN + ' notifikasi ditandai dibaca', () => this.setState({ read: prev })); },
+      menuOn: !!m, menuTitle: m ? m.title : '', menuType: m ? m.type : '',
+      mToggleLabel: m && m.unread ? 'Tandai dibaca' : 'Tandai belum dibaca',
+      mToggle: () => { this.setState({ read: { ...s.read, [m.id]: !!m.unread }, menu: null }); },
+      mMute: () => { this.setState({ menu: null }); this.toast('Jenis "' + m.type + '" dimatikan · ubah di Pengaturan'); },
+      mDelete: () => { const prev = s.del; this.setState({ del: { ...prev, [m.id]: true }, menu: null }); this.toast('Notifikasi dihapus', () => this.setState({ del: prev })); },
+      mClose: () => this.setState({ menu: null }),
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

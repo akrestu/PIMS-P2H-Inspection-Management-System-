@@ -1,13 +1,12 @@
 import { Head, router, useForm, useHttp } from '@inertiajs/react';
 import {
     AlarmClock,
-    Camera,
-    ImageIcon,
+    AlertTriangle,
+    ChevronRight,
     Pencil,
     Repeat,
     Search,
     Sparkles,
-    Wrench,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -17,10 +16,14 @@ import {
 } from '@/actions/App/Http/Controllers/P2hFindingController';
 import InputError from '@/components/input-error';
 import { PageButtons } from '@/components/pagination-bar';
+import { FilterChips } from '@/components/pims/filter-chips';
+import { KpiCard, KpiStrip } from '@/components/pims/kpi';
+import { PageHeader } from '@/components/pims/page-header';
+import type { StatusKey } from '@/components/pims/status-pill';
+import { KritisTag, StatusPill } from '@/components/pims/status-pill';
 import { SortableHead } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -40,7 +43,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useInitials } from '@/hooks/use-initials';
 import { useRowSelection } from '@/hooks/use-row-selection';
+import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -79,7 +89,16 @@ interface Props {
         last_page: number;
         total: number;
     };
-    counts: { open: number; progress: number; overdue: number };
+    counts: {
+        open: number;
+        progress: number;
+        overdue: number;
+        critical: number;
+        due_today: number;
+        closed: number;
+        all: number;
+        avg_age_days: number | null;
+    };
     picOptions: { id: number; name: string }[];
     sites: { id: number; name: string }[];
     filters: { status: string; site_id: number | null; search: string | null };
@@ -100,20 +119,30 @@ interface FindingForm {
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
     open: {
         label: 'Open',
-        className:
-            'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+        className: 'bg-info-soft text-info border-info/40',
     },
     progress: {
         label: 'On Progress',
-        className:
-            'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+        className: 'bg-warning-soft text-warning border-warning/40',
     },
     closed: {
         label: 'Closed',
-        className:
-            'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+        className: 'bg-success-soft text-success border-success/40',
     },
 };
+
+/** Status temuan → StatusPill (Open = info, On Progress = warning, Closed = success). */
+function FindingStatusPill({ status }: { status: Status }) {
+    const key: Record<Status, StatusKey> = {
+        open: 'open',
+        progress: 'menunggu',
+        closed: 'closed',
+    };
+
+    return (
+        <StatusPill status={key[status]} label={STATUS_CONFIG[status].label} />
+    );
+}
 
 function formatDate(date: string | null): string {
     if (!date) {
@@ -145,7 +174,7 @@ function FindingFlags({
             {overdue && (
                 <Badge
                     variant="outline"
-                    className="gap-1 border-red-300 text-red-700 dark:border-red-800 dark:text-red-400"
+                    className="gap-1 border-danger/40 text-danger"
                 >
                     <AlarmClock className="h-3 w-3" /> Lewat target
                 </Badge>
@@ -153,7 +182,7 @@ function FindingFlags({
             {berulang && (
                 <Badge
                     variant="outline"
-                    className="gap-1 border-purple-300 text-purple-700 dark:border-purple-800 dark:text-purple-400"
+                    className="gap-1 border-info/40 text-info"
                 >
                     <Repeat className="h-3 w-3" /> Berulang {berulang}x/
                     {windowDays} hari
@@ -748,6 +777,7 @@ export default function P2hFindings({
     );
     const title = canManage ? 'Temuan P2H' : 'Temuan Saya';
     const [search, setSearch] = useState(filters.search ?? '');
+    const getInitials = useInitials();
 
     const applyFilter = (
         next: Partial<Props['filters']> & { page?: number },
@@ -759,150 +789,119 @@ export default function P2hFindings({
         );
     };
 
+    const kpis = [
+        {
+            label: 'Belum selesai',
+            value: counts.open + counts.progress,
+            sub: `${counts.critical} kritis`,
+            tone: 'default' as const,
+        },
+        {
+            label: 'Lewat tenggat',
+            value: counts.overdue,
+            sub: counts.overdue > 0 ? 'perlu eskalasi ke PIC' : 'Semua sesuai tenggat',
+            tone: counts.overdue > 0 ? ('danger' as const) : ('default' as const),
+        },
+        {
+            label: 'Jatuh tempo hari ini',
+            value: counts.due_today,
+            sub: 'target selesai hari ini',
+            tone: counts.due_today > 0 ? ('warning' as const) : ('default' as const),
+        },
+        {
+            label: 'Rata-rata umur open',
+            value: counts.avg_age_days === null ? '—' : `${formatNumber(counts.avg_age_days)} hari`,
+            sub: 'target ≤ 2 hari',
+            tone:
+                (counts.avg_age_days ?? 0) > 2
+                    ? ('warning' as const)
+                    : ('default' as const),
+        },
+    ];
+
     return (
         <>
             <Head title={title} />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <Wrench className="h-6 w-6 text-primary" />
-                            {title}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {canManage
-                                ? 'Pantau tindakan perbaikan dan PIC setiap temuan'
-                                : 'Temuan yang ditugaskan kepada Anda — perbarui progress perbaikannya'}{' '}
-                            ·{' '}
-                            <span className="font-medium text-red-600">
-                                {counts.open} open
-                            </span>{' '}
-                            ·{' '}
-                            <span className="font-medium text-amber-600">
-                                {counts.progress} on progress
-                            </span>
-                        </p>
-                    </div>
-                </div>
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
+                <PageHeader
+                    title={canManage ? 'Temuan' : 'Temuan saya'}
+                    description={`${counts.open + counts.progress} belum selesai · ${counts.overdue} lewat tenggat${canManage ? '' : ' · ditugaskan kepada Anda'}`}
+                />
 
-                {/* ── Overdue alert ── */}
-                {counts.overdue > 0 && filters.status !== 'overdue' && (
-                    <button
-                        type="button"
-                        onClick={() =>
-                            applyFilter({ status: 'overdue', page: 1 })
-                        }
-                        className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-left dark:border-red-900 dark:bg-red-950/20"
-                    >
-                        <AlarmClock className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                        <p className="text-sm text-red-700 dark:text-red-300">
-                            <strong>{counts.overdue} temuan</strong> melewati
-                            target selesai. Klik untuk melihat.
-                        </p>
-                    </button>
-                )}
+                <KpiStrip cols={4}>
+                    {kpis.map((k) => (
+                        <KpiCard
+                            key={k.label}
+                            label={k.label}
+                            value={k.value}
+                            sub={k.sub}
+                            tone={k.tone}
+                        />
+                    ))}
+                </KpiStrip>
 
                 {/* ── Filters ── */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                     <form
-                        className="relative"
+                        className="relative w-full lg:w-72"
                         onSubmit={(e) => {
                             e.preventDefault();
                             applyFilter({ search: search || null, page: 1 });
                         }}
                     >
-                        <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari unit / item..."
-                            className="h-9 w-56 pl-8"
+                            placeholder="Cari unit atau item"
+                            aria-label="Cari temuan"
+                            className="h-12 w-full pl-10 lg:h-10"
                         />
                     </form>
-                    <Select
+                    <FilterChips
+                        label="Filter status temuan"
                         value={filters.status}
-                        onValueChange={(v) =>
-                            applyFilter({ status: v, page: 1 })
-                        }
-                    >
-                        <SelectTrigger className="h-9 w-44">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unresolved">
-                                Belum selesai
-                            </SelectItem>
-                            <SelectItem value="overdue">
-                                Lewat target
-                            </SelectItem>
-                            <SelectItem value="open">Open</SelectItem>
-                            <SelectItem value="progress">
-                                On Progress
-                            </SelectItem>
-                            <SelectItem value="closed">Closed</SelectItem>
-                            <SelectItem value="all">Semua</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select
-                        value={
-                            filters.site_id ? String(filters.site_id) : 'all'
-                        }
-                        onValueChange={(v) =>
-                            applyFilter({
-                                site_id: v === 'all' ? null : Number(v),
-                                page: 1,
-                            })
-                        }
-                    >
-                        <SelectTrigger
-                            className={cn('h-9 w-44', !canManage && 'hidden')}
+                        onChange={(v) => applyFilter({ status: v, page: 1 })}
+                        className="-mx-4 px-4 lg:mx-0 lg:px-0"
+                        options={[
+                            { value: 'unresolved', label: 'Belum selesai', count: counts.open + counts.progress },
+                            { value: 'overdue', label: 'Lewat tenggat', count: counts.overdue },
+                            { value: 'closed', label: 'Closed', count: counts.closed },
+                            { value: 'all', label: 'Semua', count: counts.all },
+                        ]}
+                    />
+                    {canManage && sites.length > 1 && (
+                        <Select
+                            value={filters.site_id ? String(filters.site_id) : 'all'}
+                            onValueChange={(v) =>
+                                applyFilter({
+                                    site_id: v === 'all' ? null : Number(v),
+                                    page: 1,
+                                })
+                            }
                         >
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Semua site</SelectItem>
-                            {sites.map((s) => (
-                                <SelectItem key={s.id} value={String(s.id)}>
-                                    {s.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                            <SelectTrigger
+                                aria-label="Filter site"
+                                className="h-12 w-full lg:ml-auto lg:h-10 lg:w-44"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua site</SelectItem>
+                                {sites.map((s) => (
+                                    <SelectItem key={s.id} value={String(s.id)}>
+                                        {s.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
-
-                {/* ── Aksi massal (admin/manager) ── */}
-                {canManage && selection.selected.length > 0 && (
-                    <div
-                        role="region"
-                        aria-label="Aksi massal"
-                        className="hidden flex-wrap items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 md:flex"
-                    >
-                        <span className="text-sm font-medium">
-                            {selection.selected.length} temuan dipilih
-                        </span>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-muted-foreground"
-                            onClick={selection.clear}
-                        >
-                            Batal pilih
-                        </Button>
-                        <Button
-                            size="sm"
-                            className="ml-auto h-8 gap-1.5"
-                            onClick={() => setBatchOpen(true)}
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Update massal
-                        </Button>
-                    </div>
-                )}
 
                 {/* ── List: kartu di HP ── */}
                 <div className="flex flex-col gap-3 md:hidden">
                     {findings.data.length === 0 && (
-                        <p className="rounded-lg border py-10 text-center text-sm text-muted-foreground">
+                        <p className="rounded-[14px] border py-10 text-center text-sm text-muted-foreground">
                             Tidak ada temuan.
                         </p>
                     )}
@@ -916,259 +915,173 @@ export default function P2hFindings({
                     ))}
                 </div>
 
-                {/* ── List: tabel di layar lebar ── */}
-                <Card className="hidden md:block">
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                                    <tr>
-                                        {canManage && (
-                                            <th className="w-10 py-3 pl-4">
-                                                <Checkbox
-                                                    checked={
-                                                        selection.allSelected
-                                                            ? true
-                                                            : selection.someSelected
-                                                              ? 'indeterminate'
-                                                              : false
-                                                    }
-                                                    onCheckedChange={
-                                                        selection.toggleAll
-                                                    }
-                                                    aria-label="Pilih semua temuan"
-                                                    disabled={
-                                                        findings.data.length ===
-                                                        0
-                                                    }
-                                                />
-                                            </th>
-                                        )}
-                                        <SortableHead
-                                            column="tanggal_temuan"
-                                            descFirst
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            Tanggal
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="unit"
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            Unit
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="item_nama"
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            Temuan
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="tindakan_perbaikan"
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            Tindakan perbaikan
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="pic"
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            PIC
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="target_selesai"
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            Target
-                                        </SortableHead>
-                                        <SortableHead
-                                            column="status"
-                                            plain
-                                            className="px-4 py-3"
-                                        >
-                                            Status
-                                        </SortableHead>
-                                        <th className="px-4 py-3" />
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {findings.data.length === 0 && (
-                                        <tr>
-                                            <td
-                                                colSpan={canManage ? 9 : 8}
-                                                className="px-4 py-10 text-center text-muted-foreground"
-                                            >
-                                                Tidak ada temuan.
-                                            </td>
-                                        </tr>
+                {/* ── List: tabel di layar lebar (Temuan-Desktop.png) ── */}
+                <div className="hidden overflow-x-auto rounded-[14px] border-(length:--bw) md:block">
+                    <table className="w-full min-w-[960px] text-sm">
+                        <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                            <tr className="h-11">
+                                {canManage && (
+                                    <th className="w-12 pl-4">
+                                        <Checkbox
+                                            checked={
+                                                selection.allSelected
+                                                    ? true
+                                                    : selection.someSelected
+                                                      ? 'indeterminate'
+                                                      : false
+                                            }
+                                            onCheckedChange={selection.toggleAll}
+                                            aria-label="Pilih semua temuan"
+                                            disabled={findings.data.length === 0}
+                                        />
+                                    </th>
+                                )}
+                                <th className="px-4 font-semibold">ID</th>
+                                <SortableHead column="unit" plain className="px-4">
+                                    Unit
+                                </SortableHead>
+                                <SortableHead column="item_nama" plain className="px-4">
+                                    Temuan
+                                </SortableHead>
+                                <SortableHead column="target_selesai" plain className="px-4">
+                                    Tenggat
+                                </SortableHead>
+                                <SortableHead column="status" plain className="px-4">
+                                    Status
+                                </SortableHead>
+                                <SortableHead column="tanggal_temuan" plain className="px-4">
+                                    Umur
+                                </SortableHead>
+                                <SortableHead column="pic" plain className="px-4">
+                                    PIC
+                                </SortableHead>
+                                <th className="px-4">
+                                    <span className="sr-only">Aksi</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {findings.data.length === 0 && (
+                                <tr>
+                                    <td
+                                        colSpan={canManage ? 9 : 8}
+                                        className="px-4 py-10 text-center text-muted-foreground"
+                                    >
+                                        Tidak ada temuan.
+                                    </td>
+                                </tr>
+                            )}
+                            {findings.data.map((f) => (
+                                <tr
+                                    key={f.id}
+                                    className={cn(
+                                        'h-[60px] border-t-(length:--bw)',
+                                        selection.isSelected(f.id) && 'bg-brand-soft',
                                     )}
-                                    {findings.data.map((f) => (
-                                        <tr
-                                            key={f.id}
-                                            className={cn(
-                                                'align-top',
-                                                selection.isSelected(f.id) &&
-                                                    'bg-muted/50',
-                                            )}
+                                >
+                                    {canManage && (
+                                        <td className="pl-4">
+                                            <Checkbox
+                                                checked={selection.isSelected(f.id)}
+                                                onCheckedChange={() => selection.toggle(f.id)}
+                                                aria-label={`Pilih temuan ${f.no_unit} ${f.item_nama}`}
+                                            />
+                                        </td>
+                                    )}
+                                    <td className="px-4 font-mono text-[13px] text-muted-foreground">
+                                        {findingCode(f.id)}
+                                    </td>
+                                    <td className="px-4 font-semibold whitespace-nowrap tnum">
+                                        {f.no_unit}
+                                    </td>
+                                    <td className="max-w-[420px] px-4 py-2.5">
+                                        <p className="flex flex-wrap items-center gap-2 font-medium">
+                                            {f.item_nama}
+                                            {f.kode_bahaya === 'AA' && <KritisTag />}
+                                        </p>
+                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                            P2H {formatDate(f.tanggal_temuan)}
+                                            {f.keterangan && ` · ${f.keterangan}`}
+                                            {f.keputusan_unit === 'BD' && ' · unit BD'}
+                                        </p>
+                                        <ReportCount finding={f} />
+                                        {f.berulang && (
+                                            <FindingFlags
+                                                overdue={false}
+                                                berulang={f.berulang}
+                                                windowDays={recurringWindowDays}
+                                            />
+                                        )}
+                                    </td>
+                                    <td className="px-4 whitespace-nowrap">
+                                        <DueText finding={f} />
+                                    </td>
+                                    <td className="px-4">
+                                        <FindingStatusPill status={f.status} />
+                                    </td>
+                                    <td className="px-4 whitespace-nowrap tnum">
+                                        {f.status === 'closed' ? '—' : ageText(f.tanggal_temuan)}
+                                    </td>
+                                    <td className="px-4">
+                                        {f.pic_name ? (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span
+                                                        tabIndex={0}
+                                                        className="grid size-8 place-items-center rounded-full bg-muted text-[11px] font-semibold"
+                                                    >
+                                                        {getInitials(f.pic_name)}
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{f.pic_name}</TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">—</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 text-right">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setEditing(f)}
                                         >
-                                            {canManage && (
-                                                <td className="py-3 pl-4">
-                                                    <Checkbox
-                                                        checked={selection.isSelected(
-                                                            f.id,
-                                                        )}
-                                                        onCheckedChange={() =>
-                                                            selection.toggle(
-                                                                f.id,
-                                                            )
-                                                        }
-                                                        aria-label={`Pilih temuan ${f.no_unit} ${f.item_nama}`}
-                                                    />
-                                                </td>
-                                            )}
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                {formatDate(f.tanggal_temuan)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <p className="font-medium">
-                                                    {f.no_unit}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {f.jenis_unit}
-                                                </p>
-                                                {f.keputusan_unit && (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={cn(
-                                                            'mt-1',
-                                                            f.keputusan_unit ===
-                                                                'BD'
-                                                                ? 'border-red-300 text-red-700 dark:border-red-800 dark:text-red-400'
-                                                                : 'border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400',
-                                                        )}
-                                                        title={
-                                                            f.alasan_keputusan ??
-                                                            undefined
-                                                        }
-                                                    >
-                                                        {f.keputusan_unit ===
-                                                        'BD'
-                                                            ? 'Diputuskan BD'
-                                                            : 'Diputuskan Layak'}
-                                                    </Badge>
-                                                )}
-                                                {f.alasan_keputusan && (
-                                                    <p className="mt-1 max-w-48 text-xs text-muted-foreground italic">
-                                                        “{f.alasan_keputusan}”
-                                                    </p>
-                                                )}
-                                            </td>
-                                            <td className="max-w-64 px-4 py-3">
-                                                <p className="font-medium">
-                                                    {f.item_nama}
-                                                    {f.kode_bahaya === 'AA' && (
-                                                        <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
-                                                            AA
-                                                        </Badge>
-                                                    )}
-                                                </p>
-                                                {f.keterangan && (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {f.keterangan}
-                                                    </p>
-                                                )}
-                                                <ReportCount finding={f} />
-                                                <FindingFlags
-                                                    overdue={f.overdue}
-                                                    berulang={f.berulang}
-                                                    windowDays={
-                                                        recurringWindowDays
-                                                    }
-                                                />
-                                            </td>
-                                            <td className="max-w-64 px-4 py-3">
-                                                {f.tindakan_perbaikan || (
-                                                    <span className="text-muted-foreground italic">
-                                                        Belum ditentukan
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                {f.pic_name || (
-                                                    <span className="text-muted-foreground italic">
-                                                        Belum ditunjuk
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td
-                                                className={cn(
-                                                    'px-4 py-3 whitespace-nowrap',
-                                                    f.overdue &&
-                                                        'font-medium text-red-600',
-                                                )}
-                                            >
-                                                {formatDate(f.target_selesai)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Badge
-                                                    variant="outline"
-                                                    className={cn(
-                                                        STATUS_CONFIG[f.status]
-                                                            .className,
-                                                    )}
-                                                >
-                                                    {
-                                                        STATUS_CONFIG[f.status]
-                                                            .label
-                                                    }
-                                                </Badge>
-                                                {f.closed_by && (
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        oleh {f.closed_by}
-                                                    </p>
-                                                )}
-                                                {f.foto_url && (
-                                                    <a
-                                                        href={f.foto_url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                                                    >
-                                                        <ImageIcon className="h-3 w-3" />
-                                                        Foto bukti
-                                                    </a>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="gap-1.5"
-                                                    onClick={() =>
-                                                        setEditing(f)
-                                                    }
-                                                >
-                                                    {f.status === 'closed' ? (
-                                                        <Camera className="h-3.5 w-3.5" />
-                                                    ) : (
-                                                        <Pencil className="h-3.5 w-3.5" />
-                                                    )}
-                                                    Update
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
+                                            Buka
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* ── Aksi massal (admin/manager) — BulkBar gelap ── */}
+                {canManage && selection.selected.length > 0 && (
+                    <div
+                        role="region"
+                        aria-label="Aksi massal"
+                        className="sticky bottom-4 z-20 mx-auto hidden items-center gap-2 rounded-[14px] bg-foreground px-4 py-2.5 text-background shadow-lg md:flex"
+                    >
+                        <span className="text-sm font-medium tnum">
+                            {selection.selected.length} dipilih
+                        </span>
+                        <Button
+                            size="sm"
+                            variant="brand"
+                            onClick={() => setBatchOpen(true)}
+                        >
+                            <Pencil className="size-3.5" />
+                            Update massal
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-background hover:bg-background/10 hover:text-background"
+                            onClick={selection.clear}
+                        >
+                            Batal
+                        </Button>
+                    </div>
+                )}
 
                 {findings.last_page > 1 && (
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -1205,6 +1118,47 @@ export default function P2hFindings({
 
 // ── Components ────────────────────────────────────────────────────────────────
 
+/** Kode tampilan temuan, mis. T-0231 (Temuan-Desktop.png). */
+function findingCode(id: number): string {
+    return `T-${String(id).padStart(4, '0')}`;
+}
+
+function daysBetween(from: string, to = new Date()): number {
+    const a = new Date(`${from}T00:00:00`);
+    const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+
+    return Math.round((b.getTime() - a.getTime()) / 86_400_000);
+}
+
+function ageText(tanggal: string): string {
+    const d = daysBetween(tanggal);
+
+    return d <= 0 ? 'hari ini' : `${d} hari`;
+}
+
+/** Tenggat: merah "Lewat n hari", oranye "Hari ini", selain itu tanggal. */
+function DueText({ finding }: { finding: Finding }) {
+    if (!finding.target_selesai) {
+        return <span className="text-muted-foreground">Belum diatur</span>;
+    }
+
+    if (finding.status === 'closed') {
+        return <span>{formatDate(finding.target_selesai)}</span>;
+    }
+
+    const late = daysBetween(finding.target_selesai);
+
+    if (late > 0) {
+        return <span className="font-medium text-danger">Lewat {late} hari</span>;
+    }
+
+    if (late === 0) {
+        return <span className="font-medium text-warning">Hari ini</span>;
+    }
+
+    return <span>{formatDate(finding.target_selesai)}</span>;
+}
+
 /** "Dilaporkan 3x · terakhir 24 Sep" untuk temuan gabungan dari beberapa laporan. */
 function ReportCount({ finding }: { finding: Finding }) {
     if (finding.jumlah_laporan <= 1) {
@@ -1221,6 +1175,7 @@ function ReportCount({ finding }: { finding: Finding }) {
 }
 
 /** Tampilan kartu untuk layar HP (menggantikan tabel 8 kolom). */
+/** Kartu temuan ringkas di HP (Temuan.png): ketuk = buka detail/update. */
 function FindingCard({
     finding: f,
     windowDays,
@@ -1231,110 +1186,56 @@ function FindingCard({
     onEdit: () => void;
 }) {
     return (
-        <Card className={cn(f.overdue && 'border-red-300 dark:border-red-900')}>
-            <CardContent className="space-y-3 p-4">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                        <p className="font-semibold">
-                            {f.no_unit}
-                            {f.keputusan_unit === 'BD' && (
-                                <Badge
-                                    variant="outline"
-                                    className="ml-2 border-red-300 text-red-700 dark:border-red-800 dark:text-red-400"
-                                >
-                                    BD
-                                </Badge>
-                            )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            {f.jenis_unit} · {formatDate(f.tanggal_temuan)}
-                        </p>
-                    </div>
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            'shrink-0',
-                            STATUS_CONFIG[f.status].className,
-                        )}
-                    >
-                        {STATUS_CONFIG[f.status].label}
-                    </Badge>
-                </div>
-
-                <div>
-                    <p className="font-medium">
-                        {f.item_nama}
-                        {f.kode_bahaya === 'AA' && (
-                            <Badge className="ml-2 bg-red-600 text-white hover:bg-red-600">
-                                AA
-                            </Badge>
-                        )}
-                    </p>
-                    {f.keterangan && (
-                        <p className="text-sm text-muted-foreground">
-                            {f.keterangan}
-                        </p>
-                    )}
-                    <ReportCount finding={f} />
+        <button
+            type="button"
+            onClick={onEdit}
+            className={cn(
+                'flex w-full press items-center gap-3 rounded-[14px] border-(length:--bw) bg-card px-4 py-3.5 text-left',
+                f.overdue && 'border-danger/50',
+            )}
+        >
+            <span
+                aria-hidden
+                className={cn(
+                    'grid size-11 shrink-0 place-items-center rounded-[12px]',
+                    f.kode_bahaya === 'AA'
+                        ? 'bg-danger-soft text-danger'
+                        : 'bg-warning-soft text-warning',
+                )}
+            >
+                <AlertTriangle className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-semibold">
+                    {f.item_nama}
+                </span>
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <span className="font-mono">{findingCode(f.id)}</span>
+                    <span className="font-semibold text-foreground tnum">
+                        {f.no_unit}
+                    </span>
+                    <DueText finding={f} />
+                    {f.kode_bahaya === 'AA' && <KritisTag />}
+                </span>
+                {f.berulang && (
                     <FindingFlags
-                        overdue={f.overdue}
+                        overdue={false}
                         berulang={f.berulang}
                         windowDays={windowDays}
                     />
-                </div>
-
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                    <dt className="text-muted-foreground">PIC</dt>
-                    <dd>
-                        {f.pic_name || (
-                            <span className="text-muted-foreground italic">
-                                Belum ditunjuk
-                            </span>
-                        )}
-                    </dd>
-                    <dt className="text-muted-foreground">Tindakan</dt>
-                    <dd>
-                        {f.tindakan_perbaikan || (
-                            <span className="text-muted-foreground italic">
-                                Belum ditentukan
-                            </span>
-                        )}
-                    </dd>
-                    <dt className="text-muted-foreground">Target</dt>
-                    <dd className={cn(f.overdue && 'font-medium text-red-600')}>
-                        {formatDate(f.target_selesai)}
-                    </dd>
-                </dl>
-
-                <div className="flex items-center justify-between gap-2">
-                    {f.foto_url ? (
-                        <a
-                            href={f.foto_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                        >
-                            <ImageIcon className="h-3.5 w-3.5" />
-                            Foto bukti
-                        </a>
-                    ) : (
-                        <span />
-                    )}
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5"
-                        onClick={onEdit}
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Update
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+                )}
+            </span>
+            <span className="flex shrink-0 flex-col items-end gap-1">
+                <FindingStatusPill status={f.status} />
+                <ChevronRight
+                    className="size-4 text-muted-foreground"
+                    aria-hidden
+                />
+            </span>
+        </button>
     );
 }
 
 P2hFindings.layout = {
-    breadcrumbs: [{ title: 'Temuan P2H', href: '/p2h/findings' }],
+    breadcrumbs: [{ title: 'Temuan', href: '/p2h/findings' }],
 };

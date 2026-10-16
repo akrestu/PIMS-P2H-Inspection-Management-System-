@@ -18,11 +18,11 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PageButtons } from '@/components/pagination-bar';
+import { TrashTabs } from '@/components/pims/trash-tabs';
 import { SiteSelect } from '@/components/site-select';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -83,6 +83,7 @@ interface Props {
     units: PaginatedData;
     filters: Filters;
     sites: Site[];
+    tabCounts: { aktif: number; sampah: number };
 }
 
 /* ─────────────────── UnitFormDialog (Add / Edit) ─────────────── */
@@ -192,8 +193,8 @@ function UnitFormDialog({
                                         }
                                         className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
                                             data.jenis_unit === jenis
-                                                ? 'border-primary bg-primary/5 text-primary'
-                                                : 'border-border text-muted-foreground hover:border-primary/50'
+                                                ? 'border-primary bg-muted text-foreground'
+                                                : 'border-border text-muted-foreground hover:border-foreground/30'
                                         }`}
                                     >
                                         {jenis === 'Bus' ? (
@@ -316,14 +317,14 @@ function UnitFormDialog({
                             <SelectContent>
                                 <SelectItem value="active">
                                     <span className="flex items-center gap-2">
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                        Active
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                                        Aktif
                                     </span>
                                 </SelectItem>
                                 <SelectItem value="inactive">
                                     <span className="flex items-center gap-2">
-                                        <XCircle className="h-3.5 w-3.5 text-red-400" />
-                                        Inactive
+                                        <XCircle className="h-3.5 w-3.5 text-danger" />
+                                        Nonaktif
                                     </span>
                                 </SelectItem>
                             </SelectContent>
@@ -478,7 +479,7 @@ function ImportSheet({
 
                     <a
                         href="/units/import-template"
-                        className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline"
+                        className="inline-flex items-center justify-center gap-2 text-sm text-foreground hover:underline"
                     >
                         <Download className="h-4 w-4" />
                         Download Template Excel
@@ -680,18 +681,18 @@ const downtimeConfig: Record<
 > = {
     BD: {
         label: 'BD',
-        cls: 'border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400',
-        dot: 'bg-red-500',
+        cls: 'border-danger/40 bg-danger-soft text-danger   ',
+        dot: 'bg-danger',
     },
     PM: {
         label: 'PM',
-        cls: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-        dot: 'bg-blue-500',
+        cls: 'border-info/40 bg-info-soft text-info   ',
+        dot: 'bg-info',
     },
     'Servis Berkala': {
         label: 'Servis',
-        cls: 'border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-        dot: 'bg-purple-500',
+        cls: 'border-info/40 bg-info-soft text-info   ',
+        dot: 'bg-info',
     },
 };
 
@@ -706,9 +707,9 @@ function OperationalStatusBadge({
         return (
             <Badge
                 variant="outline"
-                className="border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+                className="border-success/40 bg-success-soft text-success"
             >
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-success" />
                 Ready
             </Badge>
         );
@@ -865,7 +866,12 @@ function UnitStatusControl({ unit }: { unit: Unit }) {
 }
 
 /* ──────────────────────── Main Page ────────────────────────── */
-export default function UnitsIndex({ units, filters, sites }: Props) {
+export default function UnitsIndex({
+    units,
+    filters,
+    sites,
+    tabCounts,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_unit ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
@@ -952,35 +958,20 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
 
     return (
         <TooltipProvider>
-            <Head title="Manajemen Unit" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                {/* ── Header ── */}
+            <Head title="Master unit" />
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
+                {/* ── Header (MasterUnit-Desktop.png) ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            Manajemen Unit
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                            Master unit
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            Kelola data kendaraan Bus & Light Vehicle.
+                            {tabCounts.aktif} unit aktif · {tabCounts.sampah} di
+                            Sampah
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <a href="/units/trashed">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
-                                    >
-                                        <Trash2 className="h-4 w-4" /> Sampah
-                                    </Button>
-                                </a>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                Lihat unit yang telah dihapus
-                            </TooltipContent>
-                        </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
@@ -1059,8 +1050,15 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                 )}
 
                 {/* ── Filter Bar ── */}
-                <Card>
-                    <CardContent className="flex flex-wrap items-center gap-3 py-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    <TrashTabs
+                        current="aktif"
+                        activeHref="/units"
+                        trashHref="/units/trashed"
+                        counts={tabCounts}
+                    />
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                    <>
                         {/* Search */}
                         <div className="relative min-w-[200px] flex-1">
                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1068,7 +1066,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari no. unit..."
-                                className="h-9 pl-9"
+                                className="pl-9"
                             />
                         </div>
 
@@ -1089,7 +1087,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                     className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                                         jenisFilter === j
                                             ? 'border-primary bg-primary text-primary-foreground'
-                                            : 'border-border hover:border-primary/60 hover:text-primary'
+                                            : 'border-border hover:border-foreground/30 hover:text-primary'
                                     }`}
                                 >
                                     {j === 'Bus' ? (
@@ -1119,9 +1117,9 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                     className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                                         statusFilter === s
                                             ? s === 'active'
-                                                ? 'border-green-500 bg-green-500 text-white'
-                                                : 'border-red-500 bg-red-500 text-white'
-                                            : 'border-border hover:border-primary/60'
+                                                ? 'border-success bg-success text-white'
+                                                : 'border-danger bg-danger text-white'
+                                            : 'border-border hover:border-foreground/30'
                                     }`}
                                 >
                                     {s === 'active' ? (
@@ -1129,7 +1127,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                     ) : (
                                         <XCircle className="h-3 w-3" />
                                     )}
-                                    {s === 'active' ? 'Active' : 'Inactive'}
+                                    {s === 'active' ? 'Aktif' : 'Nonaktif'}
                                 </button>
                             ))}
                         </div>
@@ -1153,12 +1151,13 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                    </CardContent>
-                </Card>
+                    </>
+                </div>
+                </div>
 
                 {/* ── Table ── */}
-                <Card>
-                    <CardContent className="p-0">
+                <div className="overflow-hidden rounded-[14px] border-(length:--bw) bg-card">
+                    <>
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
@@ -1178,9 +1177,6 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                 aria-label="Pilih semua"
                                                 disabled={allIds.length === 0}
                                             />
-                                        </TableHead>
-                                        <TableHead className="hidden w-12 text-center sm:table-cell">
-                                            #
                                         </TableHead>
                                         <SortableHead column="no_unit">
                                             No. Unit
@@ -1215,7 +1211,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 <TableBody>
                                     {units.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={9}>
+                                            <TableCell colSpan={8}>
                                                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Package className="h-8 w-8 text-muted-foreground" />
@@ -1257,7 +1253,7 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        units.data.map((unit, idx) => (
+                                        units.data.map((unit) => (
                                             <TableRow
                                                 key={unit.id}
                                                 className={`group ${selectedIds.includes(unit.id) ? 'bg-destructive/5' : ''}`}
@@ -1273,11 +1269,8 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                         aria-label={`Pilih ${unit.no_unit}`}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="hidden text-center text-sm text-muted-foreground sm:table-cell">
-                                                    {(units.from ?? 1) + idx}
-                                                </TableCell>
                                                 <TableCell>
-                                                    <span className="font-mono font-semibold">
+                                                    <span className="font-semibold tnum">
                                                         {unit.no_unit}
                                                     </span>
                                                 </TableCell>
@@ -1285,16 +1278,16 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                     <span className="inline-flex items-center gap-1.5 text-sm">
                                                         {unit.jenis_unit ===
                                                         'Bus' ? (
-                                                            <Bus className="h-4 w-4 shrink-0 text-orange-500" />
+                                                            <Bus className="h-4 w-4 shrink-0 text-warning" />
                                                         ) : (
-                                                            <Car className="h-4 w-4 shrink-0 text-purple-500" />
+                                                            <Car className="h-4 w-4 shrink-0 text-info" />
                                                         )}
                                                         {unit.jenis_unit}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
                                                     {unit.no_lambung ? (
-                                                        <span className="font-mono text-sm">
+                                                        <span className="text-sm tnum">
                                                             {unit.no_lambung}
                                                         </span>
                                                     ) : (
@@ -1332,17 +1325,17 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                                         className={
                                                             unit.status ===
                                                             'active'
-                                                                ? 'border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                                : 'border-red-200 bg-red-100 text-red-600 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                                ? 'border-success/40 bg-success-soft text-success'
+                                                                : 'border-border bg-muted text-muted-foreground'
                                                         }
                                                     >
                                                         <span
-                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`}
+                                                            className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${unit.status === 'active' ? 'bg-success' : 'bg-muted-foreground'}`}
                                                         />
                                                         {unit.status ===
                                                         'active'
-                                                            ? 'Active'
-                                                            : 'Inactive'}
+                                                            ? 'Aktif'
+                                                            : 'Nonaktif'}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
@@ -1452,8 +1445,8 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
                                 </p>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </>
+                </div>
             </div>
 
             {/* ── Import Sheet ── */}
@@ -1499,5 +1492,5 @@ export default function UnitsIndex({ units, filters, sites }: Props) {
 }
 
 UnitsIndex.layout = {
-    breadcrumbs: [{ title: 'Unit', href: '/units' }],
+    breadcrumbs: [{ title: 'Master unit', href: '/units' }],
 };

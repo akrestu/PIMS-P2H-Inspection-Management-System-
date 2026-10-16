@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Downtime</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 4px; height: 64px; padding: 0 12px 0 8px; border-bottom: var(--bw) solid var(--border)">
+    <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+    <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 18px; font-weight: 600">Downtime</span><span style="font-size: 13px; color: var(--muted-foreground)">Pit A · Jum, 16 Okt</span></span>
+    <button type="button" class="press" onClick="{{ openAdd }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Periode</button>
+  </header>
+
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 80px 16px 40px; display: flex; flex-direction: column; gap: 24px">
+    <section aria-labelledby="tl-h" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 id="tl-h" style="margin: 0; font-size: 16px; font-weight: 600">Hari ini</h2>
+        <span style="display: flex; gap: 10px; font-size: 12px; color: var(--muted-foreground)">
+          <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--danger)"></span>BD</span>
+          <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--info)"></span>PM</span>
+          <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(135deg, var(--info) 0 2px, transparent 2px 4px); box-shadow: inset 0 0 0 1px var(--info)"></span>Servis</span>
+        </span>
+      </div>
+      <div style="position: relative; display: flex; flex-direction: column; gap: 6px">
+        <div class="tnum" style="display: grid; grid-template-columns: 64px 1fr; font-size: 11px; color: var(--muted-foreground)"><span></span><span style="display: flex; justify-content: space-between"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></span></div>
+        <sc-for list="{{ lanes }}" as="l" hint-placeholder-count="6">
+          <div style="display: grid; grid-template-columns: 64px 1fr; align-items: center; height: 26px">
+            <span class="tnum" style="font-size: 12px; font-weight: 600">{{ l.code }}</span>
+            <span style="position: relative; height: 18px; border-radius: 4px; background: var(--muted)">
+              <sc-for list="{{ l.bars }}" as="b" hint-placeholder-count="1">
+                <span style="position: absolute; top: 0; bottom: 0; left: {{ b.l }}%; width: {{ b.w }}%; border-radius: 4px; background: {{ b.bg }}; box-shadow: {{ b.ring }}"></span>
+              </sc-for>
+            </span>
+          </div>
+        </sc-for>
+        <span aria-hidden="true" style="position: absolute; top: 18px; bottom: 0; left: calc(64px + (100% - 64px) * 0.259); width: 1.5px; background: var(--foreground)"></span>
+        <span class="tnum" style="position: absolute; top: 0; left: calc(64px + (100% - 64px) * 0.259); transform: translateX(-50%); font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; background: var(--foreground); color: var(--background)">06:14</span>
+      </div>
+    </section>
+
+    <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px; border-radius: 12px; background: var(--muted)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+        <button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 44px; border: 0; border-radius: 9px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 15px; font-weight: 600"><span class="tnum">{{ t.label }}</span></button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <sc-for list="{{ list }}" as="p" hint-placeholder-count="5">
+        <button type="button" class="press hl" onClick="{{ p.edit }}" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 14px; border: var(--bw) solid var(--border); background: var(--card); color: var(--foreground); font: inherit; text-align: left">
+          <span style="display: flex; align-items: center; gap: 8px; width: 100%">
+            <strong class="tnum" style="font-size: 16px; font-weight: 600">{{ p.code }}</strong>
+            <span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: {{ p.pBg }}; color: {{ p.pFg }}; font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ p.st }}</span>
+            <span class="tnum" style="margin-left: auto; font-size: 14px; font-weight: 600">{{ p.dur }}</span>
+          </span>
+          <span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ p.range }}</span>
+          <span style="font-size: 14px; line-height: 20px">{{ p.note }}</span>
+          <span style="font-size: 12px; color: var(--muted-foreground); display: inline-flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 9px; background: {{ p.srcDot }}"></span>{{ p.src }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- Add / edit sheet -->
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="dt-t" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 92%; display: flex; flex-direction: column; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3)">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <div class="noscroll" style="overflow-y: auto; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 16px">
+        <strong id="dt-t" style="font-size: 20px; font-weight: 600">{{ sheetTitle }}</strong>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Unit
+          <select value="{{ fUnit }}" onChange="{{ onUnit }}" style="height: 52px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px">
+            <option value="DT-1050">DT-1050 · Dump Truck</option><option value="EX-2003">EX-2003 · Excavator</option><option value="DT-1018">DT-1018 · Dump Truck</option><option value="GR-012">GR-012 · Motor Grader</option><option value="DT-1061">DT-1061 · Dump Truck</option><option value="LV-022">LV-022 · Light Vehicle</option>
+          </select>
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span id="st-l" style="font-size: 14px; font-weight: 500">Status</span>
+          <div role="radiogroup" aria-labelledby="st-l" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted)">
+            <sc-for list="{{ stOpts }}" as="o" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{ o.on }}" class="press" onClick="{{ o.pick }}" style="height: 48px; border: 0; border-radius: 9px; background: {{ o.bg }}; box-shadow: {{ o.shadow }}; color: {{ o.fg }}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 9px; background: {{ o.dot }}"></span>{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Mulai<input type="date" value="2026-10-16" style="height: 52px; padding: 0 10px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Jam<input type="time" value="{{ fStart }}" onChange="{{ onStart }}" style="height: 52px; padding: 0 10px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px"></label>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 48px">
+          <span id="on-l" style="font-size: 15px">Masih berlangsung</span>
+          <button type="button" role="switch" aria-checked="{{ ongoingS }}" aria-labelledby="on-l" onClick="{{ toggleOngoing }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center"><span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; padding: 3px; background: {{ swBg }}; display: flex; align-items: center; transition: background-color 150ms"><span style="width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ swX }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span></span></button>
+        </div>
+        <sc-if value="{{ hasEnd }}" hint-placeholder-val="{{ false }}">
+          <label class="fade" style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Selesai<input type="time" value="{{ fEnd }}" onChange="{{ onEnd }}" style="height: 52px; padding: 0 10px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px"></label>
+        </sc-if>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Keterangan <textarea value="{{ fNote }}" onChange="{{ onNote }}" rows="2" placeholder="Contoh: menunggu sparepart selang hidrolik" class="field" style="min-height: 76px; padding: 12px 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; font-weight: 400; resize: none; outline: 0"></textarea></label>
+        <button type="button" class="press" onClick="{{ save }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 16px; font-weight: 600">Simpan</button>
+        <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="press" onClick="{{ askDelete }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600">Hapus periode</button>
+        </sc-if>
+        <button type="button" class="press" onClick="{{ closeSheet }}" style="height: 48px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ confirmOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: absolute; inset: 0; z-index: 20; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 24px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="cf-t" aria-describedby="cf-d" class="pop" style="width: 100%; padding: 20px; border-radius: 20px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="cf-t" style="font-size: 18px; font-weight: 600">Hapus periode {{ fUnit }}?</strong>
+        <span id="cf-d" style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">PA hari terkait dihitung ulang dan penghapusan tercatat di Audit Log. Bisa dipulihkan dari Sampah selama 30 hari.</span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 4px">
+          <button type="button" class="press" onClick="{{ cancelDelete }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+          <button type="button" class="press" onClick="{{ doDelete }}" style="height: 52px; border: 0; border-radius: 12px; background: #DC2626; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600">Hapus</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 24px; z-index: 22; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <span style="flex: 1">{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      items: [
+        { id: 1, code: 'DT-1050', st: 'BD', start: '05:55', end: '', note: 'Kebocoran oli kritis dari P2H. Menunggu mekanik.', auto: true },
+        { id: 2, code: 'EX-2003', st: 'BD', start: '05:57', end: '', note: 'Rem parkir tidak menahan. Penyetelan kabel.', auto: true },
+        { id: 3, code: 'DT-1018', st: 'BD', start: '00:00', end: '', note: 'Lanjutan sejak kemarin 14:20 · selang radiator.', auto: false },
+        { id: 4, code: 'GR-012', st: 'PM', start: '06:00', end: '', note: 'PM 1000 jam terjadwal.', auto: false },
+        { id: 5, code: 'LV-022', st: 'Servis', start: '05:30', end: '', note: 'AC tidak dingin · isi freon.', auto: false },
+        { id: 6, code: 'DT-1045', st: 'BD', start: '01:10', end: '03:40', note: 'Selang hidrolik diganti · uji 5 siklus OK.', auto: true },
+        { id: 7, code: 'DT-1061', st: 'Servis', start: '00:00', end: '04:30', note: 'Ganti ban belakang kiri.', auto: false }
+      ],
+      tab: 'aktif', sheet: null, editId: null, fUnit: 'DT-1050', fSt: 'BD', fStart: '06:10', fEnd: '', fNote: '', ongoing: true, confirm: false, toast: null
+    };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const NOW = 6 * 60 + 14;
+    const mins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const dur = (a, b) => { const d = (b ? mins(b) : NOW) - mins(a); return Math.floor(d / 60) + 'j ' + (d % 60) + 'm'; };
+    const bgOf = (st) => st === 'BD' ? 'var(--danger)' : (st === 'PM' ? 'var(--info)' : 'repeating-linear-gradient(135deg, var(--info) 0 3px, color-mix(in oklab, var(--info) 35%, var(--background)) 3px 6px)');
+    const kind = (st) => st === 'BD' ? 'danger' : 'info';
+    const codes = [];
+    s.items.forEach((p) => { if (!codes.includes(p.code)) codes.push(p.code); });
+    const lanes = codes.map((code) => ({ code, bars: s.items.filter((p) => p.code === code).map((p) => { const a = mins(p.start), b = p.end ? mins(p.end) : NOW; return { l: a / 1440 * 100, w: Math.max(0.8, (b - a) / 1440 * 100), bg: bgOf(p.st), ring: p.end ? 'none' : 'inset -2px 0 0 var(--foreground)' }; }) }));
+    const active = s.items.filter((p) => !p.end), done = s.items.filter((p) => p.end);
+    const tabs = [['aktif', 'Aktif · ' + active.length], ['selesai', 'Selesai hari ini · ' + done.length]].map(([k, label]) => ({ label, on: s.tab === k, bg: s.tab === k ? 'var(--card)' : 'transparent', shadow: s.tab === k ? 'var(--shadow-2)' : 'none', fg: s.tab === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ tab: k }) }));
+    const list = (s.tab === 'aktif' ? active : done).map((p) => ({
+      ...p, pBg: 'var(--' + kind(p.st) + '-soft)', pFg: 'var(--' + kind(p.st) + ')', dur: dur(p.start, p.end),
+      range: p.end ? p.start + '–' + p.end : 'Sejak ' + p.start + ' · berjalan',
+      src: p.auto ? 'Otomatis dari P2H Tidak Layak' : 'Manual · Admin', srcDot: p.auto ? 'var(--danger)' : 'var(--muted-foreground)',
+      edit: () => this.setState({ sheet: 'edit', editId: p.id, fUnit: p.code, fSt: p.st, fStart: p.start, fEnd: p.end || '', fNote: p.note, ongoing: !p.end })
+    }));
+    const stOpts = ['BD', 'PM', 'Servis'].map((x) => ({ label: x, on: s.fSt === x, bg: s.fSt === x ? 'var(--card)' : 'transparent', shadow: s.fSt === x ? 'var(--shadow-2)' : 'none', fg: s.fSt === x ? 'var(--foreground)' : 'var(--muted-foreground)', dot: 'var(--' + kind(x) + ')', pick: () => this.setState({ fSt: x }) }));
+    const toastOn = !!s.toast;
+    return {
+      theme, lanes, tabs, list, stOpts,
+      openAdd: () => this.setState({ sheet: 'add', editId: null, fUnit: 'DT-1050', fSt: 'BD', fStart: '06:10', fEnd: '', fNote: '', ongoing: true }),
+      sheetOn: !!s.sheet, isEdit: s.sheet === 'edit', sheetTitle: s.sheet === 'edit' ? 'Ubah periode downtime' : 'Tambah periode downtime',
+      closeSheet: () => this.setState({ sheet: null }),
+      fUnit: s.fUnit, onUnit: (e) => this.setState({ fUnit: e.target.value }),
+      fStart: s.fStart, onStart: (e) => this.setState({ fStart: e.target.value }),
+      fEnd: s.fEnd, onEnd: (e) => this.setState({ fEnd: e.target.value }),
+      fNote: s.fNote, onNote: (e) => this.setState({ fNote: e.target.value }),
+      ongoingS: s.ongoing, hasEnd: !s.ongoing, swBg: s.ongoing ? 'var(--success)' : 'var(--input)', swX: s.ongoing ? 20 : 0,
+      toggleOngoing: () => this.setState({ ongoing: !s.ongoing, fEnd: s.ongoing ? '07:00' : '' }),
+      save: () => {
+        const prev = s.items;
+        const rec = { code: s.fUnit, st: s.fSt, start: s.fStart, end: s.ongoing ? '' : s.fEnd, note: s.fNote || '—', auto: false };
+        const items = s.sheet === 'edit' ? prev.map((p) => p.id === s.editId ? { ...p, ...rec, auto: p.auto } : p) : prev.concat([{ id: Date.now(), ...rec }]);
+        this.setState({ items, sheet: null, tab: rec.end ? 'selesai' : 'aktif' });
+        this.toast(s.sheet === 'edit' ? 'Periode ' + rec.code + ' diperbarui · PA dihitung ulang' : 'Periode ' + rec.code + ' ditambahkan', () => this.setState({ items: prev }));
+      },
+      askDelete: () => this.setState({ confirm: true }), cancelDelete: () => this.setState({ confirm: false }), confirmOn: s.confirm,
+      doDelete: () => { const prev = s.items; this.setState({ items: prev.filter((p) => p.id !== s.editId), confirm: false, sheet: null }); this.toast('Periode dihapus · dipindah ke Sampah', () => this.setState({ items: prev })); },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

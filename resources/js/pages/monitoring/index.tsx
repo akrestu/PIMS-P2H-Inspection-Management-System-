@@ -1,918 +1,338 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import {
-    Activity,
-    AlertTriangle,
-    BarChart3,
-    Bus,
-    CalendarDays,
-    Car,
-    CheckCircle2,
-    Clock,
-    Download,
-    FileSpreadsheet,
-    FileText,
-    Filter,
-    RefreshCw,
-    WrenchIcon,
-    X,
-} from 'lucide-react';
-import { useState } from 'react';
-import { PageTabs } from '@/components/page-tabs';
-import { Badge } from '@/components/ui/badge';
+import { Head, router } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import type { TrendPoint } from '@/components/pims/compliance-trend';
+import { ComplianceTrend } from '@/components/pims/compliance-trend';
+import { KpiCard, KpiStrip } from '@/components/pims/kpi';
+import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
+import { EmptyState } from '@/components/pims/states';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import {
     Tooltip,
     TooltipContent,
-    TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatDate, formatNumber, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/*
+ * Monitoring PA (design/screens/PA-Desktop.png, docs/screens/laporan.md).
+ * PA = jam tersedia ÷ jam kalender per hari (App\Support\PaWeekly).
+ */
 
-interface TimelineDay {
-    date: string;
-    score: number | null;
-    status: 'operation' | 'bd' | 'no_data';
-    has_override: boolean;
-    downtime_tipe?: 'BD' | 'PM' | 'Servis Berkala' | null;
-}
-
-interface UnitPA {
-    id: number;
-    no_unit: string;
-    jenis_unit: 'Bus' | 'Light Vehicle';
-    no_lambung: string | null;
-    department: string | null;
-    actual_pa: number | null;
-    calendar_hours: number;
-    working_hours: number;
-    downtime_hours: number;
-    has_time_data: boolean;
-    current_status: 'operation' | 'bd' | 'no_data';
-    downtime_tipe: 'BD' | 'PM' | 'Servis Berkala' | null;
-    downtime_since: string | null;
-    latest_date: string | null;
-    total_sessions: number;
-    total_days: number;
-    operation_days: number;
-    bd_days: number;
-    total_tl: number;
-    timeline: TimelineDay[];
-}
-
-interface Summary {
-    fleet_actual_pa: number | null;
-    pa_by_jenis: Record<
-        string,
-        { pa: number | null; total: number; bd: number }
-    >;
-    total_units: number;
-    operation_count: number;
-    bd_count: number;
-    no_data_count: number;
-    units_with_time_data: number;
-    pa_threshold: number;
-}
-
-interface Filters {
-    date_from: string;
-    date_to: string;
-    unit_id?: string;
-    jenis_unit?: string;
-}
-
-interface UnitOption {
+type UnitWeek = {
     id: number;
     no_unit: string;
     jenis_unit: string;
-}
+    avg: number | null;
+    days: { date: string; pa: number | null; downtime: number }[];
+};
 
 interface Props {
-    unitData: UnitPA[];
-    summary: Summary;
-    filters: Filters;
-    allUnits: UnitOption[];
+    weekly: {
+        range: { start: string; end: string };
+        summary: {
+            pa: number | null;
+            jam_bd: number;
+            jam_pm: number;
+            di_bawah_target: number;
+            unit: number;
+            target: number;
+        };
+        daily: TrendPoint[];
+        units: UnitWeek[];
+    };
+    filters: { jenis_unit: string | null };
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const parseLocal = (iso: string) => new Date(`${iso}T00:00:00`);
+const toIso = (d: Date) => d.toLocaleDateString('en-CA');
+const TODAY = toIso(new Date());
 
-function paColor(pa: number | null): string {
+/** Ramp kuning 5 tingkat (docs/01#chart · heatmap PA). */
+function paCell(pa: number | null) {
     if (pa === null) {
-        return 'text-muted-foreground';
+        return 'bg-muted text-muted-foreground';
+    }
+
+    if (pa >= 100) {
+        return 'bg-brand-50 text-foreground ring-1 ring-brand-200 ring-inset';
     }
 
     if (pa >= 90) {
-        return 'text-emerald-600 dark:text-emerald-400';
+        return 'bg-brand-200 text-black';
     }
 
     if (pa >= 75) {
-        return 'text-yellow-600 dark:text-yellow-400';
+        return 'bg-brand-400 text-black';
     }
 
-    return 'text-red-600 dark:text-red-400';
-}
-
-function progressColor(pa: number | null): string {
-    if (pa === null) {
-        return 'bg-muted';
+    if (pa >= 60) {
+        return 'bg-brand-600 text-white';
     }
 
-    if (pa >= 90) {
-        return '[&>div]:bg-emerald-500';
-    }
-
-    if (pa >= 75) {
-        return '[&>div]:bg-yellow-500';
-    }
-
-    return '[&>div]:bg-red-500';
+    return 'bg-brand-800 text-white';
 }
 
-function statusConfig(status: UnitPA['current_status']) {
-    switch (status) {
-        case 'operation':
-            return {
-                label: 'Ready',
-                icon: CheckCircle2,
-                badgeClass:
-                    'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-                dotClass: 'bg-emerald-500',
-            };
-        case 'bd':
-            return {
-                label: 'Breakdown',
-                icon: WrenchIcon,
-                badgeClass:
-                    'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-                dotClass: 'bg-red-500',
-            };
-        default:
-            return {
-                label: 'No Data',
-                icon: Activity,
-                badgeClass: 'bg-muted text-muted-foreground border-border',
-                dotClass: 'bg-muted-foreground',
-            };
-    }
-}
+const LEGEND = [
+    { label: '100', pa: 100 },
+    { label: '≥90', pa: 95 },
+    { label: '≥75', pa: 80 },
+    { label: '≥60', pa: 65 },
+    { label: '<60', pa: 30 },
+];
 
-function formatDate(d: string) {
-    return new Date(d).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-}
+export default function MonitoringPa({ weekly, filters }: Props) {
+    const { range, summary, daily, units } = weekly;
+    const [asc, setAsc] = useState(true);
 
-function formatDateShort(d: string) {
-    return new Date(d).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-    });
-}
+    const go = (params: Record<string, string | null | undefined>) =>
+        router.get(
+            '/monitoring',
+            {
+                sampai: range.end,
+                jenis_unit: filters.jenis_unit ?? undefined,
+                ...params,
+            },
+            { preserveScroll: true, replace: true },
+        );
 
-// ── Timeline Sparkline ─────────────────────────────────────────────────────────
+    const shiftWeek = (delta: number) => {
+        const d = parseLocal(range.end);
+        d.setDate(d.getDate() + delta * 7);
+        const iso = toIso(d) > TODAY ? TODAY : toIso(d);
 
-function TimelineSparkline({ timeline }: { timeline: TimelineDay[] }) {
-    const MAX_DOTS = 30;
-    const visible = timeline.slice(-MAX_DOTS);
-
-    return (
-        <TooltipProvider delayDuration={100}>
-            <div className="flex items-center gap-px">
-                {visible.map((day) => {
-                    // Downtime tanpa P2H: warna khusus sesuai tipe
-                    const isDowntimeOnly =
-                        day.status === 'bd' && day.downtime_tipe != null;
-                    const colorClass =
-                        day.status === 'operation'
-                            ? 'bg-emerald-500'
-                            : day.status === 'bd'
-                              ? isDowntimeOnly
-                                  ? day.downtime_tipe === 'PM'
-                                      ? 'bg-blue-400'
-                                      : day.downtime_tipe === 'Servis Berkala'
-                                        ? 'bg-purple-400'
-                                        : 'bg-orange-500' // BD downtime
-                                  : 'bg-red-500' // BD dari P2H
-                              : 'bg-muted';
-
-                    return (
-                        <Tooltip key={day.date}>
-                            <TooltipTrigger asChild>
-                                <div
-                                    className={cn(
-                                        'relative h-5 w-2 cursor-default rounded-sm transition-opacity hover:opacity-80',
-                                        colorClass,
-                                        day.has_override &&
-                                            'ring-1 ring-amber-400 ring-offset-0',
-                                    )}
-                                >
-                                    {day.has_override && (
-                                        <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
-                                    )}
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
-                                <p className="font-semibold">
-                                    {formatDateShort(day.date)}
-                                </p>
-                                {day.downtime_tipe != null ? (
-                                    <p className="text-orange-400">
-                                        Downtime: {day.downtime_tipe}
-                                    </p>
-                                ) : day.score !== null ? (
-                                    <>
-                                        <p>
-                                            Kelayakan:{' '}
-                                            <span
-                                                className={
-                                                    day.score >= 80
-                                                        ? 'text-emerald-400'
-                                                        : 'text-red-400'
-                                                }
-                                            >
-                                                {day.score}%
-                                            </span>
-                                        </p>
-                                        <p>
-                                            Status:{' '}
-                                            <span
-                                                className={
-                                                    day.status === 'operation'
-                                                        ? 'text-emerald-400'
-                                                        : 'text-red-400'
-                                                }
-                                            >
-                                                {day.status === 'operation'
-                                                    ? 'Ready'
-                                                    : 'Breakdown'}
-                                            </span>
-                                            {day.has_override && (
-                                                <span className="ml-1 text-amber-400">
-                                                    (Override)
-                                                </span>
-                                            )}
-                                        </p>
-                                    </>
-                                ) : (
-                                    <p className="text-muted-foreground">
-                                        Tidak ada P2H
-                                    </p>
-                                )}
-                            </TooltipContent>
-                        </Tooltip>
-                    );
-                })}
-            </div>
-        </TooltipProvider>
-    );
-}
-
-// ── Unit PA Card ───────────────────────────────────────────────────────────────
-
-function UnitPACard({ unit }: { unit: UnitPA }) {
-    const status = statusConfig(unit.current_status);
-    const StatusIcon = status.icon;
-    const isLV = unit.jenis_unit === 'Light Vehicle';
-
-    return (
-        <Card
-            className={cn(
-                'border-2 transition-all duration-150 hover:shadow-md',
-                unit.current_status === 'bd' &&
-                    'border-red-200 dark:border-red-900',
-                unit.current_status === 'operation' &&
-                    'border-emerald-100 dark:border-emerald-900/50',
-            )}
-        >
-            <CardContent className="space-y-4 p-4">
-                {/* ── Header Row ── */}
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                        <div
-                            className={cn(
-                                'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-                                isLV
-                                    ? 'bg-blue-100 dark:bg-blue-950/40'
-                                    : 'bg-purple-100 dark:bg-purple-950/40',
-                            )}
-                        >
-                            {isLV ? (
-                                <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            ) : (
-                                <Bus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            )}
-                        </div>
-                        <div>
-                            <p className="text-base leading-tight font-bold">
-                                {unit.no_unit}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {unit.jenis_unit}
-                                {unit.no_lambung ? ` · ${unit.no_lambung}` : ''}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            'gap-1 text-xs font-semibold',
-                            status.badgeClass,
-                        )}
-                    >
-                        <StatusIcon className="h-3 w-3" />
-                        {status.label}
-                    </Badge>
-                </div>
-
-                {/* ── PA Aktual (primary) ── */}
-                <div>
-                    <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-foreground">
-                            PA Aktual
-                        </span>
-                        {unit.has_time_data ? (
-                            <span
-                                className={cn(
-                                    'text-lg font-bold tabular-nums',
-                                    paColor(unit.actual_pa),
-                                )}
-                            >
-                                {unit.actual_pa !== null
-                                    ? `${unit.actual_pa}%`
-                                    : '—'}
-                            </span>
-                        ) : (
-                            <span className="text-lg font-bold text-muted-foreground tabular-nums">
-                                —
-                            </span>
-                        )}
-                    </div>
-                    {unit.has_time_data ? (
-                        <Progress
-                            value={unit.actual_pa ?? 0}
-                            className={cn('h-2', progressColor(unit.actual_pa))}
-                        />
-                    ) : (
-                        <div className="h-2 rounded-full bg-muted" />
-                    )}
-                    <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                        {unit.has_time_data ? (
-                            <>
-                                <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    Tersedia {unit.working_hours}j · Downtime{' '}
-                                    {unit.downtime_hours}j
-                                </span>
-                                <span>(T−S)÷T</span>
-                            </>
-                        ) : (
-                            <span className="italic">Belum ada data</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── Downtime berjalan (sumber status unit) ── */}
-                {unit.downtime_tipe && (
-                    <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 text-xs dark:bg-red-950/30">
-                        <span className="font-medium text-red-700 dark:text-red-400">
-                            {unit.downtime_tipe} berjalan
-                        </span>
-                        {unit.downtime_since && (
-                            <span className="text-muted-foreground">
-                                sejak {unit.downtime_since}
-                            </span>
-                        )}
-                    </div>
-                )}
-
-                {/* ── Timeline Sparkline ── */}
-                <div>
-                    <p className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        Riwayat Harian
-                    </p>
-                    {unit.timeline.length > 0 ? (
-                        <TimelineSparkline timeline={unit.timeline} />
-                    ) : (
-                        <p className="text-xs text-muted-foreground italic">
-                            Belum ada data
-                        </p>
-                    )}
-                </div>
-
-                {/* ── Footer Stats ── */}
-                <div className="flex items-center justify-between border-t pt-3">
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {unit.total_tl > 0 && (
-                            <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                                <AlertTriangle className="h-3.5 w-3.5" />
-                                {unit.total_tl} item TL
-                            </span>
-                        )}
-                        {unit.latest_date && (
-                            <span className="flex items-center gap-1">
-                                <CalendarDays className="h-3.5 w-3.5" />
-                                P2H: {formatDate(unit.latest_date)}
-                            </span>
-                        )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                        {unit.operation_days}O/{unit.bd_days}BD
-                    </span>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-// ── Legend ────────────────────────────────────────────────────────────────────
-
-function Legend({ threshold }: { threshold: number }) {
-    return (
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground">
-            <span className="text-sm font-semibold text-foreground">
-                Legenda:
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-emerald-500" />
-                Operation
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-red-500" />
-                BD (P2H)
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-orange-500" />
-                BD (Downtime)
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-blue-400" />
-                PM (Downtime)
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-purple-400" />
-                Servis Berkala
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm border bg-muted" />
-                Tidak ada P2H
-            </span>
-            <span className="flex items-center gap-1.5">
-                <div className="h-3 w-3 rounded-sm bg-emerald-500 ring-1 ring-amber-400" />
-                Override keputusan operator
-            </span>
-            <Separator orientation="vertical" className="h-4" />
-            <span>
-                <strong className="text-foreground">PA Aktual</strong> = W ÷ (W
-                + S) × 100% · Threshold kelayakan:{' '}
-                <strong className="text-foreground">{threshold}%</strong>
-            </span>
-        </div>
-    );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
-
-export default function MonitoringIndex({
-    unitData,
-    summary,
-    filters,
-    allUnits,
-}: Props) {
-    const { auth } = usePage<{
-        auth: { user: { roles: string[]; can_monitor?: boolean } | null };
-    }>().props;
-    const roles = auth?.user?.roles ?? [];
-    const isAdminOrManager =
-        roles.includes('admin') || roles.includes('manager');
-    const isStaffDriver = !isAdminOrManager && !!auth?.user?.can_monitor;
-
-    const [form, setForm] = useState(filters);
-    const [sortBy, setSortBy] = useState<
-        'actual_asc' | 'actual_desc' | 'name' | 'status'
-    >('actual_asc');
-    const [showFilter, setShowFilter] = useState(false);
-
-    const handleApply = () => {
-        router.get('/monitoring', { ...form }, { preserveState: true });
+        go({ sampai: iso });
     };
 
-    const handleReset = () => {
-        const defaults = {
-            date_from: new Date(
-                new Date().getFullYear(),
-                new Date().getMonth(),
-                1,
-            )
-                .toISOString()
-                .split('T')[0],
-            date_to: new Date().toISOString().split('T')[0],
-        };
-        setForm(defaults);
-        router.get('/monitoring', defaults);
-    };
+    const sorted = useMemo(
+        () =>
+            [...units].sort((a, b) =>
+                asc
+                    ? (a.avg ?? 101) - (b.avg ?? 101)
+                    : (b.avg ?? -1) - (a.avg ?? -1),
+            ),
+        [units, asc],
+    );
 
-    // Quick range presets
-    const applyPreset = (preset: 'today' | 'week' | 'month' | 'last_month') => {
-        const today = new Date();
-        let from: Date, to: Date;
-
-        switch (preset) {
-            case 'today':
-                from = to = today;
-                break;
-            case 'week':
-                from = new Date(today);
-                from.setDate(today.getDate() - 6);
-                to = today;
-                break;
-            case 'last_month':
-                from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                to = new Date(today.getFullYear(), today.getMonth(), 0);
-                break;
-            default: // month
-                from = new Date(today.getFullYear(), today.getMonth(), 1);
-                to = today;
-        }
-
-        const newFilters = {
-            ...form,
-            date_from: from.toISOString().split('T')[0],
-            date_to: to.toISOString().split('T')[0],
-        };
-        setForm(newFilters);
-        router.get('/monitoring', newFilters, { preserveState: true });
-    };
-
-    // Sort
-    const sorted = [...unitData].sort((a, b) => {
-        switch (sortBy) {
-            case 'actual_asc':
-                return (a.actual_pa ?? -1) - (b.actual_pa ?? -1);
-            case 'actual_desc':
-                return (b.actual_pa ?? -1) - (a.actual_pa ?? -1);
-            case 'status': {
-                const order = { bd: 0, no_data: 1, operation: 2 };
-
-                return order[a.current_status] - order[b.current_status];
-            }
-            default:
-                return a.no_unit.localeCompare(b.no_unit);
-        }
-    });
-
-    const PRESETS = [
-        { label: 'Hari Ini', value: 'today' as const },
-        { label: '7 Hari', value: 'week' as const },
-        { label: 'Bulan Ini', value: 'month' as const },
-        { label: 'Bulan Lalu', value: 'last_month' as const },
-    ];
+    const rangeLabel = `${formatDate(parseLocal(range.start), { withYear: false })} – ${formatDate(parseLocal(range.end))}`;
+    const dayHeaders = units[0]?.days.map((d) => d.date) ?? [];
 
     return (
         <>
             <Head title="Monitoring PA" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
-                <PageTabs group="unitPerformance" />
-                {/* ── Page Header ── */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <BarChart3 className="h-6 w-6 text-primary" />
-                            Monitoring PA
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Physical Availability unit ·{' '}
-                            {formatDate(filters.date_from)} –{' '}
-                            {formatDate(filters.date_to)}
-                        </p>
-                        <p className="mt-1 text-sm">
-                            {Object.entries(summary.pa_by_jenis).map(
-                                ([jenis, g], i) => (
-                                    <span key={jenis}>
-                                        {i > 0 && ' · '}
-                                        PA {jenis}{' '}
-                                        <strong className={paColor(g.pa)}>
-                                            {g.pa !== null ? `${g.pa}%` : '—'}
-                                        </strong>
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
+                <PageHeader
+                    title="Monitoring PA"
+                    description={`Physical Availability · ${summary.unit} unit${filters.jenis_unit ? ` · ${filters.jenis_unit}` : ''}`}
+                    actions={
+                        <>
+                            <Segmented
+                                label="Jenis unit"
+                                value={filters.jenis_unit ?? 'all'}
+                                onChange={(v) => go({ jenis_unit: v === 'all' ? undefined : v })}
+                                options={[
+                                    { value: 'all', label: 'Semua' },
+                                    { value: 'Light Vehicle', label: 'LV' },
+                                    { value: 'Bus', label: 'Bus' },
+                                ]}
+                            />
+                            <div className="flex h-10 items-center rounded-[10px] border-(length:--bw)">
+                                <button
+                                    type="button"
+                                    onClick={() => shiftWeek(-1)}
+                                    aria-label="Minggu sebelumnya"
+                                    className="grid size-10 place-items-center rounded-l-[10px] hover:bg-muted"
+                                >
+                                    <ChevronLeft className="size-4" />
+                                </button>
+                                <span className="px-2 text-sm font-semibold whitespace-nowrap tnum">
+                                    {rangeLabel}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => shiftWeek(1)}
+                                    disabled={range.end >= TODAY}
+                                    aria-label="Minggu berikutnya"
+                                    className="grid size-10 place-items-center rounded-r-[10px] hover:bg-muted disabled:opacity-40"
+                                >
+                                    <ChevronRight className="size-4" />
+                                </button>
+                            </div>
+                            <Button asChild variant="outline">
+                                <a
+                                    href={`/export/monitoring-pa/excel?${new URLSearchParams({
+                                        date_from: range.start,
+                                        date_to: range.end,
+                                        ...(filters.jenis_unit ? { jenis_unit: filters.jenis_unit } : {}),
+                                    })}`}
+                                >
+                                    <Download />
+                                    Export
+                                </a>
+                            </Button>
+                        </>
+                    }
+                />
+
+                <KpiStrip cols={4}>
+                    <KpiCard
+                        label="PA armada"
+                        value={formatPercent(summary.pa)}
+                        tone={summary.pa !== null && summary.pa < summary.target ? 'danger' : 'default'}
+                        sub={`target ≥ ${summary.target}% · 7 hari`}
+                    />
+                    <KpiCard
+                        label="Jam breakdown"
+                        value={`${formatNumber(summary.jam_bd)} j`}
+                        sub="dari P2H tidak layak & laporan"
+                    />
+                    <KpiCard
+                        label="Jam PM / servis"
+                        value={`${formatNumber(summary.jam_pm)} j`}
+                        sub="terjadwal"
+                    />
+                    <KpiCard
+                        label="Unit di bawah target"
+                        value={summary.di_bawah_target}
+                        tone={summary.di_bawah_target > 0 ? 'danger' : 'default'}
+                        sub={`rata-rata PA < ${summary.target}%`}
+                    />
+                </KpiStrip>
+
+                <section
+                    aria-labelledby="pa-harian"
+                    className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5"
+                >
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 id="pa-harian" className="text-[15px] font-semibold">
+                            PA armada harian · 14 hari
+                        </h2>
+                        <span className="text-xs text-muted-foreground">
+                            garis putus = target {summary.target}%
+                        </span>
+                    </div>
+                    <div className="mt-3">
+                        <ComplianceTrend data={daily} target={summary.target} />
+                    </div>
+                </section>
+
+                <section
+                    aria-labelledby="pa-unit"
+                    className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5"
+                >
+                    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <h2 id="pa-unit" className="text-[15px] font-semibold">
+                            PA per unit · {rangeLabel}
+                        </h2>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            PA = jam Ready ÷ 24 jam
+                            <span className="flex gap-0.5">
+                                {LEGEND.map((l) => (
+                                    <span
+                                        key={l.label}
+                                        className={cn(
+                                            'rounded-[4px] px-1.5 py-0.5 text-[10px] font-semibold',
+                                            paCell(l.pa),
+                                        )}
+                                    >
+                                        {l.label}
                                     </span>
-                                ),
-                            )}
-                        </p>
+                                ))}
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant={showFilter ? 'default' : 'outline'}
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => setShowFilter((v) => !v)}
-                        >
-                            <Filter className="h-4 w-4" />
-                            Filter
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                            onClick={handleReset}
-                        >
-                            <RefreshCw className="h-4 w-4" />
-                            Reset
-                        </Button>
-                        {!isStaffDriver && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        Export
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel className="text-xs text-muted-foreground">
-                                        Unduh Laporan
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <a
-                                            href={`/export/monitoring-pa/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex cursor-pointer items-center gap-2"
-                                        >
-                                            <FileText className="h-4 w-4 text-red-500" />
-                                            Export PDF
-                                        </a>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <a
-                                            href={`/export/monitoring-pa/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null) as [string, string][])).toString()}`}
-                                            className="flex cursor-pointer items-center gap-2"
-                                        >
-                                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                            Export Excel
-                                        </a>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-                    </div>
-                </div>
 
-                {/* ── Quick Presets ── */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground">
-                        Periode:
-                    </span>
-                    {PRESETS.map((p) => (
-                        <button
-                            key={p.value}
-                            type="button"
-                            onClick={() => applyPreset(p.value)}
-                            className="flex h-7 items-center rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:text-foreground"
-                        >
-                            {p.label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* ── Filter Panel ── */}
-                {showFilter && (
-                    <Card className="border-primary/20">
-                        <CardHeader className="pt-4 pb-3">
-                            <CardTitle className="flex items-center gap-2 text-sm">
-                                <Filter className="h-4 w-4" />
-                                Filter Data
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Dari Tanggal
-                                    </Label>
-                                    <Input
-                                        type="date"
-                                        value={form.date_from}
-                                        onChange={(e) =>
-                                            setForm({
-                                                ...form,
-                                                date_from: e.target.value,
-                                            })
-                                        }
-                                        className="h-10"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Sampai Tanggal
-                                    </Label>
-                                    <Input
-                                        type="date"
-                                        value={form.date_to}
-                                        onChange={(e) =>
-                                            setForm({
-                                                ...form,
-                                                date_to: e.target.value,
-                                            })
-                                        }
-                                        className="h-10"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Unit
-                                    </Label>
-                                    <Select
-                                        value={form.unit_id ?? 'all'}
-                                        onValueChange={(v) =>
-                                            setForm({
-                                                ...form,
-                                                unit_id:
-                                                    v === 'all' ? undefined : v,
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger className="h-10 w-full">
-                                            <SelectValue placeholder="Semua unit" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">
-                                                Semua unit
-                                            </SelectItem>
-                                            {allUnits.map((u) => (
-                                                <SelectItem
-                                                    key={u.id}
-                                                    value={String(u.id)}
-                                                >
-                                                    {u.no_unit} ({u.jenis_unit})
-                                                </SelectItem>
+                    {units.length === 0 ? (
+                        <EmptyState
+                            title="Belum ada unit aktif"
+                            description="PA dihitung dari unit aktif di Data master."
+                        />
+                    ) : (
+                        <div className="mt-4 overflow-x-auto">
+                            <table className="w-full min-w-[760px] border-separate border-spacing-[3px] text-sm">
+                                <thead>
+                                    <tr className="text-xs text-muted-foreground">
+                                        <th className="sticky left-0 bg-card text-left font-semibold">Unit</th>
+                                        {dayHeaders.map((d) => (
+                                            <th
+                                                key={d}
+                                                className={cn(
+                                                    'font-normal',
+                                                    d === TODAY && 'font-bold text-foreground',
+                                                )}
+                                            >
+                                                {formatDate(parseLocal(d), { withDay: true, withYear: false }).replace(/ [A-Za-z]+$/, '')}
+                                            </th>
+                                        ))}
+                                        <th
+                                            className="pl-3 text-right font-semibold"
+                                            aria-sort={asc ? 'ascending' : 'descending'}
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() => setAsc((v) => !v)}
+                                                className="inline-flex items-center gap-1 hover:text-foreground"
+                                            >
+                                                Rata-rata
+                                                {asc ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sorted.map((u) => (
+                                        <tr key={u.id}>
+                                            <th
+                                                scope="row"
+                                                className="sticky left-0 bg-card pr-3 text-left font-semibold whitespace-nowrap tnum"
+                                            >
+                                                {u.no_unit}
+                                            </th>
+                                            {u.days.map((d) => (
+                                                <td key={d.date} className="p-0">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <span
+                                                                tabIndex={0}
+                                                                className={cn(
+                                                                    'grid h-8 place-items-center rounded-[5px] text-xs font-semibold tnum',
+                                                                    paCell(d.pa),
+                                                                )}
+                                                            >
+                                                                {d.pa === null ? '—' : Math.round(d.pa)}
+                                                            </span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            {u.no_unit} · {formatDate(parseLocal(d.date), { withDay: true, withYear: false })}
+                                                            {d.pa === null
+                                                                ? ' — belum terdaftar'
+                                                                : ` · PA ${formatPercent(d.pa)} · downtime ${formatNumber(d.downtime)} j`}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </td>
                                             ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {!isStaffDriver && (
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground">
-                                            Jenis Unit
-                                        </Label>
-                                        <Select
-                                            value={form.jenis_unit ?? 'all'}
-                                            onValueChange={(v) =>
-                                                setForm({
-                                                    ...form,
-                                                    jenis_unit:
-                                                        v === 'all'
-                                                            ? undefined
-                                                            : v,
-                                                })
-                                            }
-                                        >
-                                            <SelectTrigger className="h-10 w-full">
-                                                <SelectValue placeholder="Semua jenis" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">
-                                                    Semua jenis
-                                                </SelectItem>
-                                                <SelectItem value="Bus">
-                                                    Bus
-                                                </SelectItem>
-                                                <SelectItem value="Light Vehicle">
-                                                    Light Vehicle
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="mt-3 flex justify-end gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
-                                    onClick={handleReset}
-                                >
-                                    <X className="h-4 w-4" /> Reset
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className="gap-2"
-                                    onClick={handleApply}
-                                >
-                                    Terapkan Filter
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* ── Legend ── */}
-                <Legend threshold={summary.pa_threshold} />
-
-                {/* ── Sort & Count ── */}
-                <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                        {unitData.length} unit aktif
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <Label className="text-xs text-muted-foreground">
-                            Urutkan:
-                        </Label>
-                        <Select
-                            value={sortBy}
-                            onValueChange={(v) => setSortBy(v as typeof sortBy)}
-                        >
-                            <SelectTrigger className="h-8 w-44 text-xs">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="actual_asc">
-                                    PA Aktual Terendah
-                                </SelectItem>
-                                <SelectItem value="actual_desc">
-                                    PA Aktual Tertinggi
-                                </SelectItem>
-                                <SelectItem value="status">
-                                    Status (BD dahulu)
-                                </SelectItem>
-                                <SelectItem value="name">No. Unit</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-
-                {/* ── Unit Cards Grid ── */}
-                {sorted.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted py-16 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                            <BarChart3 className="h-8 w-8 text-muted-foreground" />
+                                            <td
+                                                className={cn(
+                                                    'pl-3 text-right font-semibold tnum',
+                                                    u.avg !== null && u.avg < summary.target && 'text-danger',
+                                                )}
+                                            >
+                                                {formatPercent(u.avg)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                        <div>
-                            <p className="text-base font-semibold">
-                                Tidak ada unit ditemukan
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Coba ubah filter pencarian.
-                            </p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {sorted.map((unit) => (
-                            <UnitPACard key={unit.id} unit={unit} />
-                        ))}
-                    </div>
-                )}
-
-                {/* ── Info Footer ── */}
-                <div className="space-y-1 rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-                    <p>
-                        <strong className="text-foreground">PA</strong> = (T −
-                        S) ÷ T × 100% —{' '}
-                        <strong className="text-foreground">T</strong> = jam
-                        kalender unit dalam periode (sampai saat ini),{' '}
-                        <strong className="text-foreground">S</strong> = jam
-                        downtime BD / PM / Servis. Semua unit aktif ikut
-                        dihitung.
-                    </p>
-                    <p>
-                        Status unit diatur admin di menu Unit. P2H ikut
-                        memperbarui: P2H BD → unit BD, P2H Layak Pakai → unit
-                        Ready (perubahan terakhir yang berlaku).
-                    </p>
-                </div>
+                    )}
+                </section>
             </div>
         </>
     );
 }
 
-MonitoringIndex.layout = {
+MonitoringPa.layout = {
     breadcrumbs: [{ title: 'Monitoring PA', href: '/monitoring' }],
 };

@@ -1,11 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    CalendarDays,
-    CheckCircle2,
-    FileSpreadsheet,
-    Search,
-    XCircle,
-} from 'lucide-react';
+import { CheckCircle2, FileSpreadsheet, Search, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { PageTabs } from '@/components/page-tabs';
 import { PageButtons } from '@/components/pagination-bar';
@@ -86,10 +80,9 @@ const STATUS_FILTERS = [
 ] as const;
 
 const FINDING_STATUS_CLASS: Record<string, string> = {
-    open: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400',
-    progress:
-        'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400',
-    closed: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400',
+    open: 'border-danger/40 bg-danger-soft text-danger   ',
+    progress: 'border-warning/40 bg-warning-soft text-warning   ',
+    closed: 'border-success/40 bg-success-soft text-success   ',
 };
 
 const num = (v: number | null | undefined, digits = 0) =>
@@ -146,13 +139,12 @@ export default function UnitMonitoring({
     return (
         <>
             <Head title="Monitoring Harian Unit" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <PageTabs group="p2hMonitoring" />
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <CalendarDays className="h-6 w-6 text-primary" />
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Monitoring Harian Unit
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -162,7 +154,7 @@ export default function UnitMonitoring({
                     </div>
                     <Button asChild variant="outline" className="gap-1.5">
                         <a href={exportUrl}>
-                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                            <FileSpreadsheet className="h-4 w-4 text-success" />
                             Export Excel
                         </a>
                     </Button>
@@ -175,7 +167,7 @@ export default function UnitMonitoring({
                         <Input
                             id="start"
                             type="date"
-                            className="h-9 w-38"
+                            className="w-38 lg:h-10"
                             value={range.start}
                             onChange={(e) =>
                                 setRange((r) => ({
@@ -190,7 +182,7 @@ export default function UnitMonitoring({
                         <Input
                             id="end"
                             type="date"
-                            className="h-9 w-38"
+                            className="w-38 lg:h-10"
                             value={range.end}
                             onChange={(e) =>
                                 setRange((r) => ({ ...r, end: e.target.value }))
@@ -198,8 +190,7 @@ export default function UnitMonitoring({
                         />
                     </div>
                     <Button
-                        size="sm"
-                        className="h-9"
+                        className="lg:h-10"
                         onClick={() => applyFilter(range)}
                     >
                         Terapkan
@@ -214,7 +205,10 @@ export default function UnitMonitoring({
                                 })
                             }
                         >
-                            <SelectTrigger className="h-9 w-40">
+                            <SelectTrigger
+                                aria-label="Jenis unit"
+                                className="w-40"
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -240,7 +234,7 @@ export default function UnitMonitoring({
                                 })
                             }
                         >
-                            <SelectTrigger className="h-9 w-40">
+                            <SelectTrigger aria-label="Site" className="w-40">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -265,7 +259,7 @@ export default function UnitMonitoring({
                             <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 id="search"
-                                className="h-9 w-44 pl-8"
+                                className="w-44 pl-8"
                                 placeholder="No. unit / lambung"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -436,12 +430,7 @@ function MonitoringCard({ row }: { row: Row }) {
     const { mainPic, allSamePic } = mainPicOf(row);
 
     return (
-        <div
-            className={cn(
-                'space-y-2 p-4',
-                !row.terisi && 'bg-red-50/40 dark:bg-red-950/10',
-            )}
-        >
+        <div className={cn('space-y-2 p-4', !row.terisi && 'bg-danger-soft')}>
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <p className="font-semibold">{row.no_unit}</p>
@@ -456,13 +445,13 @@ function MonitoringCard({ row }: { row: Row }) {
                 {row.terisi ? (
                     <Link
                         href={`/p2h/${row.session_id}`}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-400"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-success"
                     >
                         <CheckCircle2 className="h-4 w-4" />
                         {row.shifts.join(', ') || 'Terisi'}
                     </Link>
                 ) : (
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-red-600 dark:text-red-400">
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-danger">
                         <XCircle className="h-4 w-4" />
                         Tidak mengisi
                     </span>
@@ -472,14 +461,17 @@ function MonitoringCard({ row }: { row: Row }) {
             {row.terisi && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                     {row.kondisi === 'BD' && (
-                        <Badge variant="destructive" className="h-5">
+                        <Badge
+                            variant="outline"
+                            className="h-5 border-danger/40 bg-danger-soft text-danger"
+                        >
                             BD
                         </Badge>
                     )}
                     {row.pending_approval && (
                         <Badge
                             variant="outline"
-                            className="h-5 border-amber-300 text-amber-700 dark:text-amber-400"
+                            className="h-5 border-warning/40 text-warning"
                         >
                             Menunggu approval
                         </Badge>
@@ -560,12 +552,7 @@ function MonitoringRow({ row }: { row: Row }) {
     const { mainPic, allSamePic } = mainPicOf(row);
 
     return (
-        <tr
-            className={cn(
-                'align-top',
-                !row.terisi && 'bg-red-50/40 dark:bg-red-950/10',
-            )}
-        >
+        <tr className={cn('align-top', !row.terisi && 'bg-danger-soft')}>
             <td className="px-3 py-2.5 whitespace-nowrap">
                 {fmtDate(row.tanggal)}
             </td>
@@ -584,21 +571,24 @@ function MonitoringRow({ row }: { row: Row }) {
                             {row.session_id ? (
                                 <Link
                                     href={`/p2h/${row.session_id}`}
-                                    className="font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                                    className="font-medium text-success hover:underline"
                                 >
                                     <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
                                     {row.shifts.join(', ') || 'Terisi'}
                                 </Link>
                             ) : null}
                             {row.kondisi === 'BD' && (
-                                <Badge variant="destructive" className="h-5">
+                                <Badge
+                                    variant="outline"
+                                    className="h-5 border-danger/40 bg-danger-soft text-danger"
+                                >
                                     BD
                                 </Badge>
                             )}
                             {row.pending_approval && (
                                 <Badge
                                     variant="outline"
-                                    className="h-5 border-amber-300 text-amber-700 dark:text-amber-400"
+                                    className="h-5 border-warning/40 text-warning"
                                 >
                                     Menunggu approval
                                 </Badge>
@@ -611,7 +601,7 @@ function MonitoringRow({ row }: { row: Row }) {
                         )}
                     </div>
                 ) : (
-                    <span className="inline-flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+                    <span className="inline-flex items-center gap-1 font-medium text-danger">
                         <XCircle className="h-3.5 w-3.5" />
                         Tidak mengisi
                     </span>

@@ -1,7 +1,14 @@
 import { useSyncExternalStore } from 'react';
 
-export type ResolvedAppearance = 'light' | 'dark';
+/**
+ * Tema PIMS (docs/01-design-tokens.md):
+ *   `<html data-theme="light|dark|hc">`, pilihan disimpan per perangkat
+ *   di localStorage `pims.theme` (+ cookie `appearance` agar Blade bisa
+ *   menulis atribut sebelum paint).
+ */
+export type ResolvedAppearance = 'light' | 'dark' | 'hc';
 export type Appearance = ResolvedAppearance | 'system';
+export type MotionPreference = 'system' | 'reduced';
 
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;
@@ -9,8 +16,14 @@ export type UseAppearanceReturn = {
     readonly updateAppearance: (mode: Appearance) => void;
 };
 
+const STORAGE_KEY = 'pims.theme';
+const LEGACY_STORAGE_KEY = 'appearance';
+const MOTION_KEY = 'pims.motion';
+const APPEARANCES: Appearance[] = ['light', 'dark', 'hc', 'system'];
+
 const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'system';
+let currentMotion: MotionPreference = 'system';
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -29,16 +42,36 @@ const setCookie = (name: string, value: string, days = 365): void => {
     document.cookie = `${name}=${value};path=/;max-age=${maxAge};SameSite=Lax`;
 };
 
-const getStoredAppearance = (): Appearance => {
-    if (typeof window === 'undefined') {
-        return 'system';
+const safeGet = (key: string): string | null => {
+    try {
+        return localStorage.getItem(key);
+    } catch {
+        return null;
     }
-
-    return (localStorage.getItem('appearance') as Appearance) || 'system';
 };
 
-const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || (appearance === 'system' && prefersDark());
+const safeSet = (key: string, value: string): void => {
+    try {
+        localStorage.setItem(key, value);
+    } catch {
+        // storage diblokir (mode privat) — abaikan, cookie tetap menyimpan tema
+    }
+};
+
+const getStoredAppearance = (): Appearance => {
+    const stored = safeGet(STORAGE_KEY) ?? safeGet(LEGACY_STORAGE_KEY);
+
+    return APPEARANCES.includes(stored as Appearance)
+        ? (stored as Appearance)
+        : 'system';
+};
+
+const resolve = (appearance: Appearance): ResolvedAppearance => {
+    if (appearance === 'system') {
+        return prefersDark() ? 'dark' : 'light';
+    }
+
+    return appearance;
 };
 
 const applyTheme = (appearance: Appearance): void => {
@@ -46,10 +79,23 @@ const applyTheme = (appearance: Appearance): void => {
         return;
     }
 
-    const isDark = isDarkMode(appearance);
+    const resolved = resolve(appearance);
+    const root = document.documentElement;
 
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    root.dataset.theme = resolved;
+    root.style.colorScheme = resolved === 'dark' ? 'dark' : 'light';
+};
+
+const applyMotion = (motion: MotionPreference): void => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    if (motion === 'reduced') {
+        document.documentElement.dataset.motion = 'reduced';
+    } else {
+        delete document.documentElement.dataset.motion;
+    }
 };
 
 const subscribe = (callback: () => void) => {
@@ -60,31 +106,27 @@ const subscribe = (callback: () => void) => {
 
 const notify = (): void => listeners.forEach((listener) => listener());
 
-const mediaQuery = (): MediaQueryList | null => {
-    if (typeof window === 'undefined') {
-        return null;
-    }
-
-    return window.matchMedia('(prefers-color-scheme: dark)');
+const handleSystemThemeChange = (): void => {
+    applyTheme(currentAppearance);
+    notify();
 };
-
-const handleSystemThemeChange = (): void => applyTheme(currentAppearance);
 
 export function initializeTheme(): void {
     if (typeof window === 'undefined') {
         return;
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
-    }
-
     currentAppearance = getStoredAppearance();
+    safeSet(STORAGE_KEY, currentAppearance);
+    setCookie('appearance', currentAppearance);
     applyTheme(currentAppearance);
 
-    // Set up system theme change listener
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    currentMotion = safeGet(MOTION_KEY) === 'reduced' ? 'reduced' : 'system';
+    applyMotion(currentMotion);
+
+    window
+        .matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', handleSystemThemeChange);
 }
 
 export function useAppearance(): UseAppearanceReturn {
@@ -94,22 +136,35 @@ export function useAppearance(): UseAppearanceReturn {
         () => 'system',
     );
 
-    const resolvedAppearance: ResolvedAppearance = isDarkMode(appearance)
-        ? 'dark'
-        : 'light';
-
     const updateAppearance = (mode: Appearance): void => {
         currentAppearance = mode;
-
-        // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', mode);
-
-        // Store in cookie for SSR...
+        safeSet(STORAGE_KEY, mode);
         setCookie('appearance', mode);
-
         applyTheme(mode);
         notify();
     };
 
-    return { appearance, resolvedAppearance, updateAppearance } as const;
+    return {
+        appearance,
+        resolvedAppearance: resolve(appearance),
+        updateAppearance,
+    } as const;
+}
+
+/** Toggle "kurangi gerakan" (docs/03) — menambah `data-motion="reduced"` di `<html>`. */
+export function useMotionPreference() {
+    const motion: MotionPreference = useSyncExternalStore(
+        subscribe,
+        () => currentMotion,
+        () => 'system',
+    );
+
+    const updateMotion = (value: MotionPreference): void => {
+        currentMotion = value;
+        safeSet(MOTION_KEY, value);
+        applyMotion(value);
+        notify();
+    };
+
+    return { motion, updateMotion } as const;
 }

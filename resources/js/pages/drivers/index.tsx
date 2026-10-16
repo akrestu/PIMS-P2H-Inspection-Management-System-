@@ -90,26 +90,6 @@ function getInitials(name: string) {
         .join('');
 }
 
-const AVATAR_COLORS = [
-    'bg-blue-500',
-    'bg-purple-500',
-    'bg-emerald-500',
-    'bg-orange-500',
-    'bg-rose-500',
-    'bg-cyan-500',
-    'bg-indigo-500',
-    'bg-teal-500',
-];
-function avatarColor(name: string) {
-    let h = 0;
-
-    for (let i = 0; i < name.length; i++) {
-        h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-    }
-
-    return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-
 /* ─────────────────── AddDriverSheet ────────────────────────── */
 function AddDriverSheet({
     open,
@@ -391,10 +371,10 @@ function EditDriverSheet({
                     {/* Driver preview */}
                     <div className="flex items-center gap-3 pb-2">
                         <Avatar
-                            className={`h-10 w-10 text-white ${avatarColor(driver.nama)}`}
+                            className={`h-10 w-10 bg-muted text-foreground`}
                         >
                             <AvatarFallback
-                                className={`text-sm font-bold text-white ${avatarColor(driver.nama)}`}
+                                className={`bg-muted text-sm font-bold text-foreground`}
                             >
                                 {getInitials(driver.nama)}
                             </AvatarFallback>
@@ -545,10 +525,10 @@ function ViewDriverDialog({
                 <DialogHeader>
                     <div className="flex flex-col items-center gap-3 pb-2">
                         <Avatar
-                            className={`h-16 w-16 text-white ${avatarColor(driver.nama)}`}
+                            className={`h-16 w-16 bg-muted text-foreground`}
                         >
                             <AvatarFallback
-                                className={`text-xl font-bold text-white ${avatarColor(driver.nama)}`}
+                                className={`bg-muted text-xl font-semibold text-foreground`}
                             >
                                 {getInitials(driver.nama)}
                             </AvatarFallback>
@@ -629,7 +609,7 @@ function StatCard({
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
+                <div className="text-2xl font-semibold">{value}</div>
                 {sub && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
                         {sub}
@@ -698,11 +678,11 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
     return (
         <TooltipProvider>
             <Head title="Manajemen Driver" />
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Manajemen Driver
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -722,21 +702,21 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                         value={stats.total}
                         icon={Users}
                         sub="Terdaftar di sistem"
-                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        colorClass="bg-info-soft text-info  "
                     />
                     <StatCard
                         title="Halaman Ini"
                         value={drivers.data.length}
                         icon={User}
                         sub={`Halaman ${drivers.current_page} dari ${drivers.last_page}`}
-                        colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        colorClass="bg-info-soft text-info  "
                     />
                     <StatCard
                         title="Department"
                         value={stats.departments.length}
                         icon={Building2}
                         sub="Divisi terdaftar"
-                        colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        colorClass="bg-success-soft text-success  "
                     />
                 </div>
 
@@ -750,7 +730,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Cari nama atau NIK..."
-                                className="h-9 pr-8 pl-9"
+                                className="pr-8 pl-9"
                             />
                             {search && (
                                 <button
@@ -780,7 +760,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                                                 deptFilter === dept
                                                     ? 'border-primary bg-primary text-primary-foreground'
-                                                    : 'border-border hover:border-primary/60'
+                                                    : 'border-border hover:border-foreground/30'
                                             }`}
                                         >
                                             {dept}
@@ -899,10 +879,10 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar
-                                                            className={`h-8 w-8 shrink-0 ${avatarColor(driver.nama)}`}
+                                                            className={`h-8 w-8 shrink-0 bg-muted`}
                                                         >
                                                             <AvatarFallback
-                                                                className={`text-xs font-bold text-white ${avatarColor(driver.nama)}`}
+                                                                className={`bg-muted text-xs font-bold text-foreground`}
                                                             >
                                                                 {getInitials(
                                                                     driver.nama,

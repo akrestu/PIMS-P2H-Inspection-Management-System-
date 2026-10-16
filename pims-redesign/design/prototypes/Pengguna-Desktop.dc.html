@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Pengguna &amp; driver (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Pengguna &amp; driver" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Pengguna &amp; driver</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ sub }}</span></div>
+      <button type="button" class="press" onClick="{{ importIt }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Import driver</button>
+      <button type="button" class="press" onClick="{{ openAdd }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Undang pengguna</button>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <div role="tablist" style="display: flex; padding: 3px; border-radius: 10px; background: var(--muted)">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: 600"><span class="tnum">{{ t.label }}</span></button></sc-for>
+      </div>
+      <div class="field" style="flex: 0 1 280px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="{{ q }}" onChange="{{ onQ }}" aria-label="Cari pengguna" placeholder="Cari nama, NRP, email" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px"></div>
+      <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500"><input type="checkbox" checked="{{ showOff }}" onChange="{{ toggleOff }}" style="width: 16px; height: 16px; accent-color: #0A0A0A">Tampilkan nonaktif</label>
+    </div>
+
+    <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+      <table style="width: 100%; min-width: 980px; border-collapse: collapse; font-size: 14px">
+        <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+          <th style="width: 44px; padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih semua" checked="{{ allSel }}" onChange="{{ toggleAll }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></th>
+          <sc-for list="{{ cols }}" as="h" hint-placeholder-count="5"><th aria-sort="{{ h.aria }}" style="padding: 0 12px"><button type="button" class="press" onClick="{{ h.sort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: {{ h.fg }}; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap">{{ h.label }}<span style="opacity: {{ h.op }}">{{ h.arrow }}</span></button></th></sc-for>
+          <th style="padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Status</th>
+          <th style="padding: 0 14px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+            <tr style="border-top: 1px solid var(--border); height: 58px; background: {{ r.bg }}; opacity: {{ r.op }}">
+              <td style="padding: 0 0 0 14px"><input type="checkbox" aria-label="Pilih {{ r.name }}" checked="{{ r.sel }}" onChange="{{ r.toggle }}" disabled="{{ r.lock }}" style="width: 16px; height: 16px; accent-color: #0A0A0A"></td>
+              <td style="padding: 0 12px"><span style="display: flex; align-items: center; gap: 10px"><span style="width: 32px; height: 32px; border-radius: 999px; background: var(--muted); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{ r.init }}</span><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><strong style="font-weight: 600">{{ r.name }}</strong><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ r.idTxt }}</span></span></span></td>
+              <td style="padding: 0 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="height: 24px; padding: 0 9px; border-radius: 999px; border: 1px solid {{ r.roleBorder }}; background: {{ r.roleBg }}; color: {{ r.roleFg }}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{ r.role }}</span>
+                <sc-if value="{{ r.appr }}" hint-placeholder-val="{{ false }}"><span style="position: relative; display: inline-flex"><button type="button" onMouseEnter="{{ r.tipIn }}" onMouseLeave="{{ r.tipOut }}" onFocus="{{ r.tipIn }}" onBlur="{{ r.tipOut }}" aria-label="Approver LV" style="height: 24px; padding: 0 8px; border-radius: 999px; border: 0; background: var(--brand-soft); color: var(--foreground); font: inherit; font-size: 12px; font-weight: 600">Approver LV</button>
+                  <sc-if value="{{ r.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; line-height: 17px; white-space: nowrap; box-shadow: var(--shadow-2); pointer-events: none">Bisa menyetujui P2H Light Vehicle<br>di {{ r.site }} · eskalasi setelah 15 mnt</span></sc-if></span></sc-if></span></td>
+              <td style="padding: 0 12px">{{ r.site }}</td>
+              <td class="tnum" style="padding: 0 12px; color: var(--muted-foreground)">{{ r.last }}</td>
+              <td class="tnum" style="padding: 0 12px; color: var(--muted-foreground)">{{ r.p2h }}</td>
+              <td style="padding: 0 12px"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{ r.stFg }}; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 9px; background: currentColor"></span>{{ r.st }}</span></td>
+              <td style="padding: 0 14px; text-align: right; position: relative">
+                <button type="button" class="press" onClick="{{ r.edit }}" aria-disabled="{{ r.lock }}" onMouseEnter="{{ r.lockIn }}" onMouseLeave="{{ r.lockOut }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: {{ r.editFg }}; font: inherit; font-size: 13px; font-weight: 600">Ubah</button>
+                <sc-if value="{{ r.lockTip }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; right: 14px; bottom: calc(100% - 8px); z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; white-space: nowrap; box-shadow: var(--shadow-2); pointer-events: none">Hanya Admin yang dapat mengubah akun {{ r.role }}</span></sc-if>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; text-align: center; color: var(--muted-foreground); font-size: 14px">Tidak ada pengguna yang cocok.</div></sc-if>
+    </div>
+    <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ footer }}</span>
+
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div class="toast-in" role="toolbar" aria-label="Aksi massal" style="position: sticky; bottom: 16px; align-self: center; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; box-shadow: var(--shadow-3)">
+        <span class="tnum" style="font-size: 14px; font-weight: 600; padding-right: 8px">{{ selN }} dipilih</span>
+        <button type="button" class="press" onClick="{{ bulkReset }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FAFAFA; font: inherit; font-size: 13px; font-weight: 600">Kirim reset kata sandi</button>
+        <button type="button" class="press" onClick="{{ bulkToggle }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FAFAFA; font: inherit; font-size: 13px; font-weight: 600">{{ bulkToggleLabel }}</button>
+        <button type="button" class="press" onClick="{{ bulkTrash }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: rgba(255,255,255,.1); color: #FCA5A5; font: inherit; font-size: 13px; font-weight: 600">Pindah ke Sampah</button>
+        <button type="button" class="press" onClick="{{ clearSel }}" aria-label="Batal pilih" style="width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: #FAFAFA; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ drawerOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" onClick="{{ closeDrawer }}" style="position: fixed; inset: 0; z-index: 30; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="dr-t" style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 31; width: min(480px, 100%); background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; animation: pims-fade 220ms var(--ease-out) both">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 16px 12px 16px 24px; border-bottom: 1px solid var(--border)"><strong id="dr-t" style="flex: 1; font-size: 18px; font-weight: 600">{{ drawerTitle }}</strong><button type="button" class="press hl" onClick="{{ closeDrawer }}" aria-label="Tutup" style="width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+      <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span id="role-l" style="font-size: 13px; font-weight: 500">Peran</span>
+          <div role="radiogroup" aria-labelledby="role-l" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted)">
+            <sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ o.on }}" aria-disabled="{{ o.dis }}" class="press" onClick="{{ o.pick }}" style="height: 40px; border: 0; border-radius: 9px; background: {{ o.bg }}; box-shadow: {{ o.shadow }}; color: {{ o.fg }}; font: inherit; font-size: 14px; font-weight: 600; opacity: {{ o.op }}">{{ o.label }}</button></sc-for>
+          </div>
+          <span style="font-size: 12px; color: var(--muted-foreground)">{{ roleHint }}</span>
+        </div>
+        <sc-for list="{{ fields }}" as="f" hint-placeholder-count="3">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">{{ f.label }}
+            <input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" inputmode="{{ f.mode }}" data-invalid="{{ f.bad }}" class="field" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 400; outline: 0">
+            <sc-if value="{{ f.bad }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: var(--danger); font-weight: 500">{{ f.err }}</span></sc-if>
+          </label>
+        </sc-for>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; font-weight: 500">Site</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{ siteOpts }}" as="o" hint-placeholder-count="4"><button type="button" class="press" aria-pressed="{{ o.on }}" onClick="{{ o.pick }}" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid {{ o.border }}; background: {{ o.bg }}; color: {{ o.fg }}; font: inherit; font-size: 13px; font-weight: 500">{{ o.label }}</button></sc-for></div>
+          <sc-if value="{{ siteBad }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: var(--danger); font-weight: 500">Pilih minimal satu site.</span></sc-if>
+        </div>
+        <sc-if value="{{ isMgrForm }}" hint-placeholder-val="{{ false }}">
+          <button type="button" role="switch" aria-checked="{{ apprOn }}" onClick="{{ toggleAppr }}" class="press" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--background); color: var(--foreground); font: inherit; text-align: left">
+            <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><strong style="font-size: 14px; font-weight: 600">Approver Light Vehicle</strong><span style="font-size: 12px; color: var(--muted-foreground)">Menyetujui P2H LV di site terpilih</span></span>
+            <span style="width: 40px; height: 24px; border-radius: 99px; background: {{ swBg }}; position: relative; transition: background-color 150ms"><span style="position: absolute; top: 2px; left: {{ swX }}px; width: 20px; height: 20px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left 150ms var(--ease-out)"></span></span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ isDriverForm }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 19px; color: var(--muted-foreground)">Driver masuk dengan NRP dan PIN 6 digit. Tautan aktivasi dikirim ke WhatsApp.</span></sc-if>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border)">
+        <button type="button" class="press" onClick="{{ closeDrawer }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Batal</button>
+        <button type="button" class="press" onClick="{{ save }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600">{{ saveLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 6px 6px 6px 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: var(--shadow-3)">
+      <span>{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #F4D435; font: inherit; font-size: 14px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const P = (id, name, role, site, nrp, email, appr, active, last, p2h) => ({ id, name, role, site, nrp, email, appr: !!appr, active: active !== false, last, p2h });
+    this.state = {
+      users: [
+        P(1, 'Rina Anggraini', 'Admin', 'Semua site', '', 'rina.a@kontraktor.co.id', false, true, 'Hari ini 06:10', '—'), P(2, 'Hendra Wijaya', 'Manager', 'Pit A', '', 'hendra.w@kontraktor.co.id', true, true, 'Hari ini 06:21', '—'),
+        P(3, 'Wawan Setiadi', 'Manager', 'Pit A, Pit B', '', 'wawan.s@kontraktor.co.id', true, true, 'Kemarin 16:44', '—'), P(11, 'Dewi Kartika', 'Manager', 'Jetty', '', 'dewi.k@kontraktor.co.id', false, true, '13 Okt', '—'),
+        P(4, 'Budi Santoso', 'Driver', 'Pit A', '20231045', '', false, true, 'Hari ini 05:02', '29/30'), P(5, 'Andi Pratama', 'Driver', 'Pit A', '20220871', '', false, true, 'Hari ini 05:49', '28/30'),
+        P(6, 'Dedi Kurniawan', 'Driver', 'Pit A', '20210533', '', false, true, 'Hari ini 05:55', '30/30'), P(7, 'Sari Maharani', 'Driver', 'Pit B', '20240112', '', false, true, 'Hari ini 06:03', '27/30'),
+        P(8, 'Rudi Hartono', 'Driver', 'Pit A', '20200987', '', false, false, '2 Okt', '—'), P(9, 'Joko Widodo S.', 'Driver', 'Pit A', '20230440', '', false, true, 'Hari ini 05:53', '26/30'),
+        P(10, 'Fajar Nugroho', 'Driver', 'Pit B', '20240321', '', false, true, 'Kemarin 06:12', '18/30'), P(12, 'Agus Salim', 'Driver', 'Pit A', '20190455', '', false, true, 'Kemarin 18:02', '22/30'),
+        P(13, 'Slamet Riyadi', 'Driver', 'Pit A', '20180122', '', false, true, 'Hari ini 05:38', '28/30'), P(14, 'Hadi Tanoto', 'Driver', 'Pit A', '20210977', '', false, true, 'Hari ini 05:33', '30/30')
+      ],
+      tab: 'semua', q: '', showOff: true, sortKey: 'name', dir: 1, sel: {}, tip: null, lockTip: null, drawer: null, editId: null, form: {}, tried: false, toast: null
+    };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Admin';
+    const isAdmin = peran === 'Admin';
+    const U = s.users;
+    const cnt = { semua: U.length, Admin: U.filter((u) => u.role === 'Admin').length, Manager: U.filter((u) => u.role === 'Manager').length, Driver: U.filter((u) => u.role === 'Driver').length };
+    const tabs = [['semua', 'Semua'], ['Admin', 'Admin'], ['Manager', 'Manager'], ['Driver', 'Driver']].map(([k, label]) => { const on = s.tab === k; return { label: label + ' · ' + cnt[k], on, bg: on ? 'var(--card)' : 'transparent', shadow: on ? 'var(--shadow-2)' : 'none', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ tab: k, sel: {} }) }; });
+    const q = s.q.trim().toLowerCase();
+    let list = U.filter((u) => (s.tab === 'semua' || u.role === s.tab) && (s.showOff || u.active) && (!q || (u.name + u.nrp + u.email).toLowerCase().includes(q)));
+    const rk = { Admin: 0, Manager: 1, Driver: 2 };
+    const key = { name: (u) => u.name, role: (u) => rk[u.role], site: (u) => u.site, last: (u) => u.last.startsWith('Hari') ? '0' + u.last : u.last.startsWith('Kemarin') ? '1' + u.last : '2' + u.last, p2h: (u) => u.p2h === '—' ? 99 : -parseInt(u.p2h, 10) };
+    list = list.slice().sort((a, b) => { const A = key[s.sortKey](a), B = key[s.sortKey](b); return (A > B ? 1 : A < B ? -1 : 0) * s.dir; });
+    const init = (n) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    const rows = list.map((u) => {
+      const lock = !isAdmin && u.role !== 'Driver'; const sel = !!s.sel[u.id];
+      return { ...u, sel, lock, init: init(u.name), idTxt: u.role === 'Driver' ? 'NRP ' + u.nrp : u.email, bg: sel ? 'var(--brand-soft)' : 'transparent', op: u.active ? 1 : 0.6,
+        roleBg: u.role === 'Admin' ? 'var(--foreground)' : 'var(--background)', roleFg: u.role === 'Admin' ? 'var(--background)' : 'var(--foreground)', roleBorder: u.role === 'Admin' ? 'var(--foreground)' : 'var(--border)',
+        st: u.active ? 'Aktif' : 'Nonaktif', stFg: u.active ? 'var(--success)' : 'var(--muted-foreground)', editFg: lock ? 'var(--muted-foreground)' : 'var(--foreground)',
+        tipOn: s.tip === u.id, tipIn: () => { if (this.state.tip !== u.id) this.setState({ tip: u.id }); }, tipOut: () => { if (this.state.tip === u.id) this.setState({ tip: null }); },
+        lockTip: lock && s.lockTip === u.id, lockIn: () => { if (lock && this.state.lockTip !== u.id) this.setState({ lockTip: u.id }); }, lockOut: () => { if (this.state.lockTip === u.id) this.setState({ lockTip: null }); },
+        toggle: () => { if (!lock) this.setState({ sel: { ...this.state.sel, [u.id]: !sel } }); },
+        edit: () => { if (lock) return; this.setState({ drawer: 'edit', editId: u.id, form: { ...u, sites: u.site === 'Semua site' ? ['Pit A', 'Pit B', 'Hauling Road', 'Jetty'] : u.site.split(', ') }, tried: false, lockTip: null }); } };
+    });
+    const cols = [['name', 'Nama'], ['role', 'Peran'], ['site', 'Site'], ['last', 'Login terakhir'], ['p2h', 'P2H 30 hari']].map(([k, label]) => { const on = s.sortKey === k; return { label, fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', arrow: on ? (s.dir > 0 ? '↑' : '↓') : '↕', op: on ? 1 : 0.35, aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : 'none', sort: () => this.setState({ sortKey: k, dir: on ? -s.dir : 1 }) }; });
+    const selectable = rows.filter((r) => !r.lock);
+    const selIds = rows.filter((r) => r.sel).map((r) => r.id);
+    const selUsers = U.filter((u) => selIds.includes(u.id));
+    const allOff = selUsers.length > 0 && selUsers.every((u) => !u.active);
+    const F = s.form || {};
+    const role = F.role || 'Driver';
+    const setF = (k) => (e) => this.setState({ form: { ...this.state.form, [k]: e.target.value } });
+    const emailOk = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(F.email || '');
+    const nrpOk = /^\d{8}$/.test(F.nrp || '');
+    const waOk = /^(\+62|0)8\d{8,11}$/.test(String(F.wa || '').replace(/[\s-]/g, ''));
+    const fields = role === 'Driver'
+      ? [['name', 'Nama lengkap', 'mis. Bayu Aditya', 'text', !F.name ? 'Nama wajib diisi' : ''], ['nrp', 'NRP', '8 digit', 'numeric', !nrpOk ? 'NRP harus 8 digit angka' : ''], ['wa', 'Nomor WhatsApp', '08xx xxxx xxxx', 'tel', !waOk ? 'Nomor WhatsApp tidak valid' : '']]
+      : [['name', 'Nama lengkap', 'mis. Bayu Aditya', 'text', !F.name ? 'Nama wajib diisi' : ''], ['email', 'Email kantor', 'nama@kontraktor.co.id', 'email', !emailOk ? 'Format email tidak valid' : '']];
+    const fieldVals = fields.map(([k, label, ph, mode, err]) => ({ label, ph, mode, err, bad: s.tried && !!err, value: F[k] || '', on: setF(k) }));
+    const sites = F.sites || [];
+    const siteBad = s.tried && !sites.length;
+    const valid = fields.every((f) => !f[4]) && sites.length > 0;
+    const toastOn = !!s.toast;
+    return {
+      theme, peran,
+      sub: cnt.Driver + ' driver · ' + cnt.Manager + ' manager · ' + cnt.Admin + ' admin' + (isAdmin ? '' : ' · Anda hanya dapat mengelola driver'),
+      tabs, q: s.q, onQ: (e) => this.setState({ q: e.target.value }), showOff: s.showOff, toggleOff: () => this.setState({ showOff: !s.showOff }),
+      cols, rows, empty: rows.length === 0, footer: 'Menampilkan ' + rows.length + ' dari ' + U.length + ' akun. Hapus akun permanen hanya oleh Admin setelah 30 hari di Sampah.',
+      allSel: selectable.length > 0 && selectable.every((r) => r.sel), toggleAll: () => { const a = selectable.length && selectable.every((r) => r.sel); const n = {}; if (!a) selectable.forEach((r) => { n[r.id] = true; }); this.setState({ sel: n }); },
+      hasSel: selIds.length > 0, selN: selIds.length, clearSel: () => this.setState({ sel: {} }),
+      bulkReset: () => { this.setState({ sel: {} }); this.toast('Tautan reset dikirim ke ' + selIds.length + ' akun'); },
+      bulkToggleLabel: allOff ? 'Aktifkan' : 'Nonaktifkan',
+      bulkToggle: () => { const prev = U; this.setState({ users: prev.map((u) => selIds.includes(u.id) ? { ...u, active: allOff } : u), sel: {} }); this.toast(selIds.length + ' akun ' + (allOff ? 'diaktifkan' : 'dinonaktifkan'), () => this.setState({ users: prev })); },
+      bulkTrash: () => { const prev = U; this.setState({ users: prev.filter((u) => !selIds.includes(u.id)), sel: {} }); this.toast(selIds.length + ' akun dipindah ke Sampah', () => this.setState({ users: prev })); },
+      importIt: () => this.toast('Import driver dari Excel — pola sama dengan Master unit'),
+      openAdd: () => this.setState({ drawer: 'add', editId: null, form: { role: 'Driver', sites: ['Pit A'] }, tried: false }),
+      drawerOn: !!s.drawer, drawerTitle: s.drawer === 'add' ? 'Undang pengguna' : 'Ubah ' + (F.name || ''), closeDrawer: () => this.setState({ drawer: null }),
+      roleOpts: ['Admin', 'Manager', 'Driver'].map((r) => { const dis = !isAdmin && r !== 'Driver'; const on = role === r; return { label: r, on, dis, op: dis ? 0.45 : 1, bg: on ? 'var(--card)' : 'transparent', shadow: on ? 'var(--shadow-2)' : 'none', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => { if (!dis) this.setState({ form: { ...this.state.form, role: r } }); } }; }),
+      roleHint: { Admin: 'Akses penuh termasuk Pengaturan, Audit Log, dan hapus permanen.', Manager: 'Memantau, menyetujui P2H, dan mengelola temuan di site terpilih.', Driver: 'Mengisi P2H harian lewat aplikasi (PWA).' }[role] + (isAdmin ? '' : ' Manager hanya dapat mengundang driver.'),
+      fields: fieldVals, siteBad,
+      siteOpts: ['Pit A', 'Pit B', 'Hauling Road', 'Jetty'].map((x) => { const on = sites.includes(x); return { label: x, on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', pick: () => this.setState({ form: { ...this.state.form, sites: on ? sites.filter((y) => y !== x) : sites.concat(x) } }) }; }),
+      isMgrForm: role === 'Manager', isDriverForm: role === 'Driver', apprOn: !!F.appr, swBg: F.appr ? 'var(--foreground)' : 'var(--input)', swX: F.appr ? 18 : 2, toggleAppr: () => this.setState({ form: { ...this.state.form, appr: !F.appr } }),
+      saveLabel: s.drawer === 'add' ? 'Kirim undangan' : 'Simpan',
+      save: () => {
+        if (!valid) { this.setState({ tried: true }); return; }
+        const prev = U; const site = sites.length === 4 ? 'Semua site' : sites.join(', ');
+        const rec = { name: F.name, role, site, nrp: F.nrp || '', email: F.email || '', appr: role === 'Manager' && !!F.appr };
+        const users = s.drawer === 'edit' ? prev.map((u) => u.id === s.editId ? { ...u, ...rec } : u) : [{ id: Date.now(), active: true, last: 'Belum login', p2h: '—', ...rec }].concat(prev);
+        this.setState({ users, drawer: null }); this.toast(s.drawer === 'edit' ? 'Akun ' + F.name + ' disimpan' : 'Undangan dikirim ke ' + F.name + (role === 'Driver' ? ' via WhatsApp' : ' via email'), () => this.setState({ users: prev }));
+      },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

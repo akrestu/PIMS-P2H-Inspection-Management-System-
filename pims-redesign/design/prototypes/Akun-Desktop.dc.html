@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Akun saya (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ themeNow }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Akun" peran="{{ peran }}" theme="{{ themeNow }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; align-items: center; gap: 16px">
+      <span style="width: 56px; height: 56px; border-radius: 999px; background: var(--muted); font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{ initials }}</span>
+      <div style="display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">{{ name }}</h1><span style="font-size: 14px; color: var(--muted-foreground)">{{ meta }}</span></div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: 200px minmax(0, 720px); gap: 32px; align-items: start">
+      <nav aria-label="Bagian akun" style="position: sticky; top: 24px; display: flex; flex-direction: column; gap: 2px">
+        <sc-for list="{{ secs }}" as="x" hint-placeholder-count="4"><a href="#{{ x.id }}" class="press" style="height: 36px; padding: 0 10px; border-radius: 8px; font-size: 14px; color: var(--muted-foreground); text-decoration: none; display: flex; align-items: center">{{ x.label }}</a></sc-for>
+      </nav>
+
+      <div style="display: flex; flex-direction: column; gap: 20px">
+        <section id="profil" style="border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; flex-direction: column; gap: 2px"><strong style="font-size: 16px; font-weight: 600">Profil</strong><span style="font-size: 13px; color: var(--muted-foreground)">Nama, peran, dan site diatur oleh Admin.</span></div>
+          <dl style="margin: 0; display: grid; grid-template-columns: 140px 1fr; row-gap: 10px; font-size: 14px">
+            <sc-for list="{{ profile }}" as="p" hint-placeholder-count="4"><dt style="color: var(--muted-foreground)">{{ p.k }}</dt><dd class="tnum" style="margin: 0">{{ p.v }}</dd></sc-for>
+          </dl>
+        </section>
+
+        <section id="keamanan" style="border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+          <strong style="font-size: 16px; font-weight: 600">Keamanan</strong>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 12px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Kata sandi</span><span style="font-size: 13px; color: var(--muted-foreground)">{{ pwMeta }}</span></span><button type="button" class="press" onClick="{{ togglePw }}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">{{ pwBtn }}</button></div>
+            <sc-if value="{{ pwOpen }}" hint-placeholder-val="{{ false }}">
+              <div class="fade" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 14px; border-radius: 12px; background: var(--muted-2)">
+                <sc-for list="{{ pwFields }}" as="f" hint-placeholder-count="3"><label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500">{{ f.label }}<input type="password" value="{{ f.value }}" onChange="{{ f.on }}" autocomplete="{{ f.ac }}" data-invalid="{{ f.bad }}" class="field" style="height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; outline: 0"></label></sc-for>
+                <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px">
+                  <span style="flex: 1; display: flex; gap: 4px"><sc-for list="{{ strength }}" as="b" hint-placeholder-count="4"><span style="flex: 1; height: 4px; border-radius: 2px; background: {{ b.bg }}"></span></sc-for></span>
+                  <span style="font-size: 12px; color: {{ strFg }}; min-width: 160px">{{ strLabel }}</span>
+                  <button type="button" class="press" onClick="{{ savePw }}" style="height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 13px; font-weight: 600">Simpan kata sandi</button>
+                </div>
+                <sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><span style="grid-column: 1 / -1; font-size: 13px; color: var(--danger); font-weight: 500">{{ pwErr }}</span></sc-if>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border)">
+            <div style="display: flex; align-items: center; gap: 12px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Verifikasi 2 langkah</span><span style="font-size: 13px; color: {{ tfaFg }}">{{ tfaSub }}</span></span><button type="button" class="press" onClick="{{ toggleTfa }}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: {{ tfaBtnFg }}; font: inherit; font-size: 13px; font-weight: 600">{{ tfaBtn }}</button></div>
+            <sc-if value="{{ tfaSetup }}" hint-placeholder-val="{{ false }}">
+              <div class="fade" style="display: flex; gap: 20px; padding: 16px; border-radius: 12px; background: var(--muted-2)">
+                <svg width="132" height="132" viewBox="0 0 21 21" shape-rendering="crispEdges" role="img" aria-label="Kode QR autentikator" style="flex-shrink: 0; padding: 8px; background: #fff; border-radius: 8px"><path d="{{ qr }}" fill="#0A0A0A"/></svg>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+                  <span style="font-size: 14px; line-height: 21px">Pindai kode ini dengan aplikasi autentikator, lalu masukkan 6 digit kode.</span>
+                  <span class="mono" style="font-size: 13px; color: var(--muted-foreground)">Kunci manual: JBSW Y3DP EHPK 3PXP</span>
+                  <div style="display: flex; gap: 8px"><input value="{{ otp }}" onChange="{{ onOtp }}" inputmode="numeric" maxlength="6" aria-label="Kode 6 digit" placeholder="000000" data-invalid="{{ otpBad }}" class="field mono tnum" style="width: 140px; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font-size: 18px; letter-spacing: .2em; outline: 0"><button type="button" class="press" onClick="{{ enableTfa }}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 13px; font-weight: 600">Aktifkan</button></div>
+                  <sc-if value="{{ otpBad }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--danger); font-weight: 500">Kode harus 6 digit. Coba 123456 di prototype ini.</span></sc-if>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 14px; border-top: 1px solid var(--border)">
+            <div style="display: flex; align-items: center"><span style="flex: 1; font-size: 15px; font-weight: 500">Sesi aktif</span><sc-if value="{{ hasOthers }}" hint-placeholder-val="{{ true }}"><button type="button" class="press" onClick="{{ logoutOthers }}" style="height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--danger); font: inherit; font-size: 13px; font-weight: 600">Keluarkan semua sesi lain</button></sc-if></div>
+            <sc-for list="{{ sessions }}" as="x" hint-placeholder-count="3">
+              <div class="tnum" style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 14px"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 500">{{ x.dev }}<sc-if value="{{ x.cur }}" hint-placeholder-val="{{ false }}"><span style="margin-left: 8px; font-size: 12px; color: var(--success); font-weight: 600">Sesi ini</span></sc-if></span><span style="font-size: 12px; color: var(--muted-foreground)">{{ x.meta }}</span></span>
+                <sc-if value="{{ x.other }}" hint-placeholder-val="{{ true }}"><button type="button" class="press" onClick="{{ x.kill }}" style="height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 12px; font-weight: 600">Keluarkan</button></sc-if></div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section id="tampilan" style="border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 2px"><strong style="font-size: 16px; font-weight: 600">Tampilan</strong><span style="font-size: 13px; color: var(--muted-foreground)">Disimpan per perangkat. Kontras tinggi dianjurkan di bawah terik.</span></div>
+          <div role="radiogroup" aria-label="Tema" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{ themes }}" as="t" hint-placeholder-count="4">
+              <button type="button" role="radio" aria-checked="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="padding: 10px; border-radius: 12px; border: 2px solid {{ t.border }}; background: var(--background); color: var(--foreground); font: inherit; text-align: left; display: flex; flex-direction: column; gap: 8px">
+                <span style="height: 52px; border-radius: 8px; background: {{ t.sw }}; border: 1px solid var(--border); display: flex; align-items: flex-end; padding: 6px; gap: 4px; box-sizing: border-box"><span style="width: 40%; height: 8px; border-radius: 3px; background: {{ t.ink }}"></span><span style="width: 18%; height: 8px; border-radius: 3px; background: #F4D435"></span></span>
+                <span style="font-size: 13px; font-weight: 600">{{ t.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+
+        <section id="hapus" style="border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; align-items: center; gap: 16px">
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><strong style="font-size: 16px; font-weight: 600">{{ delTitle }}</strong><span style="font-size: 13px; line-height: 19px; color: var(--muted-foreground)">{{ delSub }}</span></span>
+          <button type="button" class="press" onClick="{{ delAct }}" style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: {{ delFg }}; font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap">{{ delBtn }}</button>
+        </section>
+        <span class="mono" style="font-size: 12px; color: var(--muted-foreground)">PIMS v1.0 · build 2026.10.16</span>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ delDlg }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: fixed; inset: 0; z-index: 40; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 20px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="dl-t" class="pop" style="width: min(460px, 100%); padding: 24px; border-radius: 16px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="dl-t" style="font-size: 18px; font-weight: 600">Ajukan penghapusan akun?</strong>
+        <span style="font-size: 14px; line-height: 21px; color: var(--muted-foreground)">Admin akan meninjau pengajuan ini. Setelah disetujui, Anda tidak bisa login lagi. Riwayat P2H dan persetujuan tetap disimpan untuk kepatuhan, dengan nama Anda dianonimkan.</span>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Alasan (opsional)<textarea value="{{ delReason }}" onChange="{{ onDelReason }}" rows="3" class="field" style="padding: 10px 12px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 400; outline: 0; resize: vertical"></textarea></label>
+        <div style="display: flex; justify-content: flex-end; gap: 8px"><button type="button" class="press" onClick="{{ cancelDel }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Batal</button><button type="button" class="press" onClick="{{ doDel }}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: #DC2626; color: #fff; font: inherit; font-size: 14px; font-weight: 600">Ajukan penghapusan</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 0 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Manager"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: null, pwOpen: false, pw: ['', '', ''], pwTried: false, pwDate: '3 bulan lalu', tfa: false, setup: false, otp: '', otpTried: false, others: true, delDlg: false, delReason: '', delPending: false, toast: '' };
+    let seed = 11; const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const fin = (x, y) => (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13);
+    const finOn = (x, y) => { const lx = x > 13 ? x - 14 : x, ly = y > 13 ? y - 14 : y; return lx === 0 || ly === 0 || lx === 6 || ly === 6 || (lx >= 2 && lx <= 4 && ly >= 2 && ly <= 4); };
+    let d = ''; for (let y = 0; y < 21; y++) for (let x = 0; x < 21; x++) { const on = fin(x, y) ? finOn(x, y) : rnd() > 0.5; if (on) d += 'M' + x + ' ' + y + 'h1v1h-1z'; }
+    this.QR = d;
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const peran = this.props.peran ?? 'Manager';
+    const isAdmin = peran === 'Admin';
+    const mode = s.mode || (this.props.theme ?? 'light');
+    const themeNow = mode === 'system' ? 'light' : mode;
+    const name = isAdmin ? 'Rina Anggraini' : 'Hendra Wijaya';
+    const [cur, nw, cf] = s.pw;
+    let score = 0; if (nw.length >= 8) score++; if (/[A-Z]/.test(nw) && /[a-z]/.test(nw)) score++; if (/\d/.test(nw)) score++; if (/[^A-Za-z0-9]/.test(nw) || nw.length >= 12) score++;
+    const pwErr = !s.pwTried ? '' : !cur ? 'Masukkan kata sandi saat ini.' : nw.length < 8 ? 'Kata sandi baru minimal 8 karakter.' : nw !== cf ? 'Konfirmasi tidak sama dengan kata sandi baru.' : nw === cur ? 'Kata sandi baru harus berbeda.' : '';
+    const pwOk = cur && nw.length >= 8 && nw === cf && nw !== cur;
+    const setPw = (i) => (e) => { const a = this.state.pw.slice(); a[i] = e.target.value; this.setState({ pw: a }); };
+    const otpOk = /^\d{6}$/.test(s.otp);
+    const sessions = [{ dev: 'Chrome 141 · Windows', meta: 'Kantor Pit A · 10.12.4.90 · aktif sekarang', cur: true, other: false }]
+      .concat(s.others ? [{ dev: 'Android 14 · PWA', meta: '10.12.4.88 · 06:21 hari ini', cur: false, other: true }, { dev: 'Safari · iPad', meta: 'Mess Karyawan · 14 Okt 21:10', cur: false, other: true }] : [])
+      .map((x) => ({ ...x, kill: () => { this.setState({ others: false }); this.toast('Sesi lain dikeluarkan'); } }));
+    return {
+      peran, themeNow, name, initials: name.split(' ').map((w) => w[0]).join(''), meta: peran + ' · ' + (isAdmin ? 'Semua site' : 'Pit A') + ' · ' + (isAdmin ? 'rina.a' : 'hendra.w') + '@kontraktor.co.id',
+      secs: [['profil', 'Profil'], ['keamanan', 'Keamanan'], ['tampilan', 'Tampilan'], ['hapus', 'Hapus akun']].map(([id, label]) => ({ id, label })),
+      profile: [['Nama', name], ['Email', (isAdmin ? 'rina.a' : 'hendra.w') + '@kontraktor.co.id'], ['Peran', peran + (isAdmin ? '' : ' · Approver LV')], ['Site', isAdmin ? 'Semua site' : 'Pit A'], ['Bergabung', 'Maret 2025']].map(([k, v]) => ({ k, v })),
+      pwMeta: 'Diubah ' + s.pwDate, pwBtn: s.pwOpen ? 'Batal' : 'Ganti', pwOpen: s.pwOpen, togglePw: () => this.setState({ pwOpen: !s.pwOpen, pw: ['', '', ''], pwTried: false }),
+      pwFields: [['Kata sandi saat ini', 'current-password', !cur], ['Kata sandi baru', 'new-password', nw.length < 8], ['Ulangi kata sandi baru', 'new-password', nw !== cf || !cf]].map(([label, ac, bad], i) => ({ label, ac, bad: s.pwTried && bad, value: s.pw[i], on: setPw(i) })),
+      strength: [0, 1, 2, 3].map((i) => ({ bg: i < score ? (score <= 1 ? 'var(--danger)' : score === 2 ? 'var(--warning)' : 'var(--success)') : 'var(--input)' })),
+      strLabel: !nw ? 'Minimal 8 karakter' : ['Sangat lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat kuat'][score], strFg: score >= 3 ? 'var(--success)' : 'var(--muted-foreground)',
+      pwErr, savePw: () => { if (!pwOk) { this.setState({ pwTried: true }); return; } this.setState({ pwOpen: false, pw: ['', '', ''], pwTried: false, pwDate: 'baru saja' }); this.toast('Kata sandi diganti · sesi lain tetap aktif'); },
+      tfaSub: s.tfa ? 'Aktif · aplikasi autentikator' : isAdmin ? 'Wajib untuk Admin' : 'Disarankan untuk Manager', tfaFg: s.tfa ? 'var(--success)' : isAdmin ? 'var(--danger)' : 'var(--muted-foreground)',
+      tfaBtn: s.tfa ? 'Nonaktifkan' : s.setup ? 'Batal' : 'Aktifkan', tfaBtnFg: s.tfa ? 'var(--danger)' : 'var(--foreground)',
+      toggleTfa: () => { if (s.tfa) { this.setState({ tfa: false }); this.toast('Verifikasi 2 langkah dinonaktifkan'); } else this.setState({ setup: !s.setup, otp: '', otpTried: false }); },
+      tfaSetup: s.setup && !s.tfa, qr: this.QR, otp: s.otp, onOtp: (e) => this.setState({ otp: e.target.value.replace(/\D/g, '').slice(0, 6) }), otpBad: s.otpTried && !otpOk,
+      enableTfa: () => { if (!otpOk) { this.setState({ otpTried: true }); return; } this.setState({ tfa: true, setup: false }); this.toast('Verifikasi 2 langkah aktif'); },
+      sessions, hasOthers: s.others, logoutOthers: () => { this.setState({ others: false }); this.toast('2 sesi lain dikeluarkan'); },
+      themes: [['light', 'Terang', '#FFFFFF', '#0A0A0A'], ['dark', 'Gelap', '#0A0A0A', '#FAFAFA'], ['hc', 'Kontras tinggi', '#FFFFFF', '#000000'], ['system', 'Ikuti sistem', 'linear-gradient(90deg,#FFFFFF 50%,#0A0A0A 50%)', '#888']].map(([k, label, sw, ink]) => ({ label, sw, ink, on: mode === k, border: mode === k ? 'var(--foreground)' : 'var(--border)', pick: () => this.setState({ mode: k }) })),
+      delTitle: s.delPending ? 'Penghapusan akun diajukan' : 'Hapus akun', delSub: s.delPending ? 'Menunggu persetujuan ' + (isAdmin ? 'Admin lain' : 'Admin (Rina A.)') + '. Anda masih bisa memakai akun sampai disetujui.' : 'Diajukan ke Admin. Riwayat tetap disimpan dan dianonimkan.',
+      delBtn: s.delPending ? 'Batalkan pengajuan' : 'Ajukan hapus akun', delFg: s.delPending ? 'var(--foreground)' : 'var(--danger)',
+      delAct: () => { if (s.delPending) { this.setState({ delPending: false }); this.toast('Pengajuan dibatalkan'); } else this.setState({ delDlg: true, delReason: '' }); },
+      delDlg: s.delDlg, delReason: s.delReason, onDelReason: (e) => this.setState({ delReason: e.target.value }), cancelDel: () => this.setState({ delDlg: false }),
+      doDel: () => { this.setState({ delDlg: false, delPending: true }); this.toast('Pengajuan terkirim ke Admin'); },
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Pengaturan aplikasi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 4px; height: 64px; padding: 0 8px; border-bottom: var(--bw) solid var(--border)">
+    <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+    <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 18px; font-weight: 600">Pengaturan aplikasi</span><span style="font-size: 13px; color: var(--muted-foreground)">Berlaku untuk semua site</span></span>
+  </header>
+
+  <sc-if value="{{ isManager }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 0 24px">
+      <span style="width: 52px; height: 52px; border-radius: 16px; background: var(--muted); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <strong style="font-size: 22px; font-weight: 600">Halaman khusus Admin</strong>
+      <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Pengaturan shift, pengingat, dan tautan rekap publik hanya bisa diubah Admin.</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+    <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 84px 20px {{ padBottom }}px; display: flex; flex-direction: column; gap: 36px">
+
+      <section aria-labelledby="s1" style="display: flex; flex-direction: column; gap: 14px">
+        <h2 id="s1" style="margin: 0; font-size: 18px; font-weight: 600">Shift</h2>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span id="ns-l" style="font-size: 14px; font-weight: 500">Jumlah shift per hari</span>
+          <div role="radiogroup" aria-labelledby="ns-l" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted)">
+            <sc-for list="{{ nOpts }}" as="o" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{ o.on }}" class="press" onClick="{{ o.pick }}" style="height: 44px; border: 0; border-radius: 9px; background: {{ o.bg }}; box-shadow: {{ o.shadow }}; color: {{ o.fg }}; font: inherit; font-size: 15px; font-weight: 600">{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <sc-for list="{{ shifts }}" as="x" hint-placeholder-count="2">
+          <div class="fade" style="display: grid; grid-template-columns: 70px 1fr 1fr; gap: 8px; align-items: end">
+            <span style="font-size: 15px; font-weight: 600; padding-bottom: 14px">{{ x.name }}</span>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted-foreground)">Mulai<input type="time" value="{{ x.start }}" onChange="{{ x.onStart }}" style="height: 48px; padding: 0 10px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px"></label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted-foreground)">Selesai<input type="time" value="{{ x.end }}" readonly style="height: 48px; padding: 0 10px; border-radius: 10px; border: var(--bw) solid var(--border); background: var(--muted); color: var(--muted-foreground); font: inherit; font-size: 16px"></label>
+          </div>
+        </sc-for>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+          <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Batas pengisian P2H</span><span style="font-size: 13px; color: var(--muted-foreground)">setelah shift dimulai</span></span>
+          <div style="display: flex; align-items: center; border: var(--bw) solid var(--input); border-radius: 10px">
+            <button type="button" class="press hl" onClick="{{ decLimit }}" aria-label="Kurangi 5 menit" style="width: 44px; height: 44px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 20px">−</button>
+            <span class="tnum" style="min-width: 60px; text-align: center; font-size: 15px; font-weight: 600">{{ limit }} mnt</span>
+            <button type="button" class="press hl" onClick="{{ incLimit }}" aria-label="Tambah 5 menit" style="width: 44px; height: 44px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 20px">+</button>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="s2" style="display: flex; flex-direction: column; gap: 6px">
+        <h2 id="s2" style="margin: 0 0 8px; font-size: 18px; font-weight: 600">Pengingat & notifikasi</h2>
+        <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; border-bottom: var(--bw) solid var(--border)">
+            <span style="display: flex; flex-direction: column; gap: 2px"><span id="{{ t.id }}" style="font-size: 15px; font-weight: 500">{{ t.label }}</span><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ t.sub }}</span></span>
+            <button type="button" role="switch" aria-checked="{{ t.on }}" aria-labelledby="{{ t.id }}" aria-disabled="{{ t.locked }}" onClick="{{ t.toggle }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center; flex-shrink: 0; opacity: {{ t.op }}"><span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; padding: 3px; background: {{ t.bg }}; display: flex; align-items: center; transition: background-color 150ms"><span style="width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ t.x }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span></span></button>
+          </div>
+        </sc-for>
+      </section>
+
+      <section aria-labelledby="s3" style="display: flex; flex-direction: column; gap: 12px">
+        <h2 id="s3" style="margin: 0; font-size: 18px; font-weight: 600">Tautan rekap publik</h2>
+        <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">Siapa pun yang punya tautan bisa melihat rekap tanpa login. Dipakai di pesan WhatsApp harian.</span>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 12px; border: var(--bw) solid var(--border); background: {{ linkBg }}">
+          <span class="mono" style="flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{ linkFg }}; text-decoration: {{ linkDeco }}">pims.example/rekap/{{ token }}</span>
+          <button type="button" class="press" onClick="{{ copyLink }}" disabled="{{ linkOff }}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; opacity: {{ linkBtnOp }}">{{ copyLabel }}</button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px">
+          <span style="display: flex; flex-direction: column; gap: 2px"><span id="lk-a" style="font-size: 15px; font-weight: 500">Tautan aktif</span><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ linkMeta }}</span></span>
+          <button type="button" role="switch" aria-checked="{{ linkOnS }}" aria-labelledby="lk-a" onClick="{{ toggleLink }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center"><span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; padding: 3px; background: {{ lkBg }}; display: flex; align-items: center; transition: background-color 150ms"><span style="width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ lkX }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span></span></button>
+        </div>
+        <button type="button" class="press" onClick="{{ askRegen }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Buat ulang token</button>
+        <a href="RekapPublik.dc.html" class="press" style="align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Lihat halaman rekap publik</a>
+      </section>
+
+      <section aria-labelledby="s4" style="display: flex; flex-direction: column; gap: 6px">
+        <h2 id="s4" style="margin: 0 0 8px; font-size: 18px; font-weight: 600">AI & analitik</h2>
+        <sc-for list="{{ aiToggles }}" as="t" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; border-bottom: var(--bw) solid var(--border)">
+            <span style="display: flex; flex-direction: column; gap: 2px"><span id="{{ t.id }}" style="font-size: 15px; font-weight: 500">{{ t.label }}</span><span style="font-size: 13px; color: var(--muted-foreground)">{{ t.sub }}</span></span>
+            <button type="button" role="switch" aria-checked="{{ t.on }}" aria-labelledby="{{ t.id }}" onClick="{{ t.toggle }}" class="press" style="width: 60px; height: 48px; border: 0; padding: 8px 4px; background: transparent; display: flex; align-items: center; flex-shrink: 0"><span style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 999px; padding: 3px; background: {{ t.bg }}; display: flex; align-items: center; transition: background-color 150ms"><span style="width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transform: translateX({{ t.x }}px); transition: transform 220ms cubic-bezier(.34,1.56,.64,1)"></span></span></button>
+          </div>
+        </sc-for>
+        <span style="padding-top: 8px; font-size: 13px; line-height: 18px; color: var(--muted-foreground)">Data P2H disimpan 24 bulan. Foto lampiran dikompres dan diarsipkan setelah 6 bulan.</span>
+      </section>
+    </div>
+
+    <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+      <div class="toast-in blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; padding: 12px 16px 20px; display: flex; align-items: center; gap: 8px; border-top: var(--bw) solid var(--border)">
+        <span style="flex: 1; font-size: 14px; color: var(--muted-foreground)">Perubahan belum disimpan</span>
+        <button type="button" class="press" onClick="{{ discard }}" style="height: 48px; padding: 0 14px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+        <button type="button" class="press" onClick="{{ save }}" style="height: 48px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600">Simpan</button>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{ regenOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: absolute; inset: 0; z-index: 20; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 20px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="rg-t" class="pop" style="width: 100%; padding: 20px; border-radius: 20px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="rg-t" style="font-size: 18px; font-weight: 600">Buat ulang token?</strong>
+        <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Tautan lama langsung tidak berlaku. Pesan WhatsApp yang sudah terkirim akan menampilkan "Tautan sudah tidak aktif".</span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 4px">
+          <button type="button" class="press" onClick="{{ cancelRegen }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+          <button type="button" class="press" onClick="{{ doRegen }}" style="height: 52px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600">Buat ulang</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 96px; z-index: 22; min-height: 52px; padding: 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 15px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.saved = { n: 2, starts: ['06:00', '18:00', '22:00'], limit: 30, t: { remind: true, esc: true, crit: true, over: true, result: true }, ai: { sum: true, fix: true, wa: true } };
+    this.state = { ...JSON.parse(JSON.stringify(this.saved)), token: '7Kq2', linkOn: true, regen: false, copied: false, toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); clearTimeout(this.ct); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const isAdmin = (this.props.peran ?? 'Admin') === 'Admin';
+    const add = (t, h) => { const [a, b] = t.split(':').map(Number); const m = (a * 60 + b + h * 60) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+    const len = 24 / s.n;
+    const starts = s.n === 2 ? [s.starts[0], add(s.starts[0], 12)] : s.n === 3 ? [s.starts[0], add(s.starts[0], 8), add(s.starts[0], 16)] : [s.starts[0]];
+    const shifts = starts.map((st, i) => ({ name: 'Shift ' + (i + 1), start: st, end: add(st, len), onStart: (e) => { if (i === 0) { const a = s.starts.slice(); a[0] = e.target.value; this.setState({ starts: a }); } } }));
+    const nOpts = [1, 2, 3].map((n) => ({ label: n + ' shift', on: s.n === n, bg: s.n === n ? 'var(--card)' : 'transparent', shadow: s.n === n ? 'var(--shadow-2)' : 'none', fg: s.n === n ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ n }) }));
+    const sw = (on, locked) => ({ bg: on ? 'var(--success)' : 'var(--input)', x: on ? 20 : 0, op: locked ? 0.6 : 1 });
+    const defs = [
+      ['remind', 'Pengingat belum P2H', 'Ke driver menit ke-15, ke pengawas menit ke-' + (s.limit - 5)],
+      ['esc', 'Eskalasi persetujuan LV', 'Ke Manager site jika approver LV tidak merespons > 15 menit'],
+      ['crit', 'Item kritis rusak', 'Selalu aktif — keselamatan'],
+      ['over', 'Ringkasan temuan lewat tenggat', 'Setiap hari 07:00 ke PJ & pengawas'],
+      ['result', 'Hasil persetujuan ke driver', 'Disetujui / ditolak + alasan']
+    ];
+    const toggles = defs.map(([k, label, sub]) => { const locked = k === 'crit'; return { id: 'tg-' + k, label, sub, on: s.t[k], locked, ...sw(s.t[k], locked), toggle: () => { if (locked) { this.toast('Notifikasi item kritis tidak bisa dimatikan'); return; } this.setState({ t: { ...this.state.t, [k]: !this.state.t[k] } }); } }; });
+    const aiDefs = [['sum', 'Ringkasan AI harian & periode', 'Teks dibuat dari data PIMS'], ['fix', 'Saran perbaikan AI di temuan', 'Ditampilkan sebagai saran, wajib diverifikasi'], ['wa', 'Sertakan ringkasan AI di teks WhatsApp', 'Satu kalimat prioritas']];
+    const aiToggles = aiDefs.map(([k, label, sub]) => ({ id: 'ai-' + k, label, sub, on: s.ai[k], ...sw(s.ai[k]), toggle: () => this.setState({ ai: { ...this.state.ai, [k]: !this.state.ai[k] } }) }));
+    const cur = { n: s.n, starts: s.starts, limit: s.limit, t: s.t, ai: s.ai };
+    const dirty = JSON.stringify(cur) !== JSON.stringify(this.saved);
+    return {
+      theme, isAdmin, isManager: !isAdmin, nOpts, shifts, limit: s.limit,
+      decLimit: () => this.setState({ limit: Math.max(10, s.limit - 5) }), incLimit: () => this.setState({ limit: Math.min(90, s.limit + 5) }),
+      toggles, aiToggles,
+      token: s.token, linkOff: !s.linkOn, linkOnS: s.linkOn, lkBg: s.linkOn ? 'var(--success)' : 'var(--input)', lkX: s.linkOn ? 20 : 0,
+      linkBg: s.linkOn ? 'var(--muted-2)' : 'var(--muted)', linkFg: s.linkOn ? 'var(--foreground)' : 'var(--muted-foreground)', linkDeco: s.linkOn ? 'none' : 'line-through', linkBtnOp: s.linkOn ? 1 : 0.4,
+      linkMeta: s.linkOn ? 'Dibuat 15 Okt 09:15 oleh Rina A.' : 'Nonaktif · pengunjung melihat pesan tautan tidak aktif',
+      copyLabel: s.copied ? 'Tersalin' : 'Salin',
+      copyLink: () => { try { navigator.clipboard && navigator.clipboard.writeText('https://pims.example/rekap/' + s.token); } catch (e) {} this.setState({ copied: true }); clearTimeout(this.ct); this.ct = setTimeout(() => this.setState({ copied: false }), 1800); },
+      toggleLink: () => { this.setState({ linkOn: !s.linkOn }); this.toast(s.linkOn ? 'Tautan rekap publik dinonaktifkan' : 'Tautan rekap publik aktif kembali'); },
+      askRegen: () => this.setState({ regen: true }), cancelRegen: () => this.setState({ regen: false }), regenOn: s.regen,
+      doRegen: () => { const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'; let t = ''; for (let i = 0; i < 4; i++) t += chars[Math.floor(Math.random() * chars.length)]; this.setState({ token: t, regen: false, linkOn: true }); this.toast('Token baru dibuat · tautan lama tidak berlaku'); },
+      dirty, padBottom: dirty ? 110 : 40,
+      discard: () => this.setState(JSON.parse(JSON.stringify(this.saved))),
+      save: () => { this.saved = JSON.parse(JSON.stringify(cur)); this.forceUpdate(); this.toast('Pengaturan disimpan · tercatat di Audit Log'); },
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

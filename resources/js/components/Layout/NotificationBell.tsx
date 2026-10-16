@@ -40,34 +40,34 @@ interface NotificationsSharedProp {
 
 function notifIcon(type?: string, status?: string) {
     if (type === 'lv_approval_request') {
-        return <ClipboardCheck className="h-4 w-4 text-amber-500" />;
+        return <ClipboardCheck className="h-4 w-4 text-warning" />;
     }
 
     if (type === 'lv_approval_escalation') {
-        return <Timer className="h-4 w-4 text-orange-500" />;
+        return <Timer className="h-4 w-4 text-warning" />;
     }
 
     if (type === 'lv_approval_result') {
         return status === 'approved' ? (
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-success" />
         ) : (
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-danger" />
         );
     }
 
     if (type === 'finding_assigned') {
-        return <Wrench className="h-4 w-4 text-blue-500" />;
+        return <Wrench className="h-4 w-4 text-info" />;
     }
 
     if (type === 'p2h_missing') {
-        return <ClipboardX className="h-4 w-4 text-amber-500" />;
+        return <ClipboardX className="h-4 w-4 text-warning" />;
     }
 
     if (type === 'finding_overdue') {
-        return <AlarmClock className="h-4 w-4 text-red-500" />;
+        return <AlarmClock className="h-4 w-4 text-danger" />;
     }
 
-    return <AlertTriangle className="h-4 w-4 text-red-500" />;
+    return <AlertTriangle className="h-4 w-4 text-danger" />;
 }
 
 function notifLabel(data: RecentNotification['data']): string {
@@ -119,7 +119,7 @@ export default function NotificationBell() {
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-xs font-bold text-white">
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                     )}
@@ -130,7 +130,7 @@ export default function NotificationBell() {
                 <div className="flex items-center justify-between px-3 py-2">
                     <span className="text-sm font-semibold">Notifikasi</span>
                     {unreadCount > 0 && (
-                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600 dark:bg-red-900 dark:text-red-200">
+                        <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs text-danger">
                             {unreadCount} belum dibaca
                         </span>
                     )}
@@ -166,7 +166,7 @@ export default function NotificationBell() {
                                     )}
                                 </div>
                                 {!notif.read_at && (
-                                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-danger" />
                                 )}
                             </DropdownMenuItem>
                         ))}

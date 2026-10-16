@@ -33,6 +33,8 @@ class SiteController extends Controller
         $sites = $query->paginate(15)->withQueryString();
 
         return Inertia::render('sites/index', [
+            // Tab Aktif · n / Sampah · n (MasterUnit-Desktop.png)
+            'tabCounts' => ['aktif' => Site::count(), 'sampah' => Site::onlyTrashed()->count()],
             'sites' => $sites,
             'filters' => $request->only(['search', 'status', 'sort', 'dir']),
             'sort' => $sort,
@@ -164,6 +166,8 @@ class SiteController extends Controller
         $sites = $query->paginate(15)->withQueryString();
 
         return Inertia::render('sites/trashed', [
+            // Tab Aktif · n / Sampah · n (MasterUnit-Desktop.png)
+            'tabCounts' => ['aktif' => Site::count(), 'sampah' => Site::onlyTrashed()->count()],
             'sites' => $sites,
             'filters' => $request->only(['search', 'sort', 'dir']),
             'sort' => $sort,

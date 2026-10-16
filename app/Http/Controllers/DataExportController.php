@@ -160,7 +160,7 @@ class DataExportController extends Controller
             'userEntries.answers',
         ])
             ->whereHas('userEntries', fn ($query) => $query->operational())
-            ->whereBetween('tanggal', [$dateFrom, $dateTo])
+            ->whereDate('tanggal', '>=', $dateFrom)->whereDate('tanggal', '<=', $dateTo)
             ->whereIn('unit_id', $units->pluck('id'))
             ->get()
             ->each(function ($session) use (&$sessionMap) {
@@ -272,7 +272,7 @@ class DataExportController extends Controller
             'userEntries.user',
             'userEntries.answers.inspectionItem',
         ])
-            ->whereBetween('tanggal', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->whereDate('tanggal', '>=', $dateFrom->toDateString())->whereDate('tanggal', '<=', $dateTo->toDateString())
             ->when($request->no_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$request->no_unit}%")))
             ->when($request->jenis_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $request->jenis_unit)))
             ->when($request->hasil === 'ada_tl', fn ($q) => $q->whereHas('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))

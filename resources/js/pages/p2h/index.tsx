@@ -1,12 +1,6 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
-    AlertTriangle,
-    Bus,
-    CalendarDays,
-    Car,
-    CheckCircle2,
     ChevronRight,
-    ClipboardList,
     Download,
     FileSpreadsheet,
     FileText,
@@ -17,8 +11,14 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { SessionDrawer } from '@/components/P2h/session-drawer';
 import { PageButtons } from '@/components/pagination-bar';
-import { Badge } from '@/components/ui/badge';
+import { FilterChips } from '@/components/pims/filter-chips';
+import { ListCard } from '@/components/pims/list-card';
+import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
+import { EmptyState } from '@/components/pims/states';
+import { StatusPill } from '@/components/pims/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -46,8 +46,27 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { formatDate, formatHM } from '@/lib/format';
+
+interface P2hEntrySummary {
+    driver: string | null;
+    shift: string | null;
+    time: string | null;
+}
 
 interface P2hRow {
     id: number;
@@ -57,6 +76,10 @@ interface P2hRow {
     slot_terisi: number;
     total_tl: number;
     status: string;
+    entries: P2hEntrySummary[];
+    hasil: 'Layak Pakai' | 'BD' | null;
+    approval: 'pending' | 'approved' | 'rejected' | null;
+    hm_akhir: number | string | null;
 }
 
 interface PaginatedData {
@@ -75,6 +98,7 @@ interface Filters {
     no_unit?: string;
     jenis_unit?: string;
     hasil?: string;
+    approval?: string;
     user_id?: string;
     [key: string]: string | undefined;
 }
@@ -97,26 +121,38 @@ function parseDateLocal(s: string): Date {
     return new Date(y, m - 1, d);
 }
 
-// ── Quick filter chips ────────────────────────────────────────────────────────
-const today = new Date().toISOString().split('T')[0];
-const weekStart = (() => {
+// ── Rentang & filter status (RiwayatP2H.png) ─────────────────────────────────
+const isoDaysAgo = (days: number) => {
     const d = new Date();
-    d.setDate(d.getDate() - d.getDay() + 1);
+    d.setDate(d.getDate() - days);
 
-    return d.toISOString().split('T')[0];
-})();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
-const QUICK_FILTERS = [
-    { label: 'Hari Ini', value: { date_from: today, date_to: today } },
-    { label: 'Minggu Ini', value: { date_from: weekStart, date_to: today } },
-    { label: 'Ada TL', value: { hasil: 'ada_tl' } },
-    { label: 'Semua Layak', value: { hasil: 'semua_layak' } },
-    { label: 'Bus', value: { jenis_unit: 'Bus' } },
-    { label: 'LV', value: { jenis_unit: 'Light Vehicle' } },
-];
+type RangeKey = '7' | '30' | '90' | 'semua';
 
-function isQuickActive(qf: (typeof QUICK_FILTERS)[0], form: Filters) {
-    return Object.entries(qf.value).every(([k, v]) => form[k] === v);
+function rangeOf(filters: Filters): RangeKey {
+    if (!filters.date_from || filters.date_to) {
+        return 'semua';
+    }
+
+    const match = (['7', '30', '90'] as const).find(
+        (r) => filters.date_from === isoDaysAgo(Number(r) - 1),
+    );
+
+    return match ?? 'semua';
+}
+
+type StatusKeyFilter = 'semua' | 'layak' | 'tidak_layak' | 'pending';
+
+function statusOf(filters: Filters): StatusKeyFilter {
+    if (filters.approval === 'pending') {
+        return 'pending';
+    }
+
+    return filters.hasil === 'layak' || filters.hasil === 'tidak_layak'
+        ? filters.hasil
+        : 'semua';
 }
 
 // ── Delete Confirmation Dialog ────────────────────────────────────────────────
@@ -225,159 +261,86 @@ function DeleteDialog({
 }
 
 // ── Session card ──────────────────────────────────────────────────────────────
-function SessionCard({
-    row,
-    isAdmin,
-    onDelete,
-}: {
-    row: P2hRow;
-    isAdmin: boolean;
-    onDelete: (row: P2hRow) => void;
-}) {
-    const hasTL = row.total_tl > 0;
-    const isCompleted = row.status === 'completed';
-    const isLV = row.jenis_unit === 'Light Vehicle';
+// ── Format baris (docs/screens/driver.md · Riwayat P2H) ──────────────────────
+const shiftLabel = (shift?: string | null) =>
+    shift
+        ? shift.replace('Shift II', 'Shift 2').replace('Shift I', 'Shift 1')
+        : '—';
 
-    const formattedDate = parseDateLocal(row.tanggal).toLocaleDateString(
-        'id-ID',
-        {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-        },
-    );
+function dayLabel(iso: string): string {
+    const date = parseDateLocal(iso);
+    const startToday = new Date();
+    startToday.setHours(0, 0, 0, 0);
+    const diff = Math.round((startToday.getTime() - date.getTime()) / 86400000);
 
-    return (
-        <div
-            className={cn(
-                'group relative rounded-xl border-2 p-4 transition-all duration-150 hover:border-primary/40 hover:shadow-md active:scale-[0.99]',
-                hasTL
-                    ? 'border-red-200 bg-red-50/30 dark:border-red-900 dark:bg-red-950/10'
-                    : 'border-border bg-card',
-            )}
-        >
-            {/* Top row */}
-            <div className="mb-3 flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                    <div
-                        className={cn(
-                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-                            isLV
-                                ? 'bg-blue-100 dark:bg-blue-950/40'
-                                : 'bg-purple-100 dark:bg-purple-950/40',
-                        )}
-                    >
-                        {isLV ? (
-                            <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        ) : (
-                            <Bus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        )}
-                    </div>
-                    <div>
-                        <p className="text-base leading-tight font-bold">
-                            {row.no_unit}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            {row.jenis_unit}
-                        </p>
-                    </div>
-                </div>
+    if (diff === 0) {
+        return 'Hari ini';
+    }
 
-                <div className="flex items-center gap-1.5">
-                    {hasTL ? (
-                        <Badge variant="destructive" className="gap-1 text-xs">
-                            <AlertTriangle className="h-3 w-3" />
-                            {row.total_tl} TL
-                        </Badge>
-                    ) : (
-                        <Badge className="gap-1 bg-green-500 text-xs hover:bg-green-600">
-                            <CheckCircle2 className="h-3 w-3" />
-                            Layak
-                        </Badge>
-                    )}
-                </div>
-            </div>
+    if (diff === 1) {
+        return 'Kemarin';
+    }
 
-            {/* Meta info */}
-            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    {formattedDate}
-                </span>
-                <span className="flex items-center gap-1">
-                    <ClipboardList className="h-3.5 w-3.5" />
-                    {row.slot_terisi}x P2H hari ini
-                </span>
-            </div>
+    return formatDate(date, {
+        withDay: true,
+        withYear: date.getFullYear() !== startToday.getFullYear(),
+    });
+}
 
-            {/* P2H count indicator */}
-            <div className="mb-3 flex gap-1.5">
-                {Array.from({ length: row.slot_terisi }).map((_, i) => (
-                    <div
-                        key={i}
-                        className="h-1.5 flex-1 rounded-full bg-primary"
-                    />
-                ))}
-            </div>
+function ResultPill({ row }: { row: P2hRow }) {
+    if (!row.hasil) {
+        return <span className="text-muted-foreground">—</span>;
+    }
 
-            {/* Footer */}
-            <div className="flex items-center justify-between">
-                <Badge
-                    variant={isCompleted ? 'default' : 'secondary'}
-                    className="text-xs"
-                >
-                    {isCompleted ? 'Selesai' : 'Open'}
-                </Badge>
-                <div className="flex items-center gap-1">
-                    {isAdmin && (
-                        <Button
-                            aria-label="Hapus sesi P2H"
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                onDelete(row);
-                            }}
-                            title="Hapus sesi P2H"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                    )}
-                    <Button
-                        asChild
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 gap-1.5 px-2.5 text-xs"
-                    >
-                        <a
-                            href={`/p2h/${row.id}/export-pdf`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <FileText className="h-3.5 w-3.5" />
-                            PDF
-                        </a>
-                    </Button>
-                    <Button
-                        asChild
-                        size="sm"
-                        className="h-8 gap-1.5 px-3 text-xs"
-                    >
-                        <Link href={`/p2h/${row.id}`}>
-                            Lihat Detail
-                            <ChevronRight className="h-3.5 w-3.5" />
-                        </Link>
-                    </Button>
-                </div>
-            </div>
-        </div>
+    return row.hasil === 'BD' ? (
+        <StatusPill status="tidak-layak" />
+    ) : (
+        <StatusPill status="layak" />
     );
 }
 
-// ── Card skeleton ─────────────────────────────────────────────────────────────
-// ── Main page ─────────────────────────────────────────────────────────────────
+/** Persetujuan di tabel desktop: teks berwarna, bukan pill (RiwayatP2H-Desktop.png). */
+function ApprovalText({ row }: { row: P2hRow }) {
+    switch (row.approval) {
+        case 'pending':
+            return <span className="font-medium text-warning">Menunggu</span>;
+        case 'rejected':
+            return <span className="font-medium text-danger">Ditolak</span>;
+        case 'approved':
+            return <span className="text-muted-foreground">Disetujui</span>;
+        default:
+            return <span className="text-muted-foreground">Tidak perlu</span>;
+    }
+}
+
+function DriversCell({ row }: { row: P2hRow }) {
+    const [first, ...rest] = row.entries;
+
+    if (!first) {
+        return <span className="text-muted-foreground">—</span>;
+    }
+
+    if (rest.length === 0) {
+        return <span>{first.driver ?? '—'}</span>;
+    }
+
+    return (
+        <Tooltip>
+            <TooltipTrigger className="text-left underline decoration-dotted underline-offset-4">
+                {first.driver} +{rest.length}
+            </TooltipTrigger>
+            <TooltipContent>
+                {row.entries
+                    .map((e) => `${e.driver ?? '—'} · ${e.time ?? '—'}`)
+                    .join(' → ')}
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+
+const checklistText = (row: P2hRow) =>
+    row.total_tl > 0 ? `${row.total_tl} rusak` : 'Semua baik';
+
 export default function P2hIndex({ sessions, filters, allUsers }: Props) {
     const { auth } = usePage<{ auth: { user: { roles: string[] } | null } }>()
         .props;
@@ -386,8 +349,18 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
     const [form, setForm] = useState<Filters>(filters);
     const [showFilter, setShowFilter] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<P2hRow | null>(null);
+    const [drawerId, setDrawerId] = useState<number | null>(null);
 
     const hasActiveFilters = Object.values(form).some(Boolean);
+    const activeCount = Object.values(form).filter(Boolean).length;
+    const exportQuery = new URLSearchParams(
+        Object.fromEntries(
+            Object.entries(form).filter(([, v]) => v != null && v !== '') as [
+                string,
+                string,
+            ][],
+        ),
+    ).toString();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -399,117 +372,169 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
         router.get('/p2h', {});
     };
 
-    const applyQuickFilter = (qf: (typeof QUICK_FILTERS)[0]) => {
-        const newForm = isQuickActive(qf, form)
-            ? {}
-            : ({ ...qf.value } as Filters);
-        setForm(newForm);
-        router.get('/p2h', newForm, { preserveState: true });
+    const apply = (next: Filters) => {
+        const merged = Object.fromEntries(
+            Object.entries({ ...form, ...next }).filter(
+                ([, v]) => v != null && v !== '',
+            ),
+        ) as Filters;
+        setForm(merged);
+        router.get('/p2h', merged, { preserveState: true, replace: true });
     };
+
+    const setRange = (r: RangeKey) =>
+        apply({
+            date_from: r === 'semua' ? undefined : isoDaysAgo(Number(r) - 1),
+            date_to: undefined,
+        });
+
+    const setStatusFilter = (v: StatusKeyFilter) =>
+        apply({
+            hasil: v === 'layak' || v === 'tidak_layak' ? v : undefined,
+            approval: v === 'pending' ? 'pending' : undefined,
+        });
+
+    const range = rangeOf(filters);
+    const rangeText =
+        range === 'semua' ? null : `${range} hari terakhir`;
 
     const goToPage = (page: number) => {
         router.get('/p2h', { ...filters, page }, { preserveState: true });
     };
 
+    // Kelompok per hari untuk tampilan mobile
+    const groups = sessions.data.reduce<{ day: string; rows: P2hRow[] }[]>(
+        (acc, row) => {
+            const day = dayLabel(row.tanggal);
+            const last = acc.at(-1);
+
+            if (last && last.day === day) {
+                last.rows.push(row);
+            } else {
+                acc.push({ day, rows: [row] });
+            }
+
+            return acc;
+        },
+        [],
+    );
+
     return (
         <>
             <Head title="Riwayat P2H" />
-            <div className="flex flex-col gap-4 p-4 md:p-6">
-                {/* ── Page Header ── */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold md:text-2xl">
-                            Riwayat P2H
-                        </h1>
-                        <p className="text-xs text-muted-foreground">
-                            {sessions.total > 0
-                                ? `${sessions.total} sesi ditemukan`
-                                : 'Belum ada data'}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant={showFilter ? 'default' : 'outline'}
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => setShowFilter((v) => !v)}
-                        >
-                            <SlidersHorizontal className="h-4 w-4" />
-                            Filter
-                            {hasActiveFilters && (
-                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white">
-                                    {Object.values(form).filter(Boolean).length}
-                                </span>
-                            )}
-                        </Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
-                                >
-                                    <Download className="h-4 w-4" />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                                    Unduh Riwayat P2H
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={`/export/history-p2h/pdf?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null && v !== '') as [string, string][])).toString()}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex cursor-pointer items-center gap-2"
-                                    >
-                                        <FileText className="h-4 w-4 text-red-500" />
-                                        Export PDF
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={`/export/history-p2h/excel?${new URLSearchParams(Object.fromEntries(Object.entries(form).filter(([, v]) => v != null && v !== '') as [string, string][])).toString()}`}
-                                        className="flex cursor-pointer items-center gap-2"
-                                    >
-                                        <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                        Export Excel
-                                    </a>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-
-                {/* ── Quick Filter Chips ── */}
-                <div className="flex flex-wrap gap-2">
-                    {QUICK_FILTERS.map((qf) => {
-                        const active = isQuickActive(qf, form);
-
-                        return (
-                            <button
-                                key={qf.label}
-                                type="button"
-                                onClick={() => applyQuickFilter(qf)}
-                                className={cn(
-                                    'flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-all',
-                                    active
-                                        ? 'border-primary bg-primary text-primary-foreground'
-                                        : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground',
-                                )}
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
+                <PageHeader
+                    title="Riwayat P2H"
+                    description={
+                        sessions.total > 0
+                            ? [
+                                  `${sessions.total} sesi`,
+                                  rangeText,
+                                  hasActiveFilters && !rangeText
+                                      ? 'sesuai filter'
+                                      : null,
+                              ]
+                                  .filter(Boolean)
+                                  .join(' · ')
+                            : 'Belum ada data'
+                    }
+                    actions={
+                        <>
+                            <Segmented
+                                label="Rentang"
+                                value={range}
+                                onChange={setRange}
+                                options={[
+                                    { value: '7', label: '7 hari' },
+                                    { value: '30', label: '30 hari' },
+                                    { value: '90', label: '90 hari' },
+                                    { value: 'semua', label: 'Semua' },
+                                ]}
+                            />
+                            <Button
+                                variant={showFilter ? 'default' : 'outline'}
+                                onClick={() => setShowFilter((v) => !v)}
+                                aria-expanded={showFilter}
                             >
-                                {active && <X className="h-3 w-3" />}
-                                {qf.label}
-                            </button>
-                        );
-                    })}
+                                <SlidersHorizontal />
+                                Filter
+                                {activeCount > 0 && (
+                                    <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-brand-foreground">
+                                        {activeCount}
+                                    </span>
+                                )}
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        <Download />
+                                        Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                        Unduh Riwayat P2H
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/export/history-p2h/pdf?${exportQuery}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <FileText className="size-4" />
+                                            Export PDF
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/export/history-p2h/excel?${exportQuery}`}
+                                            className="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <FileSpreadsheet className="size-4" />
+                                            Export Excel
+                                        </a>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </>
+                    }
+                />
+
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                    <form
+                        onSubmit={handleSearch}
+                        className="relative w-full lg:w-72"
+                    >
+                        <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={form.no_unit ?? ''}
+                            onChange={(e) =>
+                                setForm({ ...form, no_unit: e.target.value })
+                            }
+                            placeholder="Cari kode unit"
+                            aria-label="Cari unit"
+                            className="h-12 w-full pl-10 lg:h-10"
+                        />
+                    </form>
+                    <FilterChips
+                        label="Filter hasil"
+                        className="-mx-4 px-4 lg:mx-0 lg:px-0"
+                        value={statusOf(filters)}
+                        onChange={setStatusFilter}
+                        options={[
+                            { value: 'semua', label: 'Semua' },
+                            { value: 'layak', label: 'Layak' },
+                            { value: 'tidak_layak', label: 'Tidak layak' },
+                            { value: 'pending', label: 'Belum disetujui' },
+                        ]}
+                    />
                 </div>
 
                 {/* ── Advanced Filter Panel ── */}
                 {showFilter && (
-                    <Card className="border-primary/20">
+                    <Card className="border-border">
                         <CardContent className="pt-4">
                             <div className="mb-3 flex items-center gap-2">
                                 <Filter className="h-4 w-4 text-muted-foreground" />
@@ -688,68 +713,201 @@ export default function P2hIndex({ sessions, filters, allUsers }: Props) {
                     </Card>
                 )}
 
-                {/* ── Results ── */}
                 {sessions.data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted py-16 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                            <ClipboardList className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-base font-semibold">
-                                Tidak ada data P2H
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                {hasActiveFilters
-                                    ? 'Coba ubah filter pencarian.'
-                                    : 'Belum ada sesi P2H yang tercatat.'}
-                            </p>
-                        </div>
-                        {hasActiveFilters && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleReset}
-                            >
-                                <X className="mr-1.5 h-3.5 w-3.5" />
-                                Hapus Filter
-                            </Button>
-                        )}
-                    </div>
+                    <EmptyState
+                        title="Tidak ada data P2H"
+                        description={
+                            hasActiveFilters
+                                ? 'Coba ubah atau hapus filter pencarian.'
+                                : 'Belum ada sesi P2H yang tercatat.'
+                        }
+                        action={
+                            hasActiveFilters && (
+                                <Button variant="outline" onClick={handleReset}>
+                                    <X />
+                                    Hapus filter
+                                </Button>
+                            )
+                        }
+                    />
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {sessions.data.map((row) => (
-                                <SessionCard
-                                    key={row.id}
-                                    row={row}
-                                    isAdmin={isAdmin}
-                                    onDelete={setDeleteTarget}
-                                />
+                        {/* Mobile: kartu dikelompokkan per hari */}
+                        <div className="space-y-5 lg:hidden">
+                            {groups.map((group) => (
+                                <section key={group.day} className="space-y-2">
+                                    <h2 className="text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                                        {group.day}
+                                    </h2>
+                                    {group.rows.map((row) => (
+                                        <ListCard
+                                            key={row.id}
+                                            title={row.no_unit}
+                                            meta={[
+                                                row.jenis_unit,
+                                                shiftLabel(
+                                                    row.entries[0]?.shift,
+                                                ),
+                                                row.entries[0]?.time,
+                                                row.entries
+                                                    .map((e) => e.driver)
+                                                    .filter(Boolean)
+                                                    .join(', '),
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' · ')}
+                                            trailing={
+                                                <span className="flex flex-col items-end gap-1">
+                                                    <ResultPill row={row} />
+                                                    {row.approval ===
+                                                        'pending' && (
+                                                        <StatusPill
+                                                            status="menunggu"
+                                                            size="sm"
+                                                        />
+                                                    )}
+                                                </span>
+                                            }
+                                            onOpen={() =>
+                                                router.visit(`/p2h/${row.id}`)
+                                            }
+                                        />
+                                    ))}
+                                </section>
                             ))}
                         </div>
 
-                        {/* ── Pagination ── */}
-                        {sessions.last_page > 1 && (
-                            <>
-                                <Separator />
-                                <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-                                    <p className="text-xs text-muted-foreground">
-                                        Menampilkan {sessions.from}–
-                                        {sessions.to} dari {sessions.total} sesi
-                                    </p>
-                                    <PageButtons
-                                        currentPage={sessions.current_page}
-                                        lastPage={sessions.last_page}
-                                        onPageChange={goToPage}
-                                    />
-                                </div>
-                            </>
-                        )}
+                        {/* Desktop: tabel */}
+                        <TableContainer className="hidden lg:block">
+                            <Table className="min-w-[960px]">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Tanggal</TableHead>
+                                        <TableHead>Unit</TableHead>
+                                        <TableHead>Shift</TableHead>
+                                        <TableHead>Driver</TableHead>
+                                        <TableHead>Checklist</TableHead>
+                                        <TableHead className="text-right">
+                                            HM akhir
+                                        </TableHead>
+                                        <TableHead>Hasil</TableHead>
+                                        <TableHead>Persetujuan</TableHead>
+                                        <TableHead>
+                                            <span className="sr-only">
+                                                Aksi
+                                            </span>
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sessions.data.map((row) => (
+                                        <TableRow key={row.id}>
+                                            <TableCell className="whitespace-nowrap">
+                                                {formatDate(
+                                                    parseDateLocal(row.tanggal),
+                                                )}
+                                                {row.entries[0]?.time && (
+                                                    <span className="text-muted-foreground">
+                                                        {' '}
+                                                        · {row.entries[0].time}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                <span className="font-semibold tnum">
+                                                    {row.no_unit}
+                                                </span>{' '}
+                                                <span className="text-[13px] text-muted-foreground">
+                                                    {row.jenis_unit}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                {shiftLabel(
+                                                    row.entries[0]?.shift,
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <DriversCell row={row} />
+                                            </TableCell>
+                                            <TableCell
+                                                className={
+                                                    row.total_tl > 0
+                                                        ? 'font-medium text-danger'
+                                                        : 'text-muted-foreground'
+                                                }
+                                            >
+                                                {checklistText(row)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {row.hm_akhir
+                                                    ? formatHM(row.hm_akhir)
+                                                    : '—'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <ResultPill row={row} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <ApprovalText row={row} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex justify-end gap-1.5">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setDrawerId(row.id)
+                                                        }
+                                                    >
+                                                        Detail
+                                                        <ChevronRight />
+                                                    </Button>
+                                                    {isAdmin && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="text-danger"
+                                                            onClick={() =>
+                                                                setDeleteTarget(
+                                                                    row,
+                                                                )
+                                                            }
+                                                            aria-label={`Hapus sesi ${row.no_unit}`}
+                                                        >
+                                                            <Trash2 />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+
+                        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+                            <p className="text-xs text-muted-foreground">
+                                {sessions.from}–{sessions.to} dari{' '}
+                                {sessions.total} sesi · Satu sesi = satu unit
+                                per hari; pergantian driver tercatat sebagai
+                                entry terpisah.
+                            </p>
+                            {sessions.last_page > 1 && (
+                                <PageButtons
+                                    currentPage={sessions.current_page}
+                                    lastPage={sessions.last_page}
+                                    onPageChange={goToPage}
+                                />
+                            )}
+                        </div>
                     </>
                 )}
             </div>
 
-            {/* ── Delete Dialog ── */}
+            <SessionDrawer
+                sessionId={drawerId}
+                onClose={() => setDrawerId(null)}
+            />
+
             <DeleteDialog
                 row={deleteTarget}
                 open={deleteTarget !== null}

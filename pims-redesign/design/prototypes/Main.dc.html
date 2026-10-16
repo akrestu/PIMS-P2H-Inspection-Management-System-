@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Foundations</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=Inter:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0A0A0A}a:hover{color:#52525B}
+</style>
+</helmet>
+<div class="pims" data-theme="light" style="width: 1440px; min-height: 7960px; box-sizing: border-box; padding: 96px 120px; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; gap: 120px; overflow: hidden">
+
+  <!-- Header -->
+  <header style="display: flex; flex-direction: column; gap: 40px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="Logo PIMS" style="width: 40px; height: 40px">
+      <span style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em">PIMS</span>
+      <span style="margin-left: 8px; font-size: 13px; color: var(--muted-foreground); padding: 4px 10px; border-radius: 999px; background: var(--muted)">Design System v1.0 · Tahap 1</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 80px; align-items: end">
+      <h1 style="margin: 0; font-size: 64px; line-height: 1.02; letter-spacing: -0.035em; font-weight: 600; text-wrap: balance">Foundations untuk P2H yang cepat diisi di lapangan.</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: var(--muted-foreground); text-wrap: pretty">Token di halaman ini adalah sumber tunggal untuk React + Tailwind v4 + shadcn/ui. Netral dulu, kuning hanya sebagai aksen, status semantik selalu dengan ikon dan label. Semua ukuran mengasumsikan layar 390px, satu tangan, dan sarung tangan.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-top: 32px; border-top: 1px solid var(--border)">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">01</span>
+        <strong style="font-size: 17px; font-weight: 600">Satu fokus per layar</strong>
+        <span style="font-size: 15px; line-height: 1.5; color: var(--muted-foreground)">Hierarki lewat ukuran huruf dan jarak, bukan kotak dan garis.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">02</span>
+        <strong style="font-size: 17px; font-weight: 600">Kuning adalah sinyal</strong>
+        <span style="font-size: 15px; line-height: 1.5; color: var(--muted-foreground)">Tab aktif, CTA "Isi P2H", focus ring, seri utama chart. Tidak untuk dekorasi angka atau teks.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">03</span>
+        <strong style="font-size: 17px; font-weight: 600">Tahan terik, debu, sarung tangan</strong>
+        <span style="font-size: 15px; line-height: 1.5; color: var(--muted-foreground)">Target ≥ 48px, aksi di zona jempol, mode kontras tinggi siap pakai.</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 1. Warna -->
+  <section style="display: flex; flex-direction: column; gap: 56px">
+    <div style="display: flex; align-items: baseline; gap: 16px">
+      <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">1</span>
+      <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Warna</h2>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h3 style="margin: 0; font-size: 18px; font-weight: 600">Brand · kuning</h3>
+        <span style="font-size: 14px; color: var(--muted-foreground)">400 = #F4D435 (brand). Teks di atas kuning selalu hitam.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{ brand }}" as="s" hint-placeholder-count="11">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 88px; border-radius: 12px; background: {{ s.hex }}; display: flex; align-items: flex-end; padding: 10px; box-sizing: border-box; box-shadow: inset 0 0 0 1px rgba(10,10,10,.06)">
+              <span style="font-size: 12px; font-weight: 600; color: {{ s.on }}">{{ s.tag }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span class="tnum" style="font-size: 13px; font-weight: 600">{{ s.step }}</span>
+              <span class="mono" style="font-size: 12px; color: var(--muted-foreground)">{{ s.hex }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h3 style="margin: 0; font-size: 18px; font-weight: 600">Netral · zinc</h3>
+        <span style="font-size: 14px; color: var(--muted-foreground)">Ink #0A0A0A untuk teks & tombol utama; juga latar mode gelap.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{ neutral }}" as="s" hint-placeholder-count="12">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 72px; border-radius: 12px; background: {{ s.hex }}; box-shadow: inset 0 0 0 1px rgba(10,10,10,.06)"></div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span class="tnum" style="font-size: 13px; font-weight: 600">{{ s.step }}</span>
+              <span class="mono" style="font-size: 12px; color: var(--muted-foreground)">{{ s.hex }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 64px">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600">Status semantik</h3>
+          <span style="font-size: 14px; color: var(--muted-foreground)">Pill lembut + ikon + label. Tidak pernah warna saja.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 140px repeat(3, minmax(0, 1fr)); gap: 0; font-size: 13px">
+          <span style="padding: 10px 0; color: var(--muted-foreground)">Arti</span>
+          <span style="padding: 10px 12px; color: var(--muted-foreground)">Terang</span>
+          <span style="padding: 10px 12px; color: var(--muted-foreground)">Gelap</span>
+          <span style="padding: 10px 12px; color: var(--muted-foreground)">Kontras tinggi</span>
+        </div>
+        <sc-for list="{{ semantic }}" as="r" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 140px repeat(3, minmax(0, 1fr)); align-items: stretch; border-top: 1px solid var(--border)">
+            <div style="display: flex; flex-direction: column; gap: 2px; padding: 16px 0">
+              <strong style="font-size: 15px; font-weight: 600">{{ r.name }}</strong>
+              <span style="font-size: 12px; color: var(--muted-foreground)">{{ r.use }}</span>
+            </div>
+            <div data-theme="light" style="padding: 16px 12px; background: var(--background); display: flex; align-items: center">
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--{{ r.key }}-soft); color: var(--{{ r.key }}); font-size: 13px; font-weight: 600; border: var(--bw) solid transparent">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: currentColor"></span>{{ r.label }}
+              </span>
+            </div>
+            <div data-theme="dark" style="padding: 16px 12px; background: var(--background); display: flex; align-items: center">
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--{{ r.key }}-soft); color: var(--{{ r.key }}); font-size: 13px; font-weight: 600">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: currentColor"></span>{{ r.label }}
+              </span>
+            </div>
+            <div data-theme="hc" style="padding: 16px 12px; background: var(--background); display: flex; align-items: center">
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--{{ r.key }}-soft); color: var(--{{ r.key }}); font-size: 13px; font-weight: 700; border: 2px solid currentColor">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: currentColor"></span>{{ r.label }}
+              </span>
+            </div>
+          </div>
+        </sc-for>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Hijau: Ready, Layak Pakai, Closed, Disetujui · Merah: BD, Tidak Layak, Ditolak, Kritis · Biru: PM, Servis · Oranye: Menunggu, Open, Overdue. Kontras teks status ≥ 4.5:1 di terang dan gelap, ≥ 7:1 di kontras tinggi.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <h3 style="margin: 0; font-size: 18px; font-weight: 600">Aturan kuning</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 132px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center">
+              <span style="display: inline-flex; align-items: center; height: 48px; padding: 0 20px; border-radius: 12px; background: #F4D435; color: #0A0A0A; font-weight: 600; font-size: 15px">Isi P2H</span>
+            </div>
+            <span style="font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--success); font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Kuning + teks hitam · 13.9:1</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 132px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center">
+              <span style="font-size: 22px; font-weight: 600; color: #F4D435">Layak Pakai</span>
+            </div>
+            <span style="font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--danger); font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Teks kuning di putih · 1.5:1</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 132px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center; gap: 28px">
+              <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 600">Beranda<span style="width: 24px; height: 3px; border-radius: 3px; background: #F4D435"></span></span>
+              <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground)">Riwayat<span style="width: 24px; height: 3px"></span></span>
+            </div>
+            <span style="font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--success); font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Indikator tab aktif</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 132px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center">
+              <span style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 999px; background: #F4D435; color: #0A0A0A; font-size: 13px; font-weight: 600">BD</span>
+            </div>
+            <span style="font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--danger); font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Kuning untuk status</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 64px">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600">Chart · 5 seri</h3>
+          <span style="font-size: 14px; color: var(--muted-foreground)">Divalidasi: CVD ΔE ≥ 12, terang & gelap</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0">
+          <sc-for list="{{ charts }}" as="c" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 40px 96px 1fr; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--border)">
+              <span style="width: 40px; height: 24px; border-radius: 6px; background: {{ c.hex }}"></span>
+              <span class="mono" style="font-size: 13px">--chart-{{ c.n }}</span>
+              <span style="font-size: 14px; color: var(--muted-foreground)">{{ c.use }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 10px; height: 120px; padding-top: 12px">
+          <sc-for list="{{ bars }}" as="b" hint-placeholder-count="7">
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 2px">
+              <div style="height: {{ b.c }}px; background: #E8590C; border-radius: 4px 4px 0 0"></div>
+              <div style="height: {{ b.b }}px; background: #2563EB"></div>
+              <div style="height: {{ b.a }}px; background: #C99A06"></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600">Tema permukaan</h3>
+          <span style="font-size: 14px; color: var(--muted-foreground)">data-theme = light · dark · hc</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{ themes }}" as="t" hint-placeholder-count="3">
+            <div data-theme="{{ t.key }}" style="background: var(--background); color: var(--foreground); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: inset 0 0 0 var(--bw) var(--border); font-weight: var(--fw-body)">
+              <span style="font-size: 13px; color: var(--muted-foreground)">{{ t.name }}</span>
+              <div style="background: var(--card); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-2); border: var(--bw) solid var(--border)">
+                <span style="font-size: 12px; color: var(--muted-foreground)">Unit hari ini</span>
+                <strong class="tnum" style="font-size: 22px; letter-spacing: -0.02em">DT-1045</strong>
+                <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--success-soft); color: var(--success); font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>Ready</span>
+              </div>
+              <span style="display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font-size: 14px; font-weight: 600">Kirim P2H</span>
+              <span style="display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 10px; background: var(--brand); color: var(--brand-foreground); font-size: 14px; font-weight: 600">Isi P2H</span>
+              <div style="display: flex; gap: 6px">
+                <span style="flex: 1; height: 8px; border-radius: 4px; background: var(--muted)"></span>
+                <span style="flex: 1; height: 8px; border-radius: 4px; background: var(--border)"></span>
+                <span style="flex: 1; height: 8px; border-radius: 4px; background: var(--muted-foreground)"></span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Tipografi -->
+  <section style="display: flex; flex-direction: column; gap: 48px">
+    <div style="display: flex; align-items: baseline; gap: 16px">
+      <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">2</span>
+      <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Tipografi</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 16px; padding: 28px; border-radius: 16px; background: var(--brand-soft)">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <span style="font-size: 13px; font-weight: 600">Geist · dipilih</span>
+          <span style="font-size: 12px; padding: 3px 8px; border-radius: 999px; background: #0A0A0A; color: #FAFAFA">Utama</span>
+        </div>
+        <span style="font-family: 'Geist'; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">DT-1045 Layak Pakai</span>
+        <span style="font-family: 'Geist'; font-size: 28px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em">12.480,5 HM</span>
+        <span style="font-family: 'Geist'; font-size: 15px; line-height: 1.55">Kebocoran halus pada selang hidrolik boom. Il1 0O rn m.</span>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Karakter tegas, angka tabular rapi, pasangan Geist Mono untuk kode unit & token. Variable font ±70 KB.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; padding: 28px; border-radius: 16px; background: var(--muted-2)">
+        <span style="font-size: 13px; font-weight: 600">Inter · pembanding</span>
+        <span style="font-family: 'Inter'; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">DT-1045 Layak Pakai</span>
+        <span style="font-family: 'Inter'; font-size: 28px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em">12.480,5 HM</span>
+        <span style="font-family: 'Inter'; font-size: 15px; line-height: 1.55">Kebocoran halus pada selang hidrolik boom. Il1 0O rn m.</span>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Sangat terbaca, tetapi generik. Lebih lebar sedikit, sehingga label panjang lebih cepat terpotong di 390px.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; padding: 28px; border-radius: 16px; background: var(--muted-2)">
+        <span style="font-size: 13px; font-weight: 600">Instrument Sans · saat ini</span>
+        <span style="font-family: 'Instrument Sans'; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">DT-1045 Layak Pakai</span>
+        <span style="font-family: 'Instrument Sans'; font-size: 28px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em">12.480,5 HM</span>
+        <span style="font-family: 'Instrument Sans'; font-size: 15px; line-height: 1.55">Kebocoran halus pada selang hidrolik boom. Il1 0O rn m.</span>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Hangat dan rapat, namun angka tabular dan bobot kecil kurang kuat untuk data padat di bawah terik.</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <div style="display: grid; grid-template-columns: 180px 1fr 150px 150px 120px; gap: 24px; padding: 12px 0; font-size: 13px; color: var(--muted-foreground)">
+        <span>Token</span><span>Contoh</span><span>Mobile</span><span>Desktop</span><span>Bobot</span>
+      </div>
+      <sc-for list="{{ type }}" as="t" hint-placeholder-count="9">
+        <div style="display: grid; grid-template-columns: 180px 1fr 150px 150px 120px; gap: 24px; align-items: center; padding: 18px 0; border-top: 1px solid var(--border)">
+          <span class="mono" style="font-size: 13px">{{ t.token }}</span>
+          <span class="tnum" style="font-size: {{ t.size }}px; line-height: {{ t.lh }}px; font-weight: {{ t.w }}; letter-spacing: {{ t.ls }}; text-transform: {{ t.tt }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ t.sample }}</span>
+          <span class="tnum mono" style="font-size: 13px; color: var(--muted-foreground)">{{ t.m }}</span>
+          <span class="tnum mono" style="font-size: 13px; color: var(--muted-foreground)">{{ t.d }}</span>
+          <span class="tnum mono" style="font-size: 13px; color: var(--muted-foreground)">{{ t.w }}</span>
+        </div>
+      </sc-for>
+      <span style="padding-top: 16px; font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Body minimum 16px (17px/500 di kontras tinggi). Semua angka memakai font-variant-numeric: tabular-nums. Format angka Indonesia: 12.480,5 · tanggal "16 Okt 2026" · jam 24-jam "06:00".</span>
+    </div>
+  </section>
+
+  <!-- 3. Spacing, radius, elevasi, target sentuh -->
+  <section style="display: flex; flex-direction: column; gap: 48px">
+    <div style="display: flex; align-items: baseline; gap: 16px">
+      <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">3</span>
+      <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Ruang, radius, elevasi</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 80px">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 600">Spacing · basis 4px</h3>
+        <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="10">
+          <div style="display: grid; grid-template-columns: 80px 56px 1fr; align-items: center; gap: 16px">
+            <span class="mono" style="font-size: 13px">space-{{ s.k }}</span>
+            <span class="tnum mono" style="font-size: 13px; color: var(--muted-foreground)">{{ s.v }}px</span>
+            <span style="height: 12px; width: {{ s.v }}px; border-radius: 3px; background: #0A0A0A"></span>
+          </div>
+        </sc-for>
+        <span style="padding-top: 8px; font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Gutter mobile 16 · jarak antar grup 24–32 · padding surface 16–20 · jarak item list 0 (dipisah oleh hierarki, bukan garis).</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 40px">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600">Radius</h3>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 80px; border-radius: 10px; background: var(--muted)"></span><span style="font-size: 13px"><b>10</b> kontrol</span></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 80px; border-radius: 14px; background: var(--muted)"></span><span style="font-size: 13px"><b>14</b> surface</span></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 80px; border-radius: 20px 20px 0 0; background: var(--muted)"></span><span style="font-size: 13px"><b>20</b> sheet</span></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 80px; border-radius: 999px; background: var(--muted)"></span><span style="font-size: 13px"><b>full</b> pill, FAB</span></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600">Elevasi · nyaris tak terlihat</h3>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 24px; border-radius: 16px; background: var(--muted-2)">
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 72px; border-radius: 14px; background: #fff"></span><span style="font-size: 13px"><b>0</b> datar</span></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 72px; border-radius: 14px; background: #fff; box-shadow: var(--shadow-1)"></span><span style="font-size: 13px"><b>1</b> list</span></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 72px; border-radius: 14px; background: #fff; box-shadow: var(--shadow-2)"></span><span style="font-size: 13px"><b>2</b> kartu fokus</span></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 72px; border-radius: 14px; background: #fff; box-shadow: var(--shadow-3)"></span><span style="font-size: 13px"><b>3</b> sheet, toast</span></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600">Target sentuh</h3>
+          <div style="display: flex; align-items: flex-end; gap: 24px">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 10px; outline: 1.5px dashed #DC2626; outline-offset: 0; background: var(--muted)"></span><span class="tnum" style="font-size: 13px"><b>48</b> minimum</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 120px; height: 52px; border-radius: 10px; background: var(--muted)"></span><span class="tnum" style="font-size: 13px"><b>52</b> kontrol form driver</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 56px; height: 56px; border-radius: 999px; background: #F4D435"></span><span class="tnum" style="font-size: 13px"><b>56</b> Isi P2H (nav)</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 160px; height: 56px; border-radius: 12px; background: #0A0A0A"></span><span class="tnum" style="font-size: 13px"><b>56</b> sticky CTA</span></div>
+          </div>
+          <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">Jarak antar target ≥ 8px. Ikon 20–24px boleh, area sentuhnya tetap 48×48.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Breakpoint -->
+  <section style="display: flex; flex-direction: column; gap: 40px">
+    <div style="display: flex; align-items: baseline; gap: 16px">
+      <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">4</span>
+      <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Breakpoint & layout</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: 0.55fr 0.9fr 1.55fr; gap: 32px; align-items: end">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="height: 260px; border-radius: 20px; background: var(--muted-2); box-shadow: inset 0 0 0 1px var(--border); padding: 14px 10px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; position: relative">
+          <span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span>
+        </div>
+        <strong style="font-size: 16px">Mobile · 390</strong>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">4 kolom · margin 16 · gutter 8. Bottom nav, sheet, list card.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="height: 300px; border-radius: 20px; background: var(--muted-2); box-shadow: inset 0 0 0 1px var(--border); padding: 16px 20px 16px 72px; box-sizing: border-box; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; position: relative">
+          <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 56px; border-right: 1px solid var(--border); background: var(--background); border-radius: 20px 0 0 20px"></span>
+          <span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span>
+        </div>
+        <strong style="font-size: 16px">Tablet · 768</strong>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">8 kolom · margin 24 · nav rail 72. Sheet menjadi dialog/drawer bawah lebar maks 560.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="height: 340px; border-radius: 16px; background: var(--muted-2); box-shadow: inset 0 0 0 1px var(--border); padding: 20px 32px 20px 236px; box-sizing: border-box; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; position: relative">
+          <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 204px; border-right: 1px solid var(--border); background: var(--background); border-radius: 16px 0 0 16px"></span>
+          <span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span><span style="background: rgba(220,38,38,.08)"></span>
+        </div>
+        <strong style="font-size: 16px">Desktop · 1440</strong>
+        <span style="font-size: 13px; line-height: 1.5; color: var(--muted-foreground)">12 kolom · sidebar 264 · konten maks 1200 · gutter 24. List menjadi tabel sortable, sheet menjadi drawer samping 480.</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding-top: 24px; border-top: 1px solid var(--border)">
+      <div style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 13px">base</span><span style="font-size: 14px; color: var(--muted-foreground)">0–767 · mobile</span></div>
+      <div style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 13px">md: 48rem</span><span style="font-size: 14px; color: var(--muted-foreground)">768 · tablet, nav rail</span></div>
+      <div style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 13px">lg: 64rem</span><span style="font-size: 14px; color: var(--muted-foreground)">1024 · sidebar, tabel</span></div>
+      <div style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 13px">2xl: 90rem</span><span style="font-size: 14px; color: var(--muted-foreground)">1440 · desktop penuh</span></div>
+    </div>
+  </section>
+
+  <!-- 5. Motion -->
+  <section style="display: flex; flex-direction: column; gap: 40px">
+    <div style="display: flex; align-items: baseline; gap: 16px">
+      <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">5</span>
+      <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Motion</h2>
+      <span style="margin-left: auto; font-size: 14px; color: var(--muted-foreground)">prefers-reduced-motion: semua durasi → 1ms, scroll langsung, tanpa count-up & shake</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 64px">
+      <div style="display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: 110px 70px 1fr; gap: 16px; padding: 10px 0; font-size: 13px; color: var(--muted-foreground)"><span>Durasi</span><span>ms</span><span>Untuk</span></div>
+        <sc-for list="{{ durs }}" as="d" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: 110px 70px 1fr; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--border)">
+            <span class="mono" style="font-size: 13px">{{ d.k }}</span>
+            <span class="tnum mono" style="font-size: 13px">{{ d.v }}</span>
+            <span style="font-size: 14px; color: var(--muted-foreground)">{{ d.use }}</span>
+          </div>
+        </sc-for>
+        <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 24px 0 10px; font-size: 13px; color: var(--muted-foreground)"><span>Easing</span><span>Kurva</span></div>
+        <sc-for list="{{ eases }}" as="e" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--border)">
+            <span class="mono" style="font-size: 13px">{{ e.k }}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 13px">{{ e.v }}</span><span style="font-size: 13px; color: var(--muted-foreground)">{{ e.use }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: 1.1fr 1.4fr 0.9fr; gap: 16px; padding: 10px 0; font-size: 13px; color: var(--muted-foreground)"><span>Pemicu</span><span>Respons</span><span>Token</span></div>
+        <sc-for list="{{ specs }}" as="s" hint-placeholder-count="12">
+          <div style="display: grid; grid-template-columns: 1.1fr 1.4fr 0.9fr; gap: 16px; padding: 13px 0; border-top: 1px solid var(--border); align-items: baseline">
+            <span style="font-size: 14px; font-weight: 500">{{ s.t }}</span>
+            <span style="font-size: 14px; line-height: 1.45; color: var(--muted-foreground)">{{ s.r }}</span>
+            <span class="mono" style="font-size: 12px">{{ s.k }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Ikon & logo -->
+  <section style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 80px">
+    <div style="display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; align-items: baseline; gap: 16px">
+        <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">6</span>
+        <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Ikon</h2>
+      </div>
+      <span style="font-size: 15px; line-height: 1.55; color: var(--muted-foreground)">Lucide, stroke 1.75 (2 untuk 16px), ujung bulat. Ukuran 16 · 20 · 24. Ikon status selalu berpasangan dengan label.</span>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg></span>
+        <span style="height: 64px; border-radius: 12px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg></span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; align-items: baseline; gap: 16px">
+        <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">7</span>
+        <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Logo</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px">
+        <div style="height: 200px; border-radius: 16px; background: var(--muted-2); display: flex; align-items: center; justify-content: center; position: relative">
+          <div style="display: flex; align-items: center; gap: 14px; outline: 1px dashed rgba(220,38,38,.55); outline-offset: 24px">
+            <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="Logo PIMS" style="width: 56px; height: 56px">
+            <span style="font-size: 32px; font-weight: 700; letter-spacing: -0.03em">PIMS</span>
+          </div>
+        </div>
+        <div style="height: 200px; border-radius: 16px; background: #0A0A0A; display: flex; align-items: center; justify-content: center; gap: 12px">
+          <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="Logo PIMS di latar gelap" style="width: 44px; height: 44px">
+          <span style="font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: #FAFAFA">PIMS</span>
+        </div>
+        <div style="height: 200px; border-radius: 16px; background: var(--muted-2); display: flex; align-items: center; justify-content: center; gap: 16px">
+          <span style="width: 72px; height: 72px; border-radius: 18px; background: #0A0A0A; display: flex; align-items: center; justify-content: center"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="Ikon aplikasi PIMS" style="width: 48px; height: 48px"></span>
+          <span style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+            <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="Favicon 32" style="width: 32px; height: 32px">
+            <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="Favicon 16" style="width: 16px; height: 16px">
+          </span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; font-size: 14px; line-height: 1.5">
+        <div style="display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600">Penuh</strong><span style="color: var(--muted-foreground)">Ikon + "PIMS" Geist Bold, tinggi teks 0.57× ikon, jarak 0.25×. Clear space = ½ diameter ikon di semua sisi.</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600">Latar gelap</strong><span style="color: var(--muted-foreground)">Ikon tetap kuning-hitam (garis hitam terbaca karena dikelilingi kuning); wordmark putih #FAFAFA.</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600">Ikon / PWA</strong><span style="color: var(--muted-foreground)">Maskable 512 di kotak #0A0A0A, ikon 66% safe zone. Favicon 32 & 16, minimum 16px.</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 96px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 64px; height: 40px"></span><span style="font-size: 13px; color: var(--danger); font-weight: 600">Jangan diregangkan</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 96px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 44px; height: 44px; filter: hue-rotate(160deg)"></span><span style="font-size: 13px; color: var(--danger); font-weight: 600">Jangan diganti warnanya</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 96px; border-radius: 14px; background: #F4D435; display: flex; align-items: center; justify-content: center"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 44px; height: 44px"></span><span style="font-size: 13px; color: var(--danger); font-weight: 600">Jangan di atas kuning</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 96px; border-radius: 14px; background: var(--muted-2); display: flex; align-items: center; justify-content: center"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 44px; height: 44px; filter: drop-shadow(0 6px 8px rgba(0,0,0,.45))"></span><span style="font-size: 13px; color: var(--danger); font-weight: 600">Jangan diberi efek</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. CSS variables -->
+  <section style="display: flex; flex-direction: column; gap: 32px">
+    <div style="display: flex; align-items: baseline; gap: 16px">
+      <span class="tnum" style="font-size: 15px; color: var(--muted-foreground)">8</span>
+      <h2 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.025em">Token sebagai CSS variables</h2>
+      <span style="margin-left: auto; font-size: 14px; color: var(--muted-foreground)">app.css · shadcn/ui + Tailwind v4 · tambahan PIMS: --brand, --success, --warning, --info, --danger</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<pre class="mono" style="margin: 0; padding: 24px; border-radius: 16px; background: #0A0A0A; color: #E4E4E7; font-size: 12px; line-height: 1.7; white-space: pre; overflow: hidden">:root {
+  --radius: 0.875rem;
+  --background: #FFFFFF;
+  --foreground: #0A0A0A;
+  --card: #FFFFFF;
+  --card-foreground: #0A0A0A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+  --primary: #0A0A0A;
+  --primary-foreground: #FAFAFA;
+  --secondary: #F4F4F5;
+  --secondary-foreground: #18181B;
+  --muted: #F4F4F5;
+  --muted-foreground: #5C5C66;
+  --accent: #F4F4F5;
+  --accent-foreground: #18181B;
+  --destructive: #DC2626;
+  --border: #ECECEF;
+  --input: #E4E4E7;
+  --ring: #F4D435;
+  --brand: #F4D435;
+  --brand-foreground: #0A0A0A;
+  --success: #15803D;
+  --warning: #C2410C;
+  --info: #1D4ED8;
+  --danger: #B91C1C;
+  --chart-1: #C99A06;
+  --chart-2: #2563EB;
+  --chart-3: #E8590C;
+  --chart-4: #0F8F82;
+  --chart-5: #7C3AED;
+  --sidebar: #FAFAFA;
+  --sidebar-foreground: #0A0A0A;
+  --sidebar-primary: #0A0A0A;
+  --sidebar-primary-foreground: #FAFAFA;
+  --sidebar-accent: #F4F4F5;
+  --sidebar-accent-foreground: #18181B;
+  --sidebar-border: #ECECEF;
+  --sidebar-ring: #F4D435;
+}</pre>
+<pre class="mono" style="margin: 0; padding: 24px; border-radius: 16px; background: #0A0A0A; color: #E4E4E7; font-size: 12px; line-height: 1.7; white-space: pre; overflow: hidden">.dark {
+  --background: #0A0A0A;
+  --foreground: #FAFAFA;
+  --card: #141414;
+  --popover: #18181B;
+  --primary: #F4D435;
+  --primary-foreground: #0A0A0A;
+  --secondary: #1C1C1F;
+  --muted: #1C1C1F;
+  --muted-foreground: #A1A1AA;
+  --accent: #1F1F22;
+  --destructive: #F87171;
+  --border: #232326;
+  --input: #2E2E32;
+  --ring: #F4D435;
+  --success: #4ADE80;
+  --warning: #FB923C;
+  --info: #7AA7FF;
+  --danger: #F87171;
+  --chart-1: #B38D0E;
+  --chart-2: #3577E8;
+  --chart-3: #D9600F;
+  --chart-4: #13907F;
+  --chart-5: #8455EE;
+  --sidebar: #0F0F10;
+  --sidebar-primary: #F4D435;
+}
+
+.hc {  /* kontras tinggi / outdoor */
+  --foreground: #000000;
+  --muted-foreground: #1F1F1F;
+  --border: #000000;
+  --input: #000000;
+  --ring: #000000;
+  --success: #0A5A26;
+  --warning: #8A2D00;
+  --info: #0A3696;
+  --danger: #9B0000;
+  --bw: 2px;
+  --fw-body: 500;
+}</pre>
+<pre class="mono" style="margin: 0; padding: 24px; border-radius: 16px; background: #0A0A0A; color: #E4E4E7; font-size: 12px; line-height: 1.7; white-space: pre; overflow: hidden">@import "tailwindcss";
+@custom-variant dark (&amp;:is(.dark *));
+
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif;
+  --font-mono: "Geist Mono", ui-monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-muted: var(--muted);
+  --color-muted-foreground:
+      var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-danger: var(--danger);
+  --color-chart-1: var(--chart-1);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 6px);
+  --ease-standard: cubic-bezier(.2,0,0,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --ease-pop: cubic-bezier(.34,1.56,.64,1);
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-2xl: 90rem;
+}
+
+/* focus: ring kuning + garis tinta,
+   lolos 3:1 di terang & gelap */
+:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--ring);
+}</pre>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":7960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const brand = [
+      ['50','#FEFBE8','#0A0A0A',''],['100','#FDF5C3','#0A0A0A',''],['200','#FBEA8A','#0A0A0A',''],['300','#F8DC52','#0A0A0A',''],
+      ['400','#F4D435','#0A0A0A','Brand'],['500','#DDB80F','#0A0A0A',''],['600','#B98F0A','#0A0A0A',''],['700','#94690D','#FFFFFF',''],
+      ['800','#7A5312','#FFFFFF',''],['900','#684415','#FFFFFF',''],['950','#3D2408','#FFFFFF','']
+    ].map(([step, hex, on, tag]) => ({ step, hex, on, tag }));
+    const neutral = [
+      ['50','#FAFAFA'],['100','#F4F4F5'],['200','#E4E4E7'],['300','#D4D4D8'],['400','#A1A1AA'],['500','#71717A'],
+      ['600','#52525B'],['700','#3F3F46'],['800','#27272A'],['900','#18181B'],['950','#09090B'],['Ink','#0A0A0A']
+    ].map(([step, hex]) => ({ step, hex }));
+    const semantic = [
+      { key: 'success', name: 'Sukses', use: 'Ready · Layak · Closed', label: 'Layak Pakai' },
+      { key: 'danger', name: 'Bahaya', use: 'BD · Tidak Layak · Kritis', label: 'Tidak Layak' },
+      { key: 'info', name: 'Info', use: 'PM · Servis', label: 'Servis' },
+      { key: 'warning', name: 'Peringatan', use: 'Menunggu · Open · Overdue', label: 'Menunggu' }
+    ];
+    const charts = [
+      { n: '1', hex: '#C99A06', use: 'Seri utama (kuning brand-600): P2H masuk, kepatuhan' },
+      { n: '2', hex: '#2563EB', use: 'Seri ke-2 (mis. site kedua)' },
+      { n: '3', hex: '#E8590C', use: 'Seri ke-3' },
+      { n: '4', hex: '#0F8F82', use: 'Seri ke-4' },
+      { n: '5', hex: '#7C3AED', use: 'Seri ke-5; lebih dari 5 → “Lainnya”' },
+      { n: 'ref', hex: '#18181B', use: 'Target / periode lalu (garis putus, bukan seri)' }
+    ];
+    const bars = [[52,30,14],[60,26,18],[44,36,20],[70,22,12],[64,30,16],[58,28,24],[76,20,12]].map(([a,b,c]) => ({ a, b, c }));
+    const themes = [{ key: 'light', name: 'Terang' }, { key: 'dark', name: 'Gelap' }, { key: 'hc', name: 'Kontras tinggi' }];
+    const type = [
+      { token: 'display', sample: '87% kepatuhan', size: 40, lh: 44, w: 600, ls: '-0.03em', tt: 'none', m: '32 / 36', d: '48 / 52' },
+      { token: 'title', sample: 'Form P2H · DT-1045', size: 28, lh: 34, w: 600, ls: '-0.02em', tt: 'none', m: '24 / 30', d: '28 / 34' },
+      { token: 'heading', sample: 'Keselamatan', size: 20, lh: 28, w: 600, ls: '-0.01em', tt: 'none', m: '20 / 28', d: '20 / 28' },
+      { token: 'body-lg', sample: 'Rem utama berfungsi normal', size: 18, lh: 26, w: 500, ls: '0', tt: 'none', m: '18 / 26', d: '17 / 26' },
+      { token: 'body', sample: 'Kebocoran halus pada selang hidrolik boom kiri.', size: 16, lh: 24, w: 400, ls: '0', tt: 'none', m: '16 / 24', d: '15 / 22' },
+      { token: 'label', sample: 'HM awal', size: 14, lh: 20, w: 500, ls: '0', tt: 'none', m: '14 / 20', d: '14 / 20' },
+      { token: 'caption', sample: 'Diperbarui 06:12 · Pit A', size: 13, lh: 18, w: 400, ls: '0', tt: 'none', m: '13 / 18', d: '13 / 18' },
+      { token: 'overline', sample: 'Item kritis', size: 12, lh: 16, w: 600, ls: '0.06em', tt: 'uppercase', m: '12 / 16', d: '12 / 16' },
+      { token: 'kpi', sample: '42 / 48', size: 40, lh: 44, w: 600, ls: '-0.03em', tt: 'none', m: '36 / 40', d: '44 / 48' }
+    ];
+    const spaces = [['1',4],['2',8],['3',12],['4',16],['5',20],['6',24],['8',32],['10',40],['12',48],['16',64]].map(([k, v]) => ({ k, v }));
+    const durs = [
+      { k: '--dur-1', v: '90', use: 'Press (scale .97), highlight sentuh' },
+      { k: '--dur-2', v: '150', use: 'Toggle Baik/Rusak, warna, hover' },
+      { k: '--dur-3', v: '220', use: 'Expand/collapse, toast, chip' },
+      { k: '--dur-4', v: '320', use: 'Bottom sheet, pindah langkah, progress' },
+      { k: '--dur-5', v: '600', use: 'Layar sukses, count-up (800)' }
+    ];
+    const eases = [
+      { k: 'standard', v: 'cubic-bezier(.2, 0, 0, 1)', use: 'Perubahan state di tempat' },
+      { k: 'out', v: 'cubic-bezier(.16, 1, .3, 1)', use: 'Elemen masuk: sheet, toast, expand' },
+      { k: 'in', v: 'cubic-bezier(.4, 0, 1, 1)', use: 'Elemen keluar (durasi × 0.75)' },
+      { k: 'pop', v: 'cubic-bezier(.34, 1.56, .64, 1)', use: 'Centang sukses, badge baru. Motion: spring 420/30' }
+    ];
+    const specs = [
+      { t: 'Tekan tombol / kartu', r: 'scale .97 + latar muted; haptic 10ms (navigator.vibrate) di aksi utama', k: 'dur-1 · standard' },
+      { t: 'Pilih Baik / Rusak', r: 'Thumb geser ke opsi, warna berganti; Rusak membuka catatan + foto', k: 'dur-2 / dur-3 · out' },
+      { t: 'Item dijawab', r: 'Auto-scroll ke item berikutnya yang belum dijawab, berhenti di tengah layar', k: 'dur-4 · smooth' },
+      { t: 'Progress checklist', r: 'Bar melebar, angka 12/18 berganti tanpa lompatan (tnum)', k: 'dur-4 · out' },
+      { t: 'Buka bottom sheet', r: 'Naik dari bawah, scrim 0→40%; snap 50% / 92%; drag > 30% tinggi = tutup', k: 'dur-4 · out' },
+      { t: 'Swipe kartu', r: 'Ambang 96px memicu aksi; di bawahnya kembali (spring)', k: 'dur-3 · pop' },
+      { t: 'Long-press 450ms', r: 'Masuk mode pilih massal, haptic 15ms, bar aksi muncul di bawah', k: 'dur-3 · out' },
+      { t: 'Pull-to-refresh', r: 'Tarik ≥ 64px → spinner; rilis memuat ulang; toast hasil', k: 'dur-3' },
+      { t: 'Aksi bisa dibatalkan', r: 'Optimistic update + snackbar "Urungkan" 5 detik', k: 'dur-3 · out' },
+      { t: 'Memuat data', r: 'Skeleton shimmer hanya bila > 300ms; tidak berkedip bila cepat', k: '1.2s linear' },
+      { t: 'KPI tampil', r: 'Count-up dari 0, sekali per sesi', k: '800ms · out' },
+      { t: 'P2H terkirim', r: 'Lingkaran pop + centang digambar + ring memudar', k: 'dur-5 · pop' }
+    ];
+    return { brand, neutral, semantic, charts, bars, themes, type, spaces, durs, eases, specs };
+  }
+}
+</script>
+</body>
+</html>

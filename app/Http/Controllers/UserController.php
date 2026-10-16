@@ -66,6 +66,13 @@ class UserController extends Controller
 
         return Inertia::render('users/index', [
             'users' => $users,
+            // Tab peran (Pengguna-Desktop.png): Semua · Admin · Manager · Driver
+            'roleCounts' => [
+                'semua' => User::count(),
+                'admin' => User::role('admin')->count(),
+                'manager' => User::role('manager')->count(),
+                'driver' => User::role('driver')->count(),
+            ],
             'filters' => $request->only(['search', 'role', 'jabatan', 'per_page', 'sort', 'dir']),
             'sort' => $sort,
             'units' => Unit::active()->orderBy('no_unit')->get(['id', 'no_unit', 'jenis_unit', 'site_id']),

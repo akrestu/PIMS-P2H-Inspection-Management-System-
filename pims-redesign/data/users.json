@@ -1,0 +1,185 @@
+[
+  {
+    "name": "Rina Anggraini",
+    "role": "admin",
+    "sites": [
+      "*"
+    ],
+    "nrp": "19850704",
+    "email": "rina.a@kontraktor.co.id",
+    "phone_wa": null,
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Hendra Wijaya",
+    "role": "manager",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "19870312",
+    "email": "hendra.w@kontraktor.co.id",
+    "phone_wa": null,
+    "is_lv_approver": true,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Wawan Setiadi",
+    "role": "manager",
+    "sites": [
+      "PTA",
+      "PTB"
+    ],
+    "nrp": "19890221",
+    "email": "wawan.s@kontraktor.co.id",
+    "phone_wa": null,
+    "is_lv_approver": true,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Dewi Kartika",
+    "role": "manager",
+    "sites": [
+      "JTY"
+    ],
+    "nrp": "19920515",
+    "email": "dewi.k@kontraktor.co.id",
+    "phone_wa": null,
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Budi Santoso",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20231045",
+    "email": null,
+    "phone_wa": "08120231045",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Andi Pratama",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20220871",
+    "email": null,
+    "phone_wa": "08120220871",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Dedi Kurniawan",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20210533",
+    "email": null,
+    "phone_wa": "08120210533",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Sari Maharani",
+    "role": "driver",
+    "sites": [
+      "PTB"
+    ],
+    "nrp": "20240112",
+    "email": null,
+    "phone_wa": "08120240112",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Rudi Hartono",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20200987",
+    "email": null,
+    "phone_wa": "08120200987",
+    "is_lv_approver": false,
+    "is_active": false,
+    "password": "password"
+  },
+  {
+    "name": "Joko Widodo S.",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20230440",
+    "email": null,
+    "phone_wa": "08120230440",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Fajar Nugroho",
+    "role": "driver",
+    "sites": [
+      "PTB"
+    ],
+    "nrp": "20240321",
+    "email": null,
+    "phone_wa": "08120240321",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Agus Salim",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20190455",
+    "email": null,
+    "phone_wa": "08120190455",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Slamet Riyadi",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20180122",
+    "email": null,
+    "phone_wa": "08120180122",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  },
+  {
+    "name": "Hadi Tanoto",
+    "role": "driver",
+    "sites": [
+      "PTA"
+    ],
+    "nrp": "20210977",
+    "email": null,
+    "phone_wa": "08120210977",
+    "is_lv_approver": false,
+    "is_active": true,
+    "password": "password"
+  }
+]

@@ -113,7 +113,7 @@ test('pending entries are excluded from dashboard operational metrics', function
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('metrics.total_p2h_hari_ini', 0)
-            ->has('recentP2h', 0));
+            ->where('today.rows.0.approval.status', 'menunggu'));
 });
 
 test('downtime duration is clipped to the requested reporting period', function () {

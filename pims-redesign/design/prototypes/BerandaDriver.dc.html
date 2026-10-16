@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Beranda Driver</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" data-motion="{{ motion }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <!-- App bar -->
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 8px; height: 72px; padding: 8px 12px 8px 20px; box-sizing: border-box">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">Jumat, 16 Okt · Shift 1</span>
+      <span style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em">Halo, Budi</span>
+    </div>
+    <button type="button" class="press hl" aria-label="Cari" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+    <span style="width: 40px; height: 40px; border-radius: 999px; background: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0" aria-label="Akun Budi Santoso">BS</span>
+  </header>
+
+  <!-- Scroll area -->
+  <div class="noscroll" onPointerDown="{{ pDown }}" onPointerMove="{{ pMove }}" onPointerUp="{{ pUp }}" onPointerLeave="{{ pUp }}" onPointerCancel="{{ pUp }}" ref="{{ setScroller }}" style="flex: 1; overflow-y: auto; padding: 72px 0 120px; touch-action: pan-y; overscroll-behavior: contain">
+
+    <!-- pull indicator -->
+    <div style="height: {{ pullH }}px; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: {{ pullTransition }}">
+      <span style="width: 36px; height: 36px; border-radius: 999px; background: var(--card); box-shadow: var(--shadow-2); display: flex; align-items: center; justify-content: center; color: var(--foreground)">
+        <svg class="{{ pullSpin }}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{ pullRot }}deg)"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      </span>
+    </div>
+
+    <!-- offline banner -->
+    <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+      <div role="status" class="fade" style="margin: 4px 16px 0; padding: 12px 14px; border-radius: 12px; background: var(--warning-soft); color: var(--foreground); display: flex; gap: 12px; align-items: flex-start; border: var(--bw) solid {{ hcBorderWarn }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>
+        <span style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 20px">
+          <strong style="font-weight: 600">Anda sedang offline</strong>
+          <span style="color: var(--muted-foreground)">Data terakhir 06:02. P2H tetap bisa diisi dan dikirim otomatis saat sinyal kembali.</span>
+        </span>
+      </div>
+    </sc-if>
+
+    <!-- LOADING -->
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+      <div aria-busy="true" aria-label="Memuat" style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 28px">
+        <div style="border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px; background: var(--card); box-shadow: var(--shadow-2); border: var(--bw) solid var(--border)">
+          <span class="skeleton" style="width: 96px; height: 12px"></span>
+          <span class="skeleton" style="width: 168px; height: 36px"></span>
+          <span class="skeleton" style="width: 220px; height: 14px"></span>
+          <span class="skeleton" style="width: 100%; height: 56px; border-radius: 12px; margin-top: 8px"></span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0 4px">
+          <span class="skeleton" style="height: 56px"></span><span class="skeleton" style="height: 56px"></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 18px; padding: 0 4px">
+          <span class="skeleton" style="width: 140px; height: 16px"></span>
+          <span class="skeleton" style="width: 100%; height: 44px"></span>
+          <span class="skeleton" style="width: 100%; height: 44px"></span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- EMPTY: no unit -->
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+      <div class="fade-up" style="margin: 16px 16px 0; position: relative; overflow: hidden; border-radius: 20px; padding: 28px 20px 20px; background: var(--muted-2); border: var(--bw) solid var(--border); display: flex; flex-direction: column; gap: 16px">
+        <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -260px; top: -120px; width: 640px; opacity: .35; pointer-events: none">
+        <span style="position: relative; width: 52px; height: 52px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow-2); display: flex; align-items: center; justify-content: center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+        </span>
+        <div style="position: relative; display: flex; flex-direction: column; gap: 6px">
+          <strong style="font-size: 20px; font-weight: 600; letter-spacing: -0.015em">Belum ada unit untuk Anda</strong>
+          <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Pengawas belum menugaskan unit untuk Shift 1. Anda tetap bisa mengisi P2H dengan memilih unit sendiri.</span>
+        </div>
+        <a href="FormP2H.dc.html" class="press" style="position: relative; height: 56px; border-radius: 12px; background: var(--brand); color: var(--brand-foreground); font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none">Isi P2H & pilih unit</a>
+      </div>
+    </sc-if>
+
+    <!-- CONTENT -->
+    <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+      <div class="fade-up" style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 32px">
+
+        <!-- Unit hari ini -->
+        <section aria-labelledby="unit-h" style="border-radius: 20px; padding: 20px; background: var(--card); box-shadow: var(--shadow-2); border: var(--bw) solid var(--border); display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span id="unit-h" style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-foreground)">Unit hari ini</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--success-soft); color: var(--success); font-size: 13px; font-weight: 600; border: var(--bw) solid {{ hcBorderOk }}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Ready
+            </span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span class="tnum" style="font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.035em">DT-1045</span>
+            <span style="font-size: 15px; color: var(--muted-foreground)">Dump Truck 90 t · Pit A</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 13px; color: var(--muted-foreground)">HM terakhir</span>
+              <span class="tnum" style="font-size: 17px; font-weight: 600">12.480,5</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 13px; color: var(--muted-foreground)">Shift 1</span>
+              <span class="tnum" style="font-size: 17px; font-weight: 600">06:00–18:00</span>
+            </div>
+          </div>
+
+          <sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 4px">
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 15px">
+                <span class="pulse" style="width: 8px; height: 8px; border-radius: 999px; background: var(--warning)"></span>
+                <span style="flex: 1"><strong style="font-weight: 600">Belum P2H</strong> <span style="color: var(--muted-foreground)">· batas 06:30</span></span>
+                <span class="tnum" style="font-size: 14px; font-weight: 600; color: var(--warning)">18 mnt lagi</span>
+              </div>
+              <a href="FormP2H.dc.html" class="press" onClick="{{ buzz }}" style="height: 56px; border-radius: 12px; background: var(--brand); color: var(--brand-foreground); font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; box-shadow: {{ hcCta }}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+                Isi P2H sekarang
+              </a>
+            </div>
+          </sc-if>
+          <sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 4px">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <span class="pop" style="width: 36px; height: 36px; border-radius: 999px; background: var(--success); color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <span style="display: flex; flex-direction: column; gap: 2px">
+                  <strong style="font-size: 16px; font-weight: 600">P2H terkirim · Layak Pakai</strong>
+                  <span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">05:48 · 18 dari 18 item Baik</span>
+                </span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--muted-2); border: var(--bw) solid var(--border)">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--warning)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Menunggu persetujuan
+                </span>
+                <span style="font-size: 14px; color: var(--muted-foreground)">Pengawas · Hendra W.</span>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+
+        <!-- KPI -->
+        <section aria-label="Ringkasan saya" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 13px; color: var(--muted-foreground)">Kepatuhan 30 hari</span>
+            <span class="tnum" style="font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -0.03em">{{ kpiCompliance }}<span style="font-size: 18px; color: var(--muted-foreground); font-weight: 500">%</span></span>
+            <div style="display: flex; gap: 3px; padding-top: 6px" aria-hidden="true">
+              <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+                <span style="flex: 1; height: 6px; border-radius: 3px; background: {{ d.c }}"></span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 13px; color: var(--muted-foreground)">Temuan aktif</span>
+            <span class="tnum" style="font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -0.03em">{{ kpiFindings }}</span>
+            <span style="font-size: 13px; color: var(--warning); font-weight: 600; padding-top: 2px">1 lewat tenggat</span>
+          </div>
+        </section>
+
+        <!-- Temuan -->
+        <section aria-labelledby="temuan-h" style="display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px 6px">
+            <h2 id="temuan-h" style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em">Temuan DT-1045</h2>
+            <a href="#" class="press" style="min-height: 44px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--muted-foreground)">Lihat semua</a>
+          </div>
+          <sc-for list="{{ findings }}" as="f" hint-placeholder-count="2">
+            <a href="#" class="press hl" style="display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 10px 4px; border-radius: 12px; text-decoration: none; color: inherit">
+              <span style="width: 44px; height: 44px; border-radius: 12px; background: {{ f.iconBg }}; color: {{ f.iconFg }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              </span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ f.title }}</span>
+                <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted-foreground)">
+                  <span class="mono">{{ f.id }}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 5px; color: {{ f.statusFg }}; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ f.status }}</span>
+                  <sc-if value="{{ f.critical }}" hint-placeholder-val="{{ false }}">
+                    <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border: var(--bw) solid {{ f.hcBorder }}">KRITIS</span>
+                  </sc-if>
+                </span>
+              </span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground); flex-shrink: 0"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
+          </sc-for>
+        </section>
+
+        <!-- Riwayat -->
+        <section aria-labelledby="riwayat-h" style="display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px 6px">
+            <h2 id="riwayat-h" style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em">Riwayat P2H</h2>
+            <a href="#" class="press" style="min-height: 44px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--muted-foreground)">Semua</a>
+          </div>
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+            <a href="#" class="press hl" style="display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; min-height: 60px; padding: 8px 4px; border-radius: 12px; text-decoration: none; color: inherit">
+              <span style="display: flex; flex-direction: column; align-items: center; gap: 0">
+                <span class="tnum" style="font-size: 20px; line-height: 22px; font-weight: 600">{{ h.d }}</span>
+                <span style="font-size: 12px; color: var(--muted-foreground)">{{ h.m }}</span>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 15px; font-weight: 500">{{ h.unit }} · Shift {{ h.shift }}</span>
+                <span style="font-size: 13px; color: var(--muted-foreground)">{{ h.appr }}</span>
+              </span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 999px; background: {{ h.bg }}; color: {{ h.fg }}; font-size: 12px; font-weight: 600; border: var(--bw) solid {{ h.hcBorder }}"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ h.result }}</span>
+            </a>
+          </sc-for>
+        </section>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- Toast -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 16px; right: 16px; bottom: 104px; z-index: 6; min-height: 48px; padding: 12px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ toast }}
+    </div>
+  </sc-if>
+
+  <!-- Bottom nav -->
+  <nav aria-label="Navigasi utama" class="blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; height: 84px; padding: 4px 8px max(12px, env(safe-area-inset-bottom)); box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; border-top: var(--bw) solid var(--border)">
+    <a href="#" aria-current="page" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--foreground); font-size: 12px; font-weight: 600; position: relative">
+      <span style="position: absolute; top: 0; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--brand)"></span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Beranda
+    </a>
+    <a href="#" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>Riwayat
+    </a>
+    <a href="FormP2H.dc.html" class="press" aria-label="Isi P2H" style="height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; text-decoration: none; color: var(--foreground); font-size: 12px; font-weight: 600; margin-top: -14px">
+      <span style="width: 56px; height: 56px; border-radius: 999px; background: var(--brand); color: var(--brand-foreground); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px -6px rgba(180,140,0,.55), 0 0 0 4px var(--background)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </span>
+    </a>
+    <a href="#" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500; position: relative">
+      <span style="position: relative; display: flex">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        <span class="tnum" style="position: absolute; top: -4px; right: -8px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger); color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--background)">2</span>
+      </span>Notifikasi
+    </a>
+    <a href="#" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Akun
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"keadaan":{"editor":"enum","options":["Normal","Memuat","Sudah P2H","Kosong","Offline"],"default":"Normal"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"reducedMotion":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { booting: true, t: 0, pull: 0, dragging: false, refreshing: false, toast: '' };
+  }
+  componentDidMount() { this.boot(); }
+  componentDidUpdate(prev) { if (prev.keadaan !== this.props.keadaan) this.boot(); }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); clearTimeout(this.bt); clearTimeout(this.tt); }
+  boot() {
+    clearTimeout(this.bt);
+    this.setState({ booting: true, t: 0 });
+    this.bt = setTimeout(() => { this.setState({ booting: false }); this.countUp(); }, 650);
+  }
+  countUp() {
+    cancelAnimationFrame(this.raf);
+    if (this.props.reducedMotion) { this.setState({ t: 1 }); return; }
+    const start = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / 800);
+      this.setState({ t: 1 - Math.pow(1 - p, 3) });
+      if (p < 1) this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+  renderVals() {
+    const s = this.state;
+    const k = this.props.keadaan ?? 'Normal';
+    const theme = this.props.theme ?? 'light';
+    const hc = theme === 'hc';
+    const loading = k === 'Memuat' || s.booting || s.refreshing;
+    const empty = !loading && k === 'Kosong';
+    const findings = [
+      { id: 'T-0231', title: 'Rembesan oli di selang hidrolik', status: 'Lewat tenggat 1 hari', critical: true },
+      { id: 'T-0228', title: 'Lampu rotary tidak menyala', status: 'Open · tenggat 18 Okt', critical: false }
+    ].map((f) => ({ ...f, iconBg: f.critical ? 'var(--danger-soft)' : 'var(--warning-soft)', iconFg: f.critical ? 'var(--danger)' : 'var(--warning)', statusFg: 'var(--warning)', hcBorder: hc ? 'currentColor' : 'transparent' }));
+    const history = [
+      { d: '15', m: 'Okt', unit: 'DT-1045', shift: 1, appr: 'Disetujui Hendra W. · 06:21', result: 'Layak', ok: true },
+      { d: '14', m: 'Okt', unit: 'DT-1045', shift: 1, appr: 'Disetujui Hendra W. · 06:30', result: 'Layak', ok: true },
+      { d: '13', m: 'Okt', unit: 'DT-1045', shift: 1, appr: 'Disetujui · unit BD 3 jam', result: 'Tidak Layak', ok: false },
+      { d: '12', m: 'Okt', unit: 'DT-1022', shift: 2, appr: 'Disetujui Rina A. · 18:12', result: 'Layak', ok: true }
+    ].map((h) => ({ ...h, bg: h.ok ? 'var(--success-soft)' : 'var(--danger-soft)', fg: h.ok ? 'var(--success)' : 'var(--danger)', hcBorder: hc ? 'currentColor' : 'transparent' }));
+    const weekData = [1, 1, 1, 0, 1, 1, 1];
+    return {
+      theme,
+      motion: this.props.reducedMotion ? 'reduced' : 'full',
+      offline: k === 'Offline',
+      loading, empty,
+      ready: !loading && !empty,
+      notDone: k !== 'Sudah P2H',
+      done: k === 'Sudah P2H',
+      hcBorderOk: hc ? 'currentColor' : 'transparent',
+      hcBorderWarn: hc ? 'var(--warning)' : 'transparent',
+      hcCta: hc ? '0 0 0 2px #000' : 'none',
+      kpiCompliance: Math.round(96 * s.t),
+      kpiFindings: Math.round(2 * s.t),
+      week: weekData.map((v) => ({ c: v ? 'var(--chart-1)' : 'var(--danger)' })),
+      findings, history,
+      toast: s.toast,
+      pullH: s.refreshing ? 56 : Math.round(s.pull),
+      pullRot: Math.round(s.pull * 4),
+      pullSpin: s.refreshing ? 'spin' : '',
+      pullTransition: s.dragging ? 'none' : 'height 320ms cubic-bezier(.16,1,.3,1)',
+      setScroller: (el) => { this.scroller = el; },
+      buzz: () => { try { navigator.vibrate && navigator.vibrate(10); } catch (e) {} },
+      pDown: (e) => { if (this.scroller && this.scroller.scrollTop <= 0 && !s.refreshing) { if (e.pointerType === 'mouse') e.preventDefault(); this.y0 = e.clientY; this.setState({ dragging: true }); } },
+      pMove: (e) => { if (!this.state.dragging || this.y0 == null) return; const dy = e.clientY - this.y0; this.setState({ pull: Math.max(0, Math.min(96, dy * 0.6)) }); },
+      pUp: () => {
+        if (!this.state.dragging) return;
+        const go = this.state.pull >= 64;
+        this.y0 = null;
+        this.setState({ dragging: false, pull: 0, refreshing: go });
+        if (go) {
+          try { navigator.vibrate && navigator.vibrate(10); } catch (e) {}
+          setTimeout(() => {
+            this.setState({ refreshing: false, toast: 'Data diperbarui · 06:14' });
+            this.countUp();
+            clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600);
+          }, 1100);
+        }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

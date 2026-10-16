@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Master site</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 8px 12px; display: flex; flex-direction: column; gap: 10px; border-bottom: var(--bw) solid var(--border)">
+    <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+      <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 18px; font-weight: 600">Master site</span><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ activeN }} site aktif</span></span>
+      <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+        <button type="button" class="press" onClick="{{ openAdd }}" style="height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Site</button>
+      </sc-if>
+    </div>
+    <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 8px; padding: 3px; border-radius: 10px; background: var(--muted)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+        <button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 40px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 14px; font-weight: 600"><span class="tnum">{{ t.label }}</span></button>
+      </sc-for>
+    </div>
+  </header>
+
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 132px 12px 120px; display: flex; flex-direction: column; gap: 8px">
+    <sc-if value="{{ isTrash }}" hint-placeholder-val="{{ false }}">
+      <span style="padding: 0 4px 6px; font-size: 13px; line-height: 18px; color: var(--muted-foreground)">Site di Sampah terhapus permanen otomatis setelah 30 hari. Unit dan driver yang dulu terhubung tetap tersimpan.</span>
+    </sc-if>
+    <sc-if value="{{ notAdmin }}" hint-placeholder-val="{{ false }}">
+      <span style="padding: 0 4px 6px; font-size: 13px; line-height: 18px; color: var(--muted-foreground)">Hanya Admin yang dapat menambah atau mengubah site.</span>
+    </sc-if>
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+      <button type="button" class="press" onClick="{{ r.click }}" aria-label="{{ r.aria }}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; border: var(--bw) solid var(--border); background: var(--card); color: var(--foreground); font: inherit; text-align: left; width: 100%">
+        <span style="display: flex; align-items: center; gap: 10px; width: 100%">
+          <span class="mono" style="min-width: 44px; height: 28px; padding: 0 8px; box-sizing: border-box; border-radius: 8px; background: var(--muted); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center">{{ r.code }}</span>
+          <strong style="flex: 1; min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ r.name }}</strong>
+          <span style="height: 24px; padding: 0 9px; border-radius: 999px; border: var(--bw) solid var(--border); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; color: var(--muted-foreground)">{{ r.tz }}</span>
+        </span>
+        <span class="tnum" style="display: flex; gap: 16px; font-size: 13px; color: var(--muted-foreground)">
+          <span><strong style="color: var(--foreground); font-weight: 600">{{ r.units }}</strong> unit</span>
+          <span><strong style="color: var(--foreground); font-weight: 600">{{ r.drivers }}</strong> driver</span>
+          <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right">{{ r.sub }}</span>
+        </span>
+      </button>
+    </sc-for>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+      <div class="fade" style="position: relative; overflow: hidden; padding: 40px 12px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px">
+        <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -260px; top: -140px; width: 600px; opacity: .3; pointer-events: none">
+        <strong style="position: relative; font-size: 18px; font-weight: 600">Sampah kosong</strong>
+        <span style="position: relative; font-size: 15px; color: var(--muted-foreground)">Site yang dihapus akan muncul di sini selama 30 hari.</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- sheet -->
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="sh-t" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 92%; display: flex; flex-direction: column; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3)">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <div style="display: flex; align-items: center; padding: 0 8px 8px 20px"><strong id="sh-t" style="flex: 1; font-size: 20px; font-weight: 600">{{ sheetTitle }}</strong><button type="button" class="press hl" onClick="{{ closeSheet }}" aria-label="Tutup" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+      <div class="noscroll" style="overflow-y: auto; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px">
+
+        <sc-if value="{{ sheetForm }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ fields }}" as="f" hint-placeholder-count="3">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">{{ f.label }}
+              <input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" data-invalid="{{ f.bad }}" class="field" style="height: 52px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; font-weight: 400; outline: 0">
+              <sc-if value="{{ f.bad }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--danger); font-weight: 500">{{ f.err }}</span></sc-if>
+            </label>
+          </sc-for>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span id="tz-l" style="font-size: 14px; font-weight: 500">Zona waktu</span>
+            <div role="radiogroup" aria-labelledby="tz-l" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted)">
+              <sc-for list="{{ tzOpts }}" as="o" hint-placeholder-count="3">
+                <button type="button" role="radio" aria-checked="{{ o.on }}" class="press" onClick="{{ o.pick }}" style="height: 46px; border: 0; border-radius: 9px; background: {{ o.bg }}; box-shadow: {{ o.shadow }}; color: {{ o.fg }}; font: inherit; font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0">{{ o.label }}<span class="tnum" style="font-size: 11px; font-weight: 500; color: var(--muted-foreground)">{{ o.off }}</span></button>
+              </sc-for>
+            </div>
+            <span style="font-size: 13px; color: var(--muted-foreground)">Batas shift, tenggat P2H, dan ringkasan harian mengikuti zona ini.</span>
+          </div>
+          <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+            <div class="tnum" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+              <a href="MasterUnit.dc.html" class="press" style="padding: 12px 14px; border-radius: 12px; background: var(--muted-2); text-decoration: none; display: flex; flex-direction: column; gap: 2px"><strong style="font-size: 20px; font-weight: 600">{{ editUnits }}</strong><span style="font-size: 13px; color: var(--muted-foreground)">unit terdaftar ›</span></a>
+              <a href="Pengguna.dc.html" class="press" style="padding: 12px 14px; border-radius: 12px; background: var(--muted-2); text-decoration: none; display: flex; flex-direction: column; gap: 2px"><strong style="font-size: 20px; font-weight: 600">{{ editDrivers }}</strong><span style="font-size: 13px; color: var(--muted-foreground)">driver ›</span></a>
+            </div>
+          </sc-if>
+          <button type="button" class="press" onClick="{{ save }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 16px; font-weight: 600">Simpan</button>
+          <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="press" onClick="{{ askTrash }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600">Pindahkan ke Sampah</button>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ sheetTrashItem }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">{{ trashInfo }}</span>
+          <button type="button" class="press" onClick="{{ restoreOne }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 16px; font-weight: 600">Pulihkan</button>
+          <button type="button" class="press" onClick="{{ askPurge }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600">Hapus permanen</button>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- confirm: trash blocked -->
+  <sc-if value="{{ blockOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: absolute; inset: 0; z-index: 20; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 20px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="bk-t" class="pop" style="width: 100%; padding: 20px; border-radius: 20px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="bk-t" style="font-size: 18px; font-weight: 600">{{ blockTitle }}</strong>
+        <span class="tnum" style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">{{ blockText }}</span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <button type="button" class="press" onClick="{{ cancelBlock }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+          <button type="button" class="press" onClick="{{ confirmTrash }}" style="height: 52px; border: 0; border-radius: 12px; background: #DC2626; color: #fff; font: inherit; font-size: 15px; font-weight: 600">Pindahkan</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- purge -->
+  <sc-if value="{{ purgeOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: absolute; inset: 0; z-index: 20; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 20px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="pg-t" class="pop" style="width: 100%; padding: 20px; border-radius: 20px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="pg-t" style="font-size: 18px; font-weight: 600">Hapus permanen {{ editName }}?</strong>
+        <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Tidak bisa dipulihkan. Riwayat P2H tetap tersimpan dengan nama site. Ketik <strong class="mono" style="color: var(--foreground)">HAPUS</strong> untuk konfirmasi.</span>
+        <input value="{{ purgeText }}" onChange="{{ onPurge }}" aria-label="Ketik HAPUS" autocomplete="off" class="field mono" style="height: 48px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font-size: 16px; outline: 0">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <button type="button" class="press" onClick="{{ cancelPurge }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+          <button type="button" class="press" onClick="{{ doPurge }}" aria-disabled="{{ purgeLocked }}" style="height: 52px; border: 0; border-radius: 12px; background: {{ purgeBg }}; color: {{ purgeFg }}; font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap">Hapus permanen</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 24px; z-index: 22; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <span style="flex: 1">{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const S = (id, code, name, tz, appr, units, drivers, del) => ({ id, code, name, tz, appr, units, drivers, del: del || '' });
+    this.state = {
+      sites: [
+        S(1, 'PTA', 'Pit A', 'WITA', 'Hendra W.', 48, 58), S(2, 'PTB', 'Pit B', 'WITA', 'Wawan S.', 36, 40),
+        S(3, 'HLR', 'Hauling Road', 'WITA', 'Yusuf P.', 22, 16), S(4, 'JTY', 'Jetty Utara', 'WITA', 'Dewi K.', 9, 11),
+        S(5, 'WSP', 'Workshop Utama', 'WITA', 'Agus S.', 6, 3), S(6, 'PTC', 'Pit C (lama)', 'WITA', '—', 0, 0, '3 Okt · Rina A.')
+      ],
+      tab: 'aktif', sheet: null, editId: null, form: {}, tried: false, block: false, purge: false, purgeText: '', toast: null
+    };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const isAdmin = (this.props.peran ?? 'Admin') === 'Admin';
+    const active = s.sites.filter((x) => !x.del), trash = s.sites.filter((x) => x.del);
+    const isTrash = s.tab === 'sampah';
+    const list = isTrash ? trash : active;
+    const rows = list.map((x) => ({ ...x, sub: isTrash ? 'Dihapus ' + x.del : 'Approver ' + x.appr, aria: x.name + ', ' + x.units + ' unit, ' + x.drivers + ' driver, ' + x.tz,
+      click: () => { if (!isAdmin) { this.toast('Hanya Admin yang dapat mengubah site'); return; } this.setState({ sheet: isTrash ? 'trash' : 'edit', editId: x.id, form: { ...x }, tried: false }); } }));
+    const F = s.form || {};
+    const ed = s.sites.find((x) => x.id === s.editId);
+    const setF = (k) => (e) => this.setState({ form: { ...this.state.form, [k]: e.target.value } });
+    const dupe = !!F.code && s.sites.some((x) => x.id !== s.editId && x.code.toUpperCase() === String(F.code).toUpperCase());
+    const fields = [['name', 'Nama site', 'mis. Pit D', s.tried && !F.name ? 'Nama site wajib diisi' : ''], ['code', 'Kode (3 huruf)', 'PTD', dupe ? 'Kode ' + String(F.code).toUpperCase() + ' sudah dipakai' : (s.tried && !F.code ? 'Kode wajib diisi' : '')], ['appr', 'Approver default', 'Nama pengawas']]
+      .map(([k, label, ph, err]) => ({ label, ph, err: err || '', bad: !!err, value: F[k] || '', on: setF(k) }));
+    const tzOpts = [['WIB', 'UTC+7'], ['WITA', 'UTC+8'], ['WIT', 'UTC+9']].map(([k, off]) => { const on = F.tz === k; return { label: k, off, on, bg: on ? 'var(--card)' : 'transparent', shadow: on ? 'var(--shadow-2)' : 'none', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ form: { ...this.state.form, tz: k } }) }; });
+    const purgeOk = s.purgeText.trim().toUpperCase() === 'HAPUS';
+    const toastOn = !!s.toast;
+    const doTrash = () => { const prev = s.sites; this.setState({ sites: prev.map((x) => x.id === s.editId ? { ...x, del: 'hari ini · Anda' } : x), sheet: null, block: false }); this.toast((ed ? ed.name : 'Site') + ' dipindah ke Sampah', () => this.setState({ sites: prev })); };
+    return {
+      theme, isAdmin, notAdmin: !isAdmin && !isTrash, activeN: active.length, isTrash,
+      tabs: [['aktif', 'Aktif · ' + active.length], ['sampah', 'Sampah · ' + trash.length]].map(([k, label]) => ({ label, on: s.tab === k, bg: s.tab === k ? 'var(--card)' : 'transparent', shadow: s.tab === k ? 'var(--shadow-2)' : 'none', fg: s.tab === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ tab: k }) })),
+      rows, empty: rows.length === 0,
+      sheetOn: !!s.sheet, sheetForm: s.sheet === 'edit' || s.sheet === 'add', sheetTrashItem: s.sheet === 'trash', isEdit: s.sheet === 'edit',
+      sheetTitle: s.sheet === 'add' ? 'Tambah site' : (ed ? ed.name : ''),
+      closeSheet: () => this.setState({ sheet: null }),
+      openAdd: () => this.setState({ sheet: 'add', editId: null, form: { tz: 'WITA' }, tried: false }),
+      fields, tzOpts, editUnits: ed ? ed.units : 0, editDrivers: ed ? ed.drivers : 0, editName: ed ? ed.name : '',
+      trashInfo: ed ? 'Dihapus ' + ed.del + '. Terhapus permanen otomatis dalam 17 hari.' : '',
+      save: () => {
+        if (!F.name || !F.code || dupe) { this.setState({ tried: true }); try { navigator.vibrate && navigator.vibrate([20, 40, 20]); } catch (e) {} return; }
+        const prev = s.sites; const rec = { ...F, code: String(F.code).toUpperCase(), appr: F.appr || '—' };
+        const sites = s.sheet === 'edit' ? prev.map((x) => x.id === s.editId ? { ...x, ...rec } : x) : [{ id: Date.now(), units: 0, drivers: 0, del: '', ...rec }].concat(prev);
+        this.setState({ sites, sheet: null }); this.toast(rec.name + (s.sheet === 'edit' ? ' disimpan' : ' ditambahkan'), () => this.setState({ sites: prev }));
+      },
+      askTrash: () => this.setState({ block: true }), blockOn: s.block, cancelBlock: () => this.setState({ block: false }), confirmTrash: doTrash,
+      blockTitle: 'Pindahkan ' + (ed ? ed.name : '') + ' ke Sampah?',
+      blockText: ed && ed.units ? ed.units + ' unit dan ' + ed.drivers + ' driver masih terhubung ke site ini. Mereka akan ditandai "tanpa site" sampai dipindah ke site lain. Jadwal P2H unit tersebut dijeda.' : 'Site tanpa unit atau driver. Bisa dipulihkan dalam 30 hari.',
+      restoreOne: () => { const prev = s.sites; this.setState({ sites: prev.map((x) => x.id === s.editId ? { ...x, del: '' } : x), sheet: null }); this.toast((ed ? ed.name : 'Site') + ' dipulihkan', () => this.setState({ sites: prev })); },
+      askPurge: () => this.setState({ purge: true, purgeText: '' }), purgeOn: s.purge, purgeText: s.purgeText, onPurge: (e) => this.setState({ purgeText: e.target.value }),
+      purgeLocked: !purgeOk, purgeBg: purgeOk ? '#DC2626' : 'var(--muted)', purgeFg: purgeOk ? '#FFFFFF' : 'var(--muted-foreground)', cancelPurge: () => this.setState({ purge: false }),
+      doPurge: () => { if (!purgeOk) return; this.setState({ sites: s.sites.filter((x) => x.id !== s.editId), purge: false, sheet: null }); this.toast((ed ? ed.name : 'Site') + ' dihapus permanen · tercatat di Audit Log'); },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

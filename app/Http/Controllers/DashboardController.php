@@ -7,6 +7,7 @@ use App\Models\P2hSession;
 use App\Models\Unit;
 use App\Models\UnitDowntimeLog;
 use App\Support\FleetAvailability;
+use App\Support\TodayP2hStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,59 +36,12 @@ class DashboardController extends Controller
                 ->whereHas('session', fn ($session) => $session->whereDate('tanggal', $today)))
             ->count();
 
-        // Chart: jumlah P2H per hari, 7 hari terakhir
-        $chartData = collect(range(6, 0))->map(function ($daysAgo) {
-            $date = now()->subDays($daysAgo)->toDateString();
+        // Status P2H hari ini per unit + ketersediaan armada (Dashboard-Desktop.png)
+        $units = Unit::active()->with('users:id,name')->orderBy('no_unit')->get();
 
-            return [
-                'tanggal' => $date,
-                'label' => now()->subDays($daysAgo)->format('d/m'),
-                'total' => P2hSession::whereDate('tanggal', $date)
-                    ->whereHas('userEntries', fn ($query) => $query->operational())
-                    ->count(),
-            ];
-        });
-
-        // 10 P2H terbaru
-        $recentP2h = P2hSession::with([
-            'unit',
-            'userEntries' => fn ($query) => $query->operational(),
-            'userEntries.answers',
-            'userEntries.user',
-        ])
-            ->whereHas('userEntries', fn ($query) => $query->operational())
-            ->latest()
-            ->take(10)
-            ->get()
-            ->map(function ($session) {
-                $firstEntry = $session->userEntries->first();
-
-                return [
-                    'id' => $session->id,
-                    'no_unit' => $session->unit->no_unit,
-                    'tanggal' => $session->tanggal->format('d/m/Y'),
-                    'driver' => $firstEntry?->user?->name ?? 'Unknown',
-                    'total_tl' => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
-                    'status' => $session->status,
-                    'slot_terisi' => $session->userEntries->count(),
-                ];
-            });
-
-        // Trend PA per minggu, 4 minggu terakhir
-        $paWeeklyTrend = collect(range(3, 0))->map(function ($weeksAgo) {
-            $weekStart = now()->startOfWeek()->subWeeks($weeksAgo);
-            $weekEnd = $weekStart->copy()->endOfWeek();
-            $label = $weekStart->format('d/m').'–'.$weekEnd->format('d/m');
-
-            if ($weekEnd->isFuture()) {
-                $weekEnd = now()->endOfDay();
-            }
-
-            // Rumus PA yang sama dengan Monitoring PA
-            $pa = FleetAvailability::build($weekStart, $weekEnd)['summary']['fleet_actual_pa'];
-
-            return ['label' => $label, 'pa' => $pa ?? 0];
-        });
+        // PA hari ini (berjalan) vs kemarin — rumus yang sama dengan Monitoring PA
+        $paToday = FleetAvailability::build(today(), now())['summary']['fleet_actual_pa'];
+        $paYesterday = FleetAvailability::build(today()->subDay(), today()->subDay()->endOfDay())['summary']['fleet_actual_pa'];
 
         return Inertia::render('dashboard/index', [
             'fleetToday' => $this->fleetToday(),
@@ -97,9 +51,10 @@ class DashboardController extends Controller
                 'unit_tidak_layak_hari_ini' => $unitTidakLayakHariIni,
                 'critical_tidak_layak' => $criticalTidakLayakHariIni,
             ],
-            'chartData' => $chartData,
-            'paWeeklyTrend' => $paWeeklyTrend,
-            'recentP2h' => $recentP2h,
+            'today' => TodayP2hStatus::build(today(), $units),
+            'complianceTrend' => TodayP2hStatus::complianceTrend(30, $units),
+            'pa' => ['today' => $paToday, 'yesterday' => $paYesterday],
+            'updatedAt' => now()->format('H:i'),
         ]);
     }
 

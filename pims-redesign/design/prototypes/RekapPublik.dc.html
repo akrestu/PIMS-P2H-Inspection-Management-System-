@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Rekap P2H — Pit A</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="light" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 16px; display: flex; flex-direction: column">
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 20px 16px 32px; display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; align-items: center; gap: 10px">
+      <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="PIMS" style="width: 28px; height: 28px">
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><strong style="font-size: 17px; font-weight: 600">Rekap P2H</strong><span style="font-size: 12px; color: var(--muted-foreground)">Tautan publik · hanya baca</span></span>
+    </header>
+
+    <sc-if value="{{ inactive }}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; overflow: hidden; padding: 32px 20px; border-radius: 20px; background: var(--muted-2); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px">
+        <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -240px; top: -130px; width: 600px; opacity: .35; pointer-events: none">
+        <span style="position: relative; width: 44px; height: 44px; border-radius: 12px; background: var(--card); box-shadow: var(--shadow-2); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7"/><path d="M15 7h2a5 5 0 0 1 4 8"/><path d="M8 12h4"/><path d="m2 2 20 20"/></svg></span>
+        <strong style="position: relative; font-size: 20px; font-weight: 600">Tautan sudah tidak aktif</strong>
+        <span style="position: relative; font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Admin site telah menonaktifkan atau membuat ulang tautan ini. Minta tautan terbaru di grup WhatsApp tim.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ active }}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted-foreground)">Tanggal
+          <input type="date" value="{{ date }}" onChange="{{ onDate }}" max="2026-10-16" style="height: 48px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted-foreground)">Site
+          <select value="{{ site }}" onChange="{{ onSite }}" style="height: 48px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px">
+            <option value="Pit A">Pit A</option><option value="Pit B">Pit B</option><option value="Hauling Road">Hauling Road</option>
+          </select>
+        </label>
+      </div>
+
+      <section aria-label="Ringkasan" style="display: flex; flex-direction: column; gap: 10px">
+        <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ site }} · {{ dateLabel }} · Shift 1</span>
+        <div style="display: flex; align-items: baseline; gap: 6px"><span class="tnum" style="font-size: 44px; line-height: 44px; font-weight: 600; letter-spacing: -0.04em">{{ inN }}</span><span class="tnum" style="font-size: 20px; color: var(--muted-foreground)">/ {{ tot }} P2H masuk</span></div>
+        <div style="display: flex; gap: 2px; height: 8px" aria-hidden="true"><span style="flex: {{ ok }}; background: var(--success); border-radius: 4px 0 0 4px"></span><span style="flex: {{ bad }}; background: var(--danger)"></span><span style="flex: {{ belum }}; background: var(--muted); border-radius: 0 4px 4px 0; box-shadow: inset 0 0 0 1px var(--input)"></span></div>
+        <div class="tnum" style="display: flex; gap: 14px; font-size: 13px; color: var(--muted-foreground)"><span>{{ ok }} Layak</span><span style="color: var(--danger); font-weight: 600">{{ bad }} Tidak Layak</span><span>{{ belum }} Belum</span></div>
+      </section>
+
+      <section aria-labelledby="u-h" style="display: flex; flex-direction: column">
+        <h2 id="u-h" style="margin: 0 0 6px; font-size: 16px; font-weight: 600">Per unit</h2>
+        <sc-for list="{{ units }}" as="u" hint-placeholder-count="10">
+          <div style="display: grid; grid-template-columns: 78px 1fr auto; align-items: center; gap: 8px; min-height: 48px; border-bottom: 1px solid var(--border); font-size: 14px">
+            <strong class="tnum" style="font-weight: 600">{{ u.code }}</strong>
+            <span style="color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ u.time }}</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border-radius: 999px; background: {{ u.bg }}; color: {{ u.fg }}; font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ u.st }}</span>
+          </div>
+        </sc-for>
+      </section>
+      <span class="tnum" style="font-size: 12px; line-height: 17px; color: var(--muted-foreground)">Diperbarui 06:14 WIB. Filter di halaman ini hanya berlaku untuk tautan ini, tidak mengikuti filter aplikasi PIMS. Data bersifat ringkas; detail sesi hanya untuk pengguna yang login.</span>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tautan":{"editor":"enum","options":["Aktif","Dinonaktifkan"],"default":"Aktif"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { date: '2026-10-16', site: 'Pit A' }; }
+  renderVals() {
+    const s = this.state;
+    const today = s.date === '2026-10-16';
+    const MON = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const d = new Date(s.date + 'T00:00:00');
+    const raw = [['DT-1050', 'bad', '05:55'], ['EX-2003', 'bad', '05:57'], ['LV-034', 'none', ''], ['DT-1031', 'none', ''], ['WT-007', 'none', ''], ['DT-1045', 'ok', '05:48'], ['DT-1022', 'ok', '06:01'], ['EX-2001', 'ok', '05:40'], ['DZ-015', 'ok', '05:35'], ['LV-031', 'ok', '05:52']];
+    const units = raw.map(([code, p, t]) => {
+      const q = today ? p : 'ok';
+      return { code, time: q === 'none' ? 'Belum P2H' : 'P2H ' + (t || '05:5' + (code.length % 10)), st: q === 'ok' ? 'Layak' : (q === 'bad' ? 'Tidak Layak' : 'Belum'), bg: q === 'ok' ? 'var(--success-soft)' : (q === 'bad' ? 'var(--danger-soft)' : 'var(--warning-soft)'), fg: q === 'ok' ? 'var(--success)' : (q === 'bad' ? 'var(--danger)' : 'var(--warning)') };
+    });
+    const tot = s.site === 'Pit A' ? 48 : (s.site === 'Pit B' ? 36 : 22);
+    const inN = today ? Math.round(tot * 0.875) : tot - 2;
+    const bad = today ? 2 : 1;
+    return {
+      inactive: (this.props.tautan ?? 'Aktif') !== 'Aktif', active: (this.props.tautan ?? 'Aktif') === 'Aktif',
+      date: s.date, site: s.site, dateLabel: d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(),
+      onDate: (e) => this.setState({ date: e.target.value || '2026-10-16' }), onSite: (e) => this.setState({ site: e.target.value }),
+      tot, inN, ok: inN - bad, bad, belum: tot - inN, units
+    };
+  }
+}
+</script>
+</body>
+</html>

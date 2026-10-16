@@ -1,7 +1,8 @@
-import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, Fuel, Gauge, Wrench } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { AlertTriangle, ChartColumn, Fuel, Wrench } from 'lucide-react';
 import { useState } from 'react';
-import { PageTabs } from '@/components/page-tabs';
+import { PageHeader } from '@/components/pims/page-header';
+import { KritisTag } from '@/components/pims/status-pill';
 import { SortableHead, useClientSort } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,7 @@ interface Filters {
 }
 
 interface Props {
+    damage: Damage;
     fuel: {
         units: FuelUnit[];
         total_liter: number;
@@ -84,18 +86,15 @@ const SERVICE_STATUS: Record<
 > = {
     overdue: {
         label: 'Terlambat',
-        className:
-            'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+        className: 'bg-danger-soft text-danger border-danger/40   ',
     },
     due_soon: {
         label: 'Segera',
-        className:
-            'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+        className: 'bg-warning-soft text-warning border-warning/40   ',
     },
     ok: {
         label: 'Aman',
-        className:
-            'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+        className: 'bg-success-soft text-success border-success/40   ',
     },
     unknown: {
         label: 'Belum ada data',
@@ -108,9 +107,217 @@ const num = (v: number | null | undefined, digits = 0) =>
         ? '—'
         : v.toLocaleString('id-ID', { maximumFractionDigits: digits });
 
+// ── Kerusakan (Analitik-Desktop.png) ──────────────────────────────────────────
+
+type Damage = {
+    range: { start: string; end: string; label: string };
+    total_p2h: number;
+    items: { item: string; jumlah: number; kritis: boolean }[];
+    weekly: { label: string; kritis: number; non_kritis: number; berjalan: boolean }[];
+    units: {
+        unit_id: number;
+        no_unit: string;
+        kerusakan: number;
+        downtime: number | null;
+        mttr: number | null;
+        item_utama: string[];
+        tren: number[];
+    }[];
+};
+
+function Sparkline({ values }: { values: number[] }) {
+    const w = 72;
+    const h = 24;
+    const max = Math.max(1, ...values);
+    const pts = values.map((v, i) => [
+        (i / Math.max(1, values.length - 1)) * (w - 4) + 2,
+        h - 3 - (v / max) * (h - 6),
+    ]);
+    const last = pts.at(-1)!;
+
+    return (
+        <svg width={w} height={h} aria-hidden className="text-chart-2">
+            <polyline
+                points={pts.map((p) => p.join(',')).join(' ')}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinejoin="round"
+            />
+            <circle cx={last[0]} cy={last[1]} r="2.5" fill="currentColor" />
+        </svg>
+    );
+}
+
+function DamagePanel({ damage }: { damage: Damage }) {
+    const [itemFilter, setItemFilter] = useState<string | null>(null);
+    const itemMax = Math.max(1, ...damage.items.map((i) => i.jumlah));
+    const weekMax = Math.max(1, ...damage.weekly.map((w) => w.kritis + w.non_kritis));
+    const units = itemFilter
+        ? damage.units.filter((u) => u.item_utama.includes(itemFilter))
+        : damage.units;
+
+    return (
+        <div className="space-y-6">
+            <div className="grid gap-5 lg:grid-cols-2">
+                <section className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5">
+                    <div className="flex items-baseline justify-between">
+                        <h2 className="text-[15px] font-semibold">Item paling sering rusak</h2>
+                        <span className="text-xs text-muted-foreground">jumlah temuan</span>
+                    </div>
+                    {damage.items.length === 0 ? (
+                        <p className="mt-4 text-sm text-muted-foreground">Belum ada item rusak.</p>
+                    ) : (
+                        <ul className="mt-3 space-y-1">
+                            {damage.items.map((i) => (
+                                <li key={i.item}>
+                                    <button
+                                        type="button"
+                                        aria-pressed={itemFilter === i.item}
+                                        onClick={() => setItemFilter((v) => (v === i.item ? null : i.item))}
+                                        className={cn(
+                                            'grid w-full grid-cols-[minmax(0,236px)_1fr_32px] items-center gap-3 rounded-[8px] px-1.5 py-1.5 text-left text-sm hover:bg-muted/60',
+                                            itemFilter === i.item && 'bg-muted',
+                                        )}
+                                    >
+                                        <span className="flex min-w-0 items-center gap-2">
+                                            <span className="truncate">{i.item}</span>
+                                            {i.kritis && <KritisTag />}
+                                        </span>
+                                        <span className="h-3.5">
+                                            <span
+                                                className="block h-full rounded-r-[4px] bg-chart-1"
+                                                style={{ width: `${(i.jumlah / itemMax) * 100}%` }}
+                                            />
+                                        </span>
+                                        <span className="text-right font-semibold tnum">{i.jumlah}</span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    <p className="mt-3 text-xs text-muted-foreground">
+                        Klik item untuk memfilter tabel unit di bawah.
+                    </p>
+                </section>
+
+                <section className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5">
+                    <div className="flex items-baseline justify-between">
+                        <h2 className="text-[15px] font-semibold">Tren kerusakan mingguan</h2>
+                        <span className="flex gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                                <span className="size-2 rounded-[2px] bg-danger" /> Kritis
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="size-2 rounded-[2px] bg-chart-1" /> Non-kritis
+                            </span>
+                        </span>
+                    </div>
+                    <div
+                        className="mt-4 flex h-[200px] items-end gap-6 border-b-(length:--bw) px-4"
+                        role="img"
+                        aria-label={damage.weekly
+                            .map((w) => `${w.label}: ${w.kritis} kritis, ${w.non_kritis} non-kritis`)
+                            .join('; ')}
+                    >
+                        {damage.weekly.map((w) => {
+                            const total = w.kritis + w.non_kritis;
+
+                            return (
+                                <div key={w.label} className="flex h-full flex-1 flex-col items-center justify-end">
+                                    <span className="mb-1 text-xs font-semibold tnum">{total}</span>
+                                    <div
+                                        className={cn('flex w-full max-w-11 flex-col gap-[2px]', w.berjalan && 'opacity-70')}
+                                        style={{ height: `${(total / weekMax) * 85}%` }}
+                                    >
+                                        <span className="w-full rounded-t-[3px] bg-chart-1" style={{ flexGrow: w.non_kritis }} />
+                                        <span className="w-full bg-danger" style={{ flexGrow: w.kritis }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-2 flex gap-6 px-4">
+                        {damage.weekly.map((w) => (
+                            <span key={w.label} className="flex-1 text-center text-xs text-muted-foreground">
+                                {w.label}
+                            </span>
+                        ))}
+                    </div>
+                    {damage.weekly.at(-1)?.berjalan && (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                            {damage.weekly.at(-1)?.label} masih berjalan.
+                        </p>
+                    )}
+                </section>
+            </div>
+
+            <section>
+                <div className="flex items-center gap-3">
+                    <h2 className="text-lg font-semibold tracking-[-0.01em]">Unit dengan kerusakan terbanyak</h2>
+                    {itemFilter && (
+                        <button
+                            type="button"
+                            onClick={() => setItemFilter(null)}
+                            className="inline-flex h-[30px] items-center gap-1.5 rounded-full bg-primary px-3 text-xs font-medium text-primary-foreground"
+                        >
+                            Item: {itemFilter}
+                            <span aria-label="Hapus filter">×</span>
+                        </button>
+                    )}
+                </div>
+                <div className="mt-3 overflow-x-auto rounded-[14px] border-(length:--bw)">
+                    <table className="w-full min-w-[860px] text-sm">
+                        <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                            <tr className="h-11">
+                                <th className="px-4 font-semibold">Unit</th>
+                                <th className="px-4 text-right font-semibold">Kerusakan</th>
+                                <th className="px-4 text-right font-semibold">Downtime BD</th>
+                                <th className="px-4 text-right font-semibold">MTTR</th>
+                                <th className="px-4 font-semibold">Item utama</th>
+                                <th className="px-4 font-semibold">Tren 4 minggu</th>
+                                <th className="px-4">
+                                    <span className="sr-only">Aksi</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {units.length === 0 && (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                                        Tidak ada unit.
+                                    </td>
+                                </tr>
+                            )}
+                            {units.map((u) => (
+                                <tr key={u.unit_id} className="h-[52px] border-t-(length:--bw)">
+                                    <td className="px-4 font-semibold tnum">{u.no_unit}</td>
+                                    <td className="px-4 text-right font-semibold tnum">{u.kerusakan}</td>
+                                    <td className="px-4 text-right tnum">{u.downtime === null ? '—' : `${num(u.downtime, 1)} j`}</td>
+                                    <td className="px-4 text-right text-muted-foreground tnum">{u.mttr === null ? '—' : `${num(u.mttr, 1)} j`}</td>
+                                    <td className="max-w-[280px] truncate px-4 text-muted-foreground">{u.item_utama.join(' · ')}</td>
+                                    <td className="px-4">
+                                        <Sparkline values={u.tren} />
+                                    </td>
+                                    <td className="px-4 text-right">
+                                        <Button asChild size="sm" variant="outline">
+                                            <Link href={`/p2h?no_unit=${encodeURIComponent(u.no_unit)}`}>Riwayat</Link>
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function UnitAnalytics({
+    damage,
     fuel,
     service,
     filters,
@@ -161,27 +368,20 @@ export default function UnitAnalytics({
 
     return (
         <>
-            <Head title="Analitik Unit" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
-                <PageTabs group="unitPerformance" />
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <Gauge className="h-6 w-6 text-primary" />
-                            Analitik Unit
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Konsumsi BBM dan prediksi servis berkala dari data
-                            KM/HM & fuel log P2H
-                        </p>
-                    </div>
+            <Head title="Analitik unit" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
+                <PageHeader
+                    title="Analitik unit"
+                    description={`5 minggu terakhir (${damage.range.label}) · dari ${num(damage.total_p2h)} P2H`}
+                />
+                <div className="-mt-1 flex flex-col gap-3">
                     <div className="flex flex-wrap items-end gap-3">
                         <div className="space-y-1.5">
                             <Label htmlFor="start">Dari</Label>
                             <Input
                                 id="start"
                                 type="date"
-                                className="h-9 w-38"
+                                className="w-38"
                                 value={range.start}
                                 onChange={(e) =>
                                     setRange((r) => ({
@@ -196,7 +396,7 @@ export default function UnitAnalytics({
                             <Input
                                 id="end"
                                 type="date"
-                                className="h-9 w-38"
+                                className="w-38"
                                 value={range.end}
                                 onChange={(e) =>
                                     setRange((r) => ({
@@ -223,7 +423,7 @@ export default function UnitAnalytics({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger className="w-40">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -252,7 +452,7 @@ export default function UnitAnalytics({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-9 w-40">
+                                <SelectTrigger className="w-40">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -273,20 +473,27 @@ export default function UnitAnalytics({
                     </div>
                 </div>
 
-                <Tabs defaultValue="fuel">
+                <Tabs defaultValue="damage">
                     <TabsList>
+                        <TabsTrigger value="damage" className="gap-1.5">
+                            <ChartColumn className="h-4 w-4" /> Kerusakan
+                        </TabsTrigger>
                         <TabsTrigger value="fuel" className="gap-1.5">
                             <Fuel className="h-4 w-4" /> Konsumsi BBM
                         </TabsTrigger>
                         <TabsTrigger value="service" className="gap-1.5">
                             <Wrench className="h-4 w-4" /> Servis Berkala
                             {dueCount > 0 && (
-                                <Badge className="ml-1 h-5 bg-red-600 px-1.5 hover:bg-red-600">
+                                <Badge className="ml-1 h-5 bg-danger px-1.5 hover:bg-danger">
                                     {dueCount}
                                 </Badge>
                             )}
                         </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="damage">
+                        <DamagePanel damage={damage} />
+                    </TabsContent>
 
                     {/* ── Fuel ── */}
                     <TabsContent value="fuel">
@@ -330,7 +537,7 @@ export default function UnitAnalytics({
                                                     className={cn(
                                                         'text-right font-semibold tabular-nums',
                                                         u.boros &&
-                                                            'text-red-600',
+                                                            'text-danger',
                                                     )}
                                                 >
                                                     {num(u.km_per_liter, 2)}
@@ -368,7 +575,7 @@ export default function UnitAnalytics({
                                             {u.boros && (
                                                 <Badge
                                                     variant="outline"
-                                                    className="border-red-300 text-red-700"
+                                                    className="border-danger/40 text-danger"
                                                 >
                                                     Boros (rata-rata{' '}
                                                     {num(u.rata_rata_jenis, 2)})
@@ -377,7 +584,7 @@ export default function UnitAnalytics({
                                             {u.anomali.map((a, i) => (
                                                 <p
                                                     key={i}
-                                                    className="text-xs text-amber-700 dark:text-amber-400"
+                                                    className="text-xs text-warning"
                                                 >
                                                     <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
                                                     {a.tanggal}: isi{' '}
@@ -487,7 +694,7 @@ export default function UnitAnalytics({
                                                         className={cn(
                                                             'px-4 py-3 text-right font-medium tabular-nums',
                                                             u.boros &&
-                                                                'text-red-600',
+                                                                'text-danger',
                                                         )}
                                                     >
                                                         {num(u.km_per_liter, 2)}
@@ -496,7 +703,7 @@ export default function UnitAnalytics({
                                                         {u.boros && (
                                                             <Badge
                                                                 variant="outline"
-                                                                className="border-red-300 text-red-700"
+                                                                className="border-danger/40 text-danger"
                                                             >
                                                                 Boros (rata-rata{' '}
                                                                 {num(
@@ -510,7 +717,7 @@ export default function UnitAnalytics({
                                                             (a, i) => (
                                                                 <p
                                                                     key={i}
-                                                                    className="mt-1 text-amber-700 dark:text-amber-400"
+                                                                    className="mt-1 text-warning"
                                                                 >
                                                                     <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
                                                                     {a.tanggal}:
@@ -622,7 +829,7 @@ export default function UnitAnalytics({
                                                             'tabular-nums',
                                                             s.status ===
                                                                 'overdue' &&
-                                                                'font-medium text-red-600',
+                                                                'font-medium text-danger',
                                                         )}
                                                     >
                                                         {s.sisa_km !== null
@@ -736,7 +943,7 @@ export default function UnitAnalytics({
                                                             'px-4 py-3 text-right tabular-nums',
                                                             s.status ===
                                                                 'overdue' &&
-                                                                'font-medium text-red-600',
+                                                                'font-medium text-danger',
                                                         )}
                                                     >
                                                         {s.sisa_km !== null
@@ -783,5 +990,5 @@ export default function UnitAnalytics({
 }
 
 UnitAnalytics.layout = {
-    breadcrumbs: [{ title: 'Analitik Unit', href: '/unit-analytics' }],
+    breadcrumbs: [{ title: 'Analitik unit', href: '/unit-analytics' }],
 };

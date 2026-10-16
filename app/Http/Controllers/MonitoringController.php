@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
-use App\Support\FleetAvailability;
+use App\Support\PaWeekly;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,10 +14,8 @@ class MonitoringController extends Controller
     public function index(Request $request): Response
     {
         $request->validate([
-            'date_from' => 'nullable|date_format:Y-m-d',
-            'date_to' => 'nullable|date_format:Y-m-d',
-            'unit_id' => 'nullable|integer|exists:units,id',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
+            'sampai' => 'nullable|date_format:Y-m-d|before_or_equal:today',
         ]);
 
         $authUser = $request->user();
@@ -25,23 +23,7 @@ class MonitoringController extends Controller
         // Driver User LV 1 tidak diizinkan
         abort_unless($authUser->canViewMonitoring(), 403);
 
-        $from = Carbon::parse($request->input('date_from', now()->startOfMonth()->toDateString()));
-        $to = Carbon::parse($request->input('date_to', now()->toDateString()));
-        if ($from->gt($to)) {
-            [$from, $to] = [$to, $from];
-        }
-        // Clamp max range ke 90 hari
-        if ($from->diffInDays($to) > 90) {
-            $from = $to->copy()->subDays(89);
-        }
-
-        $unitId = $request->input('unit_id');
         $jenis = $request->input('jenis_unit');
-
-        $result = FleetAvailability::build($from, $to, [
-            'unit_id' => $unitId,
-            'jenis_unit' => $jenis,
-        ], $authUser);
 
         $allUnits = Unit::active()
             ->orderBy('no_unit')
@@ -49,13 +31,16 @@ class MonitoringController extends Controller
             ->when($authUser->isStaffOnly(), fn ($q) => $q->monitorableBy($authUser))
             ->get(['id', 'no_unit', 'jenis_unit']);
 
+        // Tampilan mingguan (PA-Desktop.png): 7 hari berakhir di ?sampai= (default hari ini)
+        $weekly = PaWeekly::build(
+            Carbon::parse($request->input('sampai', today()->toDateString())),
+            ['jenis_unit' => $jenis],
+            $authUser,
+        );
+
         return Inertia::render('monitoring/index', [
-            'unitData' => $result['units'],
-            'summary' => $result['summary'],
+            'weekly' => $weekly,
             'filters' => [
-                'date_from' => $from->toDateString(),
-                'date_to' => $to->toDateString(),
-                'unit_id' => $unitId,
                 'jenis_unit' => $jenis,
             ],
             'allUnits' => $allUnits,

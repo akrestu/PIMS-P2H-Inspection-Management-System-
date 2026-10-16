@@ -5,6 +5,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\DriverDashboardController;
+use App\Http\Controllers\LiveMonitoringController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\P2hApprovalController;
@@ -75,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/p2h', [P2hSessionController::class, 'index'])->name('p2h.index');
         Route::get('/p2h/form', [P2hSessionController::class, 'create'])->name('p2h.create');
         Route::post('/p2h', [P2hSessionController::class, 'store'])->name('p2h.store');
+        Route::get('/p2h/terkirim/{entry}', [P2hSessionController::class, 'submitted'])->name('p2h.submitted');
 
         // AJAX — cek slot unit hari ini
         Route::get('/api/p2h/check-slot', [P2hSessionController::class, 'checkSlot'])->name('p2h.check-slot');
@@ -136,6 +138,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/monitoring', [MonitoringController::class, 'index'])
         ->middleware(['role:admin|manager|driver'])
         ->name('monitoring.index');
+
+    // Monitoring P2H hari ini (live) — data unit dibatasi di controller
+    Route::get('/monitoring-p2h', [LiveMonitoringController::class, 'index'])
+        ->middleware(['role:admin|manager|driver'])
+        ->name('monitoring-p2h.index');
+    Route::post('/monitoring-p2h/ingatkan', [LiveMonitoringController::class, 'remind'])
+        ->middleware(['role:admin|manager|driver', 'throttle:20,1'])
+        ->name('monitoring-p2h.remind');
 
     // Monitoring P2H — admin, manager, dan driver dengan jabatan Approval/User LV 2
     Route::get('/p2h-compliance', [P2hComplianceController::class, 'index'])
@@ -206,3 +216,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+// Halaman cek visual komponen design system (hanya environment local)
+if (app()->isLocal()) {
+    Route::inertia('/_dev/komponen', 'dev/komponen')->name('dev.components');
+}

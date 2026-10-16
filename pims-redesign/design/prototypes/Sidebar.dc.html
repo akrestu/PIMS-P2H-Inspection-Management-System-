@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Sidebar desktop</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<aside class="pims" data-theme="{{ theme }}" aria-label="Navigasi utama" style="width: 264px; height: 100vh; overflow-y: auto; box-sizing: border-box; background: var(--sidebar); color: var(--foreground); border-right: 1px solid var(--sidebar-border); padding: 20px 12px 16px; display: flex; flex-direction: column; gap: 2px; font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 14px">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 14px">
+    <img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 30px; height: 30px">
+    <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">PIMS</span>
+  </div>
+  <button type="button" class="press" onClick="{{ cycleSite }}" aria-label="Ganti site, sekarang {{ site }}" style="margin: 0 0 10px; height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--sidebar-border); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; text-align: left">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+    <span style="flex: 1">{{ site }}</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+  </button>
+  <nav style="display: flex; flex-direction: column; gap: 2px">
+    <sc-for list="{{ nav }}" as="n" hint-placeholder-count="18">
+      <sc-if value="{{ n.group }}" hint-placeholder-val="{{ false }}"><span style="padding: 14px 10px 6px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground)">{{ n.group }}</span></sc-if>
+      <sc-if value="{{ n.item }}" hint-placeholder-val="{{ true }}">
+        <a href="{{ n.href }}" aria-current="{{ n.cur }}" class="press" style="position: relative; height: 38px; padding: 0 10px; border-radius: 10px; background: {{ n.bg }}; color: {{ n.fg }}; font-size: 14px; font-weight: {{ n.w }}; display: flex; align-items: center; gap: 8px; text-decoration: none">
+          <span aria-hidden="true" style="position: absolute; left: -12px; top: 9px; width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: var(--brand); opacity: {{ n.ind }}"></span>
+          <span style="flex: 1">{{ n.label }}</span>
+          <sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}"><span class="tnum" style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: {{ n.cBg }}; color: {{ n.cFg }}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{ n.count }}</span></sc-if>
+        </a>
+      </sc-if>
+    </sc-for>
+  </nav>
+  <span style="flex: 1; min-height: 16px"></span>
+  <a href="Akun-Desktop.dc.html" aria-current="{{ akunCur }}" class="press" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; text-decoration: none; color: var(--foreground); background: {{ akunBg }}">
+    <span style="width: 34px; height: 34px; border-radius: 999px; background: var(--muted); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{ initials }}</span>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px"><strong style="font-size: 14px; font-weight: 600">{{ user }}</strong><span style="font-size: 12px; color: var(--muted-foreground)">{{ peran }}</span></span>
+  </a>
+</aside>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["Dashboard","Monitoring P2H","Kepatuhan","Riwayat P2H","Persetujuan","Temuan","Laporan periode","Analitik unit","Monitoring PA","Downtime","Unit","Site","Pengguna & driver","Audit log","Pengaturan","Ringkasan harian","Notifikasi","Akun"],"default":"Dashboard"},"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":264,"height":980}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { site: 0 }; }
+  renderVals() {
+    const active = this.props.active ?? 'Dashboard';
+    const peran = this.props.peran ?? 'Admin';
+    const isAdmin = peran === 'Admin';
+    const sites = ['Pit A', 'Pit B', 'Hauling Road', 'Semua site'];
+    const defs = [
+      ['Dashboard', 'Dashboard-Desktop.dc.html'], ['Monitoring P2H', 'Monitoring-Desktop.dc.html'], ['Kepatuhan', 'Kepatuhan-Desktop.dc.html'], ['Riwayat P2H', 'RiwayatP2H-Desktop.dc.html'],
+      ['Persetujuan', 'Persetujuan-Desktop.dc.html', 5, true], ['Temuan', 'Temuan-Desktop.dc.html', 12], ['Notifikasi', 'Notifikasi-Desktop.dc.html', 5],
+      '#Laporan', ['Ringkasan harian', 'RingkasanHarian-Desktop.dc.html'], ['Laporan periode', 'LaporanPeriode-Desktop.dc.html'], ['Analitik unit', 'Analitik-Desktop.dc.html'], ['Monitoring PA', 'PA-Desktop.dc.html'], ['Downtime', 'Downtime-Desktop.dc.html'],
+      '#Data master', ['Unit', 'MasterUnit-Desktop.dc.html'], ['Site', 'MasterSite.dc.html'], ['Pengguna & driver', 'Pengguna-Desktop.dc.html']
+    ];
+    if (isAdmin) defs.push('#Admin', ['Audit log', 'AuditLog-Desktop.dc.html'], ['Pengaturan', 'Pengaturan-Desktop.dc.html']);
+    const nav = defs.map((n) => {
+      if (typeof n === 'string') return { group: n.slice(1), item: false };
+      const on = n[0] === active;
+      return { group: '', item: true, label: n[0], href: n[1], count: n[2] || 0, cBg: n[3] ? 'var(--danger)' : 'var(--muted)', cFg: n[3] ? '#fff' : 'var(--muted-foreground)',
+        cur: on ? 'page' : 'false', bg: on ? 'var(--sidebar-accent)' : 'transparent', fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', w: on ? 600 : 500, ind: on ? 1 : 0 };
+    });
+    return {
+      theme: this.props.theme ?? 'light', nav, peran, site: sites[this.state.site],
+      cycleSite: () => this.setState({ site: (this.state.site + 1) % sites.length }),
+      akunCur: active === 'Akun' ? 'page' : 'false', akunBg: active === 'Akun' ? 'var(--sidebar-accent)' : 'transparent',
+      user: isAdmin ? 'Rina Anggraini' : 'Hendra Wijaya', initials: isAdmin ? 'RA' : 'HW'
+    };
+  }
+}
+</script>
+</body>
+</html>

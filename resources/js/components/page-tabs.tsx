@@ -25,7 +25,7 @@ export const PAGE_TAB_GROUPS = {
             managerOnly: true,
             feature: 'unit_analytics',
         },
-        { title: 'Downtime Log', href: '/downtime', managerOnly: true },
+        { title: 'Downtime', href: '/downtime', managerOnly: true },
     ],
     p2hReport: [
         { title: 'Harian', href: '/p2h/daily-summary', managerOnly: true },

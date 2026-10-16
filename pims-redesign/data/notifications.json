@@ -1,0 +1,44 @@
+[
+  {
+    "type": "eskalasi",
+    "title": "P2H LV-031 belum disetujui 34 menit",
+    "body": "Dieskalasi ke Anda karena belum disetujui lebih dari 15 menit.",
+    "time": "06:26",
+    "unread": true
+  },
+  {
+    "type": "kritis",
+    "title": "EX-2003 · Rem parkir rusak",
+    "body": "P2H Tidak Layak oleh Dedi K. Unit otomatis BD sejak 05:57.",
+    "time": "05:57",
+    "unread": true
+  },
+  {
+    "type": "persetujuan",
+    "title": "3 P2H baru menunggu persetujuan",
+    "body": "DT-1045, DT-1003, DT-1102",
+    "time": "06:06",
+    "unread": true
+  },
+  {
+    "type": "temuan_overdue",
+    "title": "T-0231 lewat tenggat 1 hari",
+    "body": "Rembesan oli selang hidrolik · DT-1045 · PJ Yanto",
+    "time": "06:00",
+    "unread": true
+  },
+  {
+    "type": "pengingat_p2h",
+    "title": "6 unit belum P2H Shift 1",
+    "body": "Batas 06:30. Klik untuk mengingatkan driver.",
+    "time": "06:12",
+    "unread": true
+  },
+  {
+    "type": "hasil_persetujuan",
+    "title": "P2H DT-1022 disetujui",
+    "body": "oleh Hendra W. · 06:21",
+    "time": "06:21",
+    "unread": false
+  }
+]

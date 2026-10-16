@@ -1,13 +1,10 @@
 import { Head, router, useHttp } from '@inertiajs/react';
 import {
-    AlarmClock,
     ClipboardCopy,
     FileDown,
-    Repeat,
     RotateCcw,
     Send,
     Sparkles,
-    TrendingUp,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -15,12 +12,12 @@ import {
     generateAi,
     pdf,
 } from '@/actions/App/Http/Controllers/P2hPeriodReportController';
-import { PageTabs } from '@/components/page-tabs';
+import type { TrendPoint } from '@/components/pims/compliance-trend';
+import { ComplianceTrend } from '@/components/pims/compliance-trend';
+import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -31,11 +28,14 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { useWhatsAppShare } from '@/hooks/use-whatsapp-share';
+import { formatNumber, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Period =
+    | 'last_7'
+    | 'last_30'
     | 'this_week'
     | 'last_week'
     | 'this_month'
@@ -49,6 +49,7 @@ interface Report {
         label: string;
         jumlah_hari: number;
     };
+    site: string | null;
     kepatuhan: {
         unit_aktif: number;
         p2h_masuk: number;
@@ -88,8 +89,31 @@ interface Filters {
     jenis_unit: string | null;
 }
 
+interface PeriodTotals {
+    kepatuhan: number | null;
+    p2h: number;
+    wajib: number;
+    tidak_layak: number;
+    temuan: number;
+    temuan_closed: number;
+    temuan_open: number;
+    pa: number | null;
+    downtime_jam: number;
+    bd_persen: number | null;
+}
+
+/** App\Support\PeriodReportCharts::build() */
+interface Charts {
+    totals: PeriodTotals;
+    previous: PeriodTotals;
+    daily: TrendPoint[];
+    weekly: { label: string; dibuka: number; ditutup: number }[];
+    sites: { name: string; kepatuhan: number | null; p2h: number; tidak_layak: number; pa: number | null }[];
+}
+
 interface Props {
     report: Report;
+    charts: Charts;
     template: string;
     filters: Filters;
     jenisOptions: string[];
@@ -103,18 +127,12 @@ interface AiResponse {
     message?: string;
 }
 
-const PERIOD_LABEL: Record<Period, string> = {
-    this_week: 'Minggu ini',
-    last_week: 'Minggu lalu',
-    this_month: 'Bulan ini',
-    last_month: 'Bulan lalu',
-    custom: 'Pilih tanggal',
-};
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PeriodReport({
     report,
+    charts,
     template,
     filters,
     jenisOptions,
@@ -123,10 +141,6 @@ export default function PeriodReport({
 }: Props) {
     const [text, setText] = useState(template);
     const [source, setSource] = useState<'template' | 'ai'>('template');
-    const [custom, setCustom] = useState({
-        start: filters.start,
-        end: filters.end,
-    });
     const [, copy] = useClipboard();
     const { share } = useWhatsAppShare();
     const http = useHttp<Filters, AiResponse>({ ...filters });
@@ -176,344 +190,357 @@ export default function PeriodReport({
         }
     };
 
+    const setRange = (v: string) => applyFilter({ period: v as Period });
+
+    const t = charts.totals;
+    const p = charts.previous;
+    const delta = (a: number | null, b: number | null) =>
+        a === null || b === null ? null : Math.round((a - b) * 10) / 10;
+    const kepDelta = delta(t.kepatuhan, p.kepatuhan);
+    const paDelta = delta(t.pa, p.pa);
+    const tlDelta = p.p2h > 0 ? t.tidak_layak - p.tidak_layak : null;
+
+    const deltaText = (d: number | null, unit: string) =>
+        d === null ? null : `${d >= 0 ? '▲' : '▼'} ${formatNumber(Math.abs(d))}${unit}`;
+
+    const kpis = [
+        {
+            label: 'Kepatuhan rata-rata',
+            value: formatPercent(t.kepatuhan),
+            sub: deltaText(kepDelta, ' poin') ?? `target 95%`,
+            subTone: kepDelta === null ? '' : kepDelta >= 0 ? 'text-success font-semibold' : 'text-danger font-semibold',
+        },
+        {
+            label: 'P2H tercatat',
+            value: formatNumber(t.p2h, 0),
+            sub: `dari ${formatNumber(t.wajib, 0)} wajib`,
+            subTone: '',
+        },
+        {
+            label: 'Tidak Layak',
+            value: formatNumber(t.tidak_layak, 0),
+            sub: tlDelta === null ? 'sesi hasil BD' : `${tlDelta <= 0 ? '▼' : '▲'} ${Math.abs(tlDelta)} vs periode lalu`,
+            subTone: tlDelta === null ? '' : tlDelta <= 0 ? 'text-success font-semibold' : 'text-danger font-semibold',
+        },
+        {
+            label: 'Temuan dibuka',
+            value: formatNumber(t.temuan, 0),
+            sub: `${t.temuan_closed} ditutup · ${t.temuan_open} open`,
+            subTone: '',
+        },
+        {
+            label: 'PA rata-rata',
+            value: formatPercent(t.pa),
+            sub: deltaText(paDelta, ' poin') ?? 'target 90%',
+            subTone: paDelta === null ? '' : paDelta >= 0 ? 'text-success font-semibold' : 'text-danger font-semibold',
+        },
+        {
+            label: 'Downtime',
+            value: `${formatNumber(t.downtime_jam)} j`,
+            sub: t.bd_persen === null ? 'tidak ada downtime' : `BD ${formatPercent(t.bd_persen)}`,
+            subTone: '',
+        },
+    ];
+
+    const weeklyMax = Math.max(1, ...charts.weekly.flatMap((w) => [w.dibuka, w.ditutup]));
+
     return (
         <>
-            <Head title="Periodic Report P2H" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
-                <PageTabs group="p2hReport" />
-                {/* ── Header ── */}
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <TrendingUp className="h-6 w-6 text-primary" />
-                            Periodic Report P2H
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Evaluasi mingguan / bulanan: kepatuhan, tren temuan,
-                            PA, dan checklist unit · {report.periode.label}
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap items-end gap-3">
-                        <div className="space-y-1.5">
-                            <Label>Periode</Label>
-                            <Select
+            <Head title="Laporan periode" />
+            <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
+                <PageHeader
+                    title="Laporan periode"
+                    description={[
+                        report.periode.label,
+                        report.site ?? 'Semua site',
+                        filters.jenis_unit,
+                        'dibanding periode sebelumnya',
+                    ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    actions={
+                        <>
+                            <Segmented
+                                label="Rentang laporan"
                                 value={filters.period}
-                                onValueChange={(v) =>
-                                    v === 'custom'
-                                        ? applyFilter({
-                                              period: 'custom',
-                                              ...custom,
-                                          })
-                                        : applyFilter({ period: v as Period })
-                                }
-                            >
-                                <SelectTrigger className="h-9 w-40">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {(
-                                        Object.keys(PERIOD_LABEL) as Period[]
-                                    ).map((p) => (
-                                        <SelectItem key={p} value={p}>
-                                            {PERIOD_LABEL[p]}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {filters.period === 'custom' && (
-                            <div className="flex items-end gap-2">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="start">Dari</Label>
-                                    <Input
-                                        id="start"
-                                        type="date"
-                                        className="h-9 w-38"
-                                        value={custom.start}
-                                        onChange={(e) =>
-                                            setCustom((c) => ({
-                                                ...c,
-                                                start: e.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="end">Sampai</Label>
-                                    <Input
-                                        id="end"
-                                        type="date"
-                                        className="h-9 w-38"
-                                        value={custom.end}
-                                        onChange={(e) =>
-                                            setCustom((c) => ({
-                                                ...c,
-                                                end: e.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                                <Button
-                                    size="sm"
-                                    className="h-9"
-                                    onClick={() =>
-                                        applyFilter({
-                                            period: 'custom',
-                                            ...custom,
-                                        })
-                                    }
-                                >
-                                    Terapkan
-                                </Button>
-                            </div>
-                        )}
-                        <div className="space-y-1.5">
-                            <Label>Jenis unit</Label>
-                            <Select
-                                value={filters.jenis_unit ?? 'all'}
-                                onValueChange={(v) =>
-                                    applyFilter({
-                                        jenis_unit: v === 'all' ? null : v,
-                                    })
-                                }
-                            >
-                                <SelectTrigger className="h-9 w-40">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua unit
+                                onChange={setRange}
+                                options={[
+                                    { value: 'last_7', label: '7 hari' },
+                                    { value: 'last_30', label: '30 hari' },
+                                    { value: 'this_month', label: 'Bulan ini' },
+                                    { value: 'last_month', label: 'Bulan lalu' },
+                                ]}
+                            />
+                            <Button asChild>
+                                <a href={pdf.url({ query })}>
+                                    <FileDown />
+                                    Unduh PDF
+                                </a>
+                            </Button>
+                        </>
+                    }
+                />
+
+                <div className="-mt-2 flex flex-wrap gap-2">
+                    <Select
+                        value={filters.jenis_unit ?? 'all'}
+                        onValueChange={(v) => applyFilter({ jenis_unit: v === 'all' ? null : v })}
+                    >
+                        <SelectTrigger aria-label="Jenis unit" className="h-10 w-36">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua unit</SelectItem>
+                            {jenisOptions.map((j) => (
+                                <SelectItem key={j} value={j}>
+                                    {j}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {sites.length > 1 && (
+                        <Select
+                            value={filters.site_id ? String(filters.site_id) : 'all'}
+                            onValueChange={(v) => applyFilter({ site_id: v === 'all' ? null : Number(v) })}
+                        >
+                            <SelectTrigger aria-label="Site" className="h-10 w-36">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua site</SelectItem>
+                                {sites.map((site) => (
+                                    <SelectItem key={site.id} value={String(site.id)}>
+                                        {site.name}
                                     </SelectItem>
-                                    {jenisOptions.map((j) => (
-                                        <SelectItem key={j} value={j}>
-                                            {j}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Site</Label>
-                            <Select
-                                value={
-                                    filters.site_id
-                                        ? String(filters.site_id)
-                                        : 'all'
-                                }
-                                onValueChange={(v) =>
-                                    applyFilter({
-                                        site_id: v === 'all' ? null : Number(v),
-                                    })
-                                }
-                            >
-                                <SelectTrigger className="h-9 w-40">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua site
-                                    </SelectItem>
-                                    {sites.map((s) => (
-                                        <SelectItem
-                                            key={s.id}
-                                            value={String(s.id)}
-                                        >
-                                            {s.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
-                <div className="grid gap-5 lg:grid-cols-5">
-                    {/* ── WhatsApp text ── */}
-                    <Card className="lg:col-span-3">
-                        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                Teks WhatsApp
-                                <Badge variant="outline">
-                                    {source === 'ai' ? 'AI' : 'Template'}
-                                </Badge>
-                            </CardTitle>
+                <section
+                    aria-label="Ringkasan periode"
+                    className="grid grid-cols-2 gap-x-6 gap-y-5 border-b-(length:--bw) pb-6 md:grid-cols-3 xl:grid-cols-6"
+                >
+                    {kpis.map((k) => (
+                        <div key={k.label} className="min-w-0">
+                            <p className="text-[13px] text-muted-foreground">{k.label}</p>
+                            <p className="mt-1 text-[32px] leading-none font-semibold tracking-[-0.03em] tnum">
+                                {k.value}
+                            </p>
+                            <p className={cn('mt-2 truncate text-[13px] text-muted-foreground', k.subTone)}>
+                                {k.sub}
+                            </p>
+                        </div>
+                    ))}
+                </section>
+
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+                    <section aria-labelledby="harian-title">
+                        <div className="flex items-baseline gap-2">
+                            <h2 id="harian-title" className="text-lg font-semibold tracking-[-0.01em]">
+                                Kepatuhan harian
+                            </h2>
+                            <span className="text-xs text-muted-foreground">garis putus = target 95%</span>
+                        </div>
+                        <div className="mt-4">
+                            <ComplianceTrend data={charts.daily} />
+                        </div>
+                    </section>
+
+                    <section aria-labelledby="mingguan-title">
+                        <div className="flex items-baseline justify-between gap-2">
+                            <h2 id="mingguan-title" className="text-lg font-semibold tracking-[-0.01em]">
+                                Temuan per minggu
+                            </h2>
+                            <span className="flex gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
+                                    <span className="size-2 rounded-[2px] bg-chart-1" /> Dibuka
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="size-2 rounded-[2px] bg-chart-2" /> Ditutup
+                                </span>
+                            </span>
+                        </div>
+                        <div
+                            className="mt-4 flex h-[240px] items-end gap-4 border-b-(length:--bw) pb-0"
+                            role="img"
+                            aria-label={charts.weekly
+                                .map((w) => `${w.label}: ${w.dibuka} dibuka, ${w.ditutup} ditutup`)
+                                .join('; ')}
+                        >
+                            {charts.weekly.map((w) => (
+                                <div key={w.label} className="flex h-full flex-1 flex-col justify-end">
+                                    <div className="flex flex-1 items-end justify-center gap-1">
+                                        {(['dibuka', 'ditutup'] as const).map((k) => (
+                                            <div key={k} className="flex h-full w-6 flex-col justify-end">
+                                                <span className="mb-1 text-center text-xs font-semibold tnum">
+                                                    {w[k]}
+                                                </span>
+                                                <span
+                                                    className={cn(
+                                                        'w-full rounded-t-[3px]',
+                                                        k === 'dibuka' ? 'bg-chart-1' : 'bg-chart-2',
+                                                    )}
+                                                    style={{ height: `${(w[k] / weeklyMax) * 85}%` }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-2 flex gap-4">
+                            {charts.weekly.map((w) => (
+                                <span key={w.label} className="flex-1 text-center text-xs text-muted-foreground">
+                                    {w.label}
+                                </span>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+                    <div className="space-y-6">
+                        {charts.sites.length > 0 && (
+                            <section aria-labelledby="site-title">
+                                <h2 id="site-title" className="text-lg font-semibold tracking-[-0.01em]">
+                                    Per site
+                                </h2>
+                                <div className="mt-3 overflow-x-auto rounded-[14px] border-(length:--bw)">
+                                    <table className="w-full min-w-[480px] text-sm">
+                                        <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                                            <tr className="h-11">
+                                                <th className="px-4 font-semibold">Site</th>
+                                                <th className="px-4 font-semibold">Kepatuhan</th>
+                                                <th className="px-4 text-right font-semibold">P2H</th>
+                                                <th className="px-4 text-right font-semibold">Tidak Layak</th>
+                                                <th className="px-4 text-right font-semibold">PA</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {charts.sites.map((site) => (
+                                                <tr key={site.name} className="h-[52px] border-t-(length:--bw)">
+                                                    <td className="px-4 font-semibold">{site.name}</td>
+                                                    <td className="px-4">
+                                                        <span className="flex items-center gap-2">
+                                                            <span className="h-1.5 w-14 overflow-hidden rounded-full bg-muted">
+                                                                <span
+                                                                    className="block h-full rounded-full bg-chart-1"
+                                                                    style={{ width: `${site.kepatuhan ?? 0}%` }}
+                                                                />
+                                                            </span>
+                                                            <span className="tnum">{formatPercent(site.kepatuhan)}</span>
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 text-right tnum">{formatNumber(site.p2h, 0)}</td>
+                                                    <td className={cn('px-4 text-right tnum', site.tidak_layak > 0 && 'text-danger')}>
+                                                        {site.tidak_layak}
+                                                    </td>
+                                                    <td className="px-4 text-right tnum">{formatPercent(site.pa)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        )}
+
+                        <section aria-labelledby="item-title" className="grid gap-6 sm:grid-cols-2">
+                            <div>
+                                <h2 id="item-title" className="text-[15px] font-semibold">
+                                    Item paling sering bermasalah
+                                </h2>
+                                {report.item_teratas.length === 0 ? (
+                                    <p className="mt-2 text-sm text-muted-foreground">Tidak ada.</p>
+                                ) : (
+                                    <ul className="mt-2">
+                                        {report.item_teratas.map((i) => (
+                                            <li key={i.item} className="flex justify-between gap-3 border-b-(length:--bw) py-2 text-sm">
+                                                <span className="truncate">{i.item}</span>
+                                                <span className="font-semibold tnum">{i.jumlah}×</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                            <div>
+                                <h2 className="text-[15px] font-semibold">Unit dengan temuan terbanyak</h2>
+                                {report.unit_teratas.length === 0 ? (
+                                    <p className="mt-2 text-sm text-muted-foreground">Tidak ada.</p>
+                                ) : (
+                                    <ul className="mt-2">
+                                        {report.unit_teratas.map((u) => (
+                                            <li key={u.no_unit} className="flex justify-between gap-3 border-b-(length:--bw) py-2 text-sm">
+                                                <span className="font-semibold tnum">{u.no_unit}</span>
+                                                <span className="text-muted-foreground tnum">
+                                                    {u.jumlah} ({u.belum_selesai} open)
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </section>
+                    </div>
+
+                    <section
+                        aria-labelledby="ai-title"
+                        className="h-fit rounded-[14px] border-(length:--bw) bg-card p-5"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <h2 id="ai-title" className="flex items-center gap-2.5 text-lg font-semibold tracking-[-0.01em]">
+                                <span className="grid size-8 place-items-center rounded-[10px] bg-brand text-black">
+                                    <Sparkles className="size-4" aria-hidden />
+                                </span>
+                                Ringkasan periode
+                            </h2>
+                            <Badge variant="outline">{source === 'ai' ? 'AI' : 'Template'}</Badge>
+                        </div>
+                        <Textarea
+                            aria-label="Teks laporan periode"
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            className="mt-4 min-h-[300px] text-[13px] leading-relaxed"
+                        />
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <Button variant="outline" onClick={handleCopy}>
+                                <ClipboardCopy />
+                                Salin
+                            </Button>
+                            <Button variant="outline" onClick={() => share(text)}>
+                                <Send />
+                                Kirim ke WhatsApp
+                            </Button>
+                            <Button disabled={!aiEnabled || http.processing} onClick={handleAi}>
+                                <Sparkles className={cn(http.processing && 'animate-pulse')} />
+                                {http.processing ? 'Menganalisis…' : 'Analisis dengan AI'}
+                            </Button>
                             {source === 'ai' && (
                                 <Button
                                     variant="ghost"
-                                    size="sm"
-                                    className="gap-1.5"
                                     onClick={() => {
                                         setText(template);
                                         setSource('template');
                                     }}
                                 >
-                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    <RotateCcw />
                                     Kembali ke template
                                 </Button>
                             )}
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <Textarea
-                                value={text}
-                                onChange={(e) => setText(e.target.value)}
-                                className="min-h-[420px] font-mono text-xs leading-relaxed"
-                            />
-                            <div className="flex flex-wrap gap-2">
-                                <Button className="gap-2" onClick={handleCopy}>
-                                    <ClipboardCopy className="h-4 w-4" />
-                                    Salin
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="gap-2"
-                                    onClick={() => share(text)}
-                                >
-                                    <Send className="h-4 w-4" />
-                                    Kirim ke WhatsApp
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="gap-2"
-                                    asChild
-                                >
-                                    <a href={pdf.url({ query })}>
-                                        <FileDown className="h-4 w-4" />
-                                        Unduh PDF
-                                    </a>
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    className="gap-2"
-                                    disabled={!aiEnabled || http.processing}
-                                    onClick={handleAi}
-                                >
-                                    <Sparkles
-                                        className={cn(
-                                            'h-4 w-4',
-                                            http.processing && 'animate-pulse',
-                                        )}
-                                    />
-                                    {http.processing
-                                        ? 'Menganalisis...'
-                                        : 'Analisis dengan AI'}
-                                </Button>
-                            </div>
-                            {!aiEnabled && (
-                                <p className="text-xs text-muted-foreground">
-                                    AI nonaktif — isi GEMINI_API_KEY untuk
-                                    mengaktifkan analisis & rekomendasi AI.
-                                </p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* ── Highlights ── */}
-                    <div className="flex flex-col gap-5 lg:col-span-2">
-                        <RankCard
-                            title="Item paling sering bermasalah"
-                            rows={report.item_teratas.map((r) => ({
-                                label: r.item,
-                                value: `${r.jumlah}x`,
-                            }))}
-                        />
-                        <RankCard
-                            title="Unit dengan temuan terbanyak"
-                            rows={report.unit_teratas.map((r) => ({
-                                label: r.no_unit,
-                                sub: r.jenis_unit,
-                                value: `${r.jumlah} (${r.belum_selesai} open)`,
-                            }))}
-                        />
-                        <RankCard
-                            title="Perlu perhatian"
-                            rows={[
-                                ...report.berulang.map((r) => ({
-                                    icon: 'berulang' as const,
-                                    label: `${r.no_unit} · ${r.item}`,
-                                    value: `${r.jumlah}x`,
-                                })),
-                                ...report.overdue.map((r) => ({
-                                    icon: 'overdue' as const,
-                                    label: `${r.no_unit} · ${r.item}`,
-                                    sub: `PIC: ${r.pic ?? 'Belum ditunjuk'}`,
-                                    value: `+${r.hari_terlambat} hari`,
-                                })),
-                            ]}
-                        />
-                    </div>
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                            {aiEnabled
+                                ? 'Dibuat dari data PIMS · periksa sebelum dibagikan.'
+                                : 'AI nonaktif — isi GEMINI_API_KEY untuk mengaktifkan analisis & rekomendasi AI.'}
+                        </p>
+                    </section>
                 </div>
             </div>
         </>
     );
 }
 
-// ── Components ────────────────────────────────────────────────────────────────
-
-function RankCard({
-    title,
-    rows,
-}: {
-    title: string;
-    rows: {
-        label: string;
-        sub?: string;
-        value: string;
-        icon?: 'berulang' | 'overdue';
-    }[];
-}) {
-    return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {rows.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        Tidak ada data.
-                    </p>
-                ) : (
-                    <ul className="divide-y text-sm">
-                        {rows.map((r, i) => (
-                            <li
-                                key={i}
-                                className="flex items-center justify-between gap-3 py-1.5"
-                            >
-                                <div className="min-w-0">
-                                    <p className="flex items-center gap-1.5 truncate">
-                                        {r.icon === 'berulang' && (
-                                            <Repeat
-                                                className="h-3.5 w-3.5 shrink-0 text-amber-600"
-                                                aria-label="Berulang"
-                                            />
-                                        )}
-                                        {r.icon === 'overdue' && (
-                                            <AlarmClock
-                                                className="h-3.5 w-3.5 shrink-0 text-red-600"
-                                                aria-label="Lewat target"
-                                            />
-                                        )}
-                                        <span className="truncate">
-                                            {r.label}
-                                        </span>
-                                    </p>
-                                    {r.sub && (
-                                        <p className="truncate text-xs text-muted-foreground">
-                                            {r.sub}
-                                        </p>
-                                    )}
-                                </div>
-                                <span className="shrink-0 font-medium tabular-nums">
-                                    {r.value}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
-
 PeriodReport.layout = {
-    breadcrumbs: [{ title: 'Periodic Report P2H', href: '/p2h/period-report' }],
+    breadcrumbs: [{ title: 'Laporan periode', href: '/p2h/period-report' }],
 };

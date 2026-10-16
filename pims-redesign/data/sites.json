@@ -1,0 +1,42 @@
+[
+  {
+    "code": "PTA",
+    "name": "Pit A",
+    "timezone": "Asia/Makassar",
+    "default_approver": "hendra.w@kontraktor.co.id",
+    "public_token": "7Kq2",
+    "public_enabled": true
+  },
+  {
+    "code": "PTB",
+    "name": "Pit B",
+    "timezone": "Asia/Makassar",
+    "default_approver": "wawan.s@kontraktor.co.id",
+    "public_token": "Rf9x",
+    "public_enabled": true
+  },
+  {
+    "code": "HLR",
+    "name": "Hauling Road",
+    "timezone": "Asia/Makassar",
+    "default_approver": null,
+    "public_token": "m3Pd",
+    "public_enabled": true
+  },
+  {
+    "code": "JTY",
+    "name": "Jetty Utara",
+    "timezone": "Asia/Makassar",
+    "default_approver": "dewi.k@kontraktor.co.id",
+    "public_token": "Zt7Q",
+    "public_enabled": false
+  },
+  {
+    "code": "WSP",
+    "name": "Workshop Utama",
+    "timezone": "Asia/Makassar",
+    "default_approver": null,
+    "public_token": "k2Lw",
+    "public_enabled": false
+  }
+]

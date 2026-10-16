@@ -1,8 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
 import { MessageCircle, Phone } from 'lucide-react';
+import { AuthHeading, AuthShell } from '@/components/shell/auth-shell';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { login } from '@/routes';
 
 export default function ForgotPassword() {
@@ -12,69 +12,48 @@ export default function ForgotPassword() {
 
     return (
         <>
-            <Head title="PIMS — Lupa Password" />
+            <Head title="Lupa kata sandi" />
 
-            <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-                <div className="w-full max-w-sm">
-                    <div className="flex flex-col items-center gap-8">
-                        {/* Header */}
-                        <div className="text-center">
-                            <h1 className="text-2xl font-bold tracking-tight">
-                                Lupa Password?
-                            </h1>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                P2H &amp; Inspection Management System
-                            </p>
-                        </div>
-
-                        <Separator className="w-full" />
-
-                        {/* Info */}
-                        <div className="flex w-full flex-col items-center gap-6 text-center">
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                                Reset password hanya dapat dilakukan oleh{' '}
-                                <span className="font-semibold text-foreground">
-                                    Tim IT
-                                </span>{' '}
-                                PT. Wahana Bandhawa Kencana. Silakan hubungi
-                                kami melalui WhatsApp di bawah ini.
-                            </p>
-
-                            {/* WhatsApp Button */}
-                            <a
-                                href={waLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full"
-                            >
-                                <Button
-                                    size="lg"
-                                    className="w-full gap-2 bg-green-600 text-white hover:bg-green-700"
-                                >
-                                    <MessageCircle className="size-5" />
-                                    Chat WhatsApp Tim IT
-                                </Button>
-                            </a>
-
-                            {/* Number display */}
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Phone className="size-4 shrink-0" />
-                                <span>{waNumber}</span>
-                            </div>
-                        </div>
-
-                        <Separator className="w-full" />
-
-                        {/* Back to login */}
-                        <p className="text-sm text-muted-foreground">
-                            Sudah ingat password?{' '}
-                            <TextLink href={login()} className="font-medium">
-                                Kembali ke halaman masuk
-                            </TextLink>
-                        </p>
-                    </div>
+            <AuthShell>
+                <AuthHeading
+                    title="Lupa kata sandi?"
+                    description="Reset kata sandi dilakukan oleh Tim IT. Hubungi kami lewat WhatsApp."
+                />
+                <div className="space-y-4">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        Sebutkan nama dan NRP Anda saat menghubungi{' '}
+                        <span className="font-semibold text-foreground">
+                            Tim IT
+                        </span>{' '}
+                        PT. Wahana Bandhawa Kencana.
+                    </p>
+                    <Button
+                        asChild
+                        variant="brand"
+                        size="xl"
+                        className="w-full"
+                    >
+                        <a
+                            href={waLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <MessageCircle />
+                            Chat WhatsApp Tim IT
+                        </a>
+                    </Button>
+                    <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="size-4 shrink-0" aria-hidden />
+                        {waNumber}
+                    </p>
+                    <p className="pt-2 text-center text-sm text-muted-foreground">
+                        Sudah ingat kata sandi?{' '}
+                        <TextLink href={login()} className="font-semibold">
+                            Kembali ke halaman masuk
+                        </TextLink>
+                    </p>
                 </div>
-            </div>
+            </AuthShell>
         </>
     );
 }

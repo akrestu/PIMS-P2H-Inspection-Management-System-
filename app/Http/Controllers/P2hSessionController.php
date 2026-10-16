@@ -12,6 +12,7 @@ use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Site;
 use App\Models\Unit;
+use App\Models\UnitDowntimeLog;
 use App\Models\User;
 use App\Notifications\CriticalItemAlert;
 use App\Notifications\LvP2hApprovalRequest;
@@ -23,6 +24,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -36,19 +38,24 @@ class P2hSessionController extends Controller
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => 'nullable|date_format:Y-m-d',
             'jenis_unit' => 'nullable|in:Bus,Light Vehicle',
-            'hasil' => 'nullable|in:ada_tl,semua_layak',
+            'hasil' => 'nullable|in:ada_tl,semua_layak,layak,tidak_layak',
+            'approval' => 'nullable|in:pending',
             'user_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $user = $request->user();
 
-        $query = P2hSession::with(['unit', 'userEntries.answers'])
+        $query = P2hSession::with(['unit', 'userEntries.answers', 'userEntries.user:id,name'])
             ->when($request->date_from, fn ($q) => $q->whereDate('tanggal', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('tanggal', '<=', $request->date_to))
             ->when($request->no_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('no_unit', 'like', "%{$request->no_unit}%")))
             ->when($request->jenis_unit, fn ($q) => $q->whereHas('unit', fn ($u) => $u->where('jenis_unit', $request->jenis_unit)))
             ->when($request->hasil === 'ada_tl', fn ($q) => $q->whereHas('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
             ->when($request->hasil === 'semua_layak', fn ($q) => $q->whereDoesntHave('userEntries.answers', fn ($a) => $a->where('kondisi', 'Tidak Layak')))
+            // Hasil P2H (RiwayatP2H.png): Tidak layak = ada entry BD, Layak = tidak ada entry BD
+            ->when($request->hasil === 'tidak_layak', fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('kondisi_akhir', 'BD')))
+            ->when($request->hasil === 'layak', fn ($q) => $q->whereDoesntHave('userEntries', fn ($e) => $e->where('kondisi_akhir', 'BD')))
+            ->when($request->approval === 'pending', fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('approval_status', 'pending')))
             ->when($request->user_id, fn ($q) => $q->whereHas('userEntries', fn ($e) => $e->where('user_id', $request->user_id)));
 
         if ($user->isStaffOnly()) {
@@ -59,9 +66,13 @@ class P2hSessionController extends Controller
         }
         // Admin/manager: tidak ada filter tambahan → lihat semua
 
-        $sessions = $query->latest()->paginate(15)->withQueryString();
+        // Terbaru di atas: tanggal sesi, lalu waktu dibuat
+        $sessions = $query->orderByDesc('tanggal')->latest()->latest('id')->paginate(15)->withQueryString();
 
         $mapped = $sessions->through(function ($session) {
+            $entries = $session->userEntries->sortBy('submitted_at')->values();
+            $approvals = $entries->pluck('approval_status')->filter();
+
             return [
                 'id' => $session->id,
                 'tanggal' => $session->tanggal->format('Y-m-d'),
@@ -70,6 +81,20 @@ class P2hSessionController extends Controller
                 'slot_terisi' => $session->userEntries->count(),
                 'total_tl' => $session->userEntries->sum(fn ($e) => $e->answers->where('kondisi', 'Tidak Layak')->count()),
                 'status' => $session->status,
+                // Ringkasan tampilan (read-only) untuk kartu/tabel Riwayat
+                'entries' => $entries->map(fn ($e) => [
+                    'driver' => $e->user?->name,
+                    'shift' => $e->shift,
+                    'time' => $e->submitted_at?->format('H:i'),
+                ])->all(),
+                'hasil' => $entries->contains('kondisi_akhir', 'BD') ? 'BD' : ($entries->isEmpty() ? null : 'Layak Pakai'),
+                'approval' => match (true) {
+                    $approvals->contains('rejected') => 'rejected',
+                    $approvals->contains('pending') => 'pending',
+                    $approvals->isNotEmpty() => 'approved',
+                    default => null,
+                },
+                'hm_akhir' => $entries->pluck('hm_km_akhir')->filter()->max(),
             ];
         });
 
@@ -80,7 +105,7 @@ class P2hSessionController extends Controller
 
         return Inertia::render('p2h/index', [
             'sessions' => $mapped,
-            'filters' => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'user_id']),
+            'filters' => $request->only(['date_from', 'date_to', 'no_unit', 'jenis_unit', 'hasil', 'approval', 'user_id']),
             'allUsers' => $allUsers,
         ]);
     }
@@ -104,6 +129,7 @@ class P2hSessionController extends Controller
         } else {
             $units = collect();
         }
+        $units = $this->withPickerInfo($units, $assignedUnits->pluck('id'));
         $inspectionItems = P2hInspectionItem::active()->ordered()->get();
 
         // PIC approval LV hanya jabatan Approval; user jabatan Approval tidak perlu PIC
@@ -122,6 +148,50 @@ class P2hSessionController extends Controller
             'staffUsers' => $staffUsers,
             'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    /**
+     * Info tambahan untuk daftar pilih unit di Form P2H (FormP2H.png): unit yang
+     * ditugaskan, status operasional saat ini, site, dan jam P2H terakhir hari ini.
+     */
+    private function withPickerInfo(Collection $units, Collection $assignedIds): Collection
+    {
+        $ids = $units->pluck('id');
+        $sites = Unit::whereIn('id', $ids)->with('site:id,name')->get(['id', 'site_id'])->keyBy('id');
+
+        $downtimes = UnitDowntimeLog::whereIn('unit_id', $ids)
+            ->where('jam_mulai', '<=', now())
+            ->where(fn ($q) => $q->whereNull('jam_selesai')->orWhere('jam_selesai', '>', now()))
+            ->pluck('tipe', 'unit_id');
+
+        $lastToday = P2hUserEntry::query()
+            ->notRejected()
+            ->whereHas('session', fn ($q) => $q->whereDate('tanggal', today())->whereIn('unit_id', $ids))
+            ->with(['session:id,unit_id', 'user:id,name'])
+            ->latest('submitted_at')
+            ->get()
+            ->unique(fn (P2hUserEntry $e) => $e->session->unit_id)
+            ->keyBy(fn (P2hUserEntry $e) => $e->session->unit_id);
+
+        return $units->map(fn (Unit $unit) => [
+            'id' => $unit->id,
+            'no_unit' => $unit->no_unit,
+            'jenis_unit' => $unit->jenis_unit,
+            'department' => $unit->department,
+            'site_name' => $sites->get($unit->id)?->site?->name,
+            'assigned' => $assignedIds->contains($unit->id),
+            'unit_status' => match ($downtimes->get($unit->id)) {
+                'BD' => 'bd',
+                'PM' => 'pm',
+                'Servis Berkala' => 'servis',
+                default => 'ready',
+            },
+            'filled_at' => $lastToday->get($unit->id)?->submitted_at?->format('H:i'),
+            'filled_by' => $lastToday->get($unit->id)?->user?->name,
+        ])
+            // Unit yang ditugaskan di atas (FormP2H.png)
+            ->sortBy(fn ($u) => [$u['assigned'] ? 0 : 1, $u['no_unit']])
+            ->values();
     }
 
     public function checkSlot(Request $request): JsonResponse
@@ -349,46 +419,30 @@ class P2hSessionController extends Controller
             ]);
         }
 
-        $session = P2hSession::where('unit_id', $data['unit_id'])
-            ->whereDate('tanggal', today())
-            ->with('unit')
-            ->first();
+        // Layar sukses (docs/screens/driver.md §7) — halaman sendiri agar tetap tampil
+        // setelah redirect; isinya diambil ulang dari entry yang baru disimpan.
+        return redirect()->route('p2h.submitted', $createdEntry);
+    }
 
-        $slotTerisi = $session->userEntries()->count();
-        $hasCritical = $session->userEntries()
-            ->with('answers.inspectionItem')
-            ->get()
-            ->flatMap(fn ($e) => $e->answers)
-            ->where('kondisi', 'Tidak Layak')
-            ->filter(fn ($a) => $a->inspectionItem?->kode_bahaya === 'AA')
-            ->isNotEmpty();
+    /**
+     * Layar "P2H terkirim" untuk entry milik driver sendiri: hasil (Layak / Tidak
+     * Layak), temuan Tidak Layak, dan PIC persetujuan bila menunggu.
+     */
+    public function submitted(Request $request, P2hUserEntry $entry): Response
+    {
+        abort_unless($entry->user_id === $request->user()->id, 403);
 
-        // Cek apakah entry ini pending approval
-        $latestEntry = $session->userEntries()->with('pic')->latest()->first();
-        $isPendingApproval = $latestEntry?->approval_status === 'pending';
+        $entry->load(['session.unit:id,no_unit', 'pic:id,name', 'answers.inspectionItem:id,kode_bahaya']);
+        $findings = $entry->answers->where('kondisi', 'Tidak Layak');
 
-        if ($hasCritical) {
-            Inertia::flash('toast', [
-                'type' => 'error',
-                'message' => 'P2H disimpan — Ada item Critical TL!',
-                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}. Terdapat item kode bahaya AA (Stop) yang tidak layak. Admin telah diberitahu.",
-            ]);
-        } elseif ($isPendingApproval) {
-            $picName = $latestEntry?->pic?->name ?? 'PIC yang dipilih';
-            Inertia::flash('toast', [
-                'type' => 'warning',
-                'message' => 'P2H disubmit — Menunggu Verifikasi',
-                'description' => "P2H unit {$session->unit->no_unit} menunggu persetujuan dari {$picName}.",
-            ]);
-        } else {
-            Inertia::flash('toast', [
-                'type' => 'success',
-                'message' => 'P2H berhasil disimpan',
-                'description' => "Pengisian ke-{$slotTerisi} untuk unit {$session->unit->no_unit}.",
-            ]);
-        }
-
-        return redirect()->route('p2h.index');
+        return Inertia::render('p2h/submitted', [
+            'unit' => $entry->session?->unit?->no_unit ?? 'Unit',
+            'sessionId' => $entry->p2h_session_id,
+            'layak' => $entry->kondisi_akhir !== 'BD',
+            'pic' => $entry->approval_status === 'pending' ? $entry->pic?->name : null,
+            'critical' => $findings->contains(fn ($a) => $a->inspectionItem?->kode_bahaya === 'AA'),
+            'findings' => $findings->pluck('item_nama')->filter()->values(),
+        ]);
     }
 
     public function destroy(P2hSession $session): RedirectResponse

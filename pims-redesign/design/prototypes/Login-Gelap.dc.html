@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Masuk (Gelap)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.lb{position:relative;min-height:100vh;overflow:hidden;background:#0A0A0A;color:var(--foreground);font-family:'Geist',ui-sans-serif,system-ui,sans-serif;display:flex;flex-direction:column}
+.lb-topo{position:absolute;left:50%;top:-40px;width:1400px;transform:translateX(-50%);opacity:.16;pointer-events:none}
+.lb-glow{position:absolute;left:50%;top:-260px;width:760px;height:560px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(244,212,53,.22),rgba(244,212,53,0));pointer-events:none}
+.lb-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:20px 24px}
+.lb-main{position:relative;flex:1;display:flex;align-items:flex-start;justify-content:center;padding:12px 24px 24px}
+.lb-card{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:24px}
+.lb-foot{position:relative;padding:16px 24px 24px;display:flex;justify-content:center}
+@media (min-width:768px){
+ .lb-main{align-items:center}
+ .lb-card{padding:36px;border-radius:28px;background:rgba(22,22,24,.62);border:1px solid rgba(255,255,255,.08);box-shadow:0 40px 80px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%)}
+ .lb-top{padding:28px 40px}
+}
+</style>
+</helmet>
+<div class="pims lb" data-theme="{{ theme }}">
+  <img class="lb-topo" src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true">
+  <div class="lb-glow" aria-hidden="true"></div>
+  <header class="lb-top">
+    <span style="display: flex; align-items: center; gap: 10px"><img src="/_blob/785c77d2391e18917a6e22a7cd79975b" alt="" style="width: 32px; height: 32px"><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">PIMS</span></span>
+    <span class="tnum" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); font-size: 12px; color: var(--muted-foreground); display: inline-flex; align-items: center; gap: 8px"><span class="pulse" style="width: 7px; height: 7px; border-radius: 9px; background: var(--success)"></span>Shift 1 · 05:42 WITA</span>
+  </header>
+  <main class="lb-main">
+    <div class="lb-card">
+      <dc-import name="LoginForm" theme="{{ theme }}" tone="brand" size="normal" align="center" hint-size="400px,560px"></dc-import>
+    </div>
+  </main>
+  <footer class="lb-foot"><span style="font-size: 12px; color: var(--muted-foreground)">Masuk tercatat di Audit Log · <a href="Auth.dc.html" style="color: var(--foreground); font-weight: 600; text-decoration: none">Butuh bantuan?</a></span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","hc"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

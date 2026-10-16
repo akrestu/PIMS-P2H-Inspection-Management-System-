@@ -1,0 +1,58 @@
+[
+  {
+    "unit": "DT-1050",
+    "status": "bd",
+    "started_at_local": "2026-10-16 05:55",
+    "ended_at_local": null,
+    "source": "p2h_otomatis",
+    "note": "Kebocoran oli kritis dari P2H. Menunggu mekanik."
+  },
+  {
+    "unit": "EX-2003",
+    "status": "bd",
+    "started_at_local": "2026-10-16 05:57",
+    "ended_at_local": null,
+    "source": "p2h_otomatis",
+    "note": "Rem parkir tidak menahan. Penyetelan kabel."
+  },
+  {
+    "unit": "DT-1018",
+    "status": "bd",
+    "started_at_local": "2026-10-15 14:20",
+    "ended_at_local": null,
+    "source": "manual",
+    "note": "Selang radiator."
+  },
+  {
+    "unit": "GR-012",
+    "status": "pm",
+    "started_at_local": "2026-10-16 06:00",
+    "ended_at_local": null,
+    "source": "manual",
+    "note": "PM 1000 jam terjadwal."
+  },
+  {
+    "unit": "LV-022",
+    "status": "servis",
+    "started_at_local": "2026-10-16 05:30",
+    "ended_at_local": null,
+    "source": "manual",
+    "note": "AC tidak dingin · isi freon."
+  },
+  {
+    "unit": "DT-1045",
+    "status": "bd",
+    "started_at_local": "2026-10-16 01:10",
+    "ended_at_local": "2026-10-16 03:40",
+    "source": "p2h_otomatis",
+    "note": "Selang hidrolik diganti · uji 5 siklus OK."
+  },
+  {
+    "unit": "DT-1061",
+    "status": "servis",
+    "started_at_local": "2026-10-16 00:00",
+    "ended_at_local": "2026-10-16 04:30",
+    "source": "manual",
+    "note": "Ganti ban belakang kiri."
+  }
+]

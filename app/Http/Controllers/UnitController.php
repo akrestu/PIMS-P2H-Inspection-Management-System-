@@ -56,6 +56,8 @@ class UnitController extends Controller
         $units = $query->paginate(15)->withQueryString();
 
         return Inertia::render('units/index', [
+            // Tab Aktif · n / Sampah · n (MasterUnit-Desktop.png)
+            'tabCounts' => ['aktif' => Unit::count(), 'sampah' => Unit::onlyTrashed()->count()],
             'units' => $units,
             'filters' => $request->only(['search', 'jenis_unit', 'status', 'sort', 'dir']),
             'sort' => $sort,
@@ -207,6 +209,8 @@ class UnitController extends Controller
         $units = $query->paginate(15)->withQueryString();
 
         return Inertia::render('units/trashed', [
+            // Tab Aktif · n / Sampah · n (MasterUnit-Desktop.png)
+            'tabCounts' => ['aktif' => Unit::count(), 'sampah' => Unit::onlyTrashed()->count()],
             'units' => $units,
             'filters' => $request->only(['search', 'sort', 'dir']),
             'sort' => $sort,

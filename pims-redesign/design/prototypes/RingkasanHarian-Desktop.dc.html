@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Ringkasan harian (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Ringkasan harian" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Ringkasan harian</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">Pit A · dikirim otomatis 07:45 WITA ke 3 manager</span></div>
+      <div style="display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 4px; border-radius: 10px; border: 1px solid var(--input)">
+        <button type="button" class="press hl" onClick="{{ prevDay }}" aria-label="Hari sebelumnya" style="width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: {{ prevFg }}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+        <span class="tnum" style="min-width: 150px; text-align: center; font-size: 14px; font-weight: 600">{{ dateLabel }}</span>
+        <button type="button" class="press hl" onClick="{{ nextDay }}" aria-label="Hari berikutnya" style="width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: {{ nextFg }}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div class="tnum" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{ stats }}" as="k" hint-placeholder-count="6"><div style="padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: var(--muted-foreground)">{{ k.label }}</span><strong style="font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: {{ k.fg }}">{{ k.v }}</strong><span style="font-size: 12px; color: var(--muted-foreground)">{{ k.sub }}</span></div></sc-for>
+        </div>
+
+        <section style="border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+          <strong style="font-size: 15px; font-weight: 600; padding-bottom: 6px">Perlu tindakan</strong>
+          <sc-for list="{{ issues }}" as="i" hint-placeholder-count="4">
+            <a href="{{ i.href }}" class="press" style="display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; padding: 10px 8px; margin: 0 -8px; border-radius: 10px; text-decoration: none">
+              <span style="width: 8px; height: 8px; border-radius: 9px; background: {{ i.dot }}"></span>
+              <span class="tnum" style="font-size: 14px; line-height: 20px"><strong style="font-weight: 600">{{ i.code }}</strong> {{ i.text }}</span>
+              <span style="font-size: 13px; color: var(--muted-foreground)">{{ i.cta }} ›</span>
+            </a>
+          </sc-for>
+        </section>
+
+        <section style="border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg><strong style="flex: 1; font-size: 15px; font-weight: 600">Ringkasan AI</strong>
+            <sc-if value="{{ aiDone }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ runAi }}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">Buat ulang</button></sc-if>
+          </div>
+          <sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size: 14px; color: var(--muted-foreground)">Ringkas kondisi armada, bandingkan dengan hari sebelumnya, dan beri prioritas tindakan.</span>
+            <button type="button" class="press" onClick="{{ runAi }}" style="align-self: flex-start; height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600">Buat ringkasan</button>
+          </sc-if>
+          <sc-if value="{{ aiThinking }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 8px"><span class="skeleton" style="height: 14px; width: 92%"></span><span class="skeleton" style="height: 14px; width: 84%"></span><span class="skeleton" style="height: 14px; width: 60%"></span></div></sc-if>
+          <sc-if value="{{ aiShow }}" hint-placeholder-val="{{ false }}"><p aria-live="polite" class="tnum" style="margin: 0; font-size: 15px; line-height: 24px">{{ aiText }}<span class="pulse" style="display: inline-block; width: 7px; height: 16px; margin-left: 2px; vertical-align: -2px; background: var(--foreground); opacity: {{ caretOp }}"></span></p></sc-if>
+          <sc-if value="{{ aiDone }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: var(--muted-foreground)">Dibuat AI dari data PIMS · periksa sebelum dibagikan.</span></sc-if>
+        </section>
+      </div>
+
+      <aside aria-label="Teks WhatsApp" style="position: sticky; top: 24px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border)"><strong style="flex: 1; font-size: 15px; font-weight: 600">Teks untuk WhatsApp</strong><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ waLen }} karakter</span></div>
+        <div class="noscroll" style="max-height: 520px; overflow-y: auto; padding: 16px; background: var(--muted-2)">
+          <pre class="tnum" style="margin: 0; padding: 12px 14px; border-radius: 4px 14px 14px 14px; background: var(--background); box-shadow: var(--shadow-1); border: 1px solid var(--border); white-space: pre-wrap; font-family: inherit; font-size: 13.5px; line-height: 20px">{{ waText }}</pre>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--border)">
+          <button type="button" role="switch" aria-checked="{{ linkOnS }}" onClick="{{ toggleLink }}" style="display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; text-align: left; cursor: pointer"><span style="flex: 1">Sertakan link rekap publik</span><span style="width: 40px; height: 22px; border-radius: 99px; background: {{ swBg }}; position: relative; flex-shrink: 0"><span style="position: absolute; top: 2px; left: {{ swX }}px; width: 18px; height: 18px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left 150ms var(--ease-out)"></span></span></button>
+          <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px">
+            <button type="button" class="press" onClick="{{ copy }}" style="height: 42px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">{{ copyLabel }}</button>
+            <button type="button" class="press" onClick="{{ share }}" style="height: 42px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600">Buka WhatsApp Web</button>
+          </div>
+          <span style="font-size: 12px; line-height: 17px; color: var(--muted-foreground)">Membuka wa.me/?text=… dengan teks terisi. Anda yang memilih grup dan menekan kirim.</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 0 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Manager"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.DAYS = [
+      { label: 'Kamis, 15 Okt 2026', short: 'Kemarin', inN: 46, tot: 48, ok: 45, bad: 1, belum: 2, baru: 2, tutup: 3, pa: '87,9', belumList: 'LV-034, WT-007', bd: [['DT-1018', 'selang radiator bocor']], open: 10, over: 2, d: { in: '+1', pa: '+2,1' } },
+      { label: 'Jumat, 16 Okt 2026', short: 'Hari ini', inN: 42, tot: 48, ok: 40, bad: 2, belum: 6, baru: 4, tutup: 2, pa: '78,4', belumList: 'LV-034, DT-1031, WT-007, DT-1038, DT-1072, LV-040', bd: [['DT-1050', 'kebocoran oli (kritis)'], ['EX-2003', 'rem parkir (kritis)']], open: 12, over: 4, d: { in: '−4', pa: '−9,5' } }
+    ];
+    this.AI = [
+      'Kepatuhan P2H 95,8% (46 dari 48). Satu unit BD: DT-1018 karena selang radiator bocor, sedang dikerjakan mekanik. Dua temuan lewat tenggat, keduanya non-kritis. Prioritas besok: pastikan LV-034 dan WT-007 mengisi P2H sebelum 06:30.',
+      'Kepatuhan Shift 1 87,5% (42 dari 48), turun 8 poin dari kemarin karena 6 unit belum P2H. Tiga di antaranya berulang minggu ini (LV-034, WT-007, DT-1031). Dua unit BD karena item kritis: EX-2003 (rem parkir) dan DT-1050 (kebocoran oli) — keduanya perlu ditangani sebelum Shift 2. Temuan lewat tenggat naik menjadi 4; T-0219 di LV-022 sudah lewat 4 hari. Prioritas: ingatkan 3 driver berulang dan dahulukan perbaikan EX-2003.'
+    ];
+    this.state = { day: 1, ai: 'idle', aiN: 0, link: true, copied: false, toast: '' };
+  }
+  componentWillUnmount() { clearInterval(this.aiT); clearTimeout(this.tt); clearTimeout(this.ct); clearTimeout(this.th); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Manager';
+    const D = this.DAYS[s.day];
+    const pct = (D.inN / D.tot * 100).toFixed(1).replace('.', ',');
+    const stats = [
+      { label: 'P2H masuk', v: D.inN + ' / ' + D.tot, sub: pct + '% · ' + D.d.in + ' dari hari sebelumnya', fg: 'var(--foreground)' },
+      { label: 'Layak / tidak layak', v: D.ok + ' / ' + D.bad, sub: 'tidak layak otomatis BD', fg: D.bad ? 'var(--danger)' : 'var(--foreground)' },
+      { label: 'Belum P2H', v: D.belum, sub: 'batas 06:30', fg: D.belum ? 'var(--warning)' : 'var(--foreground)' },
+      { label: 'PA armada', v: D.pa + '%', sub: D.d.pa + ' poin · target 90%', fg: parseFloat(D.pa) < 90 ? 'var(--danger)' : 'var(--foreground)' },
+      { label: 'Temuan baru / ditutup', v: D.baru + ' / ' + D.tutup, sub: D.open + ' open', fg: 'var(--foreground)' },
+      { label: 'Lewat tenggat', v: D.over, sub: 'temuan open', fg: D.over ? 'var(--danger)' : 'var(--foreground)' }
+    ];
+    const issues = D.bd.map(([c, t]) => ({ code: c, text: 'BD · ' + t, dot: 'var(--danger)', href: 'Downtime-Desktop.dc.html', cta: 'Downtime' }))
+      .concat([{ code: D.belum + ' unit', text: 'belum P2H · ' + D.belumList, dot: 'var(--warning)', href: 'Monitoring-Desktop.dc.html', cta: 'Ingatkan' }, { code: D.over + ' temuan', text: 'lewat tenggat dari ' + D.open + ' open', dot: 'var(--warning)', href: 'Temuan-Desktop.dc.html', cta: 'Temuan' }]);
+    const lines = ['*Rekap P2H — Pit A*', D.label + (s.day === 1 ? ' · Shift 1' : ''), '', '*Ringkasan*', '• P2H masuk: ' + D.inN + '/' + D.tot + ' (' + pct + '%)', '• Layak: ' + D.ok + ' · Tidak Layak: ' + D.bad, '• Belum P2H: ' + D.belum + ' (' + D.belumList + ')', '', '*Unit BD*']
+      .concat(D.bd.map(([c, t]) => '• ' + c + ' — ' + t)).concat(['', '*Temuan*: baru ' + D.baru + ' · ditutup ' + D.tutup + ' · open ' + D.open + ' (' + D.over + ' lewat tenggat)', '*Ketersediaan*: PA ' + D.pa + '%']);
+    if (s.ai === 'done') lines.push('', '_' + this.AI[s.day].split('. ').slice(-1)[0].replace(/\.$/, '') + '._');
+    if (s.link) lines.push('', 'Rekap lengkap: https://pims.example/rekap/pit-a/7Kq2');
+    const waText = lines.join('\n');
+    const full = this.AI[s.day];
+    const reset = (day) => { clearInterval(this.aiT); clearTimeout(this.th); this.setState({ day, ai: 'idle', aiN: 0 }); };
+    return {
+      theme, peran, stats, issues, dateLabel: D.label, prevFg: s.day === 0 ? 'var(--muted-foreground)' : 'var(--foreground)', nextFg: s.day === 1 ? 'var(--muted-foreground)' : 'var(--foreground)',
+      prevDay: () => reset(0), nextDay: () => reset(1),
+      aiIdle: s.ai === 'idle', aiThinking: s.ai === 'thinking', aiShow: s.ai === 'stream' || s.ai === 'done', aiDone: s.ai === 'done', aiText: full.slice(0, s.aiN), caretOp: s.ai === 'stream' ? 1 : 0,
+      runAi: () => { clearInterval(this.aiT); clearTimeout(this.th); this.setState({ ai: 'thinking', aiN: 0 }); this.th = setTimeout(() => { this.setState({ ai: 'stream' }); this.aiT = setInterval(() => { const n = this.state.aiN + 5; if (n >= full.length) { clearInterval(this.aiT); this.setState({ aiN: full.length, ai: 'done' }); } else this.setState({ aiN: n }); }, 24); }, 900); },
+      waText, waLen: waText.length, linkOnS: s.link, swBg: s.link ? 'var(--success)' : 'var(--input)', swX: s.link ? 20 : 2, toggleLink: () => this.setState({ link: !s.link }),
+      copyLabel: s.copied ? 'Tersalin ✓' : 'Salin teks',
+      copy: () => { try { navigator.clipboard && navigator.clipboard.writeText(waText); } catch (e) {} this.setState({ copied: true }); clearTimeout(this.ct); this.ct = setTimeout(() => this.setState({ copied: false }), 2000); this.toast('Teks disalin · tempel di grup WhatsApp'); },
+      share: () => this.toast('Membuka WhatsApp Web… (prototype)'),
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

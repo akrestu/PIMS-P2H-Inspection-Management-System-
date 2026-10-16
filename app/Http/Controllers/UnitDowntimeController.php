@@ -85,7 +85,55 @@ class UnitDowntimeController extends Controller
             'filters' => $request->only(['unit_id', 'tipe', 'date_from', 'date_to', 'status', 'sort', 'dir']),
             'sort' => $sort,
             'ongoingCount' => $ongoingCount,
+            'today' => $this->today(),
         ]);
+    }
+
+    /**
+     * Downtime yang menyentuh hari ini (Downtime-Desktop.png): linimasa, tab
+     * Berlangsung / Selesai hari ini, dan KPI jam BD & PM/servis s/d sekarang.
+     */
+    private function today(): array
+    {
+        $start = today();
+        $now = now();
+
+        $logs = UnitDowntimeLog::with(['unit:id,no_unit,jenis_unit', 'creator:id,name'])
+            ->where('jam_mulai', '<=', $now)
+            ->where(fn ($q) => $q->whereNull('jam_selesai')->orWhere('jam_selesai', '>=', $start))
+            ->orderBy('jam_mulai')
+            ->get();
+
+        $hours = fn ($group) => round($group->sum(function (UnitDowntimeLog $log) use ($start, $now) {
+            $from = $log->jam_mulai->max($start);
+            $to = ($log->jam_selesai ?? $now)->min($now);
+
+            return $to->greaterThan($from) ? $from->diffInSeconds($to) / 3600 : 0;
+        }), 2);
+
+        $ongoing = $logs->whereNull('jam_selesai');
+
+        return [
+            'logs' => $logs->map(fn (UnitDowntimeLog $log) => [
+                'id' => $log->id,
+                'unit_id' => $log->unit_id,
+                'no_unit' => $log->unit?->no_unit,
+                'jenis_unit' => $log->unit?->jenis_unit,
+                'tipe' => $log->tipe,
+                'jam_mulai' => $log->jam_mulai->format('Y-m-d H:i'),
+                'jam_selesai' => $log->jam_selesai?->format('Y-m-d H:i'),
+                'duration_hours' => $log->duration_hours,
+                'keterangan' => $log->keterangan,
+                'created_by' => $log->creator?->name,
+                'otomatis' => $log->opened_by_entry_id !== null,
+            ])->values(),
+            'bd_now' => $ongoing->where('tipe', 'BD')->count(),
+            'bd_auto' => $ongoing->where('tipe', 'BD')->whereNotNull('opened_by_entry_id')->count(),
+            'pm_now' => $ongoing->where('tipe', '!=', 'BD')->count(),
+            'jam_bd' => $hours($logs->where('tipe', 'BD')),
+            'jam_pm' => $hours($logs->where('tipe', '!=', 'BD')),
+            'now' => $now->format('H:i'),
+        ];
     }
 
     /** Cek apakah rentang waktu bertabrakan dengan log downtime unit lain yang sudah ada. */

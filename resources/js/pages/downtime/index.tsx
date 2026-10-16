@@ -1,6 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
-    AlertTriangle,
     Bus,
     Car,
     CheckCircle2,
@@ -13,8 +12,12 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { PageTabs } from '@/components/page-tabs';
+import { DowntimeTimeline } from '@/components/downtime-timeline';
 import { PageButtons } from '@/components/pagination-bar';
+import { KpiCard, KpiStrip } from '@/components/pims/kpi';
+import { PageHeader } from '@/components/pims/page-header';
+import { Segmented } from '@/components/pims/segmented';
+import { StatusPill } from '@/components/pims/status-pill';
 import { SortableHead, sortParams } from '@/components/sortable-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -83,7 +87,18 @@ interface Props {
     allUnits: UnitOption[];
     filters: Filters;
     ongoingCount: number;
+    today: {
+        logs: TodayLog[];
+        bd_now: number;
+        bd_auto: number;
+        pm_now: number;
+        jam_bd: number;
+        jam_pm: number;
+        now: string;
+    };
 }
+
+type TodayLog = DowntimeLog & { otomatis: boolean };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -92,20 +107,17 @@ function tipeConfig(tipe: DowntimeLog['tipe']) {
         case 'BD':
             return {
                 label: 'Breakdown',
-                badgeClass:
-                    'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+                badgeClass: 'bg-danger-soft text-danger border-danger/40   ',
             };
         case 'PM':
             return {
                 label: 'Preventive Maintenance',
-                badgeClass:
-                    'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
+                badgeClass: 'bg-info-soft text-info border-info/40   ',
             };
         case 'Servis Berkala':
             return {
                 label: 'Servis Berkala',
-                badgeClass:
-                    'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800',
+                badgeClass: 'bg-info-soft text-info border-info/40   ',
             };
     }
 }
@@ -446,14 +458,122 @@ function DeleteDialog({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+/** Tabel ringkas Berlangsung / Selesai hari ini (Downtime-Desktop.png). */
+function TodayList({
+    logs,
+    empty,
+    onReady,
+    onEdit,
+}: {
+    logs: TodayLog[];
+    empty: string;
+    onReady: (log: TodayLog) => void;
+    onEdit: (log: TodayLog) => void;
+}) {
+    if (logs.length === 0) {
+        return (
+            <p className="rounded-[14px] border-(length:--bw) px-4 py-10 text-center text-sm text-muted-foreground">
+                {empty}
+            </p>
+        );
+    }
+
+    const statusKey = (t: TodayLog['tipe']) =>
+        t === 'BD' ? 'bd' : t === 'PM' ? 'pm' : 'servis';
+    const time = (dt: string) => dt.slice(11, 16);
+
+    return (
+        <div className="overflow-x-auto rounded-[14px] border-(length:--bw)">
+            <table className="w-full min-w-[820px] text-sm">
+                <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                    <tr className="h-11">
+                        <th className="px-4 font-semibold">Unit</th>
+                        <th className="px-4 font-semibold">Status</th>
+                        <th className="px-4 font-semibold">Waktu</th>
+                        <th className="px-4 font-semibold">Durasi</th>
+                        <th className="px-4 font-semibold">Sumber</th>
+                        <th className="px-4 font-semibold">Keterangan</th>
+                        <th className="px-4">
+                            <span className="sr-only">Aksi</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {logs.map((log) => {
+                        const ongoing = !log.jam_selesai;
+                        const startsToday = log.jam_mulai.slice(0, 10) === new Date().toLocaleDateString('en-CA');
+
+                        return (
+                            <tr key={log.id} className="h-14 border-t-(length:--bw)">
+                                <td className="px-4 font-semibold whitespace-nowrap tnum">{log.no_unit}</td>
+                                <td className="px-4">
+                                    <StatusPill status={statusKey(log.tipe)} size="sm" />
+                                </td>
+                                <td className="px-4 whitespace-nowrap tnum">
+                                    {startsToday ? time(log.jam_mulai) : formatDatetime(log.jam_mulai)} –{' '}
+                                    {ongoing ? 'berlangsung' : time(log.jam_selesai!)}
+                                </td>
+                                <td className="px-4 font-semibold whitespace-nowrap tnum">
+                                    {ongoing ? (
+                                        <LiveDuration since={log.jam_mulai} />
+                                    ) : (
+                                        formatDuration(log.duration_hours)
+                                    )}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-muted-foreground">
+                                    {log.otomatis ? 'Otomatis dari P2H' : 'Manual'}
+                                </td>
+                                <td className="max-w-[240px] truncate px-4 text-muted-foreground" title={log.keterangan ?? undefined}>
+                                    {log.keterangan ?? '—'}
+                                </td>
+                                <td className="px-4">
+                                    <div className="flex justify-end gap-1.5">
+                                        {ongoing && (
+                                            <Button size="sm" onClick={() => onReady(log)}>
+                                                Tandai Ready
+                                            </Button>
+                                        )}
+                                        <Button size="sm" variant="outline" onClick={() => onEdit(log)}>
+                                            Ubah
+                                        </Button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+function LiveDuration({ since }: { since: string }) {
+    const [now] = useState(() => Date.now());
+    const hours = (now - new Date(since.replace(' ', 'T')).getTime()) / 3_600_000;
+
+    return <>{formatDuration(Math.max(0, hours))}</>;
+}
+
+function fmtHours(hours: number) {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+
+    return `${h} j ${String(m).padStart(2, '0')} m`;
+}
+
 export default function DowntimeIndex({
     logs,
     allUnits,
     filters,
-    ongoingCount,
+    today,
 }: Props) {
     const [form, setForm] = useState<Filters>(filters);
+    const [tab, setTab] = useState<'berlangsung' | 'selesai' | 'riwayat'>('berlangsung');
+    const todayIso = new Date().toLocaleDateString('en-CA');
+    const ongoingToday = today.logs.filter((l) => !l.jam_selesai);
+    const doneToday = today.logs.filter((l) => l.jam_selesai);
     const [showFilter, setShowFilter] = useState(false);
+    const [view, setView] = useState<'tabel' | 'linimasa'>('tabel');
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLog, setEditLog] = useState<DowntimeLog | null>(null);
@@ -479,58 +599,102 @@ export default function DowntimeIndex({
 
     return (
         <>
-            <Head title="Downtime Log" />
-            <div className="flex flex-col gap-5 p-4 md:p-6">
-                <PageTabs group="unitPerformance" />
-                {/* ── Header ── */}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
-                            <Wrench className="h-6 w-6 text-primary" />
-                            Downtime Log
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Catat dan pantau waktu downtime unit · PA = W / (W +
-                            S)
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
+            <Head title="Downtime" />
+            <div className="flex flex-col gap-5 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
+                <PageHeader
+                    title="Downtime"
+                    description={`${formatDate(new Date(), { withDay: true })} · sekarang ${today.now}`}
+                    actions={
                         <Button
-                            variant={showFilter ? 'default' : 'outline'}
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => setShowFilter((v) => !v)}
-                        >
-                            <Filter className="h-4 w-4" /> Filter
-                        </Button>
-                        <Button
-                            size="sm"
-                            className="gap-2"
                             onClick={() => {
                                 setEditLog(null);
                                 setDialogOpen(true);
                             }}
                         >
-                            <Plus className="h-4 w-4" /> Catat Downtime
+                            <Plus /> Catat downtime
                         </Button>
-                    </div>
-                </div>
+                    }
+                />
 
-                {/* ── Ongoing Alert ── */}
-                {ongoingCount > 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950/20">
-                        <AlertTriangle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                        <p className="text-sm text-red-700 dark:text-red-300">
-                            <strong>{ongoingCount} unit</strong> sedang dalam
-                            kondisi downtime (belum ditutup). Segera tutup
-                            setelah perbaikan selesai.
-                        </p>
-                    </div>
+                <KpiStrip cols={4}>
+                    <KpiCard
+                        label="Unit BD sekarang"
+                        value={today.bd_now}
+                        tone={today.bd_now > 0 ? 'danger' : 'default'}
+                        sub={`${today.bd_auto} otomatis dari P2H tidak layak`}
+                    />
+                    <KpiCard
+                        label="PM / servis berjalan"
+                        value={today.pm_now}
+                        sub="terjadwal"
+                    />
+                    <KpiCard
+                        label="Jam BD hari ini"
+                        value={fmtHours(today.jam_bd)}
+                        sub={`sampai ${today.now}`}
+                    />
+                    <KpiCard
+                        label="Jam PM/servis hari ini"
+                        value={fmtHours(today.jam_pm)}
+                        sub="mengurangi PA armada"
+                    />
+                </KpiStrip>
+
+                {today.logs.length > 0 && (
+                    <DowntimeTimeline
+                        title="Linimasa hari ini · 00:00–24:00"
+                        logs={today.logs}
+                        dateFrom={todayIso}
+                        dateTo={todayIso}
+                        footnote="Garis hitam = sekarang. Batang bergaris berlanjut sampai ditandai Ready."
+                    />
                 )}
+
+                <Segmented
+                    label="Daftar downtime"
+                    value={tab}
+                    onChange={setTab}
+                    className="self-start"
+                    options={[
+                        { value: 'berlangsung', label: `Berlangsung · ${ongoingToday.length}` },
+                        { value: 'selesai', label: `Selesai hari ini · ${doneToday.length}` },
+                        { value: 'riwayat', label: 'Riwayat' },
+                    ]}
+                />
+
+                {tab !== 'riwayat' && (
+                    <TodayList
+                        logs={tab === 'berlangsung' ? ongoingToday : doneToday}
+                        empty={
+                            tab === 'berlangsung'
+                                ? 'Tidak ada unit yang sedang downtime.'
+                                : 'Belum ada downtime yang selesai hari ini.'
+                        }
+                        onReady={(log) => {
+                            setCloseOnlyLog(log);
+                            setDialogOpen(true);
+                        }}
+                        onEdit={(log) => {
+                            setEditLog(log);
+                            setDialogOpen(true);
+                        }}
+                    />
+                )}
+
+                {tab === 'riwayat' && (
+                    <>
+                <div className="flex justify-end">
+                    <Button
+                        variant={showFilter ? 'default' : 'outline'}
+                        onClick={() => setShowFilter((v) => !v)}
+                    >
+                        <Filter /> Filter riwayat
+                    </Button>
+                </div>
 
                 {/* ── Filter Panel ── */}
                 {showFilter && (
-                    <Card className="border-primary/20">
+                    <Card className="border-border">
                         <CardHeader className="pt-4 pb-2">
                             <CardTitle className="flex items-center gap-2 text-sm">
                                 <Filter className="h-4 w-4" /> Filter Log
@@ -650,8 +814,36 @@ export default function DowntimeIndex({
                     </Card>
                 )}
 
+                {/* ── Tampilan: tabel / linimasa ── */}
+                {logs.data.length > 0 && (
+                    <Segmented
+                        label="Tampilan downtime"
+                        value={view}
+                        onChange={setView}
+                        options={[
+                            { value: 'tabel', label: 'Tabel' },
+                            { value: 'linimasa', label: 'Linimasa' },
+                        ]}
+                        className="self-start"
+                    />
+                )}
+
+                {view === 'linimasa' && logs.data.length > 0 && (
+                    <DowntimeTimeline
+                        logs={logs.data}
+                        dateFrom={filters.date_from}
+                        dateTo={filters.date_to}
+                    />
+                )}
+
                 {/* ── Table ── */}
-                <Card>
+                <Card
+                    className={
+                        view === 'linimasa' && logs.data.length > 0
+                            ? 'hidden'
+                            : undefined
+                    }
+                >
                     <CardContent className="p-0">
                         {logs.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
@@ -682,7 +874,7 @@ export default function DowntimeIndex({
                                                 className={cn(
                                                     'space-y-2 p-4',
                                                     isOngoing &&
-                                                        'bg-red-50/40 dark:bg-red-950/10',
+                                                        'bg-danger-soft',
                                                 )}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
@@ -720,7 +912,7 @@ export default function DowntimeIndex({
                                                             Selesai
                                                         </p>
                                                         {isOngoing ? (
-                                                            <p className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+                                                            <p className="flex items-center gap-1 font-medium text-danger">
                                                                 <Timer className="h-3 w-3" />
                                                                 Sedang BD
                                                             </p>
@@ -750,7 +942,7 @@ export default function DowntimeIndex({
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-10 flex-1 gap-1 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400"
+                                                            className="h-10 flex-1 gap-1 border-success/40 text-success"
                                                             onClick={() => {
                                                                 setCloseOnlyLog(
                                                                     log,
@@ -867,7 +1059,7 @@ export default function DowntimeIndex({
                                                         className={cn(
                                                             'transition-colors hover:bg-muted/20',
                                                             isOngoing &&
-                                                                'bg-red-50/40 dark:bg-red-950/10',
+                                                                'bg-danger-soft/50',
                                                         )}
                                                     >
                                                         <td className="px-4 py-3">
@@ -876,14 +1068,14 @@ export default function DowntimeIndex({
                                                                     className={cn(
                                                                         'flex h-7 w-7 items-center justify-center rounded-md',
                                                                         isLV
-                                                                            ? 'bg-blue-100 dark:bg-blue-950/40'
-                                                                            : 'bg-purple-100 dark:bg-purple-950/40',
+                                                                            ? 'bg-info-soft'
+                                                                            : 'bg-info-soft',
                                                                     )}
                                                                 >
                                                                     {isLV ? (
-                                                                        <Car className="h-3.5 w-3.5 text-blue-600" />
+                                                                        <Car className="h-3.5 w-3.5 text-info" />
                                                                     ) : (
-                                                                        <Bus className="h-3.5 w-3.5 text-purple-600" />
+                                                                        <Bus className="h-3.5 w-3.5 text-info" />
                                                                     )}
                                                                 </div>
                                                                 <div>
@@ -923,14 +1115,14 @@ export default function DowntimeIndex({
                                                             {isOngoing ? (
                                                                 <Badge
                                                                     variant="outline"
-                                                                    className="gap-1 border-red-200 bg-red-50 text-xs text-red-600 dark:bg-red-950/20 dark:text-red-400"
+                                                                    className="gap-1 border-danger/40 bg-danger-soft text-xs text-danger"
                                                                 >
                                                                     <Timer className="h-3 w-3 animate-pulse" />
                                                                     Sedang BD
                                                                 </Badge>
                                                             ) : (
                                                                 <div className="flex items-center gap-1">
-                                                                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                                                    <CheckCircle2 className="h-3 w-3 text-success" />
                                                                     {formatDatetime(
                                                                         log.jam_selesai,
                                                                     )}
@@ -948,7 +1140,7 @@ export default function DowntimeIndex({
                                                                         log.duration_hours &&
                                                                             log.duration_hours >
                                                                                 8
-                                                                            ? 'text-red-600 dark:text-red-400'
+                                                                            ? 'text-danger'
                                                                             : '',
                                                                     )}
                                                                 >
@@ -974,7 +1166,7 @@ export default function DowntimeIndex({
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        className="h-8 gap-1 border-emerald-300 px-2.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400"
+                                                                        className="h-8 gap-1 border-success/40 px-2.5 text-xs text-success hover:bg-success-soft"
                                                                         onClick={() => {
                                                                             setCloseOnlyLog(
                                                                                 log,
@@ -1050,23 +1242,8 @@ export default function DowntimeIndex({
                     </>
                 )}
 
-                {/* ── Info Footer ── */}
-                <div className="rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-                    <p>
-                        <strong className="text-foreground">
-                            S (Service Hours)
-                        </strong>{' '}
-                        = total jam di sini.{' '}
-                        <strong className="text-foreground">
-                            W (Working Hours)
-                        </strong>{' '}
-                        = jumlah shift P2H × 12 jam.{' '}
-                        <strong className="text-foreground">
-                            PA = W / (W + S) × 100%
-                        </strong>
-                        . Lihat hasil di halaman Monitoring PA.
-                    </p>
-                </div>
+                    </>
+                )}
             </div>
 
             {/* ── Dialogs ── */}
@@ -1091,5 +1268,5 @@ export default function DowntimeIndex({
 }
 
 DowntimeIndex.layout = {
-    breadcrumbs: [{ title: 'Downtime Log', href: '/downtime' }],
+    breadcrumbs: [{ title: 'Downtime', href: '/downtime' }],
 };

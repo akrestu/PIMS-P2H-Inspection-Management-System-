@@ -1,33 +1,35 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+@php
+    // Cookie `appearance` tidak dienkripsi — hanya nilai yang dikenal yang dipakai
+    $theme = in_array($appearance ?? 'system', ['light', 'dark', 'hc'], true) ? $appearance : 'system';
+@endphp
+<html lang="id" @if ($theme !== 'system') data-theme="{{ $theme }}" @endif>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Set data-theme / data-motion sebelum paint agar tidak berkedip (docs/01) --}}
         <script>
-            (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
-
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
+            (function () {
+                var root = document.documentElement;
+                var valid = ['light', 'dark', 'hc', 'system'];
+                var theme = '{{ $theme }}';
+                try {
+                    var stored = localStorage.getItem('pims.theme');
+                    if (valid.indexOf(stored) !== -1) theme = stored;
+                    if (localStorage.getItem('pims.motion') === 'reduced') root.dataset.motion = 'reduced';
+                } catch (e) {}
+                if (theme === 'system') {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                 }
+                root.dataset.theme = theme;
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- Latar sebelum CSS termuat --}}
         <style>
-            html {
-                background-color: oklch(1 0 0);
-            }
-
-            html.dark {
-                background-color: oklch(0.145 0 0);
-            }
+            html { background-color: #FFFFFF; }
+            html[data-theme="dark"] { background-color: #0A0A0A; }
         </style>
 
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -36,14 +38,11 @@
         <link rel="shortcut icon" href="/favicon-32.png">
 
         {{-- PWA Meta Tags --}}
-        <meta name="theme-color" content="#1e40af">
+        <meta name="theme-color" content="#0A0A0A">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="PIMS">
-
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

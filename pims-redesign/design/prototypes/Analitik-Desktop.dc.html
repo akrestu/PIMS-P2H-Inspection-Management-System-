@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Analitik unit (desktop)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; position: relative; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="Sidebar" active="Analitik unit" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.025em">Analitik unit</h1><span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">5 minggu terakhir (M38–M42) · Pit A · dari 1.247 P2H</span></div>
+      <button type="button" class="press" onClick="{{ exportIt }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Export</button>
+    </header>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px">
+      <!-- Item rusak -->
+      <section style="border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: baseline; gap: 8px"><strong style="flex: 1; font-size: 15px; font-weight: 600">Item paling sering rusak</strong><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">jumlah temuan</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{ items }}" as="it" hint-placeholder-count="7">
+            <div style="position: relative">
+              <button type="button" onMouseEnter="{{ it.tipIn }}" onMouseLeave="{{ it.tipOut }}" onFocus="{{ it.tipIn }}" onBlur="{{ it.tipOut }}" onClick="{{ it.pick }}" aria-pressed="{{ it.on }}" aria-label="{{ it.aria }}" style="width: 100%; display: grid; grid-template-columns: 236px 1fr 36px; align-items: center; gap: 10px; height: 34px; padding: 0 6px; border: 0; border-radius: 8px; background: {{ it.bg }}; color: var(--foreground); font: inherit; text-align: left">
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; overflow: hidden">{{ it.name }}<sc-if value="{{ it.crit }}" hint-placeholder-val="{{ false }}"><span style="height: 16px; padding: 0 5px; border-radius: 4px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: .03em; display: inline-flex; align-items: center">KRITIS</span></sc-if></span>
+                <span style="height: 14px; display: block"><span class="bar" style="display: block; height: 100%; width: {{ it.w }}%; background: var(--chart-1); border-radius: 0 4px 4px 0"></span></span>
+                <span class="tnum" style="text-align: right; font-size: 13px; font-weight: 600">{{ it.n }}</span>
+              </button>
+              <sc-if value="{{ it.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; left: 246px; bottom: calc(100% - 2px); z-index: 6; max-width: 320px; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; line-height: 17px; box-shadow: var(--shadow-2); pointer-events: none"><strong style="font-weight: 600">{{ it.name }} · {{ it.n }} temuan</strong><br>{{ it.detail }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: var(--muted-foreground)">Klik item untuk memfilter tabel unit di bawah.</span>
+      </section>
+
+      <!-- Tren -->
+      <section style="border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 14px"><strong style="flex: 1; font-size: 15px; font-weight: 600">Tren kerusakan mingguan</strong>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground)"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--danger)"></span>Kritis</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground)"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--chart-1)"></span>Non-kritis</span>
+        </div>
+        <div style="position: relative; height: 200px; margin-left: 24px">
+          <sc-for list="{{ grid }}" as="g" hint-placeholder-count="4"><span style="position: absolute; left: 0; right: 0; bottom: {{ g.y }}px; border-top: 1px dashed var(--border)"></span><span class="tnum" style="position: absolute; left: -24px; bottom: {{ g.y }}px; transform: translateY(50%); font-size: 11px; color: var(--muted-foreground)">{{ g.v }}</span></sc-for>
+          <div style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: end; padding: 0 8px">
+            <sc-for list="{{ trend }}" as="t" hint-placeholder-count="5">
+              <div style="position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end">
+                <button type="button" onMouseEnter="{{ t.tipIn }}" onMouseLeave="{{ t.tipOut }}" onFocus="{{ t.tipIn }}" onBlur="{{ t.tipOut }}" aria-label="{{ t.aria }}" style="position: absolute; inset: 0; border: 0; border-radius: 8px; background: {{ t.hover }}; padding: 0"></button>
+                <span class="tnum" style="position: relative; text-align: center; font-size: 12px; font-weight: 600; padding-bottom: 4px; pointer-events: none">{{ t.total }}</span>
+                <span style="position: relative; display: flex; flex-direction: column; gap: 2px; width: 56%; margin: 0 auto; pointer-events: none">
+                  <span style="height: {{ t.hn }}px; background: var(--chart-1); border-radius: 4px 4px 0 0"></span>
+                  <span style="height: {{ t.hk }}px; background: var(--danger)"></span>
+                </span>
+                <sc-if value="{{ t.tipOn }}" hint-placeholder-val="{{ false }}"><span role="tooltip" class="fade" style="position: absolute; {{ t.side }}: calc(50% + 34px); bottom: {{ t.mid }}px; z-index: 6; padding: 8px 10px; border-radius: 8px; background: #0A0A0A; color: #FAFAFA; font-size: 12px; line-height: 17px; white-space: nowrap; box-shadow: var(--shadow-2); pointer-events: none"><strong style="font-weight: 600">{{ t.full }}</strong><br>{{ t.k }} kritis · {{ t.n }} non-kritis</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div class="tnum" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-left: 24px; padding: 0 8px; border-top: 1px solid var(--chart-ref)">
+          <sc-for list="{{ trend }}" as="t" hint-placeholder-count="5"><span style="text-align: center; font-size: 12px; color: var(--muted-foreground); padding-top: 6px">{{ t.label }}</span></sc-for>
+        </div>
+        <span style="font-size: 12px; color: var(--muted-foreground)">M42 masih berjalan (Sen–Jum). Puncak M41 terkait keterlambatan sparepart hidrolik.</span>
+      </section>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 10px"><strong style="font-size: 15px; font-weight: 600">Unit dengan kerusakan terbanyak</strong>
+        <sc-if value="{{ filterOn }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ clearFilter }}" style="height: 30px; padding: 0 10px; border-radius: 999px; border: 0; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px">{{ filterLabel }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></sc-if>
+      </div>
+      <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 14px">
+        <table style="width: 100%; min-width: 820px; border-collapse: collapse; font-size: 14px">
+          <thead><tr style="background: var(--muted-2); text-align: left; height: 44px">
+            <sc-for list="{{ cols }}" as="h" hint-placeholder-count="5"><th aria-sort="{{ h.aria }}" style="padding: 0 14px; text-align: {{ h.align }}"><button type="button" class="press" onClick="{{ h.sort }}" style="height: 32px; padding: 0 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: {{ h.fg }}; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap">{{ h.label }}<span style="opacity: {{ h.op }}">{{ h.arrow }}</span></button></th></sc-for>
+            <th style="padding: 0 14px; font-size: 12px; font-weight: 600; color: var(--muted-foreground)">Tren 4 minggu</th>
+            <th style="padding: 0 14px"></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ units }}" as="u" hint-placeholder-count="6">
+              <tr style="border-top: 1px solid var(--border); height: 52px">
+                <td style="padding: 0 14px"><strong class="tnum" style="font-weight: 600">{{ u.code }}</strong></td>
+                <td class="tnum" style="padding: 0 14px; text-align: right; font-weight: 600">{{ u.n }}</td>
+                <td class="tnum" style="padding: 0 14px; text-align: right">{{ u.bdTxt }}</td>
+                <td class="tnum" style="padding: 0 14px; text-align: right; color: var(--muted-foreground)">{{ u.mttr }}</td>
+                <td style="padding: 0 14px; color: var(--muted-foreground)">{{ u.top }}</td>
+                <td style="padding: 0 14px"><svg width="80" height="28" viewBox="0 0 80 28" role="img" aria-label="{{ u.trAria }}"><path d="{{ u.d }}" fill="none" stroke="var(--chart-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="{{ u.lx }}" cy="{{ u.ly }}" r="3" fill="var(--chart-2)" stroke="var(--background)" stroke-width="2"/></svg></td>
+                <td style="padding: 0 14px; text-align: right"><a href="RiwayatP2H-Desktop.dc.html" class="press" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input); font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">Riwayat</a></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding: 32px 20px; text-align: center; color: var(--muted-foreground); font-size: 14px">Tidak ada unit dengan item ini dalam periode.</div></sc-if>
+      </div>
+    </section>
+  </main>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: fixed; right: 24px; bottom: 24px; z-index: 50; min-height: 48px; padding: 0 16px; border-radius: 12px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 14px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Manager"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tip: null, item: null, sortKey: 'n', dir: -1, toast: '' }; }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const peran = this.props.peran ?? 'Manager';
+    const raw = [
+      ['Lampu rotary', 14, false, 'Terbanyak di LV (9). 11 kasus sekring putus · rata-rata tutup 1,8 hari.'],
+      ['Wiper & kaca depan', 11, false, 'Musim hujan: 8 kasus di Oktober · karet wiper.'],
+      ['Kebocoran oli / BBM / air', 9, true, 'DT-1045 (3×), DT-1050 (2×) · rata-rata BD 7,5 jam.'],
+      ['Ban & mur roda', 7, true, '5 di Hauling Road · sobek samping.'],
+      ['Rem parkir', 5, true, 'EX-2003 (2×) · penyetelan kabel.'],
+      ['AC kabin', 4, false, 'LV-022, DT-1061 · freon.'],
+      ['Radio komunikasi', 3, false, 'Antena patah · Pit B.']
+    ];
+    const tipOf = (k) => ({ tipOn: s.tip === k, tipIn: () => { if (this.state.tip !== k) this.setState({ tip: k }); }, tipOut: () => { if (this.state.tip === k) this.setState({ tip: null }); } });
+    const items = raw.map(([name, n, crit, detail], i) => ({ name, n, crit, detail, w: (n / 14) * 100, on: s.item === i, bg: s.item === i ? 'var(--muted)' : 'transparent', aria: name + ', ' + n + ' temuan' + (crit ? ', kritis' : ''), pick: () => this.setState({ item: s.item === i ? null : i }), ...tipOf('i' + i) }));
+    const T = [['M38', '14–20 Sep', 4, 10], ['M39', '21–27 Sep', 3, 8], ['M40', '28 Sep–4 Okt', 5, 10], ['M41', '5–11 Okt', 6, 10], ['M42', '12–16 Okt', 3, 5]];
+    const px = 11;
+    const trend = T.map(([label, range, k, n], i) => ({ label, k, n, total: k + n, hk: k * px, hn: n * px, mid: Math.round((k + n) * px / 2), side: i >= 3 ? 'right' : 'left', full: 'Minggu ' + label.slice(1) + ' · ' + range + (i === 4 ? ' (berjalan)' : ''), aria: 'Minggu ' + label.slice(1) + ': ' + k + ' kritis, ' + n + ' non-kritis', hover: s.tip === 't' + i ? 'var(--muted-2)' : 'transparent', ...tipOf('t' + i) }));
+    const grid = [0, 5, 10, 15].map((v) => ({ v, y: v * px }));
+    const spark = (arr) => { const mx = 3; const pts = arr.map((v, i) => [6 + i * (68 / (arr.length - 1)), 24 - (v / mx) * 20]); return { d: 'M' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L'), lx: pts[pts.length - 1][0].toFixed(1), ly: pts[pts.length - 1][1].toFixed(1) }; };
+    const U = [['DT-1045', 6, 18.5, 9.2, 'Kebocoran oli · lampu rotary', [1, 1, 2, 2], [0, 2]], ['EX-2003', 5, 22.0, 11.0, 'Rem parkir · hidrolik', [0, 2, 1, 2], [4, 2]], ['LV-031', 4, 3.0, 1.5, 'Wiper · lampu rotary', [1, 1, 1, 1], [1, 0]], ['DT-1050', 4, 15.5, 7.8, 'Kebocoran oli', [0, 1, 1, 2], [2]], ['LV-022', 3, 9.0, 4.5, 'AC kabin', [2, 0, 1, 0], [5]], ['GR-012', 2, 0, 0, 'Ban', [1, 0, 1, 0], [3]], ['DT-1061', 2, 30.0, 15.0, 'Ban · AC kabin', [0, 0, 1, 1], [3, 5]]];
+    const fmt = (x) => String(x).replace('.', ',');
+    let units = U.filter((u) => s.item == null || u[6].includes(s.item)).map(([code, n, bd, mttr, top, tr]) => ({ code, n, bd, mttrN: mttr, bdTxt: bd ? fmt(bd.toFixed(1)) + ' j' : '—', mttr: mttr ? fmt(mttr.toFixed(1)) + ' j' : '—', top, trAria: 'Kerusakan per minggu: ' + tr.join(', '), ...spark(tr) }));
+    const key = { code: 'code', n: 'n', bd: 'bd', mttr: 'mttrN' };
+    units = units.slice().sort((a, b) => { const A = a[key[s.sortKey]], B = b[key[s.sortKey]]; return (A > B ? 1 : A < B ? -1 : 0) * s.dir; });
+    const cols = [['code', 'Unit', 'left'], ['n', 'Kerusakan', 'right'], ['bd', 'Downtime', 'right'], ['mttr', 'MTTR', 'right'], ['top', 'Item utama', 'left']].map(([k, label, align]) => { const on = s.sortKey === k; const sortable = k !== 'top'; return { label, align, fg: on ? 'var(--foreground)' : 'var(--muted-foreground)', arrow: sortable ? (on ? (s.dir > 0 ? '↑' : '↓') : '↕') : '', op: on ? 1 : 0.35, aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : 'none', sort: () => { if (sortable) this.setState({ sortKey: k, dir: on ? -s.dir : -1 }); } }; });
+    return {
+      theme, peran, items, trend, grid, units, cols, empty: units.length === 0,
+      filterOn: s.item != null, filterLabel: s.item != null ? 'Item: ' + raw[s.item][0] : '', clearFilter: () => this.setState({ item: null }),
+      exportIt: () => { clearTimeout(this.tt); this.setState({ toast: 'Analitik unit M38–M42 diunduh (PDF)' }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); },
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

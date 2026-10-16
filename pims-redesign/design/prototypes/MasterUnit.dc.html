@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Master unit</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 8px 12px; display: flex; flex-direction: column; gap: 10px; border-bottom: var(--bw) solid var(--border)">
+    <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+      <sc-if value="{{ notSelecting }}" hint-placeholder-val="{{ true }}">
+        <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 18px; font-weight: 600">Master unit</span><span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ activeN }} unit · Semua site</span></span>
+        <button type="button" class="press hl" onClick="{{ openImport }}" aria-label="Import Excel" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></button>
+        <button type="button" class="press" onClick="{{ openAdd }}" style="height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Unit</button>
+      </sc-if>
+      <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+        <button type="button" class="press hl" onClick="{{ exitSelect }}" aria-label="Batal pilih" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        <span class="tnum" style="flex: 1; font-size: 20px; font-weight: 600">{{ selCount }} dipilih</span>
+        <button type="button" class="press" onClick="{{ selectAll }}" style="height: 44px; padding: 0 12px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Pilih semua</button>
+      </sc-if>
+    </div>
+    <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 8px; padding: 3px; border-radius: 10px; background: var(--muted)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+        <button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 40px; border: 0; border-radius: 8px; background: {{ t.bg }}; box-shadow: {{ t.shadow }}; color: {{ t.fg }}; font: inherit; font-size: 14px; font-weight: 600"><span class="tnum">{{ t.label }}</span></button>
+      </sc-for>
+    </div>
+    <sc-if value="{{ isActiveTab }}" hint-placeholder-val="{{ true }}">
+      <div class="field" style="display: flex; align-items: center; gap: 10px; height: 46px; margin: 0 8px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input value="{{ q }}" onChange="{{ onQ }}" aria-label="Cari unit" placeholder="Cari kode, jenis, site" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 16px">
+      </div>
+    </sc-if>
+  </header>
+
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: {{ padTop }}px 12px 120px; display: flex; flex-direction: column; gap: 8px">
+    <sc-if value="{{ isTrash }}" hint-placeholder-val="{{ false }}">
+      <span style="padding: 0 4px 6px; font-size: 13px; line-height: 18px; color: var(--muted-foreground)">Item di Sampah terhapus permanen otomatis setelah 30 hari. {{ trashHint }}</span>
+    </sc-if>
+    <sc-for list="{{ rows }}" as="u" hint-placeholder-count="8">
+      <button type="button" class="press" aria-label="{{ u.aria }}" onPointerDown="{{ u.down }}" onPointerUp="{{ u.up }}" onPointerLeave="{{ u.up }}" onClick="{{ u.click }}" style="display: flex; gap: 12px; align-items: center; padding: 12px 14px; min-height: 72px; border-radius: 14px; border: var(--bw) solid {{ u.border }}; background: {{ u.bg }}; color: var(--foreground); font: inherit; text-align: left; width: 100%; user-select: none">
+        <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+          <span style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid {{ u.boxBorder }}; background: {{ u.boxBg }}; color: var(--primary-foreground); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: {{ u.checkOp }}"><path d="M20 6 9 17l-5-5"/></svg></span>
+        </sc-if>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="display: flex; align-items: center; gap: 8px"><strong class="tnum" style="font-size: 16px; font-weight: 600">{{ u.code }}</strong><span style="font-size: 13px; color: var(--muted-foreground)">{{ u.site }}</span></span>
+          <span class="tnum" style="font-size: 13px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ u.sub }}</span>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; background: {{ u.pBg }}; color: {{ u.pFg }}; font-size: 12px; font-weight: 600; flex-shrink: 0"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ u.pill }}</span>
+      </button>
+    </sc-for>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+      <div class="fade" style="position: relative; overflow: hidden; padding: 40px 12px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px">
+        <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -260px; top: -140px; width: 600px; opacity: .3; pointer-events: none">
+        <strong style="position: relative; font-size: 18px; font-weight: 600">{{ emptyTitle }}</strong>
+        <span style="position: relative; font-size: 15px; color: var(--muted-foreground)">{{ emptyText }}</span>
+      </div>
+    </sc-if>
+    <span style="padding: 8px 4px; font-size: 13px; color: var(--muted-foreground)">Tekan lama untuk memilih beberapa unit.</span>
+  </div>
+
+  <!-- bulk bar -->
+  <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+    <div class="toast-in blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; padding: 12px 12px 20px; display: grid; grid-template-columns: {{ bulkCols }}; gap: 8px; border-top: var(--bw) solid var(--border)">
+      <sc-if value="{{ isActiveTab }}" hint-placeholder-val="{{ true }}">
+        <button type="button" class="press" onClick="{{ bulkExport }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; opacity: {{ bulkOp }}">Export</button>
+        <button type="button" class="press" onClick="{{ bulkTrash }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600; opacity: {{ bulkOp }}"><span class="tnum">Hapus {{ selCount }}</span></button>
+      </sc-if>
+      <sc-if value="{{ isTrash }}" hint-placeholder-val="{{ false }}">
+        <button type="button" class="press" onClick="{{ bulkRestore }}" style="height: 52px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600; opacity: {{ bulkOp }}"><span class="tnum">Pulihkan {{ selCount }}</span></button>
+        <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="press" onClick="{{ askPurge }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600; opacity: {{ bulkOp }}">Hapus permanen</button>
+        </sc-if>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- sheets -->
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="sh-t" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 92%; display: flex; flex-direction: column; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3)">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <div style="display: flex; align-items: center; padding: 0 8px 8px 20px"><strong id="sh-t" style="flex: 1; font-size: 20px; font-weight: 600">{{ sheetTitle }}</strong><button type="button" class="press hl" onClick="{{ closeSheet }}" aria-label="Tutup" style="width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+      <div class="noscroll" style="overflow-y: auto; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px">
+
+        <sc-if value="{{ sheetForm }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ fields }}" as="f" hint-placeholder-count="6">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">{{ f.label }}
+              <input value="{{ f.value }}" onChange="{{ f.on }}" inputmode="{{ f.mode }}" placeholder="{{ f.ph }}" class="field" style="height: 52px; padding: 0 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; font-weight: 400; outline: 0">
+            </label>
+          </sc-for>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span id="fs-l" style="font-size: 14px; font-weight: 500">Status</span>
+            <div role="radiogroup" aria-labelledby="fs-l" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted)">
+              <sc-for list="{{ stOpts }}" as="o" hint-placeholder-count="4">
+                <button type="button" role="radio" aria-checked="{{ o.on }}" class="press" onClick="{{ o.pick }}" style="height: 46px; border: 0; border-radius: 9px; background: {{ o.bg }}; box-shadow: {{ o.shadow }}; color: {{ o.fg }}; font: inherit; font-size: 14px; font-weight: 600">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ statusChanged }}" hint-placeholder-val="{{ false }}"><span class="fade" style="font-size: 13px; color: var(--muted-foreground)">Perubahan status dicatat sebagai periode downtime mulai sekarang.</span></sc-if>
+          </div>
+          <button type="button" class="press" onClick="{{ saveUnit }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 16px; font-weight: 600">Simpan</button>
+          <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="press" onClick="{{ trashOne }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--danger); font: inherit; font-size: 15px; font-weight: 600">Pindahkan ke Sampah</button>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ sheetImport }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ imp0 }}" hint-placeholder-val="{{ true }}">
+            <ol style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 24px; color: var(--muted-foreground)"><li>Unduh template dan isi satu unit per baris.</li><li>Pilih file .xlsx (maks 5 MB, 1.000 baris).</li><li>Periksa hasil validasi, lalu impor baris yang valid.</li></ol>
+            <button type="button" class="press" onClick="{{ dlTemplate }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>Unduh template (.xlsx)</button>
+            <button type="button" class="press" onClick="{{ pickFile }}" style="min-height: 140px; border-radius: 14px; border: 1.5px dashed var(--input); background: var(--muted-2); color: var(--foreground); font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>
+              <span style="font-size: 15px; font-weight: 600">Pilih file Excel</span><span style="font-size: 13px; color: var(--muted-foreground)">atau seret ke sini (desktop)</span>
+            </button>
+          </sc-if>
+          <sc-if value="{{ imp1 }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 14px; background: var(--muted-2)">
+              <span style="display: flex; justify-content: space-between; font-size: 14px"><strong style="font-weight: 600">unit-pit-b-okt.xlsx</strong><span class="tnum" style="color: var(--muted-foreground)">{{ impProg }}%</span></span>
+              <span style="height: 6px; border-radius: 3px; background: var(--muted); overflow: hidden"><span class="bar" style="display: block; height: 100%; width: {{ impProg }}%; background: var(--foreground)"></span></span>
+              <span style="font-size: 13px; color: var(--muted-foreground)">Memvalidasi 12 baris…</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ imp2 }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 16px; font-size: 14px"><span class="tnum" style="display: inline-flex; align-items: center; gap: 6px; color: var(--success); font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 9px; background: currentColor"></span>10 valid</span><span class="tnum" style="display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 9px; background: currentColor"></span>2 error</span></div>
+            <div style="display: flex; flex-direction: column">
+              <sc-for list="{{ impRows }}" as="r" hint-placeholder-count="6">
+                <div style="display: grid; grid-template-columns: 30px 1fr; gap: 8px; padding: 10px 0; border-bottom: var(--bw) solid var(--border)">
+                  <span class="tnum mono" style="font-size: 12px; color: var(--muted-foreground); padding-top: 2px">{{ r.n }}</span>
+                  <span style="display: flex; flex-direction: column; gap: 2px"><span style="display: flex; align-items: center; gap: 8px"><strong class="tnum" style="font-size: 14px; font-weight: 600">{{ r.code }}</strong><span style="font-size: 13px; color: var(--muted-foreground)">{{ r.desc }}</span></span>
+                    <sc-if value="{{ r.err }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--danger); font-weight: 500">{{ r.err }}</span></sc-if></span>
+                </div>
+              </sc-for>
+            </div>
+            <button type="button" class="press" onClick="{{ doImport }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 16px; font-weight: 600">Impor 10 baris valid</button>
+            <button type="button" class="press" onClick="{{ dlErrors }}" style="height: 48px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Unduh baris error untuk diperbaiki</button>
+          </sc-if>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- purge confirm -->
+  <sc-if value="{{ purgeOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" style="position: absolute; inset: 0; z-index: 20; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 20px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="pg-t" class="pop" style="width: 100%; padding: 20px; border-radius: 20px; background: var(--background); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 12px">
+        <strong id="pg-t" class="tnum" style="font-size: 18px; font-weight: 600">Hapus permanen {{ selCount }} unit?</strong>
+        <span style="font-size: 15px; line-height: 22px; color: var(--muted-foreground)">Unit tidak bisa dipulihkan. Riwayat P2H tetap tersimpan dengan kode unit. Ketik <strong class="mono" style="color: var(--foreground)">HAPUS</strong> untuk konfirmasi.</span>
+        <input value="{{ purgeText }}" onChange="{{ onPurge }}" aria-label="Ketik HAPUS" autocomplete="off" class="field mono" style="height: 48px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font-size: 16px; outline: 0">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <button type="button" class="press" onClick="{{ cancelPurge }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+          <button type="button" class="press" onClick="{{ doPurge }}" aria-disabled="{{ purgeLocked }}" style="height: 52px; border: 0; border-radius: 12px; background: {{ purgeBg }}; color: {{ purgeFg }}; font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap">Hapus permanen</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: {{ toastBottom }}px; z-index: 22; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <span style="flex: 1">{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const U = (code, type, model, site, hm, status, cl, appr, del) => ({ code, type, model, site, hm, status, cl, appr, del: del || '' });
+    this.state = {
+      units: [
+        U('DT-1045', 'Dump Truck', 'HD 90 t', 'Pit A', '12.481,0', 'Ready', 'Dump Truck', ''), U('DT-1050', 'Dump Truck', 'HD 90 t', 'Pit A', '9.812,0', 'BD', 'Dump Truck', ''),
+        U('DT-1022', 'Dump Truck', 'HD 90 t', 'Pit A', '11.902,4', 'Ready', 'Dump Truck', ''), U('EX-2001', 'Excavator', '200 t', 'Pit A', '18.330,0', 'Ready', 'Excavator', ''),
+        U('EX-2003', 'Excavator', '200 t', 'Pit A', '15.204,5', 'BD', 'Excavator', ''), U('LV-031', 'Light Vehicle', '4×4 double cabin', 'Pit A', '4.110,2', 'Ready', 'Light Vehicle', 'Hendra W.'),
+        U('GR-012', 'Motor Grader', '16 ft', 'Hauling Road', '7.022,6', 'PM', 'Grader', ''), U('WT-007', 'Water Truck', '20 kL', 'Pit B', '8.904,1', 'Ready', 'Water Truck', ''),
+        U('DT-1061', 'Dump Truck', 'HD 90 t', 'Pit B', '10.552,3', 'Servis', 'Dump Truck', ''), U('LV-022', 'Light Vehicle', '4×4 single cabin', 'Pit B', '6.310,0', 'Servis', 'Light Vehicle', 'Rina A.'),
+        U('DT-0998', 'Dump Truck', 'HD 90 t', 'Pit A', '21.004,0', 'Ready', 'Dump Truck', '', '12 Okt · Rina A.'), U('LV-015', 'Light Vehicle', '4×4 double cabin', 'Pit B', '15.800,7', 'Ready', 'Light Vehicle', '', '9 Okt · Hendra W.')
+      ],
+      tab: 'aktif', q: '', selecting: false, sel: {}, sheet: null, editCode: null, form: {}, imp: 0, impProg: 0, purge: false, purgeText: '', toast: null
+    };
+  }
+  componentWillUnmount() { clearTimeout(this.lp); clearTimeout(this.tt); clearInterval(this.it); }
+  buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const isAdmin = (this.props.peran ?? 'Admin') === 'Admin';
+    const active = s.units.filter((u) => !u.del), trash = s.units.filter((u) => u.del);
+    const isTrash = s.tab === 'sampah';
+    const q = s.q.trim().toLowerCase();
+    const list = (isTrash ? trash : active).filter((u) => !q || isTrash || (u.code + u.type + u.site).toLowerCase().includes(q));
+    const kind = (st) => st === 'Ready' ? 'success' : (st === 'BD' ? 'danger' : 'info');
+    const selCodes = Object.keys(s.sel).filter((k) => s.sel[k] && list.find((u) => u.code === k));
+    const rows = list.map((u) => {
+      const sel = !!s.sel[u.code];
+      return {
+        ...u, sub: isTrash ? 'Dihapus ' + u.del : u.type + ' ' + u.model + ' · HM ' + u.hm + (u.appr ? ' · approver ' + u.appr : ''),
+        pill: isTrash ? 'Sampah' : u.status, pBg: isTrash ? 'var(--muted)' : 'var(--' + kind(u.status) + '-soft)', pFg: isTrash ? 'var(--muted-foreground)' : 'var(--' + kind(u.status) + ')',
+        aria: u.code + ', ' + u.type + ', ' + u.site + (isTrash ? ', di Sampah' : ', ' + u.status),
+        bg: sel ? 'var(--brand-soft)' : 'var(--card)', border: sel ? 'var(--foreground)' : 'var(--border)',
+        boxBorder: sel ? 'var(--foreground)' : 'var(--input)', boxBg: sel ? 'var(--foreground)' : 'transparent', checkOp: sel ? 1 : 0,
+        down: () => { this.lpf = false; clearTimeout(this.lp); this.lp = setTimeout(() => { this.lpf = true; this.buzz(15); this.setState({ selecting: true, sel: { ...this.state.sel, [u.code]: true } }); }, 450); },
+        up: () => clearTimeout(this.lp),
+        click: () => {
+          if (this.lpf) { this.lpf = false; return; }
+          if (this.state.selecting) { this.setState({ sel: { ...this.state.sel, [u.code]: !this.state.sel[u.code] } }); return; }
+          if (isTrash) { this.setState({ selecting: true, sel: { [u.code]: true } }); return; }
+          this.setState({ sheet: 'edit', editCode: u.code, form: { ...u } });
+        }
+      };
+    });
+    const F = s.form || {};
+    const setF = (k) => (e) => this.setState({ form: { ...this.state.form, [k]: e.target.value } });
+    const fields = [['code', 'Kode unit', 'text', 'DT-1100'], ['type', 'Jenis', 'text', 'Dump Truck'], ['model', 'Merek / model', 'text', 'HD 90 t'], ['site', 'Site', 'text', 'Pit A'], ['hm', 'HM saat ini', 'decimal', '0'], ['cl', 'Tipe checklist P2H', 'text', 'Dump Truck'], ['appr', 'Approver LV (opsional)', 'text', 'Nama pengawas']].map(([k, label, mode, ph]) => ({ label, mode, ph, value: F[k] || '', on: setF(k) }));
+    const orig = s.units.find((u) => u.code === s.editCode);
+    const stOpts = ['Ready', 'BD', 'PM', 'Servis'].map((x) => ({ label: x, on: F.status === x, bg: F.status === x ? 'var(--card)' : 'transparent', shadow: F.status === x ? 'var(--shadow-2)' : 'none', fg: F.status === x ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ form: { ...this.state.form, status: x } }) }));
+    const impRows = [
+      { n: 2, code: 'DT-1101', desc: 'Dump Truck · Pit B', err: '' }, { n: 3, code: 'DT-1102', desc: 'Dump Truck · Pit B', err: '' },
+      { n: 4, code: 'DT-1045', desc: 'Dump Truck · Pit A', err: 'Kode unit sudah terdaftar' }, { n: 5, code: 'EX-2010', desc: 'Excavator · Pit B', err: '' },
+      { n: 6, code: 'LV-041', desc: 'Light Vehicle · —', err: 'Site wajib diisi' }, { n: 7, code: 'WT-009', desc: 'Water Truck · Pit B', err: '' }
+    ];
+    const toastOn = !!s.toast;
+    const trashUndo = (codes, prevUnits) => () => this.setState({ units: prevUnits });
+    return {
+      theme, isAdmin, activeN: active.length,
+      tabs: [['aktif', 'Aktif · ' + active.length], ['sampah', 'Sampah · ' + trash.length]].map(([k, label]) => ({ label, on: s.tab === k, bg: s.tab === k ? 'var(--card)' : 'transparent', shadow: s.tab === k ? 'var(--shadow-2)' : 'none', fg: s.tab === k ? 'var(--foreground)' : 'var(--muted-foreground)', pick: () => this.setState({ tab: k, selecting: false, sel: {} }) })),
+      isActiveTab: !isTrash, isTrash, padTop: isTrash ? 132 : 184, trashHint: isAdmin ? 'Admin bisa menghapus permanen.' : 'Hapus permanen hanya oleh Admin.',
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value }),
+      rows, empty: rows.length === 0, emptyTitle: isTrash ? 'Sampah kosong' : 'Unit tidak ditemukan', emptyText: isTrash ? 'Unit yang dihapus akan muncul di sini selama 30 hari.' : 'Coba kata kunci lain atau tambah unit baru.',
+      selecting: s.selecting, notSelecting: !s.selecting, selCount: selCodes.length, bulkOp: selCodes.length ? 1 : 0.4,
+      bulkCols: isTrash && isAdmin ? '1fr 1fr' : (isTrash ? '1fr' : '1fr 1fr'),
+      exitSelect: () => this.setState({ selecting: false, sel: {} }),
+      selectAll: () => { const sel = {}; list.forEach((u) => { sel[u.code] = true; }); this.setState({ sel }); },
+      bulkExport: () => this.toast('Export ' + selCodes.length + ' unit ke Excel'),
+      bulkTrash: () => { if (!selCodes.length) return; const prev = s.units; this.setState({ units: prev.map((u) => selCodes.includes(u.code) ? { ...u, del: 'hari ini · Anda' } : u), selecting: false, sel: {} }); this.toast(selCodes.length + ' unit dipindah ke Sampah', trashUndo(selCodes, prev)); },
+      bulkRestore: () => { if (!selCodes.length) return; const prev = s.units; this.setState({ units: prev.map((u) => selCodes.includes(u.code) ? { ...u, del: '' } : u), selecting: false, sel: {} }); this.toast(selCodes.length + ' unit dipulihkan', trashUndo(selCodes, prev)); },
+      askPurge: () => { if (selCodes.length) this.setState({ purge: true, purgeText: '' }); },
+      purgeOn: s.purge, purgeText: s.purgeText, onPurge: (e) => this.setState({ purgeText: e.target.value }),
+      purgeLocked: s.purgeText.trim().toUpperCase() !== 'HAPUS',
+      purgeBg: s.purgeText.trim().toUpperCase() === 'HAPUS' ? '#DC2626' : 'var(--muted)', purgeFg: s.purgeText.trim().toUpperCase() === 'HAPUS' ? '#FFFFFF' : 'var(--muted-foreground)',
+      cancelPurge: () => this.setState({ purge: false }),
+      doPurge: () => { if (s.purgeText.trim().toUpperCase() !== 'HAPUS') { this.buzz([20, 40, 20]); return; } this.setState({ units: s.units.filter((u) => !selCodes.includes(u.code)), purge: false, selecting: false, sel: {} }); this.toast(selCodes.length + ' unit dihapus permanen · tercatat di Audit Log'); },
+      sheetOn: !!s.sheet, sheetForm: s.sheet === 'edit' || s.sheet === 'add', sheetImport: s.sheet === 'import', isEdit: s.sheet === 'edit',
+      sheetTitle: { edit: 'Ubah ' + (s.editCode || ''), add: 'Tambah unit', import: 'Import unit dari Excel' }[s.sheet] || '',
+      closeSheet: () => { clearInterval(this.it); this.setState({ sheet: null }); },
+      openAdd: () => this.setState({ sheet: 'add', editCode: null, form: { status: 'Ready', site: 'Pit A' } }),
+      fields, stOpts, statusChanged: s.sheet === 'edit' && orig && F.status !== orig.status,
+      saveUnit: () => {
+        if (!F.code) { this.buzz([20, 40, 20]); this.toast('Kode unit wajib diisi'); return; }
+        const prev = s.units;
+        const units = s.sheet === 'edit' ? prev.map((u) => u.code === s.editCode ? { ...u, ...F } : u) : [{ type: '', model: '', hm: '0', cl: '', appr: '', del: '', ...F }].concat(prev);
+        this.setState({ units, sheet: null });
+        this.toast(s.sheet === 'edit' ? F.code + ' disimpan' : F.code + ' ditambahkan', () => this.setState({ units: prev }));
+      },
+      trashOne: () => { const prev = s.units; this.setState({ units: prev.map((u) => u.code === s.editCode ? { ...u, del: 'hari ini · Anda' } : u), sheet: null }); this.toast(s.editCode + ' dipindah ke Sampah', () => this.setState({ units: prev })); },
+      openImport: () => this.setState({ sheet: 'import', imp: 0, impProg: 0 }),
+      imp0: s.imp === 0, imp1: s.imp === 1, imp2: s.imp === 2, impProg: s.impProg, impRows,
+      dlTemplate: () => this.toast('template-unit-pims.xlsx diunduh'),
+      pickFile: () => { this.setState({ imp: 1, impProg: 0 }); clearInterval(this.it); this.it = setInterval(() => { const p = this.state.impProg + 14; if (p >= 100) { clearInterval(this.it); this.setState({ imp: 2, impProg: 100 }); } else this.setState({ impProg: p }); }, 140); },
+      doImport: () => {
+        const prev = s.units;
+        const add = ['DT-1101', 'DT-1102', 'EX-2010', 'WT-009', 'DT-1103', 'DT-1104', 'LV-042', 'LV-043', 'DZ-022', 'GR-014'].map((c) => ({ code: c, type: c.startsWith('DT') ? 'Dump Truck' : c.startsWith('EX') ? 'Excavator' : c.startsWith('LV') ? 'Light Vehicle' : c.startsWith('WT') ? 'Water Truck' : c.startsWith('DZ') ? 'Dozer' : 'Motor Grader', model: '—', site: 'Pit B', hm: '0,0', status: 'Ready', cl: '', appr: '', del: '' }));
+        this.setState({ units: add.concat(prev), sheet: null });
+        this.toast('10 unit diimpor · 2 baris dilewati', () => this.setState({ units: prev }));
+      },
+      dlErrors: () => this.toast('error-import-unit.xlsx diunduh (2 baris)'),
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo, toastBottom: s.selecting ? 100 : 24,
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

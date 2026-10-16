@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Temuan unit</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <!-- ============ LIST ============ -->
+  <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+    <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 8px 8px 12px 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: var(--bw) solid var(--border)">
+      <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+        <sc-if value="{{ notSelecting }}" hint-placeholder-val="{{ true }}">
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+            <span style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Temuan</span>
+            <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ openN }} open · {{ overN }} lewat tenggat · Pit A</span>
+          </span>
+          <button type="button" class="press" onClick="{{ startSelect }}" style="height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Pilih</button>
+        </sc-if>
+        <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="press hl" onClick="{{ exitSelect }}" aria-label="Batal pilih" style="width: 48px; height: 48px; margin-left: -12px; border: 0; border-radius: 12px; background: transparent; color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+          <span class="tnum" style="flex: 1; font-size: 20px; font-weight: 600">{{ selCount }} dipilih</span>
+        </sc-if>
+      </div>
+      <div class="noscroll" style="display: flex; gap: 8px; overflow-x: auto; margin-left: -4px; padding: 0 12px 0 4px">
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+          <button type="button" class="press" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 999px; border: var(--bw) solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px">{{ c.label }}<span class="tnum" style="font-weight: 600; opacity: .7">{{ c.n }}</span></button>
+        </sc-for>
+      </div>
+    </header>
+    <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 140px 12px 120px; display: flex; flex-direction: column; gap: 8px">
+      <sc-for list="{{ items }}" as="f" hint-placeholder-count="5">
+        <button type="button" class="press" aria-label="{{ f.aria }}" onPointerDown="{{ f.down }}" onPointerUp="{{ f.up }}" onPointerLeave="{{ f.cancel }}" onClick="{{ f.kb }}" style="display: flex; gap: 12px; padding: 12px; border-radius: 16px; border: var(--bw) solid {{ f.border }}; background: {{ f.bg }}; color: var(--foreground); font: inherit; text-align: left; user-select: none; width: 100%">
+          <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+            <span style="width: 22px; height: 22px; margin-top: 2px; border-radius: 6px; border: 2px solid {{ f.boxBorder }}; background: {{ f.boxBg }}; color: var(--primary-foreground); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: {{ f.checkOp }}"><path d="M20 6 9 17l-5-5"/></svg></span>
+          </sc-if>
+          <img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="" style="width: 64px; height: 64px; border-radius: 10px; object-fit: cover; object-position: {{ f.pos }}; flex-shrink: 0; filter: {{ f.imgFilter }}">
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground)"><span class="mono">{{ f.id }}</span>·<span class="tnum" style="font-weight: 600; color: var(--foreground)">{{ f.unit }}</span>
+              <sc-if value="{{ f.crit }}" hint-placeholder-val="{{ false }}"><span style="margin-left: auto; height: 20px; padding: 0 6px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: .05em; display: inline-flex; align-items: center">KRITIS</span></sc-if>
+            </span>
+            <span style="font-size: 15px; font-weight: 600; line-height: 20px; text-decoration: {{ f.strike }}">{{ f.title }}</span>
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 13px">
+              <span style="width: 22px; height: 22px; border-radius: 999px; background: var(--muted); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{ f.pjInit }}</span>
+              <span style="color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1">{{ f.pj }}</span>
+              <span class="tnum" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: {{ f.dueFg }}; white-space: nowrap">
+                <sc-if value="{{ f.over }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></sc-if>{{ f.due }}
+              </span>
+            </span>
+          </span>
+        </button>
+      </sc-for>
+      <sc-if value="{{ none }}" hint-placeholder-val="{{ false }}">
+        <div class="fade" style="position: relative; overflow: hidden; padding: 40px 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px">
+          <img src="/_blob/ec1baa1cd17fc9c8800a961028ef0ee3" alt="" aria-hidden="true" style="position: absolute; right: -260px; top: -140px; width: 600px; opacity: .3; pointer-events: none">
+          <strong style="position: relative; font-size: 18px; font-weight: 600">Tidak ada temuan di sini</strong>
+          <span style="position: relative; font-size: 15px; color: var(--muted-foreground)">Ganti filter untuk melihat temuan lain.</span>
+        </div>
+      </sc-if>
+      <span style="padding: 8px 4px; font-size: 13px; color: var(--muted-foreground)">Tekan lama kartu untuk memilih beberapa temuan.</span>
+    </div>
+    <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+      <div class="toast-in blurbar" style="position: absolute; left: 0; right: 0; bottom: 84px; z-index: 7; padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; border-top: var(--bw) solid var(--border)">
+        <button type="button" class="press" onClick="{{ bulkAssign }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; opacity: {{ bulkOp }}">Tugaskan</button>
+        <button type="button" class="press" onClick="{{ bulkDue }}" style="height: 52px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600; opacity: {{ bulkOp }}">Tenggat</button>
+        <button type="button" class="press" onClick="{{ bulkClose }}" style="height: 52px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; opacity: {{ bulkOp }}"><span class="tnum">Tutup {{ selCount }}</span></button>
+      </div>
+    </sc-if>
+    <nav aria-label="Navigasi utama" class="blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; height: 84px; padding: 4px 4px 12px; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; border-top: var(--bw) solid var(--border)">
+      <a href="Dashboard.dc.html" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Beranda</a>
+      <a href="Monitoring.dc.html" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>Monitoring</a>
+      <a href="Temuan.dc.html" aria-current="page" class="press" style="position: relative; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--foreground); font-size: 12px; font-weight: 600"><span style="position: absolute; top: 0; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--brand)"></span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Temuan</a>
+      <a href="Persetujuan.dc.html" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><span style="position: relative; display: flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><span class="tnum" style="position: absolute; top: -4px; right: -9px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--background)">5</span></span>Persetujuan</a>
+      <a href="Dashboard.dc.html" class="press" style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: var(--muted-foreground); font-size: 12px; font-weight: 500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>Lainnya</a>
+    </nav>
+  </sc-if>
+
+  <!-- ============ DETAIL ============ -->
+  <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+    <div class="noscroll fade" style="flex: 1; overflow-y: auto; padding-bottom: 112px">
+      <div style="position: relative; height: 232px; background: #18181B">
+        <img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="Foto temuan {{ d.title }}" style="width: 100%; height: 100%; object-fit: cover; object-position: {{ d.pos }}">
+        <button type="button" class="press" onClick="{{ back }}" aria-label="Kembali ke daftar temuan" style="position: absolute; left: 12px; top: 12px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: rgba(255,255,255,.92); color: #0A0A0A; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
+        <span class="tnum" style="position: absolute; right: 12px; bottom: 12px; height: 28px; padding: 0 10px; border-radius: 999px; background: rgba(10,10,10,.7); color: #fff; font-size: 12px; display: inline-flex; align-items: center">1 / {{ d.photos }}</span>
+      </div>
+      <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 22px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted-foreground)"><span class="mono">{{ d.id }}</span>· Pit A</span>
+          <h1 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em">{{ d.title }}</h1>
+          <span style="display: flex; gap: 6px; flex-wrap: wrap">
+            <span style="display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; background: {{ d.stBg }}; color: {{ d.stFg }}; font-size: 13px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 9px; background: currentColor"></span>{{ d.status }}</span>
+            <sc-if value="{{ d.crit }}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: .05em"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>KRITIS · unit BD</span></sc-if>
+          </span>
+        </div>
+        <section style="display: flex; flex-direction: column">
+          <sc-for list="{{ d.rows }}" as="r" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; min-height: 48px; border-bottom: var(--bw) solid var(--border)">
+              <span style="width: 120px; font-size: 14px; color: var(--muted-foreground)">{{ r.k }}</span>
+              <span class="tnum" style="flex: 1; font-size: 15px; font-weight: 500; color: {{ r.fg }}">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </section>
+        <section style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; color: var(--muted-foreground)">Catatan driver</span>
+          <p style="margin: 0; font-size: 16px; line-height: 24px">{{ d.note }}</p>
+        </section>
+
+        <section aria-labelledby="ai-h" style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 16px; background: var(--muted-2); border: var(--bw) solid var(--border)">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="width: 32px; height: 32px; border-radius: 10px; background: var(--brand); color: #0A0A0A; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
+            <h2 id="ai-h" style="flex: 1; margin: 0; font-size: 16px; font-weight: 600">Saran perbaikan AI</h2>
+            <sc-if value="{{ aiDone }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ copyAi }}" style="height: 40px; padding: 0 12px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 600">Salin</button></sc-if>
+          </div>
+          <sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground)">Buat langkah perbaikan dari catatan, foto, dan riwayat unit ini.</span>
+            <button type="button" class="press" onClick="{{ runAi }}" style="height: 48px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Buat saran</button>
+          </sc-if>
+          <sc-if value="{{ aiThinking }}" hint-placeholder-val="{{ false }}">
+            <div aria-busy="true" style="display: flex; flex-direction: column; gap: 8px"><span class="skeleton" style="width: 90%; height: 12px"></span><span class="skeleton" style="width: 75%; height: 12px"></span><span class="skeleton" style="width: 82%; height: 12px"></span></div>
+          </sc-if>
+          <sc-if value="{{ aiShow }}" hint-placeholder-val="{{ false }}">
+            <p aria-live="polite" style="margin: 0; font-size: 15px; line-height: 23px; white-space: pre-line">{{ aiText }}<span class="pulse" style="display: inline-block; width: 7px; height: 16px; margin-left: 2px; vertical-align: -2px; background: var(--foreground); opacity: {{ caretOp }}"></span></p>
+            <span style="font-size: 12px; color: var(--muted-foreground)">Saran AI · wajib diverifikasi mekanik sebelum dikerjakan.</span>
+          </sc-if>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 10px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600">Aktivitas</h2>
+          <sc-for list="{{ d.log }}" as="l" hint-placeholder-count="3">
+            <div style="display: flex; gap: 10px">
+              <span style="width: 28px; height: 28px; border-radius: 999px; background: var(--muted); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{ l.init }}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 20px"><span><strong style="font-weight: 600">{{ l.who }}</strong> <span style="color: var(--muted-foreground)">{{ l.what }}</span></span><span class="tnum" style="font-size: 12px; color: var(--muted-foreground)">{{ l.when }}</span></span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </div>
+    <sc-if value="{{ d.isOpen }}" hint-placeholder-val="{{ true }}">
+      <div class="blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; padding: 12px 16px 20px; display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; border-top: var(--bw) solid var(--border)">
+        <button type="button" class="press" onClick="{{ bulkAssign }}" style="height: 56px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; font-weight: 600">Ubah</button>
+        <button type="button" class="press" onClick="{{ openClose }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 16px; font-weight: 600">Tutup temuan</button>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <!-- ============ CLOSE SHEET ============ -->
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div class="fade" aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: var(--scrim)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="cl-t" class="sheet-in" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; gap: 16px; padding: 0 20px 20px; background: var(--background); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-3)">
+      <div style="height: 24px; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 5px; border-radius: 5px; background: var(--input)"></span></div>
+      <strong id="cl-t" style="font-size: 20px; font-weight: 600; letter-spacing: -0.015em">{{ closeTitle }}</strong>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 500">Foto penutupan <span style="color: var(--danger)">*</span></span>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <sc-if value="{{ photoEmpty }}" hint-placeholder-val="{{ true }}">
+            <button type="button" class="press" onClick="{{ takePhoto }}" style="width: 96px; height: 96px; border-radius: 12px; border: 1.5px dashed var(--input); background: var(--muted-2); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>Ambil foto</button>
+          </sc-if>
+          <sc-if value="{{ photoHas }}" hint-placeholder-val="{{ false }}">
+            <span class="pop" style="position: relative; width: 96px; height: 96px; border-radius: 12px; overflow: hidden; background: #18181B"><img src="/_blob/e92b866e0b4736a0e20bfce633c4cee5" alt="Foto penutupan" style="width: 100%; height: 100%; object-fit: cover; object-position: 20% 50%"><sc-if value="{{ photoUp }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 8px; right: 8px; bottom: 8px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.3); overflow: hidden"><span style="display: block; height: 100%; width: {{ photoProg }}%; background: #F4D435"></span></span></sc-if></span>
+          </sc-if>
+          <span style="flex: 1; font-size: 13px; line-height: 18px; color: var(--muted-foreground)">Foto kondisi setelah diperbaiki, dari sudut yang sama dengan foto temuan.</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="cl-note" style="font-size: 14px; font-weight: 500">Tindakan perbaikan <span style="color: var(--danger)">*</span></label>
+        <textarea id="cl-note" value="{{ closeNote }}" onChange="{{ onCloseNote }}" rows="2" placeholder="Contoh: ganti selang hidrolik boom kiri, uji tekanan OK" class="field" style="min-height: 80px; padding: 12px 14px; border-radius: 10px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; resize: none; outline: 0"></textarea>
+      </div>
+      <sc-if value="{{ closeCrit }}" hint-placeholder-val="{{ false }}">
+        <span style="display: flex; gap: 8px; font-size: 13px; line-height: 18px; color: var(--muted-foreground)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Unit kembali Ready setelah P2H berikutnya Layak Pakai.</span>
+      </sc-if>
+      <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px">
+        <button type="button" class="press" onClick="{{ closeSheet }}" style="height: 56px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Batal</button>
+        <button type="button" class="press" onClick="{{ confirmClose }}" aria-disabled="{{ closeDisabled }}" style="height: 56px; border: 0; border-radius: 12px; background: {{ closeBg }}; color: {{ closeFg }}; font: inherit; font-size: 16px; font-weight: 600">{{ closeCta }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: {{ toastBottom }}px; z-index: 12; min-height: 52px; padding: 6px 6px 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: var(--shadow-3)">
+      <span style="flex: 1">{{ toastText }}</span>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ doUndo }}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: #F4D435; font: inherit; font-size: 15px; font-weight: 600">Urungkan</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.ALL = [
+      { id: 'T-0235', unit: 'EX-2003', title: 'Rem parkir tidak menahan unit', crit: true, pj: 'Yanto · Mekanik', pjInit: 'YA', due: 'Hari ini 18:00', over: false, pos: '15% 70%', found: 'P2H 16 Okt · Shift 1 · Dedi K.', note: 'Unit bergeser di tanjakan ringan saat rem parkir aktif. Tuas terasa longgar.', st: 'open' },
+      { id: 'T-0231', unit: 'DT-1045', title: 'Rembesan oli di selang hidrolik', crit: true, pj: 'Yanto · Mekanik', pjInit: 'YA', due: 'Lewat 1 hari', over: true, pos: '30% 70%', found: 'P2H 14 Okt · Shift 1 · Budi S.', note: 'Rembesan di sambungan selang hidrolik sisi kiri, tetesan di bawah unit setelah parkir 10 menit.', st: 'open' },
+      { id: 'T-0226', unit: 'LV-031', title: 'Karet wiper sobek', crit: false, pj: 'Wahyu · Elektrik', pjInit: 'WA', due: 'Lewat 2 hari', over: true, pos: '60% 20%', found: 'P2H 13 Okt · Shift 1 · Andi P.', note: 'Karet wiper kanan sobek, sapuan meninggalkan garis.', st: 'open' },
+      { id: 'T-0219', unit: 'LV-022', title: 'AC kabin tidak dingin', crit: false, pj: 'Wahyu · Elektrik', pjInit: 'WA', due: 'Lewat 4 hari', over: true, pos: '75% 35%', found: 'P2H 11 Okt · Shift 2 · Sari M.', note: 'AC menyala tapi tidak dingin setelah 15 menit.', st: 'open' },
+      { id: 'T-0228', unit: 'DT-1045', title: 'Lampu rotary tidak menyala', crit: false, pj: 'Wahyu · Elektrik', pjInit: 'WA', due: '18 Okt', over: false, pos: '78% 40%', found: 'P2H 15 Okt · Shift 1 · Budi S.', note: 'Lampu rotary mati, kemungkinan sekring putus.', st: 'open' },
+      { id: 'T-0210', unit: 'DT-1022', title: 'Spion kiri retak', crit: false, pj: 'Tim Body', pjInit: 'TB', due: 'Ditutup 14 Okt', over: false, pos: '45% 60%', found: 'P2H 10 Okt · Shift 1 · Rudi H.', note: 'Kaca spion kiri retak memanjang.', st: 'closed' }
+    ];
+    this.AI = {
+      'T-0231': 'Kemungkinan penyebab: O-ring sambungan selang aus atau klem kendor.\n\n1. Bersihkan area, nyalakan unit, tandai titik rembes.\n2. Kencangkan fitting sesuai torsi spesifikasi; jika tetap rembes, ganti O-ring.\n3. Bila selang retak/menggelembung, ganti selang (kode part di katalog unit).\n4. Isi ulang oli hidrolik ke level normal, uji gerakan boom 5 siklus.\n\nRiwayat: temuan serupa pada DT-1045 bulan Juli (T-0142).',
+      'default': 'Langkah yang disarankan:\n\n1. Verifikasi kerusakan di lokasi bersama driver.\n2. Siapkan part pengganti sesuai katalog unit.\n3. Lakukan perbaikan dan uji fungsi.\n4. Ambil foto setelah perbaikan dari sudut yang sama.'
+    };
+    this.state = { st: {}, filter: 'open', screen: 'list', cur: 'T-0231', selecting: false, sel: {}, ai: 'idle', aiN: 0, sheet: false, photo: 'empty', prog: 0, closeNote: '', bulkIds: null, toast: null };
+  }
+  componentWillUnmount() { clearTimeout(this.lp); clearTimeout(this.tt); clearInterval(this.aiT); clearInterval(this.upT); }
+  buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+  toast(text, undo) { clearTimeout(this.tt); this.setState({ toast: { text, undo } }); this.tt = setTimeout(() => this.setState({ toast: null }), undo ? 5000 : 2600); }
+  stOf(f) { return this.state.st[f.id] || f.st; }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const all = this.ALL.map((f) => ({ ...f, st: this.stOf(f) }));
+    const open = all.filter((f) => f.st === 'open');
+    const counts = { open: open.length, over: open.filter((f) => f.over).length, closed: all.filter((f) => f.st === 'closed').length, semua: all.length };
+    const chips = [['open', 'Open'], ['over', 'Lewat tenggat'], ['closed', 'Closed'], ['semua', 'Semua']].map(([k, label]) => { const on = s.filter === k; return { label, n: counts[k], on, bg: on ? 'var(--primary)' : 'var(--background)', fg: on ? 'var(--primary-foreground)' : 'var(--foreground)', border: on ? 'var(--primary)' : 'var(--input)', pick: () => this.setState({ filter: k }) }; });
+    const list = all.filter((f) => s.filter === 'semua' || (s.filter === 'open' && f.st === 'open') || (s.filter === 'over' && f.st === 'open' && f.over) || (s.filter === 'closed' && f.st === 'closed'));
+    const selIds = Object.keys(s.sel).filter((k) => s.sel[k]);
+    const items = list.map((f) => {
+      const selected = !!s.sel[f.id]; const closed = f.st === 'closed';
+      return {
+        ...f, aria: f.id + ' ' + f.unit + ', ' + f.title + (f.crit ? ', kritis' : '') + ', ' + f.due,
+        dueFg: closed ? 'var(--success)' : (f.over ? 'var(--warning)' : 'var(--muted-foreground)'), due: closed && !f.due.startsWith('Ditutup') ? 'Ditutup hari ini' : f.due,
+        strike: 'none', imgFilter: closed ? 'grayscale(1)' : 'none',
+        bg: selected ? 'var(--brand-soft)' : 'var(--card)', border: selected ? 'var(--foreground)' : 'var(--border)',
+        boxBorder: selected ? 'var(--foreground)' : 'var(--input)', boxBg: selected ? 'var(--foreground)' : 'transparent', checkOp: selected ? 1 : 0,
+        down: () => { this.lpFired = false; clearTimeout(this.lp); this.lp = setTimeout(() => { this.lpFired = true; this.buzz(15); this.setState({ selecting: true, sel: { ...this.state.sel, [f.id]: true } }); }, 450); },
+        cancel: () => clearTimeout(this.lp),
+        up: () => { clearTimeout(this.lp); },
+        kb: () => {
+          if (this.lpFired) { this.lpFired = false; return; }
+          if (this.state.selecting) { this.setState({ sel: { ...this.state.sel, [f.id]: !this.state.sel[f.id] } }); return; }
+          clearInterval(this.aiT);
+          this.setState({ screen: 'detail', cur: f.id, ai: 'idle', aiN: 0 });
+        }
+      };
+    });
+    const cur = all.find((f) => f.id === s.cur) || all[0];
+    const curOpen = cur.st === 'open';
+    const d = {
+      ...cur, isOpen: curOpen, photos: 2,
+      status: curOpen ? (cur.over ? 'Open · lewat tenggat' : 'Open') : 'Closed',
+      stBg: curOpen ? 'var(--warning-soft)' : 'var(--success-soft)', stFg: curOpen ? 'var(--warning)' : 'var(--success)',
+      crit: cur.crit && curOpen,
+      rows: [
+        { k: 'Unit', v: cur.unit + ' · ' + (cur.crit && curOpen ? 'BD' : 'Ready'), fg: 'var(--foreground)' },
+        { k: 'Ditemukan', v: cur.found, fg: 'var(--foreground)' },
+        { k: 'PJ', v: cur.pj, fg: 'var(--foreground)' },
+        { k: 'Tenggat', v: curOpen ? cur.due : (cur.due.startsWith('Ditutup') ? cur.due : 'Ditutup hari ini'), fg: cur.over && curOpen ? 'var(--warning)' : 'var(--foreground)' }
+      ],
+      log: [
+        { init: 'SY', who: 'Sistem', what: 'membuat temuan dari P2H', when: cur.found.split(' · ').slice(0, 2).join(' · ') },
+        { init: 'HW', who: 'Hendra W.', what: 'menugaskan ke ' + cur.pj.split(' · ')[0], when: '+12 mnt' }
+      ].concat(curOpen ? [] : [{ init: 'YA', who: cur.pj.split(' · ')[0], what: 'menutup temuan dengan foto', when: 'Hari ini' }])
+    };
+    const aiFull = this.AI[cur.id] || this.AI['default'];
+    const ids = s.bulkIds || [cur.id];
+    const closeCrit = ids.some((id) => (this.ALL.find((f) => f.id === id) || {}).crit);
+    const ready = s.photo === 'done' && s.closeNote.trim();
+    const toastOn = !!s.toast;
+    return {
+      theme, isList: s.screen === 'list', isDetail: s.screen === 'detail',
+      openN: counts.open, overN: counts.over, chips, items, none: items.length === 0,
+      selecting: s.selecting, notSelecting: !s.selecting, selCount: selIds.length, bulkOp: selIds.length ? 1 : 0.4,
+      startSelect: () => this.setState({ selecting: true, sel: {} }), exitSelect: () => this.setState({ selecting: false, sel: {} }),
+      bulkAssign: () => this.toast(s.screen === 'detail' ? 'Pilih penanggung jawab & tenggat (sheet)' : 'Tugaskan ' + selIds.length + ' temuan ke… (sheet pilih orang)'),
+      bulkDue: () => this.toast('Ubah tenggat ' + selIds.length + ' temuan (date picker)'),
+      bulkClose: () => { if (!selIds.length) return; this.setState({ sheet: true, bulkIds: selIds, photo: 'empty', prog: 0, closeNote: '' }); },
+      d, back: () => { clearInterval(this.aiT); this.setState({ screen: 'list' }); },
+      aiIdle: s.ai === 'idle', aiThinking: s.ai === 'thinking', aiShow: s.ai === 'stream' || s.ai === 'done', aiDone: s.ai === 'done',
+      aiText: aiFull.slice(0, s.aiN), caretOp: s.ai === 'stream' ? 1 : 0,
+      runAi: () => {
+        this.setState({ ai: 'thinking', aiN: 0 });
+        setTimeout(() => {
+          this.setState({ ai: 'stream' });
+          clearInterval(this.aiT);
+          this.aiT = setInterval(() => {
+            const n = this.state.aiN + 6;
+            if (n >= aiFull.length) { clearInterval(this.aiT); this.setState({ aiN: aiFull.length, ai: 'done' }); }
+            else this.setState({ aiN: n });
+          }, 30);
+        }, 900);
+      },
+      copyAi: () => { try { navigator.clipboard && navigator.clipboard.writeText(aiFull); } catch (e) {} this.toast('Saran AI disalin'); },
+      openClose: () => this.setState({ sheet: true, bulkIds: null, photo: 'empty', prog: 0, closeNote: '' }),
+      sheetOn: s.sheet, closeSheet: () => this.setState({ sheet: false }),
+      closeTitle: s.bulkIds ? 'Tutup ' + s.bulkIds.length + ' temuan' : 'Tutup ' + cur.id,
+      photoEmpty: s.photo === 'empty', photoHas: s.photo !== 'empty', photoUp: s.photo === 'up', photoProg: s.prog,
+      takePhoto: () => {
+        this.buzz(10); this.setState({ photo: 'up', prog: 0 });
+        clearInterval(this.upT);
+        this.upT = setInterval(() => { const p = this.state.prog + 12; if (p >= 100) { clearInterval(this.upT); this.setState({ photo: 'done', prog: 100 }); } else this.setState({ prog: p }); }, 110);
+      },
+      closeNote: s.closeNote, onCloseNote: (e) => this.setState({ closeNote: e.target.value }), closeCrit,
+      closeDisabled: !ready, closeBg: ready ? 'var(--primary)' : 'var(--muted)', closeFg: ready ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+      closeCta: s.photo === 'up' ? 'Mengunggah…' : 'Tutup temuan',
+      confirmClose: () => {
+        if (!ready) { this.buzz([20, 40, 20]); return; }
+        const prev = s.st; const next = { ...prev }; ids.forEach((id) => { next[id] = 'closed'; });
+        this.buzz([10, 40, 20]);
+        this.setState({ st: next, sheet: false, selecting: false, sel: {}, bulkIds: null });
+        this.toast(ids.length > 1 ? ids.length + ' temuan ditutup' : 'Temuan ' + ids[0] + ' ditutup', () => this.setState({ st: prev }));
+      },
+      toastOn, toastText: toastOn ? s.toast.text : '', toastUndo: toastOn && !!s.toast.undo,
+      toastBottom: s.screen === 'list' ? (s.selecting ? 168 : 96) : (curOpen ? 104 : 24),
+      doUndo: () => { const u = s.toast && s.toast.undo; clearTimeout(this.tt); this.setState({ toast: null }); if (u) u(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

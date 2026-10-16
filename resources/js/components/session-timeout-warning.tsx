@@ -63,13 +63,13 @@ export function SessionTimeoutWarning() {
 
     return (
         <div className="fixed right-4 bottom-4 left-4 z-50 md:right-4 md:left-auto md:w-80">
-            <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-lg dark:border-amber-700 dark:bg-amber-950/80">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 shadow-lg">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                 <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    <p className="text-sm font-semibold text-warning">
                         Sesi akan berakhir
                     </p>
-                    <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
+                    <p className="mt-0.5 text-xs text-warning">
                         Sesi Anda akan habis dalam 2 menit karena tidak ada
                         aktivitas.
                     </p>

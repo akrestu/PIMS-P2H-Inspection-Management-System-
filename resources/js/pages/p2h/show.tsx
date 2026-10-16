@@ -47,15 +47,13 @@ const SECTION_ORDER: P2hInspectionItem['section'][] = ['A', 'B', 'C'];
 const sectionGroupConfig = {
     A: {
         label: 'A — Pemeriksaan Keliling Unit / Di Luar Kabin',
-        headerClass:
-            'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-200',
-        dot: 'bg-blue-500',
+        headerClass: 'bg-info-soft border-info/40 text-info   ',
+        dot: 'bg-info',
     },
     B: {
         label: 'B — Pemeriksaan Dari Dalam Kabin',
-        headerClass:
-            'bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/20 dark:border-indigo-900 dark:text-indigo-200',
-        dot: 'bg-indigo-500',
+        headerClass: 'bg-info-soft border-info/40 text-info   ',
+        dot: 'bg-info',
     },
     C: {
         label: 'C — Kelengkapan Tambahan',
@@ -73,11 +71,11 @@ function ShiftBadge({ shift }: { shift?: string | null }) {
     const map: Record<string, { icon: React.ReactNode; cls: string }> = {
         'Shift I': {
             icon: <Sun className="h-3.5 w-3.5" />,
-            cls: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/30 dark:text-amber-300',
+            cls: 'bg-warning-soft text-warning border-warning/40  ',
         },
         'Shift II': {
             icon: <Moon className="h-3.5 w-3.5" />,
-            cls: 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/30 dark:text-indigo-300',
+            cls: 'bg-info-soft text-info border-info/40  ',
         },
     };
     const cfg = map[shift] ?? { icon: null, cls: '' };
@@ -109,17 +107,15 @@ function StatCard({
 }) {
     const cls = {
         default: 'bg-card border-border',
-        success:
-            'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900',
-        danger: 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900',
-        warning:
-            'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900',
+        success: 'bg-success-soft border-success/40  ',
+        danger: 'bg-danger-soft border-danger/40  ',
+        warning: 'bg-warning-soft border-warning/40  ',
     }[variant];
     const valueCls = {
         default: 'text-foreground',
-        success: 'text-green-700 dark:text-green-400',
-        danger: 'text-red-700 dark:text-red-400',
-        warning: 'text-yellow-700 dark:text-yellow-400',
+        success: 'text-success ',
+        danger: 'text-danger ',
+        warning: 'text-warning ',
     }[variant];
 
     return (
@@ -185,15 +181,13 @@ function EntryDetail({
 
             {/* ── Approval status banner ── */}
             {entry.approval_status === 'pending' && (
-                <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/20">
-                    <span className="text-amber-600 dark:text-amber-400">
-                        ⏳
-                    </span>
+                <div className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning-soft p-3">
+                    <span className="text-warning">⏳</span>
                     <div>
-                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                        <p className="text-sm font-semibold text-warning">
                             Menunggu Verifikasi
                         </p>
-                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                        <p className="text-xs text-warning">
                             {entry.pic ? (
                                 <>
                                     Menunggu persetujuan{' '}
@@ -210,19 +204,19 @@ function EntryDetail({
                 </div>
             )}
             {entry.approval_status === 'rejected' && (
-                <div className="space-y-1 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/20">
-                    <p className="flex items-center gap-1.5 text-sm font-semibold text-red-800 dark:text-red-300">
+                <div className="space-y-1 rounded-xl border border-danger/40 bg-danger-soft p-3">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-danger">
                         <XCircle className="h-4 w-4" />
                         P2H Ditolak
                     </p>
                     {entry.catatan_approval && (
-                        <p className="text-xs text-red-700 dark:text-red-400">
+                        <p className="text-xs text-danger">
                             <span className="font-semibold">Catatan: </span>
                             {entry.catatan_approval}
                         </p>
                     )}
                     {entry.approver && (
-                        <p className="text-xs text-red-600 dark:text-red-500">
+                        <p className="text-xs text-danger">
                             Ditolak oleh {entry.approver.name} ·{' '}
                             {entry.approved_at
                                 ? new Date(entry.approved_at).toLocaleString(
@@ -241,16 +235,16 @@ function EntryDetail({
                 </div>
             )}
             {entry.approval_status === 'approved' && (
-                <div className="space-y-1 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/20">
+                <div className="space-y-1 rounded-xl border border-success/40 bg-success-soft p-3">
                     <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        <p className="text-sm font-semibold text-success">
                             Disetujui
                             {entry.approver
                                 ? ` oleh ${entry.approver.name}`
                                 : ''}
                             {entry.approved_at && (
-                                <span className="ml-1.5 text-xs font-normal text-emerald-600 dark:text-emerald-400">
+                                <span className="ml-1.5 text-xs font-normal text-success">
                                     ·{' '}
                                     {new Date(entry.approved_at).toLocaleString(
                                         'id-ID',
@@ -267,7 +261,7 @@ function EntryDetail({
                         </p>
                     </div>
                     {entry.catatan_approval && (
-                        <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                        <p className="text-xs text-success">
                             <span className="font-semibold">Catatan: </span>
                             {entry.catatan_approval}
                         </p>
@@ -341,12 +335,12 @@ function EntryDetail({
                             Hasil Checklist
                         </p>
                         {hasTL ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-danger">
                                 <AlertTriangle className="h-3.5 w-3.5" />
                                 Ada Item TL
                             </span>
                         ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 dark:text-green-400">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-success">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 Semua Layak
                             </span>
@@ -359,24 +353,24 @@ function EntryDetail({
                             </p>
                             <div className="flex flex-wrap items-center gap-2">
                                 {entry.kondisi_akhir === 'Layak Pakai' ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-bold text-success">
                                         <ShieldCheck className="h-3.5 w-3.5" />
                                         Layak Pakai
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 dark:bg-red-950/40 dark:text-red-300">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-3 py-1 text-xs font-bold text-danger">
                                         <ShieldAlert className="h-3.5 w-3.5" />
                                         BD / Tidak Layak
                                     </span>
                                 )}
                                 {entry.is_override && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
                                         Override
                                     </span>
                                 )}
                             </div>
                             {entry.justifikasi_kondisi && (
-                                <p className="mt-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                                <p className="mt-1.5 rounded-lg bg-warning-soft px-3 py-2 text-xs text-warning">
                                     <span className="font-semibold">
                                         Alasan:{' '}
                                     </span>
@@ -390,10 +384,10 @@ function EntryDetail({
 
             {/* ── TL Items highlight ── */}
             {tlItems.length > 0 && (
-                <div className="rounded-xl border-2 border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/20">
+                <div className="rounded-xl border-2 border-danger/40 bg-danger-soft p-4">
                     <div className="mb-2.5 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        <p className="text-sm font-bold text-red-800 dark:text-red-300">
+                        <AlertTriangle className="h-4 w-4 text-danger" />
+                        <p className="text-sm font-bold text-danger">
                             {tlItems.length} Item Tidak Layak
                         </p>
                     </div>
@@ -406,17 +400,17 @@ function EntryDetail({
                             return (
                                 <div
                                     key={ans.id}
-                                    className="rounded-lg bg-white/70 p-2.5 dark:bg-red-950/30"
+                                    className="rounded-lg bg-white/70 p-2.5"
                                 >
                                     <div className="flex items-start gap-2">
-                                        <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
+                                        <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
                                         <div>
-                                            <p className="text-xs font-semibold text-red-900 dark:text-red-200">
+                                            <p className="text-xs font-semibold text-danger">
                                                 {item?.nama_item ??
                                                     `Item #${ans.inspection_item_id}`}
                                             </p>
                                             {ans.keterangan && (
-                                                <p className="mt-0.5 text-xs text-red-700/80 dark:text-red-400/80">
+                                                <p className="mt-0.5 text-xs text-danger">
                                                     {ans.keterangan}
                                                 </p>
                                             )}
@@ -493,8 +487,7 @@ function EntryDetail({
                                                 key={item.id}
                                                 className={cn(
                                                     'flex items-start gap-3 px-3 py-2.5 text-sm',
-                                                    isTL &&
-                                                        'bg-red-50/60 dark:bg-red-950/10',
+                                                    isTL && 'bg-danger-soft',
                                                 )}
                                             >
                                                 <span className="mt-0.5 shrink-0 font-mono text-xs text-muted-foreground">
@@ -506,7 +499,7 @@ function EntryDetail({
                                                     </p>
                                                     {isTL &&
                                                         ans?.keterangan && (
-                                                            <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
+                                                            <p className="mt-0.5 text-xs text-danger">
                                                                 ↳{' '}
                                                                 {ans.keterangan}
                                                             </p>
@@ -514,12 +507,12 @@ function EntryDetail({
                                                 </div>
                                                 <div className="shrink-0">
                                                     {isTL ? (
-                                                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
                                                             <XCircle className="h-3 w-3" />
                                                             TL
                                                         </span>
                                                     ) : isLayak ? (
-                                                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">
                                                             <CheckCircle2 className="h-3 w-3" />
                                                             OK
                                                         </span>
@@ -551,7 +544,7 @@ function EntryDetail({
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4 pb-4 text-sm">
                             <div className="rounded-lg bg-muted/40 p-3 text-center">
-                                <p className="text-2xl font-bold">
+                                <p className="text-2xl font-semibold">
                                     {entry.fuel_log.km_unit
                                         ? entry.fuel_log.km_unit.toLocaleString(
                                               'id-ID',
@@ -563,7 +556,7 @@ function EntryDetail({
                                 </p>
                             </div>
                             <div className="rounded-lg bg-muted/40 p-3 text-center">
-                                <p className="text-2xl font-bold">
+                                <p className="text-2xl font-semibold">
                                     {entry.fuel_log.jumlah_liter ?? '-'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
@@ -619,7 +612,7 @@ function EntryDetail({
                                 <p className="mb-1.5 text-xs text-muted-foreground">
                                     Approver
                                 </p>
-                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-emerald-300 bg-white p-2 dark:border-emerald-700 dark:bg-gray-100">
+                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-success/40 bg-white p-2 dark:bg-gray-100">
                                     <img
                                         src={entry.approver_signature_url}
                                         alt={`TTD ${entry.approver?.name}`}
@@ -759,7 +752,7 @@ function DeleteEntryDialog({
                                     </div>
                                 </div>
                             )}
-                            <p className="text-amber-700 dark:text-amber-400">
+                            <p className="text-warning">
                                 Semua jawaban checklist dan tanda tangan entry
                                 ini akan dihapus permanen.
                             </p>
@@ -874,15 +867,13 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                             <div
                                 className={cn(
                                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                                    isLV
-                                        ? 'bg-blue-100 dark:bg-blue-950/40'
-                                        : 'bg-purple-100 dark:bg-purple-950/40',
+                                    isLV ? 'bg-info-soft' : 'bg-info-soft',
                                 )}
                             >
                                 {isLV ? (
-                                    <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                    <Car className="h-5 w-5 text-info" />
                                 ) : (
-                                    <Bus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                    <Bus className="h-5 w-5 text-info" />
                                 )}
                             </div>
                             <div>
@@ -971,11 +962,11 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                                         P2H #{slot}
                                     </span>
                                     {slotTL > 0 ? (
-                                        <span className="text-xs font-medium text-red-500">
+                                        <span className="text-xs font-medium text-danger">
                                             {slotTL} TL
                                         </span>
                                     ) : (
-                                        <span className="text-xs font-medium text-green-500">
+                                        <span className="text-xs font-medium text-success">
                                             Layak
                                         </span>
                                     )}
@@ -983,8 +974,8 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                                         className={cn(
                                             'absolute top-1.5 right-1.5 h-2 w-2 rounded-full',
                                             slotTL > 0
-                                                ? 'bg-red-500'
-                                                : 'bg-green-500',
+                                                ? 'bg-danger'
+                                                : 'bg-success',
                                         )}
                                     />
                                 </TabsTrigger>
@@ -1045,7 +1036,7 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                                         variant="outline"
                                         className="gap-1.5 text-xs"
                                     >
-                                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                                        <span className="h-1.5 w-1.5 rounded-full bg-info" />
                                         Servis Mingguan
                                     </Badge>
                                 )}
@@ -1054,7 +1045,7 @@ export default function P2hShow({ session, inspectionItems }: Props) {
                                         variant="outline"
                                         className="gap-1.5 text-xs"
                                     >
-                                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                                        <span className="h-1.5 w-1.5 rounded-full bg-info" />
                                         Servis Berkala
                                     </Badge>
                                 )}

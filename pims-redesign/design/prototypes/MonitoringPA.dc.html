@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS — Monitoring unit harian (PA)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./pims.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--background); color: var(--foreground); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body); font-weight: var(--fw-body); display: flex; flex-direction: column">
+
+  <header class="blurbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 8px 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: var(--bw) solid var(--border)">
+    <div style="display: flex; align-items: center; gap: 4px; height: 52px">
+      <a href="Dashboard.dc.html" class="press hl" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--foreground)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></a>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 18px; font-weight: 600">Monitoring unit harian</span><span style="font-size: 13px; color: var(--muted-foreground)">Physical Availability · Pit A</span></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px">
+      <button type="button" class="press hl" onClick="{{ prev }}" aria-label="Minggu sebelumnya" style="width: 44px; height: 44px; border: var(--bw) solid var(--input); border-radius: 10px; background: var(--background); color: var(--foreground); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <span class="tnum" style="flex: 1; text-align: center; font-size: 15px; font-weight: 600">{{ weekLabel }}</span>
+      <button type="button" class="press hl" onClick="{{ next }}" disabled="{{ isLast }}" aria-label="Minggu berikutnya" style="width: 44px; height: 44px; border: var(--bw) solid var(--input); border-radius: 10px; background: var(--background); color: var(--foreground); display: flex; align-items: center; justify-content: center; opacity: {{ nextOp }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+  </header>
+
+  <div class="noscroll" style="flex: 1; overflow-y: auto; padding: 136px 16px 112px; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: var(--muted-foreground)">PA armada · minggu</span><span class="tnum" style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em">{{ fleetPa }}%</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: var(--muted-foreground)">Jam BD</span><span class="tnum" style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em">{{ bdH }}</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: var(--muted-foreground)">Target</span><span class="tnum" style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: var(--muted-foreground)">90%</span></div>
+    </section>
+
+    <section aria-labelledby="pa-h" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <h2 id="pa-h" style="margin: 0; font-size: 16px; font-weight: 600">PA per unit per hari</h2>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted-foreground)">100%<span style="width: 64px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #FEFBE8, #F8DC52, #B98F0A, #684415)"></span>&lt;60%</span>
+      </div>
+      <div role="grid" aria-label="Physical availability per unit per hari" style="display: flex; flex-direction: column; gap: 3px">
+        <div role="row" style="display: grid; grid-template-columns: 70px repeat(7, minmax(0, 1fr)) 40px; gap: 3px; font-size: 11px; color: var(--muted-foreground); text-align: center">
+          <span style="text-align: left">Unit</span>
+          <sc-for list="{{ days }}" as="d" hint-placeholder-count="7"><span role="columnheader" class="tnum" style="font-weight: {{ d.w }}; color: {{ d.fg }}">{{ d.wd }}<br>{{ d.n }}</span></sc-for>
+          <span style="text-align: right">Rata²</span>
+        </div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+          <div role="row" style="display: grid; grid-template-columns: 70px repeat(7, minmax(0, 1fr)) 40px; gap: 3px; align-items: center">
+            <span role="rowheader" class="tnum" style="font-size: 13px; font-weight: 600">{{ r.code }}</span>
+            <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="7">
+              <button type="button" role="gridcell" class="press" onClick="{{ c.pick }}" aria-label="{{ c.aria }}" style="height: 34px; border: 0; padding: 0; border-radius: 6px; background: {{ c.bg }}; color: {{ c.fg }}; font: inherit; font-size: 11px; font-weight: 600; box-shadow: {{ c.ring }}"><span class="tnum">{{ c.t }}</span></button>
+            </sc-for>
+            <span class="tnum" style="font-size: 13px; font-weight: 600; text-align: right; color: {{ r.avgFg }}">{{ r.avg }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div role="status" aria-live="polite" style="padding: 12px 14px; border-radius: 12px; background: var(--muted-2); border: var(--bw) solid var(--border); display: flex; flex-direction: column; gap: 6px">
+        <strong class="tnum" style="font-size: 14px; font-weight: 600">{{ det.title }}</strong>
+        <div style="display: flex; gap: 2px; height: 10px; border-radius: 5px; overflow: hidden" aria-hidden="true"><span style="flex: {{ det.ready }}; background: var(--success)"></span><span style="flex: {{ det.bd }}; background: var(--danger)"></span><span style="flex: {{ det.pm }}; background: var(--info)"></span></div>
+        <span class="tnum" style="font-size: 13px; color: var(--muted-foreground)">{{ det.sub }}</span>
+      </div>
+      <span style="font-size: 12px; line-height: 17px; color: var(--muted-foreground)">PA = (jam kalender − jam BD/PM/Servis) ÷ jam kalender. Periode downtime diambil dari P2H Tidak Layak dan perubahan status manual.</span>
+    </section>
+  </div>
+
+  <div class="blurbar" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; padding: 12px 16px 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border-top: var(--bw) solid var(--border)">
+    <button type="button" class="press" onClick="{{ excel }}" style="height: 56px; border-radius: 12px; border: var(--bw) solid var(--input); background: var(--background); color: var(--foreground); font: inherit; font-size: 15px; font-weight: 600">Excel</button>
+    <button type="button" class="press" onClick="{{ pdf }}" style="height: 56px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600">Unduh PDF</button>
+  </div>
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div role="status" class="toast-in" style="position: absolute; left: 12px; right: 12px; bottom: 100px; z-index: 12; min-height: 52px; padding: 6px 16px; border-radius: 14px; background: #0A0A0A; color: #FAFAFA; display: flex; align-items: center; font-size: 15px; box-shadow: var(--shadow-3)">{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","hc"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.UNITS = ['DT-1045', 'DT-1050', 'DT-1022', 'DT-1061', 'EX-2001', 'EX-2003', 'LV-031', 'LV-022', 'GR-012', 'DZ-015'];
+    const base = {
+      'DT-1045': [100, 100, 92, 100, 71, 100, 100], 'DT-1050': [100, 100, 100, 100, 100, 100, 75], 'DT-1022': [100, 100, 100, 96, 100, 100, 100],
+      'DT-1061': [100, 100, 100, 100, 58, 0, 0], 'EX-2001': [100, 100, 100, 100, 100, 100, 100], 'EX-2003': [100, 88, 100, 100, 100, 100, 72],
+      'LV-031': [100, 100, 100, 100, 100, 100, 100], 'LV-022': [100, 100, 100, 100, 100, 79, 70], 'GR-012': [100, 100, 100, 100, 100, 100, 67], 'DZ-015': [100, 100, 100, 92, 100, 100, 100]
+    };
+    this.W = [{ label: '3–9 Okt 2026', start: 3, data: {} }, { label: '10–16 Okt 2026', start: 10, data: base }];
+    this.UNITS.forEach((u, i) => { this.W[0].data[u] = base[u].map((v, j) => (v < 100 ? 100 : ((i + j) % 9 === 0 ? 83 : 100))); });
+    this.state = { w: 1, sel: [1, 6], toast: '' };
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  toast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const theme = this.props.theme ?? 'light';
+    const W = this.W[s.w];
+    const WD = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const ramp = (v) => v >= 99.5 ? ['#FEFBE8', '#5C4A12'] : v >= 90 ? ['#FBEA8A', '#0A0A0A'] : v >= 75 ? ['#F8DC52', '#0A0A0A'] : v >= 60 ? ['#B98F0A', '#FFFFFF'] : ['#684415', '#FFFFFF'];
+    const days = Array.from({ length: 7 }, (_, j) => { const d = new Date(2026, 9, W.start + j); const today = s.w === 1 && j === 6; return { wd: WD[d.getDay()], n: d.getDate(), w: today ? 700 : 500, fg: today ? 'var(--foreground)' : 'var(--muted-foreground)' }; });
+    let tot = 0, cnt = 0, down = 0;
+    const rows = this.UNITS.map((code, ui) => {
+      const arr = W.data[code];
+      const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+      tot += avg; cnt++; down += arr.reduce((a, v) => a + (100 - v) * 0.24, 0);
+      return { code, avg: Math.round(avg), avgFg: avg < 90 ? 'var(--danger)' : 'var(--foreground)', cells: arr.map((v, j) => {
+        const [bg, fg] = ramp(v); const on = s.sel[0] === ui && s.sel[1] === j;
+        return { t: v === 100 ? '100' : String(v), bg, fg, ring: on ? '0 0 0 2px var(--background), 0 0 0 4px var(--foreground)' : 'inset 0 0 0 1px rgba(10,10,10,.06)', aria: code + ' ' + days[j].n + ' Okt: PA ' + v + '%', pick: () => this.setState({ sel: [ui, j] }) };
+      }) };
+    });
+    const [su, sj] = s.sel; const v = W.data[this.UNITS[su]][sj];
+    const dn = 24 * (100 - v) / 100;
+    const isPm = this.UNITS[su] === 'GR-012' || this.UNITS[su] === 'DT-1061';
+    const fmt = (x) => String(Math.round(x * 10) / 10).replace('.', ',');
+    const det = { title: this.UNITS[su] + ' · ' + days[sj].wd + ', ' + days[sj].n + ' Okt · PA ' + v + '%', ready: 24 - dn, bd: isPm ? 0 : dn, pm: isPm ? dn : 0,
+      sub: 'Ready ' + fmt(24 - dn) + ' j' + (dn ? ' · ' + (isPm ? 'PM/Servis ' : 'BD ') + fmt(dn) + ' j' : ' · tanpa downtime') + (s.w === 1 && sj === 6 ? ' · hari berjalan' : '') };
+    return {
+      theme, weekLabel: W.label, isLast: s.w === 1, nextOp: s.w === 1 ? 0.4 : 1,
+      prev: () => this.setState({ w: 0 }), next: () => this.setState({ w: 1 }),
+      days, rows, det, fleetPa: fmt(tot / cnt), bdH: Math.round(down),
+      excel: () => this.toast('Excel PA ' + W.label + ' diunduh'), pdf: () => this.toast('Menyiapkan PDF PA ' + W.label + '…'),
+      toastOn: !!s.toast, toastText: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
