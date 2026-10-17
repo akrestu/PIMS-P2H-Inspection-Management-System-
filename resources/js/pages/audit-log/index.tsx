@@ -70,6 +70,7 @@ const MODULE: Record<string, string> = {
     user: 'Pengguna',
     unit: 'Master unit',
     p2h: 'P2H',
+    settings: 'Pengaturan',
 };
 
 const SYSTEM = 'System';
@@ -112,6 +113,29 @@ function whenLabel(iso: string) {
     return `${day} · ${formatTime(d)}`;
 }
 
+/** Kelompokkan log per hari: "Hari ini · Sab, 17 Okt", "Kemarin · …", "14 Okt 2026". */
+function groupByDay(logs: LogEntry[]): [string, LogEntry[]][] {
+    const groups = new Map<string, LogEntry[]>();
+    const today = new Date().toDateString();
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const yesterday = y.toDateString();
+
+    for (const log of logs) {
+        const d = new Date(log.created_at_iso);
+        const key = d.toDateString();
+        const label =
+            key === today
+                ? `Hari ini · ${formatDate(d, { withDay: true, withYear: false })}`
+                : key === yesterday
+                  ? `Kemarin · ${formatDate(d, { withDay: true, withYear: false })}`
+                  : formatDate(d);
+        groups.set(label, [...(groups.get(label) ?? []), log]);
+    }
+
+    return [...groups.entries()];
+}
+
 const isoDaysAgo = (n: number) => {
     const d = new Date();
     d.setDate(d.getDate() - n);
@@ -144,7 +168,10 @@ function Sentence({ text }: { text: string }) {
 }
 
 function Changes({ properties }: { properties: Record<string, unknown> }) {
-    const after = (properties.attributes ?? null) as Record<string, unknown> | null;
+    const after = (properties.attributes ?? null) as Record<
+        string,
+        unknown
+    > | null;
     const before = (properties.old ?? null) as Record<string, unknown> | null;
     const show = (v: unknown) =>
         v === null || v === undefined || v === ''
@@ -172,7 +199,9 @@ function Changes({ properties }: { properties: Record<string, unknown> }) {
                             <td className="py-2 pr-3 text-danger line-through">
                                 {show(before?.[f])}
                             </td>
-                            <td className="py-2 text-success">{show(after[f])}</td>
+                            <td className="py-2 text-success">
+                                {show(after[f])}
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -183,14 +212,20 @@ function Changes({ properties }: { properties: Record<string, unknown> }) {
     const entries = Object.entries(properties);
 
     if (entries.length === 0) {
-        return <p className="text-sm text-muted-foreground">Tidak ada data tambahan.</p>;
+        return (
+            <p className="text-sm text-muted-foreground">
+                Tidak ada data tambahan.
+            </p>
+        );
     }
 
     return (
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
             {entries.map(([k, v]) => (
                 <div key={k} className="contents">
-                    <dt className="font-mono text-xs text-muted-foreground">{k}</dt>
+                    <dt className="font-mono text-xs text-muted-foreground">
+                        {k}
+                    </dt>
                     <dd className="break-words">{show(v)}</dd>
                 </div>
             ))}
@@ -275,7 +310,10 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                         className="-mx-4 px-4 lg:mx-0 lg:px-0"
                         value={filters.log_name ?? 'semua'}
                         onChange={(v) =>
-                            apply({ log_name: v === 'semua' ? undefined : v, page: 1 })
+                            apply({
+                                log_name: v === 'semua' ? undefined : v,
+                                page: 1,
+                            })
                         }
                         options={[
                             { value: 'semua', label: 'Semua modul' },
@@ -292,94 +330,230 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                         description="Tidak ada log yang cocok dengan filter."
                     />
                 ) : (
-                    <div className="overflow-x-auto rounded-[14px] border-(length:--bw)">
-                        <table className="w-full min-w-[920px] text-sm">
-                            <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
-                                <tr className="h-11">
-                                    <SortableHead column="created_at" plain descFirst className="px-4">
-                                        Waktu
-                                    </SortableHead>
-                                    <SortableHead column="causer" plain className="px-4">
-                                        Pengguna
-                                    </SortableHead>
-                                    <th className="px-4 font-semibold">Aksi</th>
-                                    <SortableHead column="description" plain className="px-4">
-                                        Deskripsi
-                                    </SortableHead>
-                                    <SortableHead column="log_name" plain className="px-4">
-                                        Modul
-                                    </SortableHead>
-                                    <th className="px-4">
-                                        <span className="sr-only">Detail</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {logs.data.map((log) => {
-                                    const action = ACTION_META[actionOf(log)];
-                                    const system = log.causer_name === SYSTEM;
+                    <>
+                        {/* Mobile: daftar per tanggal (AuditLog.png) */}
+                        <div className="-mx-4 lg:hidden">
+                            {groupByDay(logs.data).map(([day, items]) => (
+                                <section key={day}>
+                                    <h2 className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground">
+                                        {day}
+                                    </h2>
+                                    <ul>
+                                        {items.map((log) => {
+                                            const action =
+                                                ACTION_META[actionOf(log)];
+                                            const system =
+                                                log.causer_name === SYSTEM;
 
-                                    return (
-                                        <tr key={log.id} className="h-[52px] border-t-(length:--bw)">
-                                            <td className="px-4 whitespace-nowrap tnum">
-                                                {whenLabel(log.created_at_iso)}
-                                            </td>
-                                            <td className="px-4">
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <span tabIndex={0} className="inline-flex items-center gap-2 whitespace-nowrap">
-                                                            <span
-                                                                className={cn(
-                                                                    'grid size-7 place-items-center rounded-full text-[10px] font-bold',
-                                                                    system
-                                                                        ? 'bg-foreground text-background'
-                                                                        : 'bg-muted',
-                                                                )}
-                                                            >
-                                                                {system ? 'SY' : getInitials(log.causer_name)}
-                                                            </span>
-                                                            {system ? 'Sistem' : log.causer_name}
+                                            return (
+                                                <li key={log.id}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setDetail(log)
+                                                        }
+                                                        className="flex min-h-12 w-full press items-start gap-3 px-4 py-3 text-left hover:bg-muted-2"
+                                                    >
+                                                        <span
+                                                            className={cn(
+                                                                'grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-bold',
+                                                                system
+                                                                    ? 'bg-foreground text-background'
+                                                                    : 'bg-muted',
+                                                            )}
+                                                        >
+                                                            {system
+                                                                ? 'SY'
+                                                                : getInitials(
+                                                                      log.causer_name,
+                                                                  )}
                                                         </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        {system
-                                                            ? 'Dijalankan otomatis oleh sistem'
-                                                            : `${log.causer_name} · ${log.causer_role}`}
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </td>
-                                            <td className="px-4">
-                                                <span
-                                                    className={cn(
-                                                        'inline-flex h-6 items-center rounded-md px-2 text-xs font-semibold',
-                                                        action.className,
+                                                        <span className="min-w-0 flex-1">
+                                                            <span className="block text-[15px] leading-snug">
+                                                                <b className="font-semibold">
+                                                                    {system
+                                                                        ? 'Sistem'
+                                                                        : log.causer_name}
+                                                                </b>{' '}
+                                                                <span className="text-muted-foreground">
+                                                                    <Sentence
+                                                                        text={
+                                                                            log.description
+                                                                        }
+                                                                    />
+                                                                </span>
+                                                            </span>
+                                                            <span className="mt-1 flex items-center gap-2 text-xs text-muted-foreground tnum">
+                                                                <span
+                                                                    className={cn(
+                                                                        'inline-flex h-5 items-center rounded-md px-1.5 text-xs font-semibold',
+                                                                        action.className,
+                                                                    )}
+                                                                >
+                                                                    {
+                                                                        action.label
+                                                                    }
+                                                                </span>
+                                                                {formatTime(
+                                                                    new Date(
+                                                                        log.created_at_iso,
+                                                                    ),
+                                                                )}
+                                                                <span>
+                                                                    ·{' '}
+                                                                    {MODULE[
+                                                                        log
+                                                                            .log_name
+                                                                    ] ??
+                                                                        log.log_name}
+                                                                </span>
+                                                            </span>
+                                                        </span>
+                                                    </button>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </section>
+                            ))}
+                        </div>
+
+                        <div className="hidden overflow-x-auto rounded-[14px] border-(length:--bw) lg:block">
+                            <table className="w-full min-w-[920px] text-sm">
+                                <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                                    <tr className="h-11">
+                                        <SortableHead
+                                            column="created_at"
+                                            plain
+                                            descFirst
+                                            className="px-4"
+                                        >
+                                            Waktu
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="causer"
+                                            plain
+                                            className="px-4"
+                                        >
+                                            Pengguna
+                                        </SortableHead>
+                                        <th className="px-4 font-semibold">
+                                            Aksi
+                                        </th>
+                                        <SortableHead
+                                            column="description"
+                                            plain
+                                            className="px-4"
+                                        >
+                                            Deskripsi
+                                        </SortableHead>
+                                        <SortableHead
+                                            column="log_name"
+                                            plain
+                                            className="px-4"
+                                        >
+                                            Modul
+                                        </SortableHead>
+                                        <th className="px-4">
+                                            <span className="sr-only">
+                                                Detail
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {logs.data.map((log) => {
+                                        const action =
+                                            ACTION_META[actionOf(log)];
+                                        const system =
+                                            log.causer_name === SYSTEM;
+
+                                        return (
+                                            <tr
+                                                key={log.id}
+                                                className="h-[52px] border-t-(length:--bw)"
+                                            >
+                                                <td className="px-4 whitespace-nowrap tnum">
+                                                    {whenLabel(
+                                                        log.created_at_iso,
                                                     )}
-                                                >
-                                                    {action.label}
-                                                </span>
-                                            </td>
-                                            <td className="max-w-[420px] truncate px-4">
-                                                <Sentence text={log.description} />
-                                            </td>
-                                            <td className="px-4 whitespace-nowrap text-muted-foreground">
-                                                {MODULE[log.log_name] ?? log.log_name}
-                                            </td>
-                                            <td className="px-4 text-right">
-                                                <Button size="sm" variant="outline" onClick={() => setDetail(log)}>
-                                                    Detail
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                                </td>
+                                                <td className="px-4">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <span
+                                                                tabIndex={0}
+                                                                className="inline-flex items-center gap-2 whitespace-nowrap"
+                                                            >
+                                                                <span
+                                                                    className={cn(
+                                                                        'grid size-7 place-items-center rounded-full text-[10px] font-bold',
+                                                                        system
+                                                                            ? 'bg-foreground text-background'
+                                                                            : 'bg-muted',
+                                                                    )}
+                                                                >
+                                                                    {system
+                                                                        ? 'SY'
+                                                                        : getInitials(
+                                                                              log.causer_name,
+                                                                          )}
+                                                                </span>
+                                                                {system
+                                                                    ? 'Sistem'
+                                                                    : log.causer_name}
+                                                            </span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            {system
+                                                                ? 'Dijalankan otomatis oleh sistem'
+                                                                : `${log.causer_name} · ${log.causer_role}`}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </td>
+                                                <td className="px-4">
+                                                    <span
+                                                        className={cn(
+                                                            'inline-flex h-6 items-center rounded-md px-2 text-xs font-semibold',
+                                                            action.className,
+                                                        )}
+                                                    >
+                                                        {action.label}
+                                                    </span>
+                                                </td>
+                                                <td className="max-w-[420px] truncate px-4">
+                                                    <Sentence
+                                                        text={log.description}
+                                                    />
+                                                </td>
+                                                <td className="px-4 whitespace-nowrap text-muted-foreground">
+                                                    {MODULE[log.log_name] ??
+                                                        log.log_name}
+                                                </td>
+                                                <td className="px-4 text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setDetail(log)
+                                                        }
+                                                    >
+                                                        Detail
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
 
                 <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground sm:flex-row sm:justify-between">
                     <span>
-                        {logs.total} entri · urut terbaru dulu · log tidak dapat diubah atau dihapus, termasuk oleh Admin.
+                        {logs.total} entri · urut terbaru dulu · log tidak dapat
+                        diubah atau dihapus, termasuk oleh Admin.
                     </span>
                     {logs.last_page > 1 && (
                         <PageButtons
@@ -394,7 +568,15 @@ export default function AuditLogIndex({ logs, filters }: Props) {
             <ResponsiveDrawer
                 open={detail !== null}
                 onOpenChange={(o) => !o && setDetail(null)}
-                title={detail ? <Sentence text={`${detail.causer_name === SYSTEM ? 'Sistem' : detail.causer_name} — ${detail.description}`} /> : ''}
+                title={
+                    detail ? (
+                        <Sentence
+                            text={`${detail.causer_name === SYSTEM ? 'Sistem' : detail.causer_name} — ${detail.description}`}
+                        />
+                    ) : (
+                        ''
+                    )
+                }
                 description={
                     detail
                         ? `${detail.created_at} WIB · ${MODULE[detail.log_name] ?? detail.log_name} · AL-${detail.id}`
@@ -419,21 +601,31 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                 {detail && (
                     <div className="space-y-5">
                         <section>
-                            <h3 className="mb-2 text-sm font-semibold">Perubahan</h3>
+                            <h3 className="mb-2 text-sm font-semibold">
+                                Perubahan
+                            </h3>
                             <Changes properties={detail.properties ?? {}} />
                         </section>
                         <section>
-                            <h3 className="mb-2 text-sm font-semibold">Konteks</h3>
+                            <h3 className="mb-2 text-sm font-semibold">
+                                Konteks
+                            </h3>
                             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                                <dt className="text-muted-foreground">Pelaku</dt>
+                                <dt className="text-muted-foreground">
+                                    Pelaku
+                                </dt>
                                 <dd>
                                     {detail.causer_name === SYSTEM
                                         ? 'Sistem (otomatis)'
                                         : `${detail.causer_name} · ${detail.causer_role}`}
                                 </dd>
                                 <dt className="text-muted-foreground">Modul</dt>
-                                <dd>{MODULE[detail.log_name] ?? detail.log_name}</dd>
-                                <dt className="text-muted-foreground">ID log</dt>
+                                <dd>
+                                    {MODULE[detail.log_name] ?? detail.log_name}
+                                </dd>
+                                <dt className="text-muted-foreground">
+                                    ID log
+                                </dt>
                                 <dd className="font-mono">AL-{detail.id}</dd>
                             </dl>
                         </section>

@@ -478,7 +478,7 @@ export default function DailySummary({
                                 aria-label="Teks WhatsApp"
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
-                                className="min-h-[360px] resize-y rounded-[12px] border-(length:--bw) bg-card text-[13px] leading-relaxed whitespace-pre-wrap"
+                                className="min-h-[360px] resize-y rounded-[12px] border-(length:--bw) bg-card text-base leading-relaxed whitespace-pre-wrap lg:text-[13px]"
                             />
                         </div>
                         <div className="space-y-2 p-4">

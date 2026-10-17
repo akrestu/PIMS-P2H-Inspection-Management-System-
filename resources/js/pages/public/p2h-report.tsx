@@ -55,7 +55,7 @@ const STATUS: Record<
     downtime: {
         code: 'D',
         label: 'Tidak P2H, unit BD/PM/servis',
-        cls: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+        cls: 'bg-muted text-muted-foreground',
     },
     kosong: {
         code: '–',

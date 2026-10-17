@@ -18,7 +18,7 @@ export default function AuthSplitLayout({
                     className="relative z-20 flex items-center text-lg font-medium"
                 >
                     <img
-                        src="/logo.png"
+                        src="/images/logo-256.png"
                         alt="PIMS Logo"
                         className="mr-2 size-8 object-contain"
                     />
@@ -32,7 +32,7 @@ export default function AuthSplitLayout({
                         className="relative z-20 flex items-center justify-center lg:hidden"
                     >
                         <img
-                            src="/logo.png"
+                            src="/images/logo-256.png"
                             alt="PIMS Logo"
                             className="h-10 object-contain sm:h-12"
                         />

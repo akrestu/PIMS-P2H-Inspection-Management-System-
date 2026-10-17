@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { Menu, Plus } from 'lucide-react';
 import { useState } from 'react';
+import type { ShellNavItem } from './navigation';
+import { useShellNavigation } from './navigation';
 import {
     Drawer,
     DrawerContent,
@@ -9,8 +11,6 @@ import {
     DrawerTitle,
 } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
-import type { ShellNavItem } from './navigation';
-import { useShellNavigation } from './navigation';
 
 function Badge({ item }: { item: ShellNavItem }) {
     const count = item.count ?? 0;

@@ -9,7 +9,7 @@ import { store } from '@/routes/password/confirm';
 export default function ConfirmPassword() {
     return (
         <>
-            <Head title="Confirm password" />
+            <Head title="Konfirmasi kata sandi" />
 
             <Form
                 action={store.url()}
@@ -19,11 +19,11 @@ export default function ConfirmPassword() {
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Kata sandi</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
-                                placeholder="Password"
+                                placeholder="Masukkan kata sandi"
                                 autoComplete="current-password"
                                 autoFocus
                             />
@@ -33,12 +33,13 @@ export default function ConfirmPassword() {
 
                         <div className="flex items-center">
                             <Button
+                                size="lg"
                                 className="w-full"
                                 disabled={processing}
                                 data-test="confirm-password-button"
                             >
                                 {processing && <Spinner />}
-                                Confirm password
+                                Konfirmasi
                             </Button>
                         </div>
                     </div>
@@ -49,7 +50,7 @@ export default function ConfirmPassword() {
 }
 
 ConfirmPassword.layout = {
-    title: 'Confirm your password',
+    title: 'Konfirmasi kata sandi',
     description:
-        'This is a secure area of the application. Please confirm your password before continuing.',
+        'Ini area aman. Masukkan kata sandi Anda untuk melanjutkan.',
 };

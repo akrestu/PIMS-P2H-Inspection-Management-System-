@@ -1,4 +1,6 @@
 import { Link } from '@inertiajs/react';
+import type { ShellNavItem } from './navigation';
+import { useShellNavigation } from './navigation';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -8,14 +10,12 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
-import type { ShellNavItem } from './navigation';
-import { useShellNavigation } from './navigation';
 
 /** Logo + wordmark PIMS. */
 export function ShellLogo({ className }: { className?: string }) {
     return (
         <span className={cn('flex items-center gap-2.5', className)}>
-            <img src="/logo.png" alt="" className="size-8 object-contain" />
+            <img src="/images/logo-256.png" alt="" className="size-8 object-contain" />
             <span className="text-[17px] font-bold tracking-[-0.01em]">
                 PIMS
             </span>

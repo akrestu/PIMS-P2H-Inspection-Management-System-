@@ -114,7 +114,7 @@ function PublicLink({ url }: { url: string | null }) {
                             readOnly
                             aria-label="Tautan rekap publik"
                             onFocus={(e) => e.target.select()}
-                            className="h-10 bg-muted-2 font-mono text-[13px]"
+                            className="h-12 bg-muted-2 font-mono text-base lg:h-10 lg:text-[13px]"
                         />
                         <Button type="button" variant="outline" onClick={copy}>
                             Salin

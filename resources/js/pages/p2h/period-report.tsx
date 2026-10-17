@@ -501,7 +501,7 @@ export default function PeriodReport({
                             aria-label="Teks laporan periode"
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            className="mt-4 min-h-[300px] text-[13px] leading-relaxed"
+                            className="mt-4 min-h-[300px] text-base leading-relaxed lg:text-[13px]"
                         />
                         <div className="mt-3 flex flex-wrap gap-2">
                             <Button variant="outline" onClick={handleCopy}>

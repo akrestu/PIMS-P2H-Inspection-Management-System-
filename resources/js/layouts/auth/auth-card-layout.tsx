@@ -27,7 +27,7 @@ export default function AuthCardLayout({
                 >
                     <div className="flex h-9 w-9 items-center justify-center">
                         <img
-                            src="/logo.png"
+                            src="/images/logo-256.png"
                             alt="PIMS Logo"
                             className="size-9 object-contain"
                         />

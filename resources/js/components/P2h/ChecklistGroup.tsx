@@ -1,6 +1,6 @@
+import ChecklistItem from './ChecklistItem';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
-import ChecklistItem from './ChecklistItem';
 
 interface Props {
     section: P2hInspectionItem['section'];

@@ -582,7 +582,7 @@ function EntryDetail({
                                 <p className="mb-1.5 text-xs text-muted-foreground">
                                     Pengemudi
                                 </p>
-                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-muted bg-white p-2 dark:bg-gray-100">
+                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-muted bg-white p-2">
                                     <img
                                         src={entry.paraf_url}
                                         alt={`Tanda tangan ${entry.user?.name}`}
@@ -612,7 +612,7 @@ function EntryDetail({
                                 <p className="mb-1.5 text-xs text-muted-foreground">
                                     Approver
                                 </p>
-                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-success/40 bg-white p-2 dark:bg-gray-100">
+                                <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-success/40 bg-white p-2">
                                     <img
                                         src={entry.approver_signature_url}
                                         alt={`TTD ${entry.approver?.name}`}

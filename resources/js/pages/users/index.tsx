@@ -213,7 +213,7 @@ const JABATAN_META: Record<Jabatan, string> = {
     Approval: 'bg-info-soft text-info border-info/40  ',
     'User LV 2': 'bg-success-soft text-success border-success/40  ',
     'User LV 1':
-        'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400',
+        'bg-muted text-muted-foreground border-border',
 };
 
 function JabatanBadge({ jabatan }: { jabatan: Jabatan | null }) {

@@ -1,10 +1,10 @@
 import { Link } from '@inertiajs/react';
 import { Bell } from 'lucide-react';
+import { useShellNavigation } from './navigation';
+import { ShellLogo } from './sidebar';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
-import { useShellNavigation } from './navigation';
-import { ShellLogo } from './sidebar';
 
 export function NotificationButton() {
     const { notifications } = useShellNavigation();
