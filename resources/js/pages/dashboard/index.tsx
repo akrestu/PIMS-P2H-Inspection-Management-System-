@@ -210,7 +210,7 @@ export default function DashboardIndex({
     return (
         <>
             <Head title="Dashboard" />
-            <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-4 pt-4 pb-8 lg:px-10 lg:pt-8">
+            <div className="flex w-full flex-1 flex-col px-4 pt-4 pb-8 lg:px-10 lg:pt-8">
                 {/* ── Header (desktop) ── */}
                 <header className="hidden items-start justify-between gap-4 lg:flex">
                     <div className="min-w-0">

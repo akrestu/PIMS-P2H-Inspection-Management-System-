@@ -461,7 +461,7 @@ export default function DriverDashboardIndex({
     return (
         <>
             <Head title="Beranda" />
-            <div className="mx-auto w-full max-w-[640px] space-y-8 px-4 pt-5 pb-8 lg:pt-8">
+            <div className="w-full max-w-[820px] space-y-8 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
                 <header className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                         <p className="text-[13px] text-muted-foreground">
