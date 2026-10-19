@@ -32,10 +32,10 @@
             html[data-theme="dark"] { background-color: #0A0A0A; }
         </style>
 
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-        <link rel="shortcut icon" href="/favicon-32.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2">
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png?v=2">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
+        <link rel="shortcut icon" href="/favicon-32.png?v=2">
 
         {{-- PWA Meta Tags --}}
         <meta name="theme-color" content="#0A0A0A">
