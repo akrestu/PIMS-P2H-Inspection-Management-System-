@@ -44,7 +44,7 @@ function Section({
         <section
             id={id}
             aria-labelledby={`${id}-title`}
-            className="scroll-mt-6 rounded-[14px] border-(length:--bw) bg-card p-5"
+            className="scroll-mt-6 rounded-xl border-(length:--bw) bg-card p-5"
         >
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -270,7 +270,7 @@ export default function AppSettingsPage({ settings }: Props) {
                 <div
                     role="region"
                     aria-label="Perubahan belum disimpan"
-                    className="fixed inset-x-4 bottom-24 z-30 mx-auto flex max-w-[560px] items-center justify-between gap-3 rounded-[14px] bg-foreground px-4 py-3 text-background shadow-lg lg:bottom-6 lg:left-[calc(264px+2rem)]"
+                    className="fixed inset-x-4 bottom-24 z-30 mx-auto flex max-w-[560px] items-center justify-between gap-3 rounded-xl bg-foreground px-4 py-3 text-background shadow-lg lg:bottom-6 lg:left-[calc(264px+2rem)]"
                 >
                     <span className="text-sm font-medium">Perubahan belum disimpan</span>
                     <div className="flex gap-2">

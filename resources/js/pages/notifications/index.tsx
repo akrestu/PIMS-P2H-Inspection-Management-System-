@@ -526,7 +526,7 @@ export default function NotificationsIndex({
                     <EmptyState tab={filter} />
                 ) : (
                     <div className="space-y-4">
-                        <div className="overflow-hidden rounded-[14px] border-(length:--bw) bg-card">
+                        <div className="overflow-hidden rounded-xl border-(length:--bw) bg-card">
                             {groupOrder
                                 .filter((label) => grouped[label].length)
                                 .map((label) => (

@@ -1156,7 +1156,7 @@ export default function UnitsIndex({
                 </div>
 
                 {/* ── Table ── */}
-                <div className="overflow-hidden rounded-[14px] border-(length:--bw) bg-card">
+                <div className="overflow-hidden rounded-xl border-(length:--bw) bg-card">
                     <>
                         <div className="overflow-x-auto">
                             <Table>

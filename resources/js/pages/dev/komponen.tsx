@@ -334,7 +334,7 @@ export default function Komponen() {
 
                 <Section
                     title="Tabel & aksi massal"
-                    description="Header muted-2 44px, baris 52px, baris terpilih brand-soft, bulk bar gelap mengambang."
+                    description="Di dalam kartu putih, header tanpa latar, baris 56px, baris terpilih brand-soft, bulk bar gelap mengambang."
                 >
                     <PageHeader
                         title="Status P2H hari ini"
@@ -573,7 +573,7 @@ export default function Komponen() {
 
                 <Section
                     title="KPI, timeline, stepper"
-                    description="Angka 36–40 tanpa kartu di mobile, kartu 28 di desktop. Selalu tabular."
+                    description="Kartu putih radius 20, label uppercase, angka 32/800. Selalu tabular."
                 >
                     <KpiStrip cols={5}>
                         <KpiCard

@@ -407,7 +407,7 @@ export default function PeriodReport({
                                 <h2 id="site-title" className="text-lg font-semibold tracking-[-0.01em]">
                                     Per site
                                 </h2>
-                                <div className="mt-3 overflow-x-auto rounded-[14px] border-(length:--bw)">
+                                <div className="mt-3 overflow-x-auto rounded-xl border-(length:--bw)">
                                     <table className="w-full min-w-[480px] text-sm">
                                         <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
                                             <tr className="h-11">
@@ -486,7 +486,7 @@ export default function PeriodReport({
 
                     <section
                         aria-labelledby="ai-title"
-                        className="h-fit rounded-[14px] border-(length:--bw) bg-card p-5"
+                        className="h-fit rounded-xl border-(length:--bw) bg-card p-5"
                     >
                         <div className="flex items-center justify-between gap-3">
                             <h2 id="ai-title" className="flex items-center gap-2.5 text-lg font-semibold tracking-[-0.01em]">

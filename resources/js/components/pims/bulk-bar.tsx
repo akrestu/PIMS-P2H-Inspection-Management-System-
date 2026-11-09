@@ -31,7 +31,7 @@ export function BulkBar({
             <div
                 role="toolbar"
                 aria-label="Aksi massal"
-                className="pointer-events-auto flex animate-fade-up items-center gap-1 rounded-[14px] bg-ink p-1.5 pl-4 text-ink-foreground shadow-lg dark:ring-1 dark:ring-white/10"
+                className="pointer-events-auto flex animate-fade-up items-center gap-1 rounded-full bg-ink p-1.5 pl-4 text-ink-foreground shadow-lg dark:ring-1 dark:ring-white/10"
             >
                 <span aria-live="polite" className="mr-2 text-sm font-semibold">
                     {count} dipilih
@@ -41,7 +41,7 @@ export function BulkBar({
                     type="button"
                     onClick={onClear}
                     aria-label="Batalkan pilihan"
-                    className="ml-1 grid size-10 press place-items-center rounded-[10px] text-white/70 hover:bg-white/10 hover:text-white"
+                    className="ml-1 grid size-10 press place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"
                 >
                     <X className="size-4" />
                 </button>
@@ -60,7 +60,7 @@ export function BulkAction({
         <button
             type="button"
             className={cn(
-                'inline-flex h-10 press items-center gap-1.5 rounded-[10px] px-3 text-sm font-semibold whitespace-nowrap disabled:opacity-40 [&_svg]:size-4',
+                'inline-flex h-10 press items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap disabled:opacity-40 [&_svg]:size-4',
                 tone === 'default' &&
                     'bg-white/10 text-white hover:bg-white/15',
                 tone === 'danger' &&

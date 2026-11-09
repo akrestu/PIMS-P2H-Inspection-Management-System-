@@ -365,7 +365,7 @@ export function TodayTable({
     const th = 'h-11 px-4 text-left text-xs font-semibold text-muted-foreground';
 
     return (
-        <div className="overflow-x-auto rounded-[14px] border-(length:--bw)">
+        <div className="overflow-x-auto rounded-xl border-(length:--bw)">
             <table
                 className={cn(
                     'w-full text-sm',
@@ -517,7 +517,7 @@ export function TodayListCard({ row }: { row: TodayRow }) {
     );
 
     const cls =
-        'flex min-h-[72px] items-center gap-3 rounded-[14px] border-(length:--bw) bg-card px-4 py-3';
+        'flex min-h-[72px] items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3';
 
     return href ? (
         <Link href={href} className={cn(cls, 'press')}>

@@ -81,7 +81,7 @@ export default function P2hSubmitted({
                     )}
                 </div>
                 {findings.length > 0 && (
-                    <ul className="w-full max-w-sm divide-y rounded-[14px] border-(length:--bw) bg-card text-left">
+                    <ul className="w-full max-w-sm divide-y rounded-xl border-(length:--bw) bg-card text-left">
                         <li className="px-4 py-2.5 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
                             {findings.length} temuan Tidak Layak
                         </li>

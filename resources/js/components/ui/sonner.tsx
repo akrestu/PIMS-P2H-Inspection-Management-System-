@@ -23,7 +23,7 @@ function Toaster({ ...props }: ToasterProps) {
             visibleToasts={3}
             toastOptions={{
                 classNames: {
-                    toast: 'rounded-[14px] border-0 bg-ink text-ink-foreground shadow-lg text-sm font-medium gap-3 dark:ring-1 dark:ring-white/10',
+                    toast: 'rounded-xl border-0 bg-ink text-ink-foreground shadow-lg text-sm font-medium gap-3 dark:ring-1 dark:ring-white/10',
                     title: 'font-semibold text-sm',
                     description: 'text-xs mt-0.5 !text-ink-foreground/70',
                     actionButton:

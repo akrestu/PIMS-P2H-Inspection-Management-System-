@@ -24,7 +24,7 @@ export function EmptyState({
     return (
         <div
             className={cn(
-                'relative flex flex-col items-center justify-center overflow-hidden rounded-xl border-(length:--bw) border-dashed px-6 py-12 text-center',
+                'relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-card px-6 shadow-sm py-12 text-center',
                 className,
             )}
         >
@@ -68,7 +68,7 @@ export function ErrorState({
         <div
             role="alert"
             className={cn(
-                'flex flex-col items-center justify-center gap-2 rounded-xl border-(length:--bw) px-6 py-12 text-center',
+                'flex flex-col items-center justify-center gap-2 rounded-xl bg-card px-6 shadow-sm py-12 text-center',
                 className,
             )}
         >
@@ -148,7 +148,7 @@ export function Forbidden({
     return (
         <div
             className={cn(
-                'relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border-(length:--bw) p-8 lg:p-12',
+                'relative flex flex-col items-start gap-3 overflow-hidden rounded-xl bg-card p-8 shadow-sm lg:p-12',
                 className,
             )}
         >

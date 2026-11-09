@@ -23,9 +23,9 @@ export function TrashTabs({
             href={href}
             aria-current={current === key ? 'page' : undefined}
             className={cn(
-                'inline-flex h-10 items-center rounded-[10px] px-3.5 text-sm font-medium whitespace-nowrap transition-colors lg:h-8 lg:rounded-[8px]',
+                'inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium whitespace-nowrap transition-colors lg:h-8',
                 current === key
-                    ? 'bg-background font-semibold text-foreground shadow-sm'
+                    ? 'bg-card font-bold text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground',
             )}
         >
@@ -37,7 +37,7 @@ export function TrashTabs({
         <nav
             aria-label="Aktif atau Sampah"
             className={cn(
-                'inline-flex shrink-0 rounded-[12px] bg-muted p-1 lg:rounded-[10px]',
+                'inline-flex shrink-0 rounded-full bg-muted p-1',
                 className,
             )}
         >

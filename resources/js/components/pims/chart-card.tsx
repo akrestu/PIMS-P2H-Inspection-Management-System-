@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * ChartCard (docs/02#chart): border 1, radius 14, judul 15/600,
+ * ChartCard (docs/02#chart): kartu radius 20 tanpa garis, judul 15/600,
  * legenda kanan atas, catatan 12 muted di bawah. Chart di dalamnya (Recharts)
  * wajib punya ringkasan teks (`summary`) untuk pembaca layar.
  */
@@ -27,7 +27,7 @@ export function ChartCard({
     return (
         <section
             className={cn(
-                'rounded-xl border-(length:--bw) bg-card p-4 shadow-sm lg:p-[18px]',
+                'rounded-xl bg-card p-4 shadow-sm lg:p-6',
                 className,
             )}
         >

@@ -418,7 +418,7 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                             ))}
                         </div>
 
-                        <div className="hidden overflow-x-auto rounded-[14px] border-(length:--bw) lg:block">
+                        <div className="hidden overflow-x-auto rounded-xl border-(length:--bw) lg:block">
                             <table className="w-full min-w-[920px] text-sm">
                                 <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
                                     <tr className="h-11">

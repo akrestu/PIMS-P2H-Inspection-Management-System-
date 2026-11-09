@@ -46,7 +46,7 @@ export function ResponsiveDrawer({
                 <SheetContent
                     side="right"
                     className={cn(
-                        'w-full gap-0 p-0 shadow-lg sm:max-w-none',
+                        'inset-y-3 right-3 h-auto w-full gap-0 overflow-hidden rounded-2xl border-0 p-0 shadow-lg sm:max-w-none',
                         width === 'md' ? 'lg:w-[480px]' : 'lg:w-[540px]',
                     )}
                 >

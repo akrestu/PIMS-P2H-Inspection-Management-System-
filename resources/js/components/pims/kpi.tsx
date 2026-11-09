@@ -51,13 +51,13 @@ export function KpiCard({
 }: KpiCardProps) {
     const body = (
         <>
-            <span className="text-[13px] text-muted-foreground">{label}</span>
+            <span className="text-xs font-bold tracking-[0.06em] text-muted-foreground uppercase">
+                {label}
+            </span>
             <span
                 className={cn(
-                    'mt-1 flex items-baseline gap-0.5 leading-none font-semibold tracking-[-0.03em]',
-                    variant === 'card'
-                        ? 'text-[28px]'
-                        : 'text-[36px] lg:text-[40px]',
+                    'mt-2 flex items-baseline gap-0.5 leading-none font-extrabold tracking-[-0.03em]',
+                    'text-[32px]',
                     VALUE_TONE[tone],
                 )}
             >
@@ -82,7 +82,7 @@ export function KpiCard({
                 </span>
             )}
             {sub && (
-                <span className={cn('mt-1.5 text-xs', SUB_TONE[subTone])}>
+                <span className={cn('mt-1.5 text-[13px]', SUB_TONE[subTone])}>
                     {sub}
                 </span>
             )}
@@ -92,9 +92,9 @@ export function KpiCard({
     const classes = cn(
         'flex min-w-0 flex-col text-left',
         variant === 'card' &&
-            'rounded-xl border-(length:--bw) bg-card p-4 shadow-sm',
-        onClick && 'press hover:border-foreground/30',
-        onClick && active && 'border-foreground',
+            'rounded-xl bg-card p-[18px] shadow-sm',
+        onClick && 'press hover:bg-muted-2',
+        onClick && active && 'ring-2 ring-foreground',
         className,
     );
 

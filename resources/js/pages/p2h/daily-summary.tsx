@@ -390,7 +390,7 @@ export default function DailySummary({
                             ))}
                         </div>
 
-                        <section className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5">
+                        <section className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5">
                             <h2 className="text-[15px] font-semibold">Perlu tindakan</h2>
                             {actions.length === 0 ? (
                                 <p className="mt-2 text-sm text-muted-foreground">
@@ -422,7 +422,7 @@ export default function DailySummary({
                             )}
                         </section>
 
-                        <section className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5">
+                        <section className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5">
                             <h2 className="flex items-center gap-2 text-[15px] font-semibold">
                                 <Sparkles className="size-4" aria-hidden />
                                 Ringkasan AI
@@ -466,7 +466,7 @@ export default function DailySummary({
                     </div>
 
                     {/* Teks WhatsApp — panel kanan sticky */}
-                    <aside className="h-fit overflow-hidden rounded-[14px] border-(length:--bw) bg-card lg:sticky lg:top-6">
+                    <aside className="h-fit overflow-hidden rounded-xl border-(length:--bw) bg-card lg:sticky lg:top-6">
                         <div className="flex items-baseline justify-between gap-2 px-4 pt-4">
                             <h2 className="text-[15px] font-semibold">Teks untuk WhatsApp</h2>
                             <span className="text-xs text-muted-foreground tnum">

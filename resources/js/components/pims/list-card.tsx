@@ -123,8 +123,8 @@ export function ListCard({
     return (
         <div
             className={cn(
-                'flex min-h-[72px] items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3 shadow-sm',
-                selected && 'border-foreground bg-brand-soft',
+                'flex min-h-[72px] items-center gap-3 rounded-xl bg-card px-4 py-3 shadow-sm',
+                selected && 'bg-brand-soft ring-2 ring-foreground',
                 className,
             )}
         >

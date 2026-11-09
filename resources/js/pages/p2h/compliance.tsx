@@ -348,7 +348,7 @@ export default function P2hCompliance({ matrix, dates, summary, filters }: Props
                 ) : (
                     <section
                         aria-labelledby="heatmap-title"
-                        className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5"
+                        className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5"
                     >
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                             <h2
@@ -463,7 +463,7 @@ export default function P2hCompliance({ matrix, dates, summary, filters }: Props
                                 return (
                                     <div
                                         key={row.id}
-                                        className="rounded-[14px] border-(length:--bw) bg-card p-4"
+                                        className="rounded-xl border-(length:--bw) bg-card p-4"
                                     >
                                         <div className="flex items-baseline justify-between gap-2">
                                             <p className="min-w-0 truncate">

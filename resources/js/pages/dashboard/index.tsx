@@ -381,7 +381,7 @@ export default function DashboardIndex({
                             <Link
                                 key={k.label}
                                 href={k.href}
-                                className="press rounded-[14px] border-(length:--bw) bg-muted-2 p-4"
+                                className="press rounded-xl border-(length:--bw) bg-muted-2 p-4"
                             >
                                 <span className="flex items-center gap-2 text-[13px] text-muted-foreground">
                                     <span

@@ -160,7 +160,7 @@ function DamagePanel({ damage }: { damage: Damage }) {
     return (
         <div className="space-y-6">
             <div className="grid gap-5 lg:grid-cols-2">
-                <section className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5">
+                <section className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5">
                     <div className="flex items-baseline justify-between">
                         <h2 className="text-[15px] font-semibold">Item paling sering rusak</h2>
                         <span className="text-xs text-muted-foreground">jumlah temuan</span>
@@ -201,7 +201,7 @@ function DamagePanel({ damage }: { damage: Damage }) {
                     </p>
                 </section>
 
-                <section className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5">
+                <section className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5">
                     <div className="flex items-baseline justify-between">
                         <h2 className="text-[15px] font-semibold">Tren kerusakan mingguan</h2>
                         <span className="flex gap-3 text-xs text-muted-foreground">
@@ -266,7 +266,7 @@ function DamagePanel({ damage }: { damage: Damage }) {
                         </button>
                     )}
                 </div>
-                <div className="mt-3 overflow-x-auto rounded-[14px] border-(length:--bw)">
+                <div className="mt-3 overflow-x-auto rounded-xl border-(length:--bw)">
                     <table className="w-full min-w-[860px] text-sm">
                         <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
                             <tr className="h-11">

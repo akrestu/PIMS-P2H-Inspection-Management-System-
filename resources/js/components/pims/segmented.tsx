@@ -32,7 +32,7 @@ export function Segmented<T extends string>({
             role="radiogroup"
             aria-label={label}
             className={cn(
-                'inline-flex rounded-[12px] bg-muted p-1 lg:rounded-[10px]',
+                'inline-flex rounded-full bg-muted p-1',
                 className,
             )}
         >
@@ -48,10 +48,10 @@ export function Segmented<T extends string>({
                         disabled={opt.disabled}
                         onClick={() => onChange(opt.value)}
                         className={cn(
-                            'flex-1 press rounded-[9px] px-3 text-sm font-medium whitespace-nowrap disabled:opacity-40 lg:rounded-[7px]',
+                            'flex-1 press rounded-full px-3.5 text-sm font-medium whitespace-nowrap disabled:opacity-40',
                             size === 'lg' ? 'h-11' : 'h-10 lg:h-8',
                             active
-                                ? 'bg-background text-foreground shadow-md'
+                                ? 'bg-card font-bold text-foreground shadow-sm'
                                 : 'text-muted-foreground hover:text-foreground',
                         )}
                     >
@@ -99,7 +99,7 @@ export function SegmentedChoice({
             aria-label={label}
             aria-invalid={invalid || undefined}
             className={cn(
-                'grid h-13 grid-cols-2 gap-1 rounded-[12px] border-(length:--bw) border-transparent bg-muted p-1',
+                'grid h-13 grid-cols-2 gap-1 rounded-full border-(length:--bw) border-transparent bg-muted p-1',
                 invalid && 'animate-shake border-danger',
                 className,
             )}
@@ -116,7 +116,7 @@ export function SegmentedChoice({
                         disabled={disabled}
                         onClick={() => onChange(v)}
                         className={cn(
-                            'flex press items-center justify-center gap-1.5 rounded-[9px] border-(length:--bw) border-transparent text-[15px] font-semibold disabled:opacity-40',
+                            'flex press items-center justify-center gap-1.5 rounded-full border-(length:--bw) border-transparent text-[15px] font-semibold disabled:opacity-40',
                             !active &&
                                 'text-muted-foreground hover:text-foreground',
                             active &&

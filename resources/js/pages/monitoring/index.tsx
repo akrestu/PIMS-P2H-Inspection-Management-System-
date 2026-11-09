@@ -203,7 +203,7 @@ export default function MonitoringPa({ weekly, filters }: Props) {
 
                 <section
                     aria-labelledby="pa-harian"
-                    className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5"
+                    className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5"
                 >
                     <div className="flex items-center justify-between gap-3">
                         <h2 id="pa-harian" className="text-[15px] font-semibold">
@@ -220,7 +220,7 @@ export default function MonitoringPa({ weekly, filters }: Props) {
 
                 <section
                     aria-labelledby="pa-unit"
-                    className="rounded-[14px] border-(length:--bw) bg-card p-4 lg:p-5"
+                    className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5"
                 >
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                         <h2 id="pa-unit" className="text-[15px] font-semibold">

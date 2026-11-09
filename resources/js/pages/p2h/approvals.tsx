@@ -921,7 +921,7 @@ function EntryCard({
                 data-active={active || undefined}
                 {...handlers}
                 style={dx ? { transform: `translateX(${dx}px)` } : undefined}
-                className="relative touch-pan-y rounded-[14px] border-(length:--bw) bg-card px-4 py-3.5 transition-[box-shadow,transform] duration-200 data-[active]:ring-2 data-[active]:ring-ring"
+                className="relative touch-pan-y rounded-xl border-(length:--bw) bg-card px-4 py-3.5 transition-[box-shadow,transform] duration-200 data-[active]:ring-2 data-[active]:ring-ring"
             >
                 {/* Kartu ringkas (Persetujuan.png): ketuk = tinjau, geser = setujui/tolak */}
                 <button
@@ -1578,7 +1578,7 @@ export default function P2hApprovals({
                 />
 
                 {/* ── Desktop: master–detail ── */}
-                <div className="hidden h-[calc(100svh-150px)] min-h-[560px] grid-cols-[minmax(320px,380px)_1fr] overflow-hidden rounded-[14px] border-(length:--bw) lg:grid">
+                <div className="hidden h-[calc(100svh-150px)] min-h-[560px] grid-cols-[minmax(320px,380px)_1fr] overflow-hidden rounded-xl border-(length:--bw) lg:grid">
                     <div className="flex min-h-0 flex-col border-r-(length:--bw)">
                         <div className="border-b-(length:--bw) px-4 py-3">
                             <FilterChips

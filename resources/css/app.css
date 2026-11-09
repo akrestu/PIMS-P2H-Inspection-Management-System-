@@ -203,8 +203,10 @@
 
 /* Field wrapper memegang focus ring (input di dalamnya bersih, tanpa ring ganda) */
 @utility field {
-  &:focus-within { border-color: var(--foreground); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 55%, transparent); }
-  &[data-invalid="true"], &[aria-invalid="true"] { border-color: var(--danger); }
+  /* !important: menimpa border/bg bawaan kelas di halaman lama (pola yang sama dengan mw.css) */
+  background: var(--input-fill) !important; border-color: transparent !important; border-radius: 16px !important;
+  &:focus-within { border-color: var(--foreground) !important; box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 55%, transparent); }
+  &[data-invalid="true"], &[aria-invalid="true"] { border-color: var(--danger) !important; background: var(--danger-soft) !important; }
   &[data-invalid="true"]:focus-within, &[aria-invalid="true"]:focus-within { box-shadow: 0 0 0 4px color-mix(in oklab, var(--danger) 22%, transparent); }
   & input:focus-visible, & textarea:focus-visible { outline: 0; box-shadow: none; }
 }

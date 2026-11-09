@@ -46,7 +46,7 @@ export function FilterChips<T extends string>({
                             'inline-flex h-10 press items-center gap-1.5 rounded-full border-(length:--bw) px-3.5 text-sm font-medium whitespace-nowrap lg:h-[34px] lg:text-[13px]',
                             active
                                 ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-input bg-background text-foreground hover:bg-muted',
+                                : 'border-input bg-card text-foreground hover:bg-muted',
                         )}
                     >
                         {opt.label}

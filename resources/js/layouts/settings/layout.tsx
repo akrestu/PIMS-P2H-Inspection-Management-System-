@@ -90,7 +90,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 </nav>
 
                 <div className="min-w-0 space-y-5">
-                    <section className="space-y-10 rounded-[14px] border-(length:--bw) bg-card p-5 lg:p-6">
+                    <section className="space-y-10 rounded-xl border-(length:--bw) bg-card p-5 lg:p-6">
                         {children}
                     </section>
 

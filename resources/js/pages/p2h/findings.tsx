@@ -901,7 +901,7 @@ export default function P2hFindings({
                 {/* ── List: kartu di HP ── */}
                 <div className="flex flex-col gap-3 md:hidden">
                     {findings.data.length === 0 && (
-                        <p className="rounded-[14px] border py-10 text-center text-sm text-muted-foreground">
+                        <p className="rounded-xl border py-10 text-center text-sm text-muted-foreground">
                             Tidak ada temuan.
                         </p>
                     )}
@@ -916,7 +916,7 @@ export default function P2hFindings({
                 </div>
 
                 {/* ── List: tabel di layar lebar (Temuan-Desktop.png) ── */}
-                <div className="hidden overflow-x-auto rounded-[14px] border-(length:--bw) md:block">
+                <div className="hidden overflow-x-auto rounded-xl border-(length:--bw) md:block">
                     <table className="w-full min-w-[960px] text-sm">
                         <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
                             <tr className="h-11">
@@ -1059,7 +1059,7 @@ export default function P2hFindings({
                     <div
                         role="region"
                         aria-label="Aksi massal"
-                        className="sticky bottom-4 z-20 mx-auto hidden items-center gap-2 rounded-[14px] bg-foreground px-4 py-2.5 text-background shadow-lg md:flex"
+                        className="sticky bottom-4 z-20 mx-auto hidden items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-background shadow-lg md:flex"
                     >
                         <span className="text-sm font-medium tnum">
                             {selection.selected.length} dipilih
@@ -1190,7 +1190,7 @@ function FindingCard({
             type="button"
             onClick={onEdit}
             className={cn(
-                'flex w-full press items-center gap-3 rounded-[14px] border-(length:--bw) bg-card px-4 py-3.5 text-left',
+                'flex w-full press items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3.5 text-left',
                 f.overdue && 'border-danger/50',
             )}
         >

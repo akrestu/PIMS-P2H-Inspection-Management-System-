@@ -248,7 +248,7 @@ function ReviewBlock({
     danger?: number;
 }) {
     return (
-        <div className="rounded-[14px] border-(length:--bw) bg-card">
+        <div className="rounded-xl border-(length:--bw) bg-card">
             <div className="flex items-center justify-between gap-3 border-b-(length:--bw) py-2 pr-2 pl-4">
                 <h3 className="text-[15px] font-semibold">{title}</h3>
                 <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
@@ -1602,7 +1602,7 @@ export default function P2hForm({
                                     </label>
                                 )}
                                 {units.length === 0 ? (
-                                    <p className="rounded-[14px] bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                                    <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
                                         Belum ada unit untuk akun Anda.
                                         Hubungi admin site untuk penugasan
                                         unit.
@@ -1633,7 +1633,7 @@ export default function P2hForm({
                                                         setPicApproverId('');
                                                     }}
                                                     className={cn(
-                                                        'flex min-h-[72px] w-full press items-center gap-3 rounded-[14px] border-(length:--bw) bg-card px-4 py-3 text-left',
+                                                        'flex min-h-[72px] w-full press items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3 text-left',
                                                         isSelected
                                                             ? 'border-foreground ring-1 ring-foreground'
                                                             : 'hover:border-foreground/30',
@@ -2143,7 +2143,7 @@ export default function P2hForm({
                                 <section
                                     aria-label="Perkiraan hasil"
                                     className={cn(
-                                        'flex flex-col gap-3 rounded-[14px] border-(length:--bw) p-4',
+                                        'flex flex-col gap-3 rounded-xl border-(length:--bw) p-4',
                                         recommendedKondisi === 'Layak Pakai'
                                             ? 'border-success/40 bg-success-soft'
                                             : 'border-danger/40 bg-danger-soft',
@@ -2354,7 +2354,7 @@ export default function P2hForm({
                                                     }
                                                 }}
                                                 className={cn(
-                                                    'flex min-h-[88px] press flex-col items-center justify-center gap-1 rounded-[14px] border-2 px-2 text-[15px] font-semibold transition-colors duration-150',
+                                                    'flex min-h-[88px] press flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 text-[15px] font-semibold transition-colors duration-150',
                                                     active
                                                         ? opt.on
                                                         : 'border-border bg-card text-muted-foreground hover:text-foreground',

@@ -284,7 +284,7 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
 
                     <aside
                         aria-labelledby="feed-title"
-                        className="h-fit rounded-[14px] border-(length:--bw) bg-card p-4"
+                        className="h-fit rounded-xl border-(length:--bw) bg-card p-4"
                     >
                         <h2 id="feed-title" className="text-[15px] font-semibold">
                             Aktivitas terbaru
