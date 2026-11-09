@@ -144,7 +144,7 @@ export default function UnitMonitoring({
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                        <h1 className="text-2xl leading-[30px] font-extrabold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Monitoring Harian Unit
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -161,7 +161,7 @@ export default function UnitMonitoring({
                 </div>
 
                 {/* ── Filters ── */}
-                <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+                <div className="flex flex-wrap items-end gap-3 rounded-xl bg-card shadow-sm p-3">
                     <div className="space-y-1.5">
                         <Label htmlFor="start">Dari</Label>
                         <Input
@@ -296,7 +296,7 @@ export default function UnitMonitoring({
                 </div>
 
                 {/* ── Mobile: kartu ── */}
-                <div className="divide-y rounded-xl border md:hidden">
+                <div className="divide-y rounded-xl bg-card shadow-sm md:hidden">
                     {rows.data.length === 0 ? (
                         <p className="px-3 py-12 text-center text-sm text-muted-foreground">
                             Tidak ada data untuk filter ini.
@@ -312,7 +312,7 @@ export default function UnitMonitoring({
                 </div>
 
                 {/* ── Table (tablet & desktop) ── */}
-                <div className="hidden overflow-x-auto rounded-xl border md:block">
+                <div className="hidden overflow-x-auto rounded-xl bg-card shadow-sm md:block">
                     <table className="w-full min-w-[1100px] text-sm">
                         <thead className="bg-muted/60 text-xs text-muted-foreground">
                             <tr className="text-left">
@@ -496,7 +496,7 @@ function MonitoringCard({ row }: { row: Row }) {
             </div>
 
             {row.temuan.length > 0 && (
-                <div className="space-y-1.5 rounded-lg border bg-muted/30 p-2.5">
+                <div className="space-y-1.5 rounded-md bg-muted-2 p-2.5">
                     <p className="text-xs font-semibold">
                         Temuan ({row.temuan.length})
                     </p>

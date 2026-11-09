@@ -72,7 +72,7 @@ function paCell(pa: number | null) {
         return 'bg-brand-600 text-white';
     }
 
-    return 'bg-brand-800 text-white';
+    return 'bg-brand-900 text-white';
 }
 
 const LEGEND = [
@@ -138,7 +138,7 @@ export default function MonitoringPa({ weekly, filters }: Props) {
                                     { value: 'Bus', label: 'Bus' },
                                 ]}
                             />
-                            <div className="flex h-10 items-center rounded-[10px] border-(length:--bw)">
+                            <div className="flex h-10 items-center rounded-full bg-card shadow-sm">
                                 <button
                                     type="button"
                                     onClick={() => shiftWeek(-1)}
@@ -203,7 +203,7 @@ export default function MonitoringPa({ weekly, filters }: Props) {
 
                 <section
                     aria-labelledby="pa-harian"
-                    className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5"
+                    className="rounded-xl bg-card shadow-sm p-4 lg:p-5"
                 >
                     <div className="flex items-center justify-between gap-3">
                         <h2 id="pa-harian" className="text-[15px] font-semibold">
@@ -220,7 +220,7 @@ export default function MonitoringPa({ weekly, filters }: Props) {
 
                 <section
                     aria-labelledby="pa-unit"
-                    className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5"
+                    className="rounded-xl bg-card shadow-sm p-4 lg:p-5"
                 >
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                         <h2 id="pa-unit" className="text-[15px] font-semibold">
@@ -297,7 +297,7 @@ export default function MonitoringPa({ weekly, filters }: Props) {
                                                             <span
                                                                 tabIndex={0}
                                                                 className={cn(
-                                                                    'grid h-8 place-items-center rounded-[5px] text-xs font-semibold tnum',
+                                                                    'grid h-8 place-items-center rounded-sm text-xs font-semibold tnum',
                                                                     paCell(d.pa),
                                                                 )}
                                                             >

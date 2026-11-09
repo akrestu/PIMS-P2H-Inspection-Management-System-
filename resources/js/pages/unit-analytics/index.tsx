@@ -160,7 +160,7 @@ function DamagePanel({ damage }: { damage: Damage }) {
     return (
         <div className="space-y-6">
             <div className="grid gap-5 lg:grid-cols-2">
-                <section className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5">
+                <section className="rounded-xl bg-card shadow-sm p-4 lg:p-5">
                     <div className="flex items-baseline justify-between">
                         <h2 className="text-[15px] font-semibold">Item paling sering rusak</h2>
                         <span className="text-xs text-muted-foreground">jumlah temuan</span>
@@ -176,7 +176,7 @@ function DamagePanel({ damage }: { damage: Damage }) {
                                         aria-pressed={itemFilter === i.item}
                                         onClick={() => setItemFilter((v) => (v === i.item ? null : i.item))}
                                         className={cn(
-                                            'grid w-full grid-cols-[minmax(0,236px)_1fr_32px] items-center gap-3 rounded-[8px] px-1.5 py-1.5 text-left text-sm hover:bg-muted/60',
+                                            'grid w-full grid-cols-[minmax(0,236px)_1fr_32px] items-center gap-3 rounded-sm px-1.5 py-1.5 text-left text-sm hover:bg-muted/60',
                                             itemFilter === i.item && 'bg-muted',
                                         )}
                                     >
@@ -201,7 +201,7 @@ function DamagePanel({ damage }: { damage: Damage }) {
                     </p>
                 </section>
 
-                <section className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5">
+                <section className="rounded-xl bg-card shadow-sm p-4 lg:p-5">
                     <div className="flex items-baseline justify-between">
                         <h2 className="text-[15px] font-semibold">Tren kerusakan mingguan</h2>
                         <span className="flex gap-3 text-xs text-muted-foreground">
@@ -266,9 +266,9 @@ function DamagePanel({ damage }: { damage: Damage }) {
                         </button>
                     )}
                 </div>
-                <div className="mt-3 overflow-x-auto rounded-xl border-(length:--bw)">
+                <div className="mt-3 overflow-x-auto rounded-xl bg-card shadow-sm">
                     <table className="w-full min-w-[860px] text-sm">
-                        <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                        <thead className="text-left text-[13px] text-muted-foreground">
                             <tr className="h-11">
                                 <th className="px-4 font-semibold">Unit</th>
                                 <th className="px-4 text-right font-semibold">Kerusakan</th>

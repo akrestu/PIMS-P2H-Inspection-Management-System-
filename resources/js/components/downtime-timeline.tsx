@@ -65,7 +65,7 @@ export function DowntimeTimeline({
 
     return (
         <section
-            className="rounded-xl border-(length:--bw) bg-card p-4 shadow-sm lg:p-[18px]"
+            className="rounded-xl bg-card p-4 shadow-sm lg:p-[18px]"
             aria-label={`Linimasa downtime ${units.length} unit, ${formatDate(start)} sampai ${formatDate(end)}`}
         >
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">

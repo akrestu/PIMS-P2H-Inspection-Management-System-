@@ -320,7 +320,7 @@ export default function PeriodReport({
 
                 <section
                     aria-label="Ringkasan periode"
-                    className="grid grid-cols-2 gap-x-6 gap-y-5 border-b-(length:--bw) pb-6 md:grid-cols-3 xl:grid-cols-6"
+                    className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl bg-card p-5 shadow-sm md:grid-cols-3 xl:grid-cols-6"
                 >
                     {kpis.map((k) => (
                         <div key={k.label} className="min-w-0">
@@ -335,10 +335,10 @@ export default function PeriodReport({
                     ))}
                 </section>
 
-                <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-                    <section aria-labelledby="harian-title">
+                <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+                    <section aria-labelledby="harian-title" className="rounded-xl bg-card p-5 shadow-sm lg:p-6">
                         <div className="flex items-baseline gap-2">
-                            <h2 id="harian-title" className="text-lg font-semibold tracking-[-0.01em]">
+                            <h2 id="harian-title" className="text-lg font-bold tracking-[-0.01em]">
                                 Kepatuhan harian
                             </h2>
                             <span className="text-xs text-muted-foreground">garis putus = target 95%</span>
@@ -348,9 +348,9 @@ export default function PeriodReport({
                         </div>
                     </section>
 
-                    <section aria-labelledby="mingguan-title">
+                    <section aria-labelledby="mingguan-title" className="rounded-xl bg-card p-5 shadow-sm lg:p-6">
                         <div className="flex items-baseline justify-between gap-2">
-                            <h2 id="mingguan-title" className="text-lg font-semibold tracking-[-0.01em]">
+                            <h2 id="mingguan-title" className="text-lg font-bold tracking-[-0.01em]">
                                 Temuan per minggu
                             </h2>
                             <span className="flex gap-3 text-xs text-muted-foreground">
@@ -400,16 +400,16 @@ export default function PeriodReport({
                     </section>
                 </div>
 
-                <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+                <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
                     <div className="space-y-6">
                         {charts.sites.length > 0 && (
                             <section aria-labelledby="site-title">
-                                <h2 id="site-title" className="text-lg font-semibold tracking-[-0.01em]">
+                                <h2 id="site-title" className="text-lg font-bold tracking-[-0.01em]">
                                     Per site
                                 </h2>
-                                <div className="mt-3 overflow-x-auto rounded-xl border-(length:--bw)">
+                                <div className="mt-3 overflow-x-auto rounded-xl bg-card shadow-sm">
                                     <table className="w-full min-w-[480px] text-sm">
-                                        <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                                        <thead className="text-left text-[13px] text-muted-foreground">
                                             <tr className="h-11">
                                                 <th className="px-4 font-semibold">Site</th>
                                                 <th className="px-4 font-semibold">Kepatuhan</th>
@@ -446,7 +446,7 @@ export default function PeriodReport({
                             </section>
                         )}
 
-                        <section aria-labelledby="item-title" className="grid gap-6 sm:grid-cols-2">
+                        <section aria-labelledby="item-title" className="grid gap-6 rounded-xl bg-card p-5 shadow-sm sm:grid-cols-2 lg:p-6">
                             <div>
                                 <h2 id="item-title" className="text-[15px] font-semibold">
                                     Item paling sering bermasalah
@@ -486,11 +486,11 @@ export default function PeriodReport({
 
                     <section
                         aria-labelledby="ai-title"
-                        className="h-fit rounded-xl border-(length:--bw) bg-card p-5"
+                        className="h-fit rounded-xl bg-card shadow-sm p-5"
                     >
                         <div className="flex items-center justify-between gap-3">
-                            <h2 id="ai-title" className="flex items-center gap-2.5 text-lg font-semibold tracking-[-0.01em]">
-                                <span className="grid size-8 place-items-center rounded-[10px] bg-brand text-black">
+                            <h2 id="ai-title" className="flex items-center gap-2.5 text-lg font-bold tracking-[-0.01em]">
+                                <span className="grid size-8 place-items-center rounded-md bg-brand text-black">
                                     <Sparkles className="size-4" aria-hidden />
                                 </span>
                                 Ringkasan periode

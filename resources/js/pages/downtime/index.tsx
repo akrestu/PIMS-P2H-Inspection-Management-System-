@@ -472,7 +472,7 @@ function TodayList({
 }) {
     if (logs.length === 0) {
         return (
-            <p className="rounded-xl border-(length:--bw) px-4 py-10 text-center text-sm text-muted-foreground">
+            <p className="rounded-xl bg-card px-4 py-10 shadow-sm text-center text-sm text-muted-foreground">
                 {empty}
             </p>
         );
@@ -483,9 +483,9 @@ function TodayList({
     const time = (dt: string) => dt.slice(11, 16);
 
     return (
-        <div className="overflow-x-auto rounded-xl border-(length:--bw)">
+        <div className="overflow-x-auto rounded-xl bg-card shadow-sm">
             <table className="w-full min-w-[820px] text-sm">
-                <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                <thead className="text-left text-[13px] text-muted-foreground">
                     <tr className="h-11">
                         <th className="px-4 font-semibold">Unit</th>
                         <th className="px-4 font-semibold">Status</th>

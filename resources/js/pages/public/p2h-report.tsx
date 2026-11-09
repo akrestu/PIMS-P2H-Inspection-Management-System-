@@ -60,7 +60,7 @@ const STATUS: Record<
     kosong: {
         code: '–',
         label: 'Tidak P2H',
-        cls: 'bg-background text-danger ring-1 ring-danger/40 ring-inset ',
+        cls: 'bg-card text-danger ring-1 ring-danger/40 ring-inset ',
     },
 };
 
@@ -121,7 +121,7 @@ export default function PublicP2hReport({
                             <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                 PIMS · P2H Management System
                             </p>
-                            <h1 className="text-2xl font-semibold tracking-[-0.02em] lg:text-[28px]">
+                            <h1 className="text-2xl font-extrabold tracking-[-0.02em] lg:text-[28px]">
                                 Rekap P2H {bulanLabel}
                             </h1>
                             <p className="text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ export default function PublicP2hReport({
                                         className={cn(
                                             'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                                             jenis === o.value
-                                                ? 'bg-background shadow-sm'
+                                                ? 'bg-card shadow-sm'
                                                 : 'text-muted-foreground hover:text-foreground',
                                         )}
                                     >
@@ -256,7 +256,7 @@ export default function PublicP2hReport({
                     </ul>
 
                     {/* Kalender */}
-                    <div className="overflow-x-auto rounded-lg border">
+                    <div className="overflow-x-auto rounded-xl bg-card shadow-sm">
                         <table className="w-full border-collapse text-xs">
                             <thead>
                                 <tr className="bg-muted/60">
@@ -294,7 +294,7 @@ export default function PublicP2hReport({
                                     >
                                         <th
                                             scope="row"
-                                            className="sticky left-0 z-10 border-r bg-background px-3 py-1.5 text-left font-semibold whitespace-nowrap"
+                                            className="sticky left-0 z-10 border-r bg-card px-3 py-1.5 text-left font-semibold whitespace-nowrap"
                                         >
                                             {r.no_unit}
                                         </th>
