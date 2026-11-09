@@ -1,12 +1,12 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
-    Bell,
     CheckCircle2,
     ChevronRight,
     ClipboardCheck,
     Wrench,
 } from 'lucide-react';
+import NotificationBell from '@/components/Layout/NotificationBell';
 import { KpiCard } from '@/components/pims/kpi';
 import { ListCard } from '@/components/pims/list-card';
 import { SectionHeader } from '@/components/pims/page-header';
@@ -467,11 +467,9 @@ export default function DriverDashboardIndex({
     currentEntry,
     unitFindings,
 }: Props) {
-    const { auth, notifications } = usePage<{
+    const { auth } = usePage<{
         auth: { user: { name: string; site_name?: string | null } };
-        notifications?: { unread_count?: number };
     }>().props;
-    const unread = notifications?.unread_count ?? 0;
     const getInitials = useInitials();
     const now = new Date();
     const today = `${new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(now)}, ${formatDate(now, { withYear: false })}`;
@@ -479,7 +477,7 @@ export default function DriverDashboardIndex({
     return (
         <>
             <Head title="Beranda" />
-            <div className="relative isolate h-[236px] overflow-hidden lg:mx-10 lg:mt-8 lg:max-w-[820px] lg:rounded-2xl">
+            <div className="relative isolate h-[236px] overflow-hidden lg:mx-10 lg:mt-8 lg:flex lg:h-auto lg:min-h-56 lg:flex-col lg:justify-end lg:rounded-2xl lg:px-8 lg:pt-10 lg:pb-6 lg:text-white">
                 <img
                     src="/images/hero-mountain.jpg"
                     alt=""
@@ -487,9 +485,22 @@ export default function DriverDashboardIndex({
                 />
                 <div
                     aria-hidden
-                    className="absolute inset-0 -z-10 bg-gradient-to-b from-black/55 via-black/25 to-transparent"
+                    className="absolute inset-0 -z-10 bg-gradient-to-b from-black/55 via-black/25 to-transparent lg:from-transparent lg:from-40% lg:via-transparent lg:to-black/60"
                 />
-                <header className="px-5 pt-[max(env(safe-area-inset-top),20px)] text-white">
+                <div className="hidden lg:block">
+                    <p className="text-[13px] font-medium">
+                        {[today, shiftLabel(shiftAktif), auth.user.site_name]
+                            .filter(Boolean)
+                            .join(' · ')}
+                    </p>
+                    <h1 className="mt-1.5 text-[34px] leading-[1.1] font-extrabold tracking-[-0.025em]">
+                        {greeting(now.getHours())}, {firstName(auth.user.name)}
+                    </h1>
+                    <p className="mt-1.5 text-[13px] font-medium text-white/85">
+                        Cek unit dulu, baru jalan.
+                    </p>
+                </div>
+                <header className="px-5 pt-[max(env(safe-area-inset-top),20px)] text-white lg:hidden">
                     <div className="flex items-center gap-3">
                         <Link
                             href={ACCOUNT_HREF}
@@ -513,171 +524,164 @@ export default function DriverDashboardIndex({
                                 {firstName(auth.user.name)}
                             </p>
                         </div>
-                        <Link
-                            href="/notifications"
-                            aria-label={
-                                unread > 0
-                                    ? unread + ' notifikasi belum dibaca'
-                                    : 'Notifikasi'
-                            }
-                            className="relative grid size-12 shrink-0 press place-items-center rounded-full bg-white text-black"
-                        >
-                            <Bell className="size-5" aria-hidden />
-                            {unread > 0 && (
-                                <span
-                                    aria-hidden
-                                    className="absolute top-2.5 right-3 size-2.5 rounded-full bg-brand"
-                                />
-                            )}
-                        </Link>
+                        <NotificationBell className="bg-white text-black hover:bg-white" />
                     </div>
                     <h1 className="mt-4 max-w-[240px] text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em]">
                         Cek unit dulu, baru jalan.
                     </h1>
                 </header>
             </div>
-            <div className="relative -mt-12 w-full max-w-[820px] space-y-8 px-4 pb-8 lg:px-14">
-                <UnitCard
-                    unit={todayUnit}
-                    assignment={assignment}
-                    shift={shiftAktif}
-                    entry={currentEntry}
-                />
-
-                {/* Dua kartu statistik — berpadding agar tidak menempel ke tepi */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="flex min-h-[148px] min-w-0 flex-col rounded-xl bg-card p-[18px] shadow-sm">
-                        <KpiCard
-                            variant="plain"
-                            label="P2H bulan ini"
-                            value={stats.total_p2h_bulan}
-                        />
-                        <WeekStrip week={stats.week} />
-                    </div>
-                    <KpiCard
-                        className="min-h-[148px]"
-                        label="Temuan aktif"
-                        value={unitFindings.count}
-                        tone={unitFindings.overdue > 0 ? 'danger' : 'default'}
-                        sub={
-                            unitFindings.overdue > 0
-                                ? `${unitFindings.overdue} lewat tenggat`
-                                : 'Tidak ada yang lewat tenggat'
-                        }
-                        subTone={
-                            unitFindings.overdue > 0 ? 'danger' : 'default'
-                        }
+            <div className="relative -mt-12 grid w-full gap-8 px-4 pb-8 lg:mt-4 lg:grid-cols-2 lg:items-start lg:gap-5 lg:px-10">
+                <div className="min-w-0 space-y-8 lg:space-y-5">
+                    <UnitCard
+                        unit={todayUnit}
+                        assignment={assignment}
+                        shift={shiftAktif}
+                        entry={currentEntry}
                     />
+
+                    {/* Dua kartu statistik — berpadding agar tidak menempel ke tepi */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex min-h-[148px] min-w-0 flex-col rounded-xl bg-card p-[18px] shadow-sm">
+                            <KpiCard
+                                variant="plain"
+                                label="P2H bulan ini"
+                                value={stats.total_p2h_bulan}
+                            />
+                            <WeekStrip week={stats.week} />
+                        </div>
+                        <KpiCard
+                            className="min-h-[148px]"
+                            label="Temuan aktif"
+                            value={unitFindings.count}
+                            tone={
+                                unitFindings.overdue > 0 ? 'danger' : 'default'
+                            }
+                            sub={
+                                unitFindings.overdue > 0
+                                    ? `${unitFindings.overdue} lewat tenggat`
+                                    : 'Tidak ada yang lewat tenggat'
+                            }
+                            subTone={
+                                unitFindings.overdue > 0 ? 'danger' : 'default'
+                            }
+                        />
+                    </div>
                 </div>
 
-                {todayUnit && (
+                <div className="min-w-0 space-y-8 lg:space-y-5">
+                    {todayUnit && (
+                        <section className="space-y-3">
+                            <SectionHeader
+                                title={`Temuan ${todayUnit.no_unit}`}
+                                action={
+                                    unitFindings.count > 0 && (
+                                        <Link
+                                            href="/p2h/findings"
+                                            className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+                                        >
+                                            Lihat semua
+                                        </Link>
+                                    )
+                                }
+                            />
+                            {unitFindings.items.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {unitFindings.items.map((f) => (
+                                        <FindingRow key={f.id} finding={f} />
+                                    ))}
+                                </ul>
+                            ) : (
+                                <EmptyState
+                                    icon={<Wrench className="size-6" />}
+                                    title="Tidak ada temuan terbuka"
+                                    description={`Semua temuan ${todayUnit.no_unit} sudah ditutup.`}
+                                    className="py-8"
+                                />
+                            )}
+                        </section>
+                    )}
+
                     <section className="space-y-3">
                         <SectionHeader
-                            title={`Temuan ${todayUnit.no_unit}`}
+                            title="Riwayat P2H"
                             action={
-                                unitFindings.count > 0 && (
+                                history.length > 0 && (
                                     <Link
-                                        href="/p2h/findings"
+                                        href="/p2h"
                                         className="text-sm font-semibold text-muted-foreground hover:text-foreground"
                                     >
-                                        Lihat semua
+                                        Semua
                                     </Link>
                                 )
                             }
                         />
-                        {unitFindings.items.length > 0 ? (
-                            <ul className="space-y-2">
-                                {unitFindings.items.map((f) => (
-                                    <FindingRow key={f.id} finding={f} />
-                                ))}
-                            </ul>
+                        {history.length > 0 ? (
+                            <div className="space-y-2">
+                                {history.slice(0, 5).map((item) => {
+                                    const date = parseDmy(item.tanggal);
+                                    const time =
+                                        item.submitted_at?.split(' ')[1];
+
+                                    return (
+                                        <ListCard
+                                            key={item.id}
+                                            title={item.no_unit}
+                                            meta={[
+                                                date
+                                                    ? formatDate(date, {
+                                                          withYear: false,
+                                                      })
+                                                    : item.tanggal,
+                                                shiftLabel(item.shift),
+                                                time,
+                                                item.tl_count > 0
+                                                    ? `${item.tl_count} item rusak`
+                                                    : `${item.total_items} item baik`,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' · ')}
+                                            trailing={
+                                                <StatusPill
+                                                    size="sm"
+                                                    status={
+                                                        item.kondisi_akhir ===
+                                                        'BD'
+                                                            ? 'tidak-layak'
+                                                            : 'layak'
+                                                    }
+                                                    label={
+                                                        item.kondisi_akhir ===
+                                                        'BD'
+                                                            ? 'Tidak Layak'
+                                                            : 'Layak'
+                                                    }
+                                                />
+                                            }
+                                            onOpen={() =>
+                                                router.visit(
+                                                    `/p2h/${item.session_id}`,
+                                                )
+                                            }
+                                        />
+                                    );
+                                })}
+                            </div>
                         ) : (
                             <EmptyState
-                                icon={<Wrench className="size-6" />}
-                                title="Tidak ada temuan terbuka"
-                                description={`Semua temuan ${todayUnit.no_unit} sudah ditutup.`}
-                                className="py-8"
+                                title="Belum ada riwayat P2H"
+                                description="P2H yang Anda kirim akan muncul di sini."
+                                action={
+                                    <Button asChild variant="outline">
+                                        <Link href={FORM_HREF}>
+                                            Isi P2H pertama
+                                        </Link>
+                                    </Button>
+                                }
                             />
                         )}
                     </section>
-                )}
-
-                <section className="space-y-3">
-                    <SectionHeader
-                        title="Riwayat P2H"
-                        action={
-                            history.length > 0 && (
-                                <Link
-                                    href="/p2h"
-                                    className="text-sm font-semibold text-muted-foreground hover:text-foreground"
-                                >
-                                    Semua
-                                </Link>
-                            )
-                        }
-                    />
-                    {history.length > 0 ? (
-                        <div className="space-y-2">
-                            {history.slice(0, 5).map((item) => {
-                                const date = parseDmy(item.tanggal);
-                                const time = item.submitted_at?.split(' ')[1];
-
-                                return (
-                                    <ListCard
-                                        key={item.id}
-                                        title={item.no_unit}
-                                        meta={[
-                                            date
-                                                ? formatDate(date, {
-                                                      withYear: false,
-                                                  })
-                                                : item.tanggal,
-                                            shiftLabel(item.shift),
-                                            time,
-                                            item.tl_count > 0
-                                                ? `${item.tl_count} item rusak`
-                                                : `${item.total_items} item baik`,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ')}
-                                        trailing={
-                                            <StatusPill
-                                                size="sm"
-                                                status={
-                                                    item.kondisi_akhir === 'BD'
-                                                        ? 'tidak-layak'
-                                                        : 'layak'
-                                                }
-                                                label={
-                                                    item.kondisi_akhir === 'BD'
-                                                        ? 'Tidak Layak'
-                                                        : 'Layak'
-                                                }
-                                            />
-                                        }
-                                        onOpen={() =>
-                                            router.visit(
-                                                `/p2h/${item.session_id}`,
-                                            )
-                                        }
-                                    />
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <EmptyState
-                            title="Belum ada riwayat P2H"
-                            description="P2H yang Anda kirim akan muncul di sini."
-                            action={
-                                <Button asChild variant="outline">
-                                    <Link href={FORM_HREF}>
-                                        Isi P2H pertama
-                                    </Link>
-                                </Button>
-                            }
-                        />
-                    )}
-                </section>
+                </div>
             </div>
         </>
     );

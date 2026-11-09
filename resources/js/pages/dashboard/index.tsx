@@ -26,7 +26,6 @@ import type { TrendPoint } from '@/components/pims/compliance-trend';
 import { FilterChips } from '@/components/pims/filter-chips';
 import { Segmented } from '@/components/pims/segmented';
 import { EmptyState } from '@/components/pims/states';
-import { NotificationButton } from '@/components/shell/top-bar';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatNumber, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -70,7 +69,7 @@ function Kpi({
     subTone?: 'muted' | 'danger' | 'warning' | 'success';
 }) {
     return (
-        <div className="min-w-0 rounded-xl bg-card p-[18px] shadow-md">
+        <div className="min-w-0 rounded-xl bg-card p-[18px] shadow-sm">
             <p className="flex items-center gap-2 text-xs font-bold tracking-[0.06em] text-muted-foreground uppercase">
                 <span
                     aria-hidden
@@ -246,52 +245,27 @@ export default function DashboardIndex({
         <>
             <Head title="Dashboard" />
             <div className="flex w-full flex-1 flex-col px-4 pt-4 pb-8 lg:px-10 lg:pt-8">
-                {/* ── Hero (desktop, docs/13#2) ── */}
-                <header className="relative isolate hidden min-h-[310px] overflow-hidden rounded-2xl px-9 pt-8 pb-20 text-white lg:block">
+                {/* ── Hero (desktop, gaya admin MyWahana) ── */}
+                <header className="relative isolate hidden min-h-56 flex-col justify-end overflow-hidden rounded-2xl px-8 pt-10 pb-6 text-white lg:flex">
                     <img
                         src="/images/hero-mountain.jpg"
                         alt=""
-                        className="absolute inset-0 -z-20 size-full object-cover object-[50%_30%]"
+                        className="absolute inset-0 -z-20 size-full object-cover object-[60%_64%]"
                     />
                     <div
                         aria-hidden
-                        className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/35 to-black/5"
+                        className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent from-40% to-black/60"
                     />
-                    <div className="flex items-start justify-between gap-4">
-                        <span className="inline-flex h-8 items-center gap-2 rounded-full bg-white/15 px-3 text-[13px] font-medium ring-1 ring-white/25 backdrop-blur-sm">
-                            <span
-                                aria-hidden
-                                className="size-2 rounded-full bg-success-soft"
-                            />
-                            Diperbarui {updatedAt}
-                        </span>
-                        <span className="rounded-full bg-white text-black">
-                            <NotificationButton />
-                        </span>
-                    </div>
-                    <h1 className="mt-3 text-[34px] leading-tight font-extrabold tracking-[-0.02em]">
+                    <p className="text-[13px] font-medium">
+                        {todayLabel} · diperbarui {updatedAt}
+                    </p>
+                    <h1 className="mt-1.5 text-[34px] leading-[1.1] font-extrabold tracking-[-0.025em]">
                         {greeting}, {auth.user.name.trim().split(/\s+/)[0]}
                     </h1>
-                    <p className="mt-2 max-w-[540px] text-[15px] text-white/90">
-                        {todayLabel} ·{' '}
-                        <b className="font-bold">
-                            {summary.belum} unit belum P2H
-                        </b>{' '}
-                        dan {tlCount} unit Tidak Layak perlu ditinjau.
+                    <p className="mt-1.5 text-[13px] font-medium text-white/85">
+                        {summary.belum} unit belum P2H · {tlCount} unit Tidak
+                        Layak · {summary.waiting} menunggu persetujuan
                     </p>
-                    <div className="mt-5 flex flex-wrap gap-2.5">
-                        <Button asChild variant="brand">
-                            <Link href="/monitoring-p2h">Lihat monitoring</Link>
-                        </Button>
-                        {summary.waiting > 0 && (
-                            <Link
-                                href="/p2h/approvals"
-                                className="inline-flex h-10 press items-center rounded-full bg-white/15 px-4 text-sm font-semibold ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25"
-                            >
-                                {summary.waiting} menunggu persetujuan
-                            </Link>
-                        )}
-                    </div>
                 </header>
                 <p className="text-[13px] text-muted-foreground lg:hidden">
                     {todayLabel} · diperbarui {updatedAt}
@@ -300,7 +274,7 @@ export default function DashboardIndex({
                 {/* ── KPI strip (desktop) ── */}
                 <section
                     aria-label="Ringkasan hari ini"
-                    className="relative -mt-14 hidden grid-cols-3 gap-3 px-6 lg:grid xl:grid-cols-5"
+                    className="mt-4 hidden grid-cols-3 gap-3 lg:grid xl:grid-cols-5"
                 >
                     <Kpi
                         label="P2H masuk"

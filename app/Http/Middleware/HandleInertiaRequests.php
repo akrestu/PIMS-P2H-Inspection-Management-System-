@@ -78,6 +78,17 @@ class HandleInertiaRequests extends Middleware
                     'can_monitor' => $user->canViewMonitoring(),
                 ]) : null,
             ],
+            // Prop terpisah: halaman Notifikasi menimpa prop 'notifications' dengan datanya sendiri
+            'notification_bell' => [
+                'unread_count' => $user ? $user->unreadNotifications()->count() : 0,
+                'recent' => $user
+                    ? cache()->remember(
+                        "recent_notifications_user_{$user->id}",
+                        now()->addSeconds(30),
+                        fn () => $user->notifications()->latest()->limit(5)->get(['id', 'type', 'data', 'read_at', 'created_at'])->toArray()
+                    )
+                    : [],
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'notifications' => [
                 'unread_count' => $user ? $user->unreadNotifications()->count() : 0,
@@ -85,7 +96,7 @@ class HandleInertiaRequests extends Middleware
                     ? cache()->remember(
                         "recent_notifications_user_{$user->id}",
                         now()->addSeconds(30),
-                        fn () => $user->notifications()->latest()->limit(5)->get(['id', 'type', 'data', 'read_at', 'created_at'])
+                        fn () => $user->notifications()->latest()->limit(5)->get(['id', 'type', 'data', 'read_at', 'created_at'])->toArray()
                     )
                     : [],
                 'pending_approvals' => $user ? PendingApprovalCache::count($user) : 0,

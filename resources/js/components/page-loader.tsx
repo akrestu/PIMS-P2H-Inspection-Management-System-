@@ -62,7 +62,7 @@ export default function PageLoader() {
         <div
             role="status"
             aria-label="Memuat halaman"
-            className="fixed inset-x-0 top-16 bottom-0 z-20 overflow-hidden bg-background px-4 pt-5 lg:top-14 lg:left-[264px] lg:px-8 lg:pt-8"
+            className="fixed inset-x-0 top-0 bottom-0 z-20 overflow-hidden bg-background px-4 pt-20 lg:left-(--shell-left,264px) lg:px-10 lg:pt-8"
         >
             <div className="space-y-5">
                 <div className="space-y-2">

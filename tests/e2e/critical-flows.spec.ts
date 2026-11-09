@@ -68,3 +68,15 @@ test('manager menyetujui P2H di desktop', async ({ page }) => {
         0,
     );
 });
+
+test('lonceng membuka popup tanpa pindah halaman', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page, NRP.manager);
+    const url = page.url();
+
+    await page.getByRole('button', { name: /^Notifikasi/ }).click();
+    await expect(
+        page.getByRole('link', { name: 'Lihat semua notifikasi' }),
+    ).toBeVisible();
+    expect(page.url()).toBe(url);
+});

@@ -1,35 +1,10 @@
 import { Link } from '@inertiajs/react';
-import { Bell } from 'lucide-react';
+import NotificationBell from '@/components/Layout/NotificationBell';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { useShellNavigation } from './navigation';
 import { ShellLogo } from './sidebar';
-
-export function NotificationButton() {
-    const { notifications } = useShellNavigation();
-    const count = notifications.count ?? 0;
-
-    return (
-        <Link
-            href={notifications.href}
-            aria-label={
-                count > 0 ? count + ' notifikasi belum dibaca' : 'Notifikasi'
-            }
-            className="relative grid size-12 press place-items-center rounded-full text-foreground hover:bg-muted lg:size-10"
-        >
-            <Bell className="size-5" strokeWidth={1.75} aria-hidden />
-            {count > 0 && (
-                <span
-                    aria-hidden
-                    className="absolute top-2 right-2 grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-foreground lg:top-1 lg:right-1"
-                >
-                    {count > 9 ? '9+' : count}
-                </span>
-            )}
-        </Link>
-    );
-}
 
 /**
  * Bar atas (docs/02#appshell).
@@ -69,7 +44,7 @@ export function ShellTopBar({
                         <ShellLogo />
                     )}
                 </div>
-                {!bellInBottom && <NotificationButton />}
+                {!bellInBottom && <NotificationBell />}
                 {user && (
                     <Link
                         href={account.href}
@@ -80,7 +55,6 @@ export function ShellTopBar({
                     </Link>
                 )}
             </div>
-
         </header>
     );
 }
