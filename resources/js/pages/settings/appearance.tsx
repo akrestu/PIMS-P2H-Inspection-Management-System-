@@ -21,7 +21,7 @@ export default function Appearance() {
                     description="Tema berlaku untuk perangkat ini."
                 />
                 <AppearanceTabs />
-                <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border-(length:--bw) p-4">
+                <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-md bg-muted-2 p-4">
                     <Checkbox
                         className="mt-0.5 size-5"
                         checked={motion === 'reduced'}

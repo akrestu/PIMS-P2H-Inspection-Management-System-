@@ -57,7 +57,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     {getInitials(user?.name ?? '')}
                 </span>
                 <div className="min-w-0">
-                    <h1 className="truncate text-[24px] leading-tight font-semibold tracking-[-0.02em] lg:text-[28px]">
+                    <h1 className="truncate text-[24px] leading-tight font-extrabold tracking-[-0.02em] lg:text-[28px]">
                         {user?.name ?? 'Akun'}
                     </h1>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
@@ -77,7 +77,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 href={item.href}
                                 aria-current={active ? 'page' : undefined}
                                 className={cn(
-                                    'block rounded-[8px] px-3 py-2 text-sm whitespace-nowrap',
+                                    'block rounded-sm px-3 py-2 text-sm whitespace-nowrap',
                                     active
                                         ? 'bg-muted font-semibold text-foreground'
                                         : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -90,7 +90,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 </nav>
 
                 <div className="min-w-0 space-y-5">
-                    <section className="space-y-10 rounded-xl border-(length:--bw) bg-card p-5 lg:p-6">
+                    <section className="space-y-10 rounded-xl bg-card shadow-sm p-5 lg:p-6">
                         {children}
                     </section>
 

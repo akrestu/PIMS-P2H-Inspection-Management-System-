@@ -137,8 +137,8 @@ function AddDriverSheet({
         },
         {
             key: 'nik' as const,
-            label: 'NIK Karyawan',
-            placeholder: 'NIK-001',
+            label: 'NRP',
+            placeholder: 'Nomor NRP',
             icon: IdCard,
             type: 'text',
             hint: 'Nomor Induk Karyawan, harus unik.',
@@ -390,7 +390,7 @@ function EditDriverSheet({
                         Edit Profil Driver
                     </SheetTitle>
                     <SheetDescription>
-                        Perbarui data NIK, nama, dan department driver.
+                        Perbarui data NRP, nama, dan department driver.
                     </SheetDescription>
                 </SheetHeader>
 
@@ -404,7 +404,7 @@ function EditDriverSheet({
                             htmlFor="edit-nik"
                             className="text-sm font-medium"
                         >
-                            NIK Karyawan{' '}
+                            NRP{' '}
                             <span className="text-destructive">*</span>
                         </Label>
                         <div className="relative">
@@ -413,7 +413,7 @@ function EditDriverSheet({
                                 id="edit-nik"
                                 value={data.nik}
                                 onChange={(e) => setData('nik', e.target.value)}
-                                placeholder="NIK-001"
+                                placeholder="Nomor NRP"
                                 className="h-10 pl-9"
                                 required
                             />
@@ -543,9 +543,9 @@ function ViewDriverDialog({
                         </div>
                     </div>
                 </DialogHeader>
-                <div className="space-y-3 rounded-lg border p-4">
+                <div className="space-y-3 rounded-md bg-muted-2 p-4">
                     {[
-                        { icon: IdCard, label: 'NIK', value: driver.nik },
+                        { icon: IdCard, label: 'NRP', value: driver.nik },
                         {
                             icon: Mail,
                             label: 'Email',
@@ -682,7 +682,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                 {/* ── Header ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                        <h1 className="text-2xl leading-[30px] font-extrabold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Manajemen Driver
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -729,7 +729,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                             <Input
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                placeholder="Cari nama atau NIK..."
+                                placeholder="Cari nama atau NRP..."
                                 className="pr-8 pl-9"
                             />
                             {search && (
@@ -808,7 +808,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                             #
                                         </TableHead>
                                         <TableHead>Driver</TableHead>
-                                        <TableHead>NIK</TableHead>
+                                        <TableHead>NRP</TableHead>
                                         <TableHead>Department</TableHead>
                                         <TableHead className="hidden md:table-cell">
                                             Email

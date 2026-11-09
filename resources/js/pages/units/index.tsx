@@ -443,7 +443,7 @@ function ImportSheet({
                         />
                     </div>
 
-                    <div className="space-y-1.5 rounded-lg border bg-muted/50 p-3 text-xs text-muted-foreground">
+                    <div className="space-y-1.5 rounded-md bg-muted-2 p-3 text-xs text-muted-foreground">
                         <p className="text-xs font-semibold text-foreground">
                             Panduan Import:
                         </p>
@@ -557,7 +557,7 @@ function DeleteConfirmDialog({
                         dari halaman Sampah, atau dihapus permanen dari sana.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-1 rounded-lg border p-3 text-sm">
+                <div className="space-y-1 rounded-md bg-muted-2 p-3 text-sm">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">No. Unit</span>
                         <span className="font-mono font-medium">
@@ -963,7 +963,7 @@ export default function UnitsIndex({
                 {/* ── Header (MasterUnit-Desktop.png) ── */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                        <h1 className="text-2xl leading-[30px] font-extrabold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Master unit
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -1013,7 +1013,7 @@ export default function UnitsIndex({
 
                 {/* ── Batch Action Bar ── */}
                 {selectedIds.length > 0 && (
-                    <div className="flex animate-in items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 duration-200 fade-in slide-in-from-top-2">
+                    <div className="flex animate-in items-center justify-between rounded-md bg-destructive/5 px-4 py-2.5 duration-200 fade-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <Checkbox
                                 checked={allSelected}
@@ -1156,7 +1156,7 @@ export default function UnitsIndex({
                 </div>
 
                 {/* ── Table ── */}
-                <div className="overflow-hidden rounded-xl border-(length:--bw) bg-card">
+                <div className="overflow-hidden rounded-xl bg-card shadow-sm">
                     <>
                         <div className="overflow-x-auto">
                             <Table>
@@ -1352,7 +1352,7 @@ export default function UnitsIndex({
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 aria-label="Aksi"
-                                                                className="h-10 w-10 p-0 focus-visible:opacity-100 data-[state=open]:opacity-100 md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
+                                                                className="h-10 w-10 p-0 data-[state=open]:opacity-100 md:h-8 md:w-8 md: md:"
                                                             >
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>

@@ -244,7 +244,7 @@ export default function SitesTrashed({
             <div className="flex flex-col gap-6 px-4 pt-5 pb-8 lg:px-8 lg:pt-8">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
+                        <h1 className="text-2xl leading-[30px] font-extrabold tracking-[-0.02em] max-lg:sr-only lg:text-[28px] lg:leading-[34px]">
                             Master site
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">

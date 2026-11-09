@@ -44,7 +44,7 @@ function Section({
         <section
             id={id}
             aria-labelledby={`${id}-title`}
-            className="scroll-mt-6 rounded-xl border-(length:--bw) bg-card p-5"
+            className="scroll-mt-6 rounded-xl bg-card shadow-sm p-5"
         >
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -179,7 +179,7 @@ export default function AppSettingsPage({ settings }: Props) {
                                 <li key={s.id}>
                                     <a
                                         href={`#${s.id}`}
-                                        className="block rounded-[8px] px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        className="block rounded-sm px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                                     >
                                         {s.label}
                                     </a>
@@ -196,7 +196,7 @@ export default function AppSettingsPage({ settings }: Props) {
                         >
                             <div className="grid gap-3 sm:grid-cols-2">
                                 {data.shifts.map((shift, i) => (
-                                    <div key={i} className="rounded-[12px] bg-muted-2 p-3 ring-1 ring-border ring-inset">
+                                    <div key={i} className="rounded-md bg-muted-2 p-3">
                                         <label className="text-[13px] font-semibold" htmlFor={`shift-${i}`}>
                                             Shift {i + 1}
                                         </label>
@@ -206,7 +206,7 @@ export default function AppSettingsPage({ settings }: Props) {
                                                 value={shift}
                                                 onChange={(e) => updateShift(i, e.target.value)}
                                                 placeholder="Contoh: Shift I"
-                                                className="h-10 bg-background"
+                                                className="h-10 bg-card"
                                             />
                                             <Button
                                                 aria-label={`Hapus shift ${i + 1}`}

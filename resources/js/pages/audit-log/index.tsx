@@ -418,9 +418,9 @@ export default function AuditLogIndex({ logs, filters }: Props) {
                             ))}
                         </div>
 
-                        <div className="hidden overflow-x-auto rounded-xl border-(length:--bw) lg:block">
+                        <div className="hidden overflow-x-auto rounded-xl bg-card shadow-sm lg:block">
                             <table className="w-full min-w-[920px] text-sm">
-                                <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                                <thead className="text-left text-[13px] text-muted-foreground">
                                     <tr className="h-11">
                                         <SortableHead
                                             column="created_at"

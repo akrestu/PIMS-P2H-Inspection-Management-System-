@@ -71,7 +71,7 @@ export function TrashBatchActions({
             <div
                 role="region"
                 aria-label="Aksi massal"
-                className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2"
+                className="flex flex-wrap items-center gap-2 rounded-md bg-muted-2 px-3 py-2"
             >
                 <span className="text-sm font-medium">
                     {count} {noun} dipilih
