@@ -13,7 +13,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 /**
  * ThemeToggle
  *
- * Quick button to switch between Terang / Gelap / Kontras tinggi / Sistem.
+ * Quick button to switch between Terang / Gelap / Sistem.
  * Uses the existing useAppearance hook (localStorage + cookie).
  * Icon animates between Sun and Moon based on resolved theme.
  *

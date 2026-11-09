@@ -1211,7 +1211,7 @@ function ApprovalDetailPanel({
                 </header>
 
                 {entry.escalated && pending && (
-                    <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm text-danger hc:border-2 hc:border-danger">
+                    <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm text-danger">
                         Dieskalasi karena PIC belum menyetujui sampai akhir shift.
                     </p>
                 )}

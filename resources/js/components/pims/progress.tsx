@@ -45,7 +45,7 @@ export function ChecklistProgress({
                     return (
                         <span
                             key={i}
-                            className="h-1 flex-1 overflow-hidden rounded-full bg-muted hc:border hc:border-foreground"
+                            className="h-1 flex-1 overflow-hidden rounded-full bg-muted"
                         >
                             <span
                                 className="block h-full rounded-full bg-brand transition-[width] duration-300 ease-out"

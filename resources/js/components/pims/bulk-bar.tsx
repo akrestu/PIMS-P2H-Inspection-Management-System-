@@ -31,7 +31,7 @@ export function BulkBar({
             <div
                 role="toolbar"
                 aria-label="Aksi massal"
-                className="pointer-events-auto flex animate-fade-up items-center gap-1 rounded-[14px] bg-ink p-1.5 pl-4 text-ink-foreground shadow-lg dark:ring-1 dark:ring-white/10 hc:outline-2 hc:outline-white"
+                className="pointer-events-auto flex animate-fade-up items-center gap-1 rounded-[14px] bg-ink p-1.5 pl-4 text-ink-foreground shadow-lg dark:ring-1 dark:ring-white/10"
             >
                 <span aria-live="polite" className="mr-2 text-sm font-semibold">
                     {count} dipilih

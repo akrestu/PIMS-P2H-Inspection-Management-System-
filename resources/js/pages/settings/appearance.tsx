@@ -18,7 +18,7 @@ export default function Appearance() {
                 <Heading
                     variant="small"
                     title="Tampilan"
-                    description="Tema berlaku untuk perangkat ini. Kontras tinggi cocok untuk di lapangan saat terik."
+                    description="Tema berlaku untuk perangkat ini."
                 />
                 <AppearanceTabs />
                 <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border-(length:--bw) p-4">

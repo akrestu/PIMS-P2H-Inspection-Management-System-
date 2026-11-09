@@ -86,7 +86,7 @@ export function LoginForm({ status }: { status?: string }) {
                             {serverError && (
                                 <div
                                     role="alert"
-                                    className="flex items-start gap-2.5 rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger hc:border-2 hc:border-danger"
+                                    className="flex items-start gap-2.5 rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
                                 >
                                     <AlertCircle
                                         className="mt-0.5 size-4 shrink-0"

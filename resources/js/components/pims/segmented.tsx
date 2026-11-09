@@ -32,7 +32,7 @@ export function Segmented<T extends string>({
             role="radiogroup"
             aria-label={label}
             className={cn(
-                'inline-flex rounded-[12px] bg-muted p-1 lg:rounded-[10px] hc:border-2 hc:border-foreground',
+                'inline-flex rounded-[12px] bg-muted p-1 lg:rounded-[10px]',
                 className,
             )}
         >
@@ -51,7 +51,7 @@ export function Segmented<T extends string>({
                             'flex-1 press rounded-[9px] px-3 text-sm font-medium whitespace-nowrap disabled:opacity-40 lg:rounded-[7px]',
                             size === 'lg' ? 'h-11' : 'h-10 lg:h-8',
                             active
-                                ? 'bg-background text-foreground shadow-md hc:outline-2 hc:outline-foreground'
+                                ? 'bg-background text-foreground shadow-md'
                                 : 'text-muted-foreground hover:text-foreground',
                         )}
                     >
@@ -121,10 +121,10 @@ export function SegmentedChoice({
                                 'text-muted-foreground hover:text-foreground',
                             active &&
                                 v === 'baik' &&
-                                'border-success bg-success-soft text-success shadow-sm hc:bg-background',
+                                'border-success bg-success-soft text-success shadow-sm',
                             active &&
                                 v === 'rusak' &&
-                                'border-danger bg-danger-soft text-danger shadow-sm hc:bg-background',
+                                'border-danger bg-danger-soft text-danger shadow-sm',
                         )}
                     >
                         <Icon className="size-4" aria-hidden />

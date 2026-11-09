@@ -111,7 +111,7 @@ export function PhotoPicker({
                     </p>
                 )}
                 {error && (
-                    <p className="flex items-start gap-2 rounded-xl bg-danger-soft px-3 py-2.5 text-[13px] font-medium text-danger hc:border-2 hc:border-danger">
+                    <p className="flex items-start gap-2 rounded-xl bg-danger-soft px-3 py-2.5 text-[13px] font-medium text-danger">
                         <AlertCircle
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden

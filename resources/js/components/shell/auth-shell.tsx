@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 export function AuthShell({ children }: { children: ReactNode }) {
     return (
         <div className="flex min-h-svh bg-card lg:items-center lg:justify-center lg:bg-background lg:p-8">
-            <div className="relative isolate flex w-full flex-col overflow-hidden bg-card lg:max-w-4xl lg:flex-row lg:rounded-[28px] lg:shadow-[0_24px_60px_oklch(0.191_0_0/0.10)] hc:lg:border-2">
+            <div className="relative isolate flex w-full flex-col overflow-hidden bg-card lg:max-w-4xl lg:flex-row lg:rounded-[28px] lg:shadow-[0_24px_60px_oklch(0.191_0_0/0.10)]">
                 {/* Hero: unit excavator */}
                 <div className="relative isolate flex h-[300px] shrink-0 flex-col justify-between px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6 sm:h-[360px] lg:h-auto lg:min-h-[560px] lg:w-1/2 lg:pt-6">
                     <img

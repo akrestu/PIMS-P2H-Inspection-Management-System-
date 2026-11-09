@@ -115,7 +115,7 @@ export function OfflineBanner({
         <div
             role="status"
             className={cn(
-                'flex items-start gap-3 rounded-xl bg-warning-soft px-4 py-3 text-sm text-foreground hc:border-2 hc:border-warning',
+                'flex items-start gap-3 rounded-xl bg-warning-soft px-4 py-3 text-sm text-foreground',
                 className,
             )}
         >

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 @php
     // Cookie `appearance` tidak dienkripsi — hanya nilai yang dikenal yang dipakai
-    $theme = in_array($appearance ?? 'system', ['light', 'dark', 'hc'], true) ? $appearance : 'system';
+    $theme = in_array($appearance ?? 'system', ['light', 'dark'], true) ? $appearance : 'system';
 @endphp
 <html lang="id" @if ($theme !== 'system') data-theme="{{ $theme }}" @endif>
     <head>
@@ -12,7 +12,7 @@
         <script>
             (function () {
                 var root = document.documentElement;
-                var valid = ['light', 'dark', 'hc', 'system'];
+                var valid = ['light', 'dark', 'system'];
                 var theme = '{{ $theme }}';
                 try {
                     var stored = localStorage.getItem('pims.theme');
@@ -28,8 +28,8 @@
 
         {{-- Latar sebelum CSS termuat --}}
         <style>
-            html { background-color: #FFFFFF; }
-            html[data-theme="dark"] { background-color: #0A0A0A; }
+            html { background-color: #F7F6F2; }
+            html[data-theme="dark"] { background-color: #0F0F0E; }
         </style>
 
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2">

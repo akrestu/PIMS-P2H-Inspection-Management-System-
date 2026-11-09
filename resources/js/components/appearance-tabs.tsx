@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Contrast, Monitor, Moon, Sun } from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import type { HTMLAttributes } from 'react';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -12,7 +12,6 @@ export const APPEARANCE_OPTIONS: {
 }[] = [
     { value: 'light', icon: Sun, label: 'Terang' },
     { value: 'dark', icon: Moon, label: 'Gelap' },
-    { value: 'hc', icon: Contrast, label: 'Kontras tinggi' },
     { value: 'system', icon: Monitor, label: 'Sistem' },
 ];
 
@@ -24,15 +23,13 @@ export default function AppearanceToggleTab({
 
     // Kartu pratinjau tema (Akun-Desktop.png): latar + garis teks + aksen kuning
     const preview: Record<Appearance, string> = {
-        light: 'bg-white border border-zinc-200',
-        dark: 'bg-[#0A0A0A]',
-        hc: 'bg-white border-2 border-black',
-        system: 'bg-[linear-gradient(90deg,#fff_0_50%,#0A0A0A_50%_100%)] border border-zinc-200',
+        light: 'bg-[#F7F6F2] border border-border',
+        dark: 'bg-[#0F0F0E]',
+        system: 'bg-[linear-gradient(90deg,#F7F6F2_0_50%,#0F0F0E_50%_100%)] border border-border',
     };
     const line: Record<Appearance, string> = {
-        light: 'bg-[#0A0A0A]',
+        light: 'bg-[#141414]',
         dark: 'bg-white',
-        hc: 'bg-black',
         system: 'bg-zinc-500',
     };
 
@@ -40,7 +37,7 @@ export default function AppearanceToggleTab({
         <div
             role="radiogroup"
             aria-label="Tema"
-            className={cn('grid grid-cols-2 gap-3 sm:grid-cols-4', className)}
+            className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3', className)}
             {...props}
         >
             {APPEARANCE_OPTIONS.map(({ value, label }) => (
@@ -65,7 +62,7 @@ export default function AppearanceToggleTab({
                         )}
                     >
                         <span className={cn('h-1.5 w-12 rounded-full', line[value])} />
-                        <span className="h-1.5 w-5 rounded-full bg-[#F4D435]" />
+                        <span className="h-1.5 w-5 rounded-full bg-brand" />
                     </span>
                     <span className="text-sm font-semibold">
                         {value === 'system' ? 'Ikuti sistem' : label}

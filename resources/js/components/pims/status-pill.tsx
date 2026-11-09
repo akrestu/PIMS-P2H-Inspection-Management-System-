@@ -90,7 +90,7 @@ export function StatusPill({
             data-status={status}
             className={cn(
                 'inline-flex shrink-0 items-center gap-1.5 rounded-full font-semibold whitespace-nowrap',
-                'hc:border-2 hc:border-current',
+                '',
                 size === 'md' ? 'h-6 px-2.5 text-xs' : 'h-5 px-2 text-[11px]',
                 solid ? SOLID[meta.tone] : SOFT[meta.tone],
                 className,

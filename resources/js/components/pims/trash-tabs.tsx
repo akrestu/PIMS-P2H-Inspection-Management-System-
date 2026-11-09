@@ -37,7 +37,7 @@ export function TrashTabs({
         <nav
             aria-label="Aktif atau Sampah"
             className={cn(
-                'inline-flex shrink-0 rounded-[12px] bg-muted p-1 lg:rounded-[10px] hc:border-2 hc:border-foreground',
+                'inline-flex shrink-0 rounded-[12px] bg-muted p-1 lg:rounded-[10px]',
                 className,
             )}
         >

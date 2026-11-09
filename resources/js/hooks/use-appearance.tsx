@@ -2,11 +2,11 @@ import { useSyncExternalStore } from 'react';
 
 /**
  * Tema PIMS (docs/01-design-tokens.md):
- *   `<html data-theme="light|dark|hc">`, pilihan disimpan per perangkat
+ *   `<html data-theme="light|dark">`, pilihan disimpan per perangkat
  *   di localStorage `pims.theme` (+ cookie `appearance` agar Blade bisa
  *   menulis atribut sebelum paint).
  */
-export type ResolvedAppearance = 'light' | 'dark' | 'hc';
+export type ResolvedAppearance = 'light' | 'dark';
 export type Appearance = ResolvedAppearance | 'system';
 export type MotionPreference = 'system' | 'reduced';
 
@@ -19,7 +19,7 @@ export type UseAppearanceReturn = {
 const STORAGE_KEY = 'pims.theme';
 const LEGACY_STORAGE_KEY = 'appearance';
 const MOTION_KEY = 'pims.motion';
-const APPEARANCES: Appearance[] = ['light', 'dark', 'hc', 'system'];
+const APPEARANCES: Appearance[] = ['light', 'dark', 'system'];
 
 const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'system';

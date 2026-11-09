@@ -1513,7 +1513,7 @@ export default function P2hForm({
                             </div>
                         </div>
                         {hasDraft && (
-                            <div className="mb-3 flex items-start justify-between gap-3 rounded-xl bg-warning-soft px-3 py-2 hc:border-2 hc:border-warning">
+                            <div className="mb-3 flex items-start justify-between gap-3 rounded-xl bg-warning-soft px-3 py-2">
                                 <p className="text-[13px]">
                                     Draft dilanjutkan otomatis.{' '}
                                     <span className="font-semibold">
