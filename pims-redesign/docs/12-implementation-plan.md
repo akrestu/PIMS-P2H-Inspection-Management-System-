@@ -5,7 +5,7 @@ Kerjakan per fase; setiap fase selesai = lulus tes + cek visual terhadap `design
 ## Fase 0 — Fondasi (½–1 hari)
 - [ ] Laravel 12 + Breeze/Inertia React TS (atau starter kit React), Vite, Pest, Vitest, Playwright.
 - [ ] `design/tokens.css` → `resources/css/app.css`; shadcn init (style new-york, base color zinc, CSS variables) lalu **pertahankan** variabel PIMS.
-- [ ] Font Geist & Geist Mono self-host. `<html lang="id" data-theme>` + script anti-flash tema.
+- [ ] Font Plus Jakarta Sans & JetBrains Mono self-host. `<html lang="id" data-theme>` + script anti-flash tema.
 - [ ] Helper format `id-ID` (`formatNumber`, `formatHM`, `formatPercent`, `formatDate`, `formatTime(tz)`, `formatDuration`).
 **AC**: halaman kosong bertema light/dark/hc; `tnum` & font benar.
 

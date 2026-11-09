@@ -1,7 +1,7 @@
-# 04 · Aksesibilitas (target WCAG 2.2 AA; AAA teks di tema `hc`)
+# 04 · Aksesibilitas (target WCAG 2.2 AA)
 
 ## Wajib
-- **Kontras**: teks ≥ 4.5:1 (besar ≥ 3:1) di light & dark; ≥ 7:1 di `hc`. Status selalu pill + ikon/titik + label (tidak bergantung warna).
+- **Kontras**: teks ≥ 4.5:1 (besar ≥ 3:1) di light & dark. Status selalu pill + ikon/titik + label (tidak bergantung warna).
 - **Target sentuh** ≥ 48×48 (WCAG 2.5.8 minimum 24, kita pakai 48 karena sarung tangan). Jarak ≥ 8.
 - **Fokus terlihat**: outline 2px `foreground` + ring 5px kuning. Field: ring di wrapper. Jangan `outline: none` tanpa pengganti.
 - **Elemen asli**: tombol = `<button>`, tautan navigasi = `<a>`/Inertia `<Link>`, input asli. Jangan `div role="button"`.
@@ -21,4 +21,4 @@
 1. axe-core di Playwright untuk setiap halaman × 3 tema.
 2. Navigasi keyboard penuh: Form P2H, Persetujuan (termasuk pintasan), tabel + bulk bar, drawer.
 3. TalkBack (Android) untuk alur driver: login → Isi P2H → kirim.
-4. Uji luar ruangan (tema `hc`) di HP kelas menengah.
+4. Uji luar ruangan (tema terang) di HP kelas menengah.

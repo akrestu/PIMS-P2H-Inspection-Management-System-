@@ -6,7 +6,7 @@ Driver sering di area sinyal lemah. **Form P2H harus berfungsi penuh offline.** 
 `name: "PIMS — P2H Management System"`, `short_name: "PIMS"`, `lang: "id"`, `display: "standalone"`, `orientation: "portrait"` (driver), `theme_color: "#0A0A0A"`, `background_color: "#FFFFFF"`, ikon dari `design/assets/pims-logo.png` (192, 512, maskable dengan padding 20%). `start_url: "/"`.
 
 ## Service worker (vite-plugin-pwa, `injectManifest`)
-- Precache: shell aplikasi (JS/CSS/font Geist/ikon).
+- Precache: shell aplikasi (JS/CSS/font Plus Jakarta Sans/ikon).
 - Runtime: halaman Inertia `GET` → NetworkFirst (timeout 4 dtk) dengan fallback cache; gambar → CacheFirst 30 hari; API data master driver (unit di site, item checklist, profil) → StaleWhileRevalidate.
 - Background Sync (`workbox-background-sync`) untuk antrean kirim P2H; fallback: coba kirim saat event `online` / app dibuka.
 - Web Push handler (notifikasi).

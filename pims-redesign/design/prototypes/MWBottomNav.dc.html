@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS × MyWahana — Bottom nav</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./mw.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+.mwn-i{transition:transform 80ms}.mwn-i:active{transform:scale(.92)}
+.mwn-i:focus-visible,.mwn-fab:focus-visible{outline:2px solid #F4D03F;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.mwn-i,.mwn-fab{transition:none}}
+</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="position: relative; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif">
+  <sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+    <div role="menu" aria-label="Aksi cepat" class="fade-up" style="position: absolute; left: 0; right: 0; bottom: 88px; padding: 10px; border-radius: 28px; background: var(--card); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 4px">
+      <span style="padding: 6px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--muted-foreground)">AKSI CEPAT</span>
+      <sc-for list="{{ actions }}" as="a" hint-placeholder-count="3">
+        <a role="menuitem" href="{{ a.href }}" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 10px; border-radius: 16px; text-decoration: none; color: var(--foreground)">
+          <span style="width: 40px; height: 40px; border-radius: 14px; background: {{ a.bg }}; display: flex; align-items: center; justify-content: center; font-size: 16px">{{ a.ic }}</span>
+          <span style="display: flex; flex-direction: column"><strong style="font-size: 14px; font-weight: 700">{{ a.label }}</strong><span style="font-size: 12px; color: var(--muted-foreground)">{{ a.sub }}</span></span>
+        </a>
+      </sc-for>
+    </div>
+  </sc-if>
+  <nav aria-label="Navigasi utama" style="height: 72px; border-radius: 28px; padding: 0 4px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: stretch; background: {{ glass }}; border: 1px solid {{ glassBd }}; box-shadow: 0 10px 30px rgba(20,20,20,.18); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4)">
+    <sc-for list="{{ left }}" as="n" hint-placeholder-count="2">
+      <a href="{{ n.href }}" aria-current="{{ n.cur }}" aria-label="{{ n.aria }}" class="mwn-i" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: {{ n.fg }}">
+        <span style="position: relative; height: 30px; min-width: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ n.d }}"/></svg>
+          <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: -2px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #F4D03F; color: #141414; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{ n.badge }}</span></sc-if></span>
+        <span style="font-size: 11px; line-height: 1; font-weight: {{ n.w }}">{{ n.label }}</span>
+      </a>
+    </sc-for>
+    <div style="display: flex; justify-content: center; align-items: flex-start">
+      <button type="button" class="mwn-fab mwn-i" onClick="{{ toggle }}" aria-expanded="{{ sheetOn }}" aria-label="{{ fabLabel }}" style="margin-top: -20px; width: 56px; height: 56px; border: 0; border-radius: 999px; background: {{ fabBg }}; color: {{ fabFg }}; box-shadow: 0 0 0 4px {{ ring }}, 0 8px 20px rgba(20,20,20,.24); display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="transform: rotate({{ rot }}deg); transition: transform 240ms var(--ease-out)"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </button>
+    </div>
+    <sc-for list="{{ right }}" as="n" hint-placeholder-count="2">
+      <a href="{{ n.href }}" aria-current="{{ n.cur }}" aria-label="{{ n.aria }}" class="mwn-i" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: {{ n.fg }}">
+        <span style="position: relative; height: 30px; min-width: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ n.d }}"/></svg>
+          <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: -2px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #F4D03F; color: #141414; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{ n.badge }}</span></sc-if></span>
+        <span style="font-size: 11px; line-height: 1; font-weight: {{ n.w }}">{{ n.label }}</span>
+      </a>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Driver","Manager"],"default":"Driver"},"active":{"editor":"enum","options":["Beranda","Riwayat","Notifikasi","Akun","Monitoring","Temuan","Persetujuan","Lainnya"],"default":"Beranda"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":366,"height":340}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: false }; }
+  renderVals() {
+    const theme = this.props.theme === 'dark' ? 'dark' : 'light';
+    const dark = theme === 'dark';
+    const drv = (this.props.peran ?? 'Driver') === 'Driver';
+    const act = this.props.active ?? 'Beranda';
+    const I = { home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', hist: 'M3 12a9 9 0 1 0 3-6.7L3 8 M3 3v5h5 M12 7v5l3 2', bell: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0', user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21a8 8 0 0 1 16 0', act: 'M22 12h-4l-3 9L9 3l-3 9H2', alert: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z M12 9v4 M12 17h.01', check: 'M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', grid: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' };
+    const defs = drv
+      ? [['Beranda', 'MW-BerandaDriver.dc.html', I.home], ['Riwayat', 'MW-RiwayatP2H.dc.html', I.hist], ['Notifikasi', 'MW-Notifikasi.dc.html', I.bell, 3], ['Akun', 'MW-Akun.dc.html', I.user]]
+      : [['Beranda', 'MW-Dashboard.dc.html', I.home], ['Temuan', 'MW-Temuan.dc.html', I.alert, 12], ['Persetujuan', 'MW-Persetujuan.dc.html', I.check, 5], ['Lainnya', 'MW-Dashboard.dc.html', I.grid]];
+    const items = defs.map(([label, href, d, badge]) => { const on = label === act; return { label, href, d, badge: badge || 0, cur: on ? 'page' : 'false', aria: badge ? label + ', ' + badge + ' baru' : label, w: on ? 700 : 500, fg: on ? (dark ? '#FFFFFF' : '#141414') : (dark ? '#D9D4C9' : '#3A3833') }; });
+    const actions = drv
+      ? [['Isi P2H', 'DT-1045 · batas 06:30', 'MW-FormP2H.dc.html', '✓', '#F4D03F'], ['Lapor kerusakan', 'Tanpa P2H, langsung ke pengawas', 'MW-FormP2H.dc.html', '!', 'var(--danger-soft)'], ['Riwayat P2H', 'Lihat hasil & persetujuan', 'MW-RiwayatP2H.dc.html', '↺', 'var(--muted)']]
+      : [['Tinjau persetujuan', '5 menunggu · 2 eskalasi', 'MW-Persetujuan.dc.html', '✓', '#F4D03F'], ['Ubah status unit', 'Ready / BD / PM / Servis', 'MW-Dashboard.dc.html', '⚙', 'var(--muted)'], ['Ingatkan driver', '6 unit belum P2H', 'MW-Monitoring.dc.html', '!', 'var(--warning-soft)']];
+    return {
+      theme, left: items.slice(0, 2), right: items.slice(2),
+      glass: dark ? 'rgba(24,24,22,.55)' : 'rgba(255,255,255,.55)', glassBd: dark ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.7)',
+      fabBg: dark ? '#F4D03F' : '#141414', fabFg: dark ? '#141414' : '#F4D03F', ring: dark ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.75)',
+      fabLabel: drv ? 'Buat (aksi cepat): Isi P2H' : 'Buat (aksi cepat)', rot: this.state.open ? 45 : 0,
+      sheetOn: this.state.open, toggle: () => this.setState({ open: !this.state.open }),
+      actions: actions.map(([label, sub, href, ic, bg]) => ({ label, sub, href, ic, bg }))
+    };
+  }
+}
+</script>
+</body>
+</html>

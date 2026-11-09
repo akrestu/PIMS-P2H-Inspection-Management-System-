@@ -49,20 +49,21 @@ Merah solid, huruf besar "KRITIS". Di Form P2H boleh disertai ikon segitiga.
 
 ## AppShell
 - **Mobile** (`< lg`): `AppBar` (blur, 64–72, judul + subjudul + aksi kanan) + konten + `BottomNav`.
-  - Driver: Beranda · Riwayat · **Isi P2H** (tombol tengah kuning 56) · Notifikasi · Akun.
-  - Manager/Admin: Beranda · Monitoring · Temuan · Persetujuan (badge) · Lainnya (sheet berisi laporan, analitik, downtime, master data, audit, pengaturan, akun).
-  - Indikator aktif: garis kuning 24×3 di atas ikon + label 600.
+  - **BottomNav gaya MyWahana** (`design/prototypes/MWBottomNav.dc.html`): bar kaca melayang (inset 12, tinggi 72, radius 28, blur 18) dengan **tombol + tengah** (FAB 56, `margin-top:-20px`, ring 4px) yang membuka menu "AKSI CEPAT".
+  - Driver: Beranda · Riwayat · [+] · Notifikasi (badge) · Akun. Aksi cepat: Isi P2H, Lapor kerusakan, Riwayat P2H.
+  - Manager/Admin: Beranda · Temuan (badge) · [+] · Persetujuan (badge) · Lainnya. Aksi cepat: Tinjau persetujuan, Ubah status unit, Ingatkan driver.
+  - Item aktif: label 700 + warna foreground (tanpa garis kuning). Konten scroll diberi padding bawah ≥ 120.
 - **Tablet** (`md`): nav rail 72.
-- **Desktop** (`lg+`): `Sidebar` 264 sticky tinggi 100vh (lihat `design/screens/Sidebar.png`):
+- **Desktop** (`lg+`): `Sidebar` 264 sticky tinggi 100vh (lihat `design/screens/MWSidebar.png`, latar putih):
   logo + "PIMS" → pemilih site → grup: (tanpa judul) Dashboard, Monitoring P2H, Kepatuhan, Riwayat P2H, Persetujuan [badge merah], Temuan [hitungan abu], Notifikasi [hitungan abu] · **Laporan**: Ringkasan harian, Laporan periode, Analitik unit, Monitoring PA, Downtime · **Data master**: Unit, Site, Pengguna & driver · **Admin** (Admin saja): Audit log, Pengaturan · kartu akun di bawah (avatar inisial, nama, peran) → Akun.
-  Item 38–40px, aktif = `sidebar-accent` + garis kuning 3×20 di tepi kiri + `aria-current="page"`. Badge merah hanya bila butuh tindakan; lainnya angka abu.
+  Item 40px radius 12, aktif = **pill hitam** (`sidebar-accent`) teks putih + titik kuning 6px + `aria-current="page"`. Tag peran ADMIN/MANAGER (hitam, teks kuning) di samping logo. Badge merah hanya bila butuh tindakan; lainnya angka abu.
 
 ## PageHeader (desktop)
-Judul 28/600 + subjudul 14 muted (konteks: jumlah, rentang, site) + aksi kanan (segmented rentang, Export outline, CTA primer). Tinggi aksi 40.
+Judul 28/800 + subjudul 14 muted (konteks: jumlah, rentang, site) + aksi kanan (segmented rentang, Export outline, CTA primer). Tinggi aksi 40.
 
 ## KpiCard / KpiStrip
-Desktop: grid 4 kolom, kartu border 1 radius 14 p-16: label 13 muted · angka 28/600 `tnum` · sub 12 muted. Warna angka hanya `foreground`, `danger` (masalah), `warning` (perhatian). Opsional bar progres 4px. Bila kartu bisa diklik sebagai filter → `button` dengan `aria-pressed`, border `foreground` saat aktif.
-Mobile: KPI tanpa kartu (label 13, angka 36–40), count-up 800ms sekali per sesi.
+Desktop: grid auto-fit (min 170), **kartu putih tanpa garis radius 20** + `shadow-1`, p-18: (opsional ikon 28 dalam kotak soft radius 10) · label 12 uppercase muted · angka 32/800 `tnum` · sub 13. Di Dashboard kartu KPI menumpuk di bawah hero (margin-top -56). Warna angka hanya `foreground`, `danger` (masalah), `warning` (perhatian). Opsional bar progres 4px. Bila kartu bisa diklik sebagai filter → `button` dengan `aria-pressed`, border `foreground` saat aktif.
+Mobile: KPI juga di kartu putih radius 20 (lihat Beranda Driver: dua kartu sama tinggi min 148), count-up 800ms sekali per sesi.
 
 ## FilterChips
 Chip 34 (desktop) / 40 (mobile), radius full. Aktif = bg `primary`. Boleh menampilkan hitungan (opacity .7). Satu baris di atas data; chip aktif di mobile punya tombol hapus 32.

@@ -48,6 +48,6 @@ Gambar: `Akun.png` (driver), `Akun-Desktop.png` (Manager).
 - Header avatar 56 + nama + "Manager · Pit A · email".
 - **Profil** (read-only, "Nama, peran, dan site diatur oleh Admin.").
 - **Keamanan**: Kata sandi "Diubah 3 bulan lalu" → form inline 3 field + meter kekuatan + validasi; **Verifikasi 2 langkah** (status; Aktifkan → QR + kunci manual + kode 6 digit; Admin wajib); **Sesi aktif** (perangkat, lokasi/IP, waktu; "Sesi ini"; "Keluarkan" / "Keluarkan semua sesi lain").
-- **Tampilan**: pilihan kartu Terang / Gelap / Kontras tinggi / Ikuti sistem (berlaku langsung, simpan per perangkat).
+- **Tampilan**: pilihan kartu Terang / Gelap / Ikuti sistem (berlaku langsung, simpan per perangkat).
 - **Hapus akun**: "Ajukan hapus akun" → dialog (penjelasan anonimisasi + alasan opsional) → status "Penghapusan akun diajukan · Menunggu persetujuan Admin" + "Batalkan pengajuan".
 - "Keluar" (mobile di bawah), versi build.

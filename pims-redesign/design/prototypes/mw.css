@@ -1,0 +1,146 @@
+/* PIMS × MyWahana "Sunlit Calm" — token MyWahana dipetakan ke nama token PIMS.
+   Tema: light (default) & dark. "hc" dipetakan ke light (tidak ada kontras tinggi di MyWahana). */
+
+
+.pims, [data-theme="light"], [data-theme="hc"] {
+  --background: #F7F6F2; --foreground: #141414;
+  --card: #FFFFFF; --card-foreground: #141414; --popover: #FFFFFF; --popover-foreground: #141414;
+  --primary: #141414; --primary-foreground: #FFFFFF;
+  --secondary: #F1EEE6; --secondary-foreground: #141414;
+  --muted: #F1EEE6; --muted-2: #FBFAF7; --muted-foreground: #5F5A51;
+  --accent: #F1EEE6; --accent-foreground: #141414;
+  --destructive: #A3261B; --destructive-foreground: #FFFFFF;
+  --border: #E7E3DA; --input: #E7E3DA; --input-fill: #F5F3EE; --ring: #141414;
+  --brand: #F4D03F; --brand-foreground: #141414; --brand-soft: #FDF6D8;
+  --success: #1F6B3F; --success-soft: #E3F3E8;
+  --warning: #8A5300; --warning-soft: #FDF0D5;
+  --info: #24508A; --info-soft: #E4ECF6;
+  --danger: #A3261B; --danger-soft: #FBE4E1; --risk-extreme: #5C1410;
+  --chart-1: #C99A06; --chart-2: #2563EB; --chart-3: #E8590C; --chart-4: #0F8F82; --chart-5: #7C3AED; --chart-ref: #141414;
+  --sidebar: #FFFFFF; --sidebar-foreground: #141414; --sidebar-primary: #141414; --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #141414; --sidebar-accent-foreground: #FFFFFF; --sidebar-border: #E7E3DA; --sidebar-ring: #141414;
+  --scrim: rgba(20,20,20,.40);
+  --bw: 1px; --fw-body: 500; --fs-body: 15px;
+  --shadow-1: 0 1px 2px rgba(20,20,20,.04);
+  --shadow-2: 0 8px 24px rgba(20,20,20,.07);
+  --shadow-3: 0 20px 48px -12px rgba(20,20,20,.22);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: #0F0F0E; --foreground: #F5F3EE;
+  --card: #181816; --card-foreground: #F5F3EE; --popover: #181816; --popover-foreground: #F5F3EE;
+  --primary: #F5F3EE; --primary-foreground: #141414;
+  --secondary: #22211F; --secondary-foreground: #F5F3EE;
+  --muted: #22211F; --muted-2: #141412; --muted-foreground: #A8A397;
+  --accent: #22211F; --accent-foreground: #F5F3EE;
+  --destructive: #F0948A; --destructive-foreground: #141414;
+  --border: #2E2D2A; --input: #2E2D2A; --input-fill: #22211F; --ring: #F4D03F;
+  --brand: #F4D03F; --brand-foreground: #141414; --brand-soft: #3A3214;
+  --success: #7FCB9A; --success-soft: #16301F;
+  --warning: #F2B865; --warning-soft: #3A2A10;
+  --info: #8DB3E8; --info-soft: #15243A;
+  --danger: #F0948A; --danger-soft: #3D1714; --risk-extreme: #FF6B5C;
+  --chart-1: #B38D0E; --chart-2: #3577E8; --chart-3: #D9600F; --chart-4: #13907F; --chart-5: #8455EE; --chart-ref: #E4E4E7;
+  --sidebar: #181816; --sidebar-foreground: #F5F3EE; --sidebar-primary: #F5F3EE; --sidebar-primary-foreground: #141414;
+  --sidebar-accent: #F5F3EE; --sidebar-accent-foreground: #141414; --sidebar-border: #2E2D2A; --sidebar-ring: #F4D03F;
+  --scrim: rgba(0,0,0,.60);
+  --shadow-1: 0 0 0 1px rgba(255,255,255,.04);
+  --shadow-2: 0 0 0 1px rgba(255,255,255,.05), 0 8px 24px -8px rgba(0,0,0,.6);
+  --shadow-3: 0 0 0 1px rgba(255,255,255,.06), 0 24px 48px -16px rgba(0,0,0,.8);
+  color-scheme: dark;
+}
+
+/* Radius, spacing, motion */
+.pims, [data-theme] {
+  --radius: 20px;           /* surface (12–16) */
+  --radius-sm: 16px;        /* control */
+  --radius-lg: 28px;        /* sheet */
+  --radius-full: 999px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+  --tap: 48px;              /* minimum touch target */
+  --dur-1: 80ms;            /* press */
+  --dur-2: 160ms;           /* toggle, hover, color */
+  --dur-3: 240ms;           /* expand/collapse, toast */
+  --dur-4: 360ms;           /* sheet, page, progress */
+  --dur-5: 600ms;           /* success, celebratory */
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+.mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Interaction primitives */
+.press { -webkit-tap-highlight-color: transparent; transition: transform var(--dur-1) var(--ease-standard), background-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard), border-color var(--dur-2) var(--ease-standard), box-shadow var(--dur-2) var(--ease-standard), opacity var(--dur-2); cursor: pointer; touch-action: manipulation; }
+.press:active { transform: scale(.97); }
+.hl:active { background-color: var(--muted) !important; }
+.pims button:focus-visible, .pims a:focus-visible, .pims input:focus-visible, .pims textarea:focus-visible,
+[data-theme] button:focus-visible, [data-theme] a:focus-visible, [data-theme] input:focus-visible, [data-theme] textarea:focus-visible {
+  outline: 2px solid var(--foreground); outline-offset: 2px; box-shadow: 0 0 0 4px #F4D03F;
+}
+.field:focus-within { border-color: var(--foreground) !important; box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 55%, transparent); }
+[data-theme="hc"] .field:focus-within { box-shadow: 0 0 0 3px #F4D435; }
+.noscroll { scrollbar-width: none; }
+.noscroll::-webkit-scrollbar { display: none; }
+.blurbar { background: color-mix(in oklab, var(--background) 82%, transparent); -webkit-backdrop-filter: saturate(180%) blur(16px); backdrop-filter: saturate(180%) blur(16px); }
+.collapse { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--dur-3) var(--ease-out), opacity var(--dur-3) var(--ease-out); }
+.collapse[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+.collapse > * { min-height: 0; overflow: hidden; }
+.bar { transition: width var(--dur-4) var(--ease-out); }
+.sheet-move { transition: transform var(--dur-4) var(--ease-out); }
+
+@keyframes pims-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.skeleton { background: linear-gradient(90deg, var(--muted) 0%, var(--muted-2) 50%, var(--muted) 100%); background-size: 200% 100%; animation: pims-shimmer 1.2s linear infinite; border-radius: 8px; }
+@keyframes pims-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: pims-fade-up var(--dur-4) var(--ease-out) both; }
+@keyframes pims-fade { from { opacity: 0; } to { opacity: 1; } }
+.fade { animation: pims-fade var(--dur-3) var(--ease-out) both; }
+@keyframes pims-toast { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+.toast-in { animation: pims-toast var(--dur-3) var(--ease-out) both; }
+@keyframes pims-sheet { from { transform: translateY(100%); } to { transform: none; } }
+.sheet-in { animation: pims-sheet var(--dur-4) var(--ease-out) both; }
+@keyframes pims-pop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.pop { animation: pims-pop var(--dur-5) var(--ease-pop) both; }
+@keyframes pims-draw { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
+.draw { stroke-dasharray: 48; stroke-dashoffset: 48; animation: pims-draw 420ms var(--ease-out) 260ms forwards; }
+@keyframes pims-ring { from { transform: scale(.85); opacity: .55; } to { transform: scale(1.6); opacity: 0; } }
+.ring { animation: pims-ring 1100ms var(--ease-out) 300ms both; }
+@keyframes pims-spin { to { transform: rotate(360deg); } }
+.spin { animation: pims-spin 800ms linear infinite; }
+@keyframes pims-shake { 0%,100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.shake { animation: pims-shake 220ms var(--ease-standard) 2; }
+@keyframes pims-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.pulse { animation: pims-pulse 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+  .press:active { transform: none; }
+}
+[data-motion="reduced"] *, [data-motion="reduced"] *::before, [data-motion="reduced"] *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+
+/* Field wrappers own the focus ring; inner inputs stay clean (no double ring) */
+.field input:focus-visible, .field textarea:focus-visible { outline: 0 !important; box-shadow: none !important; }
+textarea.field:focus-visible { outline: 0 !important; box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 55%, transparent) !important; }
+[data-theme="hc"] textarea.field:focus-visible { box-shadow: 0 0 0 3px #F4D435 !important; }
+.field[data-invalid="true"] { border-color: var(--danger) !important; }
+.field[data-invalid="true"]:focus-within { border-color: var(--danger) !important; box-shadow: 0 0 0 4px color-mix(in oklab, var(--danger) 22%, transparent) !important; }
+
+/* Children of scroll areas never shrink (prevents squashed buttons in sheets) */
+.noscroll > * { flex-shrink: 0; }
+
+/* ---- Gaya MyWahana: font, field terisi tanpa garis, kartu tanpa garis ---- */
+.pims, .pims * { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; }
+.pims .mono, .pims .mono * { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.pims .field { background: var(--input-fill) !important; border-color: transparent !important; border-radius: 16px !important; }
+.pims textarea.field, .pims select.field, .pims input.field { background: var(--input-fill) !important; border-color: transparent !important; border-radius: 16px !important; }
+.pims .field:focus-within, .pims .field:focus { border-color: var(--foreground) !important; box-shadow: 0 0 0 4px color-mix(in oklab, #F4D03F 60%, transparent) !important; }
+.pims .field[data-invalid="true"] { border-color: var(--danger) !important; background: var(--danger-soft) !important; }
+.pims button.press, .pims a.press { border-radius: 999px; }
+.pims h1 { font-weight: 800 !important; letter-spacing: -0.02em !important; }
+.pims strong { font-weight: 700; }

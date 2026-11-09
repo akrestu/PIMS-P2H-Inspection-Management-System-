@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS × MyWahana — Masuk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./mw.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.lg-m{min-height:100vh;display:flex;flex-direction:column;background:var(--card);color:var(--foreground);font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif}
+.lg-hero{position:relative;height:340px;flex-shrink:0;overflow:hidden;color:#FAFAFA}
+.lg-hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 55%}
+.lg-hero .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,.30) 0%,rgba(255,255,255,0) 40%,color-mix(in oklab,var(--card) 85%,transparent) 85%,var(--card) 100%)}
+.lg-mform{position:relative;margin-top:-40px;padding:0 24px 24px;overflow:hidden;isolation:isolate;flex:1;display:flex;flex-direction:column;gap:24px}
+.lg-d{display:none}
+@media (min-width:1024px){
+ .lg-m{display:none}
+ .lg-d{position:relative;min-height:100vh;background:var(--background);color:var(--foreground);font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:40px;box-sizing:border-box}
+}
+.lg-d{--lg-bg:#F7F6F2;--lg-topo:.45;--lg-card:rgba(255,255,255,.86);--lg-card-bd:transparent;--lg-card-sh:0 40px 80px -32px rgba(10,10,10,.22),0 1px 2px rgba(10,10,10,.04),inset 0 1px 0 rgba(255,255,255,.9);--lg-pill:rgba(255,255,255,.7);--lg-pill-bd:rgba(10,10,10,.08)}
+.lg-d[data-theme="dark"]{--lg-bg:#0F0F0E;--lg-topo:.14;--lg-card:rgba(24,24,22,.72);--lg-card-bd:rgba(255,255,255,.08);--lg-card-sh:0 40px 80px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);--lg-pill:rgba(255,255,255,.04);--lg-pill-bd:rgba(255,255,255,.1)}
+.lg-d[data-theme="hc"]{--lg-bg:#FFFFFF;--lg-topo:0;--lg-card:#FFFFFF;--lg-card-bd:#000;--lg-card-sh:none;--lg-pill:#FFFFFF;--lg-pill-bd:#000}
+.lg-topo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:var(--lg-topo);pointer-events:none}
+.lg-card{width:100%;max-width:440px;box-sizing:border-box;padding:36px;border-radius:28px;background:var(--lg-card);border:var(--bw) solid var(--lg-card-bd);box-shadow:var(--lg-card-sh);-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);display:flex;justify-content:center}
+.lg-pill{background:var(--lg-pill);border:1px solid var(--lg-pill-bd)}
+.lgd-card{width:100%;max-width:896px;display:grid;grid-template-columns:1fr 1fr;border-radius:28px;overflow:hidden;background:var(--card);box-shadow:0 30px 70px -30px rgba(20,20,20,.25)}
+.lgd-hero{position:relative;isolation:isolate;overflow:hidden;min-height:566px;padding:20px;display:flex;flex-direction:column;justify-content:space-between}
+.lgd-form{position:relative;isolation:isolate;overflow:hidden;padding:44px 40px;display:flex;align-items:center}
+</style>
+</helmet>
+<div>
+  <!-- MOBILE & TABLET (< 1024): gaya L1 Hero -->
+  <div class="pims lg-m" data-theme="{{ theme }}">
+    <section class="lg-hero" aria-hidden="true">
+      <img class="bg" src="../assets/hero-mountain.jpg" alt="">
+      <div class="ov"></div>
+      <div style="position: absolute; top: 20px; left: 24px; right: 24px; display: flex; align-items: center; justify-content: space-between">
+        <span style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.92); border-radius: 999px; padding: 6px 14px 6px 6px; color: #141414"><img src="../assets/pims-logo.png" alt="" style="width: 30px; height: 30px"><span style="font-size: 12px; font-weight: 800; letter-spacing: .1em">PIMS</span></span>
+      </div>
+    </section>
+    <section class="lg-mform">
+      <img src="../assets/topo-motif-mw.png" alt="" aria-hidden="true" style="position: absolute; right: -300px; bottom: -140px; width: 760px; opacity: .35; z-index: -1; pointer-events: none">
+      <dc-import name="MWLoginForm" theme="{{ theme }}" align="left" hint-size="342px,620px"></dc-import>
+      <span style="margin-top: auto; font-size: 12px; color: var(--muted-foreground)">PIMS v1.0 · masuk tercatat di Audit Log</span>
+    </section>
+  </div><div class="pims lg-d" data-theme="{{ dtheme }}">
+    <div class="lgd-card">
+      <section class="lgd-hero" aria-hidden="true">
+        <img src="../assets/hero-mountain.jpg" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 55%; z-index: -2">
+        <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,10,10,.18) 0%, rgba(10,10,10,0) 35%, rgba(10,10,10,0) 75%, rgba(10,10,10,.25) 100%); z-index: -1"></div>
+        <span style="display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; background: rgba(255,255,255,.92); border-radius: 999px; padding: 6px 16px 6px 6px; color: #141414"><img src="../assets/pims-logo.png" alt="" style="width: 30px; height: 30px"><span style="font-size: 13px; font-weight: 800; letter-spacing: .1em">PIMS</span></span>
+        <span style="align-self: flex-end; font-size: 12px; font-weight: 600; color: #FFFFFF; text-shadow: 0 1px 6px rgba(0,0,0,.4)">Merapi Barat</span>
+      </section>
+      <section class="lgd-form">
+        <img src="../assets/topo-motif-mw.png" alt="" aria-hidden="true" style="position: absolute; left: -260px; top: 220px; width: 1000px; opacity: .45; z-index: -1; pointer-events: none">
+        <dc-import name="MWLoginForm" theme="{{ dtheme }}" align="left" hint-size="368px,560px"></dc-import>
+      </section>
+    </div>
+  </div>
+
+  <!-- DESKTOP (>= 1024): gaya L2 — terang (default) / gelap / kontras tinggi mengikuti tema -->
+  
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { const t = this.props.theme ?? 'light'; return { theme: t, dtheme: t }; }
+}
+</script>
+</body>
+</html>

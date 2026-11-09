@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS × MyWahana — Master site desktop</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./mw.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0} .ms-row:hover{background:var(--muted-2)}</style>
+</helmet>
+<div class="pims" data-theme="{{ theme }}" style="min-height: 100vh; background: var(--background); color: var(--foreground); font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; font-size: 15px; display: flex; align-items: stretch">
+  <div style="flex: 0 0 264px; position: sticky; top: 0; height: 100vh; align-self: flex-start; display: flex"><dc-import name="MWSidebar" active="Site" peran="{{ peran }}" theme="{{ theme }}" hint-size="264px,100%"></dc-import></div>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px clamp(16px, 3vw, 40px) 48px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em">Master site</h1>
+        <span class="tnum" style="font-size: 14px; color: var(--muted-foreground)">{{ sub }}</span>
+      </div>
+      <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+        <button type="button" class="press" onClick="{{ openAdd }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Tambah site</button>
+      </sc-if>
+    </header>
+
+    <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+      <div role="note" style="padding: 12px 16px; border-radius: 16px; background: var(--info-soft); color: var(--info); font-size: 14px; font-weight: 500">Hanya Admin yang dapat menambah atau mengubah site.</div>
+    </sc-if>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <div role="tablist" style="display: flex; padding: 4px; border-radius: 999px; background: var(--muted)">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{ t.on }}" class="press" onClick="{{ t.pick }}" style="height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: {{ t.bg }}; color: var(--foreground); font: inherit; font-size: 14px; font-weight: {{ t.w }}; box-shadow: {{ t.sh }}">{{ t.label }}</button></sc-for>
+      </div>
+      <div class="field" style="flex: 0 1 300px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 999px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="color: var(--muted-foreground)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input aria-label="Cari site" placeholder="Cari nama atau kode site" value="{{ q }}" onInput="{{ onQ }}" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px"></div>
+    </div>
+
+    <section aria-label="Daftar site" style="background: var(--card); border-radius: 20px; box-shadow: var(--shadow-1); overflow: hidden">
+      <div style="overflow-x: auto">
+        <table style="width: 100%; min-width: 860px; border-collapse: collapse; font-size: 14px">
+          <thead><tr style="text-align: left; height: 48px; color: var(--muted-foreground); font-size: 13px">
+            <th style="padding: 0 20px; font-weight: 600">Kode</th><th style="padding: 0 12px; font-weight: 600">Nama site</th><th style="padding: 0 12px; font-weight: 600">Zona waktu</th><th style="padding: 0 12px; font-weight: 600; text-align: right">Unit</th><th style="padding: 0 12px; font-weight: 600; text-align: right">Driver</th><th style="padding: 0 12px; font-weight: 600">Approver default</th><th style="padding: 0 20px"></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+              <tr class="ms-row" style="height: 64px; border-top: 1px solid var(--border)">
+                <td style="padding: 0 20px"><span class="mono" style="padding: 4px 8px; border-radius: 8px; background: var(--muted); font-size: 12px; font-weight: 500">{{ r.code }}</span></td>
+                <td style="padding: 0 12px; font-weight: 700">{{ r.name }}</td>
+                <td style="padding: 0 12px"><span style="display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--muted); font-size: 12px; font-weight: 600">{{ r.tz }}</span></td>
+                <td class="tnum" style="padding: 0 12px; text-align: right">{{ r.units }}</td>
+                <td class="tnum" style="padding: 0 12px; text-align: right">{{ r.drivers }}</td>
+                <td style="padding: 0 12px; color: {{ r.apprFg }}">{{ r.appr }}</td>
+                <td style="padding: 0 20px; text-align: right"><sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}"><button type="button" class="press" onClick="{{ r.act }}" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--input); background: var(--card); color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600">{{ r.actLabel }}</button></sc-if></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 32px 20px; text-align: center; color: var(--muted-foreground)">Tidak ada site yang cocok.</p></sc-if>
+    </section>
+    <sc-if value="{{ isTrash }}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--muted-foreground)">Item di Sampah terhapus permanen otomatis setelah 30 hari.</span></sc-if>
+  </main>
+
+  <sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position: fixed; inset: 0; background: rgba(10,10,10,.32); z-index: 20"></div>
+    <aside role="dialog" aria-label="{{ drawerTitle }}" class="fade" style="position: fixed; top: 12px; right: 12px; bottom: 12px; width: 440px; z-index: 21; background: var(--card); border-radius: 28px; box-shadow: var(--shadow-3); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 20px 24px"><h2 style="margin: 0; flex: 1; font-size: 20px; font-weight: 800">{{ drawerTitle }}</h2><button type="button" class="press" onClick="{{ close }}" aria-label="Tutup" style="width: 40px; height: 40px; border-radius: 999px; border: 0; background: var(--muted); color: var(--foreground); font-size: 18px">×</button></div>
+      <div style="flex: 1; overflow-y: auto; padding: 0 24px; display: flex; flex-direction: column; gap: 16px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Nama site<input class="field" value="{{ fName }}" style="height: 52px; padding: 0 16px; border-radius: 16px; font: inherit; font-size: 16px; font-weight: 400; color: var(--foreground)"></label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Kode (3 huruf)<input class="field mono" value="{{ fCode }}" maxlength="3" style="height: 52px; padding: 0 16px; border-radius: 16px; font-size: 16px; font-weight: 400; color: var(--foreground); text-transform: uppercase"></label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Approver default<input class="field" value="{{ fAppr }}" style="height: 52px; padding: 0 16px; border-radius: 16px; font: inherit; font-size: 16px; font-weight: 400; color: var(--foreground)"></label>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; font-weight: 600">Zona waktu</span>
+          <div role="radiogroup" style="display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; border-radius: 999px; background: var(--muted)">
+            <sc-for list="{{ tzOpts }}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ o.on }}" class="press" onClick="{{ o.pick }}" style="height: 40px; border: 0; border-radius: 999px; background: {{ o.bg }}; color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600; box-shadow: {{ o.sh }}">{{ o.label }}</button></sc-for>
+          </div>
+          <span style="font-size: 13px; color: var(--muted-foreground)">Batas shift, tenggat P2H, dan ringkasan harian mengikuti zona ini.</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; padding: 20px 24px">
+        <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}"><button type="button" class="press" onClick="{{ close }}" style="height: 48px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--input); background: var(--card); color: var(--danger); font: inherit; font-size: 14px; font-weight: 600">Pindahkan ke Sampah</button></sc-if>
+        <span style="flex: 1"></span>
+        <button type="button" class="press" onClick="{{ close }}" style="height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 15px; font-weight: 600">Simpan</button>
+      </div>
+    </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["Admin","Manager"],"default":"Admin"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const S = (code, name, tz, appr, units, drivers, del) => ({ code, name, tz, appr, units, drivers, del: del || '' });
+    this.state = { tab: 'aktif', q: '', edit: null, tz: 'WITA', sites: [
+      S('PTA', 'Pit A', 'WITA', 'Hendra W.', 48, 58), S('PTB', 'Pit B', 'WITA', 'Wawan S.', 36, 40), S('HLR', 'Hauling Road', 'WITA', 'Yusuf P.', 22, 16),
+      S('JTY', 'Jetty Utara', 'WITA', 'Dewi K.', 9, 11), S('WSP', 'Workshop Utama', 'WITA', 'Agus S.', 6, 3), S('PTC', 'Pit C (lama)', 'WITA', '—', 0, 0, 'Dihapus 3 Okt')
+    ] };
+  }
+  renderVals() {
+    const isAdmin = (this.props.peran ?? 'Admin') === 'Admin';
+    const st = this.state, trash = st.tab === 'sampah';
+    const q = st.q.toLowerCase();
+    const list = st.sites.filter((s) => (trash ? s.del : !s.del) && (!q || (s.name + s.code).toLowerCase().includes(q)));
+    const nA = st.sites.filter((s) => !s.del).length, nS = st.sites.length - nA;
+    const tabs = [['aktif', 'Aktif · ' + nA], ['sampah', 'Sampah · ' + nS]].map(([k, l]) => ({ label: l, on: st.tab === k ? 'true' : 'false', bg: st.tab === k ? 'var(--card)' : 'transparent', w: st.tab === k ? 700 : 500, sh: st.tab === k ? 'var(--shadow-1)' : 'none', pick: () => this.setState({ tab: k }) }));
+    const ed = st.edit && st.edit !== 'new' ? st.sites.find((s) => s.code === st.edit) : null;
+    return {
+      theme: this.props.theme ?? 'light', peran: isAdmin ? 'Admin' : 'Manager', isAdmin, readOnly: !isAdmin, isTrash: trash,
+      sub: nA + ' site aktif · ' + st.sites.filter((s) => !s.del).reduce((a, s) => a + s.units, 0) + ' unit', tabs, q: st.q,
+      onQ: (e) => this.setState({ q: e.target.value }), empty: list.length === 0,
+      rows: list.map((s) => ({ ...s, tz: s.tz + (s.tz === 'WIB' ? ' · UTC+7' : s.tz === 'WIT' ? ' · UTC+9' : ' · UTC+8'), appr: s.del || ('Approver ' + s.appr), apprFg: s.del ? 'var(--muted-foreground)' : 'var(--foreground)', actLabel: trash ? 'Pulihkan' : 'Ubah',
+        act: trash ? () => this.setState({ sites: st.sites.map((x) => x.code === s.code ? { ...x, del: '' } : x) }) : () => this.setState({ edit: s.code, tz: s.tz }) })),
+      openAdd: () => this.setState({ edit: 'new', tz: 'WITA' }), drawer: !!st.edit, editing: !!ed,
+      drawerTitle: ed ? 'Ubah site' : 'Tambah site', fName: ed ? ed.name : '', fCode: ed ? ed.code : '', fAppr: ed ? ed.appr : '',
+      tzOpts: [['WIB', 'WIB UTC+7'], ['WITA', 'WITA UTC+8'], ['WIT', 'WIT UTC+9']].map(([k, l]) => ({ label: l, on: st.tz === k ? 'true' : 'false', bg: st.tz === k ? 'var(--card)' : 'transparent', sh: st.tz === k ? 'var(--shadow-1)' : 'none', pick: () => this.setState({ tz: k }) })),
+      close: () => this.setState({ edit: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

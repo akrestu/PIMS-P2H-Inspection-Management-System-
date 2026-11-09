@@ -1,6 +1,6 @@
 # Layar · Operasional Manager/Admin
 
-Semua layar: pemilih site aktif, 5 keadaan (memuat/kosong/error/offline/403), tema 3. Desktop = sidebar + PageHeader. Mobile = app bar + bottom nav.
+Semua layar: pemilih site aktif, 5 keadaan (memuat/kosong/error/offline/403), tema terang & gelap. Desktop = sidebar + PageHeader. Mobile = app bar + bottom nav.
 
 ## Dashboard (`/dashboard`)
 Gambar: `Dashboard.png`, `Dashboard-Desktop.png`.
