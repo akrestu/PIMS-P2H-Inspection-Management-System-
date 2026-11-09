@@ -1,5 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, IdCard, Lock } from 'lucide-react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { request } from '@/routes/password';
  * Field backend tetap `nik` (Fortify::username) — di UI disebut "NRP".
  */
 const fieldShell =
-    'field flex h-[50px] items-center gap-3 rounded-md border-(length:--bw) border-input bg-background px-4 transition-[border-color,box-shadow] duration-150';
+    'field flex h-14 items-center gap-3 border-(length:--bw) px-4 transition-[border-color,box-shadow] duration-150';
 
 export function LoginForm({ status }: { status?: string }) {
     const [nik, setNik] = useState('');
@@ -52,11 +52,11 @@ export function LoginForm({ status }: { status?: string }) {
     return (
         <div>
             <div className="mb-4">
-                <h1 className="text-[28px] font-extrabold tracking-tight">
+                <h1 className="text-3xl font-extrabold tracking-[-0.02em]">
                     Masuk ke PIMS
                 </h1>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                    Inspeksi P2H unit, cepat dan tercatat.
+                    Gunakan NRP dan kata sandi Anda.
                 </p>
             </div>
 
@@ -99,7 +99,7 @@ export function LoginForm({ status }: { status?: string }) {
                             <div className="space-y-1.5">
                                 <label
                                     htmlFor="nik"
-                                    className="text-[13px] font-semibold"
+                                    className="block text-[13px] font-semibold"
                                 >
                                     NRP
                                 </label>
@@ -107,6 +107,10 @@ export function LoginForm({ status }: { status?: string }) {
                                     className={fieldShell}
                                     data-invalid={!!clientErrors.nik}
                                 >
+                                    <IdCard
+                                        className="size-5 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
                                     <input
                                         id="nik"
                                         name="nik"
@@ -115,7 +119,7 @@ export function LoginForm({ status }: { status?: string }) {
                                         autoComplete="username"
                                         autoFocus
                                         maxLength={16}
-                                        placeholder="Nomor induk, hanya angka"
+                                        placeholder="Nomor NRP Anda"
                                         value={nik}
                                         onChange={(e) => {
                                             setNik(
@@ -137,7 +141,7 @@ export function LoginForm({ status }: { status?: string }) {
                                                 ? 'nik-error'
                                                 : undefined
                                         }
-                                        className="h-full min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
+                                        className="h-full min-w-0 flex-1 bg-transparent text-base outline-none lg:text-[15px] placeholder:text-muted-foreground"
                                     />
                                 </div>
                                 {clientErrors.nik && (
@@ -153,7 +157,7 @@ export function LoginForm({ status }: { status?: string }) {
                             <div className="space-y-1.5">
                                 <label
                                     htmlFor="password"
-                                    className="text-[13px] font-semibold"
+                                    className="block text-[13px] font-semibold"
                                 >
                                     Kata sandi
                                 </label>
@@ -165,6 +169,10 @@ export function LoginForm({ status }: { status?: string }) {
                                         !!serverError
                                     }
                                 >
+                                    <Lock
+                                        className="size-5 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
                                     <input
                                         id="password"
                                         name="password"
@@ -172,7 +180,6 @@ export function LoginForm({ status }: { status?: string }) {
                                             showPassword ? 'text' : 'password'
                                         }
                                         autoComplete="current-password"
-                                        placeholder="Kata sandi"
                                         value={password}
                                         onChange={(e) => {
                                             setPassword(e.target.value);
@@ -187,7 +194,7 @@ export function LoginForm({ status }: { status?: string }) {
                                             !!clientErrors.password || undefined
                                         }
                                         aria-describedby="password-msg"
-                                        className="h-full min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
+                                        className="h-full min-w-0 flex-1 bg-transparent text-base outline-none lg:text-[15px] placeholder:text-muted-foreground"
                                     />
                                     <button
                                         type="button"
@@ -200,7 +207,7 @@ export function LoginForm({ status }: { status?: string }) {
                                                 ? 'Sembunyikan kata sandi'
                                                 : 'Tampilkan kata sandi'
                                         }
-                                        className="grid size-11 press place-items-center rounded-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        className="grid size-11 press place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
                                     >
                                         {showPassword ? (
                                             <EyeOff className="size-5" />
@@ -248,7 +255,7 @@ export function LoginForm({ status }: { status?: string }) {
 
                             <Button
                                 type="submit"
-                                size="lg"
+                                size="xl"
                                 className="w-full"
                                 loading={processing}
                                 data-test="login-button"
@@ -260,7 +267,7 @@ export function LoginForm({ status }: { status?: string }) {
                 }}
             </Form>
 
-            <p className="mt-6 text-center text-xs text-muted-foreground">
+            <p className="mt-5 text-[13px] text-muted-foreground">
                 Belum punya akun atau NRP terkunci? Hubungi admin site Anda.
             </p>
         </div>

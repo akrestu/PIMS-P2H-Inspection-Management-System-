@@ -33,7 +33,7 @@ export type ShellNavItem = {
     title: string;
     href: string;
     icon: LucideIcon;
-    /** Angka di kanan item. `alert` = badge merah (butuh tindakan), selain itu abu. */
+    /** Angka di kanan item. `alert` = badge kuning (butuh tindakan), selain itu abu. */
     count?: number;
     alert?: boolean;
     /** URL lain (tab halaman) yang juga menandai item ini aktif. */
@@ -54,6 +54,7 @@ type SharedProps = {
             can_approve?: boolean;
             can_monitor?: boolean;
             jabatan?: string | null;
+            site_name?: string | null;
         } | null;
     };
     notifications?: { unread_count?: number; pending_approvals?: number };
@@ -192,8 +193,8 @@ export function useShellNavigation() {
 
     /*
      * Bottom nav mobile (docs/02#appshell):
-     * - Driver: Beranda, Riwayat, [Isi P2H], Notifikasi, Akun (atau Lainnya bila punya menu tambahan)
-     * - Manager/Admin: Beranda, Monitoring, Temuan, Persetujuan, Lainnya
+     * - Driver: Beranda, Riwayat, [+], Notifikasi, Akun (atau Lainnya bila punya menu tambahan)
+     * - Manager/Admin: Beranda, Temuan, [+], Persetujuan, Lainnya
      */
     let bottom: ShellNavItem[];
     let more: ShellNavItem[] = [];
@@ -201,7 +202,6 @@ export function useShellNavigation() {
     if (isManager) {
         bottom = [
             { ...item.home, title: 'Beranda' },
-            { ...item.live, title: 'Monitoring' },
             item.findings,
             canApprove ? item.approvals : item.history,
         ];
@@ -228,6 +228,17 @@ export function useShellNavigation() {
         }
     }
 
+    // Menu "Aksi cepat" (docs/02). "Lapor kerusakan" belum punya alur di backend → tidak ditampilkan.
+    const quickActions: ShellNavItem[] = isManager
+        ? [
+              ...(canApprove
+                  ? [{ ...item.approvals, title: 'Tinjau persetujuan' }]
+                  : []),
+              { ...item.downtime, title: 'Ubah status unit' },
+              { ...item.live, title: 'Ingatkan driver' },
+          ]
+        : [item.fill, { ...item.history, title: 'Riwayat P2H' }];
+
     const isActive = (nav: ShellNavItem) =>
         isCurrentUrl(nav.href) ||
         (nav.activeMatch ?? []).some((href) => isCurrentUrl(href));
@@ -241,7 +252,9 @@ export function useShellNavigation() {
         groups,
         bottom,
         more,
-        fill: item.fill,
+        quickActions,
+        siteName: auth.user?.site_name ?? null,
+        isAdmin,
         account: item.account,
         notifications: item.notifications,
         isActive,

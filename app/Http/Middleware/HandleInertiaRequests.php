@@ -73,6 +73,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ? array_merge($user->only(['id', 'name', 'nik', 'email', 'jabatan', 'department', 'jenis_unit']), [
                     'roles' => $user->getRoleNames()->toArray(),
+                    'site_name' => $user->site?->name,
                     'can_approve' => $user->canApproveLv(),
                     'can_monitor' => $user->canViewMonitoring(),
                 ]) : null,

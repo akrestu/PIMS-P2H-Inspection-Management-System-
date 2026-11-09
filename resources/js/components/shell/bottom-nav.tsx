@@ -1,8 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { Menu, Plus } from 'lucide-react';
-import { useState } from 'react';
-import type { ShellNavItem } from './navigation';
-import { useShellNavigation } from './navigation';
+import { Menu, Plus, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import {
     Drawer,
     DrawerContent,
@@ -11,6 +9,8 @@ import {
     DrawerTitle,
 } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
+import type { ShellNavItem } from './navigation';
+import { useShellNavigation } from './navigation';
 
 function Badge({ item }: { item: ShellNavItem }) {
     const count = item.count ?? 0;
@@ -20,28 +20,19 @@ function Badge({ item }: { item: ShellNavItem }) {
     }
 
     return (
-        <span
-            className={cn(
-                'absolute -top-1 left-1/2 ml-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-bold ring-2 ring-background',
-                item.alert
-                    ? 'bg-danger text-white dark:text-background'
-                    : 'bg-foreground text-background',
-            )}
-        >
+        <span className="absolute -top-1.5 left-1/2 ml-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-foreground">
             {count > 99 ? '99+' : count}
         </span>
     );
 }
 
-function NavButton({
-    item,
-    active,
-    className,
-}: {
-    item: ShellNavItem;
-    active: boolean;
-    className?: string;
-}) {
+const navItemClass = (active: boolean) =>
+    cn(
+        'relative flex min-h-12 flex-1 press flex-col items-center justify-center gap-1 text-[11px]',
+        active ? 'font-bold text-foreground' : 'text-muted-foreground',
+    );
+
+function NavButton({ item, active }: { item: ShellNavItem; active: boolean }) {
     const Icon = item.icon;
 
     return (
@@ -49,20 +40,8 @@ function NavButton({
             href={item.href}
             prefetch
             aria-current={active ? 'page' : undefined}
-            className={cn(
-                'relative flex min-h-12 flex-1 press flex-col items-center justify-center gap-1 pt-1.5 text-[11px]',
-                active
-                    ? 'font-semibold text-foreground'
-                    : 'text-muted-foreground',
-                className,
-            )}
+            className={navItemClass(active)}
         >
-            {active && (
-                <span
-                    aria-hidden
-                    className="absolute top-0 h-[3px] w-6 rounded-b-full bg-brand"
-                />
-            )}
             <span className="relative">
                 <Icon className="size-6" strokeWidth={1.75} aria-hidden />
                 <Badge item={item} />
@@ -73,26 +52,90 @@ function NavButton({
 }
 
 /**
- * Bottom nav mobile (docs/02#appshell): tinggi 84 termasuk safe area, 5 item.
- * Driver: tombol tengah kuning 56 "Isi P2H". Manager/Admin: "Lainnya" membuka sheet.
+ * MWBottomNav (docs/02#appshell, docs/13#3): bar kaca melayang, tombol + tengah
+ * membuka menu "AKSI CEPAT". "Lainnya" membuka sheet menu lengkap.
  */
 export function ShellBottomNav() {
-    const { bottom, more, fill, isActive, isManager } = useShellNavigation();
-    const [open, setOpen] = useState(false);
+    const { bottom, more, quickActions, isActive } = useShellNavigation();
+    const [moreOpen, setMoreOpen] = useState(false);
+    const [quickOpen, setQuickOpen] = useState(false);
+    const fabRef = useRef<HTMLButtonElement>(null);
     const moreActive = more.some(isActive);
     const moreAlert = more.some((i) => i.alert && (i.count ?? 0) > 0);
 
-    // Driver: dua item, tombol Isi P2H di tengah, lalu sisanya
-    const left = isManager ? bottom : bottom.slice(0, 2);
-    const right = isManager ? [] : bottom.slice(2);
+    // Dua item di kiri tombol +, sisanya di kanan
+    const left = bottom.slice(0, 2);
+    const right = bottom.slice(2);
+
+    useEffect(() => {
+        if (!quickOpen) {
+            return;
+        }
+
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setQuickOpen(false);
+                fabRef.current?.focus();
+            }
+        };
+
+        document.addEventListener('keydown', onKey);
+
+        return () => document.removeEventListener('keydown', onKey);
+    }, [quickOpen]);
 
     return (
         <>
+            {quickOpen && (
+                <div className="lg:hidden">
+                    <button
+                        type="button"
+                        aria-label="Tutup aksi cepat"
+                        tabIndex={-1}
+                        onClick={() => setQuickOpen(false)}
+                        className="fixed inset-0 z-40 animate-fade bg-scrim"
+                    />
+                    <div
+                        id="aksi-cepat"
+                        className="fixed inset-x-3 bottom-[calc(max(env(safe-area-inset-bottom),12px)+84px)] z-50 mx-auto max-w-[536px] animate-fade-up rounded-2xl bg-card p-3 shadow-lg"
+                    >
+                        <p className="px-3 pt-1 pb-2 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">
+                            Aksi cepat
+                        </p>
+                        <ul>
+                            {quickActions.map((action, i) => {
+                                const Icon = action.icon;
+
+                                return (
+                                    <li key={action.href}>
+                                        <Link
+                                            href={action.href}
+                                            autoFocus={i === 0}
+                                            onClick={() => setQuickOpen(false)}
+                                            className="flex min-h-14 press items-center gap-3 rounded-md px-3 text-[15px] font-semibold hover:bg-muted"
+                                        >
+                                            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted">
+                                                <Icon
+                                                    className="size-5"
+                                                    strokeWidth={1.75}
+                                                    aria-hidden
+                                                />
+                                            </span>
+                                            {action.title}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                </div>
+            )}
+
             <nav
                 aria-label="Navigasi utama"
-                className="fixed inset-x-0 bottom-0 z-40 border-t pb-[max(env(safe-area-inset-bottom),8px)] blurbar lg:hidden"
+                className="fixed inset-x-3 bottom-[max(env(safe-area-inset-bottom),12px)] z-50 mx-auto max-w-[536px] rounded-2xl shadow-lg blurbar lg:hidden"
             >
-                <div className="mx-auto flex h-[68px] max-w-[560px] items-stretch px-2">
+                <div className="flex h-[72px] items-stretch px-1">
                     {left.map((item) => (
                         <NavButton
                             key={item.href}
@@ -101,20 +144,29 @@ export function ShellBottomNav() {
                         />
                     ))}
 
-                    {!isManager && (
-                        <div className="flex flex-1 items-start justify-center">
-                            <Link
-                                href={fill.href}
-                                aria-label={fill.title}
-                                aria-current={
-                                    isActive(fill) ? 'page' : undefined
-                                }
-                                className="-mt-5 grid size-14 press place-items-center rounded-full bg-brand text-brand-foreground shadow-lg ring-4 ring-background"
-                            >
-                                <Plus className="size-7" strokeWidth={2.25} />
-                            </Link>
-                        </div>
-                    )}
+                    <div className="flex flex-1 items-start justify-center">
+                        <button
+                            ref={fabRef}
+                            type="button"
+                            aria-label={
+                                quickOpen ? 'Tutup aksi cepat' : 'Aksi cepat'
+                            }
+                            aria-expanded={quickOpen}
+                            aria-controls="aksi-cepat"
+                            onClick={() => setQuickOpen((v) => !v)}
+                            className="-mt-5 grid size-14 press place-items-center rounded-full bg-ink text-brand shadow-lg ring-4 ring-background dark:bg-brand dark:text-brand-foreground"
+                        >
+                            {quickOpen ? (
+                                <X className="size-6" aria-hidden />
+                            ) : (
+                                <Plus
+                                    className="size-7"
+                                    strokeWidth={2.25}
+                                    aria-hidden
+                                />
+                            )}
+                        </button>
+                    </div>
 
                     {right.map((item) => (
                         <NavButton
@@ -127,21 +179,10 @@ export function ShellBottomNav() {
                     {more.length > 0 && (
                         <button
                             type="button"
-                            onClick={() => setOpen(true)}
+                            onClick={() => setMoreOpen(true)}
                             aria-haspopup="dialog"
-                            className={cn(
-                                'relative flex min-h-12 flex-1 press flex-col items-center justify-center gap-1 pt-1.5 text-[11px]',
-                                moreActive
-                                    ? 'font-semibold text-foreground'
-                                    : 'text-muted-foreground',
-                            )}
+                            className={navItemClass(moreActive)}
                         >
-                            {moreActive && (
-                                <span
-                                    aria-hidden
-                                    className="absolute top-0 h-[3px] w-6 rounded-b-full bg-brand"
-                                />
-                            )}
                             <span className="relative">
                                 <Menu
                                     className="size-6"
@@ -151,7 +192,7 @@ export function ShellBottomNav() {
                                 {moreAlert && (
                                     <span
                                         aria-hidden
-                                        className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-danger ring-2 ring-background"
+                                        className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-brand"
                                     />
                                 )}
                             </span>
@@ -161,7 +202,7 @@ export function ShellBottomNav() {
                 </div>
             </nav>
 
-            <Drawer open={open} onOpenChange={setOpen}>
+            <Drawer open={moreOpen} onOpenChange={setMoreOpen}>
                 <DrawerContent>
                     <DrawerHeader>
                         <DrawerTitle>Menu lainnya</DrawerTitle>
@@ -178,15 +219,15 @@ export function ShellBottomNav() {
                                 <li key={item.href}>
                                     <Link
                                         href={item.href}
-                                        onClick={() => setOpen(false)}
+                                        onClick={() => setMoreOpen(false)}
                                         aria-current={
                                             active ? 'page' : undefined
                                         }
                                         className={cn(
-                                            'relative flex min-h-[88px] press flex-col items-center justify-center gap-2 rounded-xl border-(length:--bw) p-2 text-center text-[13px] leading-tight',
+                                            'relative flex min-h-[88px] press flex-col items-center justify-center gap-2 rounded-xl p-2 text-center text-[13px] leading-tight',
                                             active
-                                                ? 'border-foreground bg-brand-soft font-semibold'
-                                                : 'bg-card hover:bg-muted',
+                                                ? 'bg-ink font-semibold text-ink-foreground'
+                                                : 'bg-muted-2 hover:bg-muted',
                                         )}
                                     >
                                         <span className="relative">

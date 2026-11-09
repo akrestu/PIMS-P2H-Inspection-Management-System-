@@ -34,7 +34,7 @@ export default function AppSidebarLayout({
                     className={
                         fullscreenFlow
                             ? 'flex flex-1 flex-col'
-                            : 'flex flex-1 flex-col pb-28 lg:pb-0'
+                            : 'flex flex-1 flex-col pb-[120px] lg:pb-0'
                     }
                 >
                     {children}

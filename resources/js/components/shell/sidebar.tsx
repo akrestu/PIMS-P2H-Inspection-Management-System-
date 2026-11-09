@@ -1,6 +1,5 @@
 import { Link } from '@inertiajs/react';
-import type { ShellNavItem } from './navigation';
-import { useShellNavigation } from './navigation';
+import { MapPin } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,12 +9,14 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
+import { useShellNavigation } from './navigation';
+import type { ShellNavItem } from './navigation';
 
 /** Logo + wordmark PIMS. */
 export function ShellLogo({ className }: { className?: string }) {
     return (
         <span className={cn('flex items-center gap-2.5', className)}>
-            <img src="/images/logo-256.png" alt="" className="size-8 object-contain" />
+            <img src="/images/pims-logo.png" alt="" className="size-8 object-contain" />
             <span className="text-[17px] font-bold tracking-[-0.01em]">
                 PIMS
             </span>
@@ -39,22 +40,22 @@ function SidebarLink({
                 prefetch
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                    'relative flex h-10 press items-center gap-3 rounded-[10px] px-2.5 text-sm',
+                    'relative flex h-10 press items-center gap-2.5 rounded-md px-3 text-sm',
                     active
                         ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+                        : 'text-sidebar-foreground/85 hover:bg-muted hover:text-sidebar-foreground',
                 )}
             >
                 {active && (
                     <span
                         aria-hidden
-                        className="absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand"
+                        className="size-1.5 shrink-0 rounded-full bg-brand"
                     />
                 )}
                 <span className="flex-1 truncate">{item.title}</span>
                 {count > 0 &&
                     (item.alert ? (
-                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white dark:text-background">
+                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-brand-foreground">
                             {count > 99 ? '99+' : count}
                             <span className="sr-only"> menunggu</span>
                         </span>
@@ -69,25 +70,41 @@ function SidebarLink({
 }
 
 /**
- * Sidebar desktop (docs/02#appshell, design/screens/Sidebar.png):
+ * Sidebar desktop (docs/02#appshell, design/screens/MWSidebar.png):
  * 264px sticky setinggi layar, grup navigasi, kartu akun di bawah.
  */
 export function ShellSidebar() {
-    const { groups, isActive, user, roleLabel, homeHref } =
+    const { groups, isActive, user, roleLabel, homeHref, isManager, siteName, isAdmin } =
         useShellNavigation();
     const getInitials = useInitials();
 
     return (
         <aside className="sticky top-0 hidden h-svh w-[264px] shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground lg:flex">
-            <div className="flex h-[68px] items-center px-5">
+            <div className="flex h-[68px] items-center justify-between px-5">
                 <Link href={homeHref} aria-label="PIMS — beranda">
                     <ShellLogo />
                 </Link>
+                {isManager && (
+                    <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold tracking-[0.06em] text-brand uppercase">
+                        {roleLabel}
+                    </span>
+                )}
             </div>
+
+            {/* Site pengguna, hanya informasi: backend belum punya konsep site aktif */}
+            {(siteName || isAdmin) && (
+                <div className="mx-3 mb-3 flex h-10 items-center gap-2 rounded-full bg-input-fill px-3.5 text-sm font-medium">
+                    <MapPin
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden
+                    />
+                    <span className="truncate">{siteName ?? 'Semua site'}</span>
+                </div>
+            )}
 
             <nav
                 aria-label="Navigasi utama"
-                className="flex-1 overflow-y-auto px-3 pb-4"
+                className="noscroll flex-1 overflow-y-auto px-3 pb-4"
             >
                 {groups.map((group, gi) => (
                     <div
@@ -115,7 +132,7 @@ export function ShellSidebar() {
             {user && (
                 <div className="p-3">
                     <DropdownMenu>
-                        <DropdownMenuTrigger className="flex w-full press items-center gap-3 rounded-[12px] p-2 text-left hover:bg-sidebar-accent">
+                        <DropdownMenuTrigger className="flex w-full press items-center gap-3 rounded-md p-2 text-left hover:bg-muted">
                             <span
                                 aria-hidden
                                 className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-[13px] font-semibold"

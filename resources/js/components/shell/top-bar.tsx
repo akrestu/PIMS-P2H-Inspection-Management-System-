@@ -1,10 +1,10 @@
 import { Link } from '@inertiajs/react';
 import { Bell } from 'lucide-react';
-import { useShellNavigation } from './navigation';
-import { ShellLogo } from './sidebar';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
+import { useShellNavigation } from './navigation';
+import { ShellLogo } from './sidebar';
 
 export function NotificationButton() {
     const { notifications } = useShellNavigation();
@@ -16,13 +16,13 @@ export function NotificationButton() {
             aria-label={
                 count > 0 ? count + ' notifikasi belum dibaca' : 'Notifikasi'
             }
-            className="relative grid size-12 press place-items-center rounded-[12px] text-foreground hover:bg-muted lg:size-10 lg:rounded-[10px]"
+            className="relative grid size-12 press place-items-center rounded-full text-foreground hover:bg-muted lg:size-10"
         >
             <Bell className="size-5" strokeWidth={1.75} aria-hidden />
             {count > 0 && (
                 <span
                     aria-hidden
-                    className="absolute top-2 right-2 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white ring-2 ring-background lg:top-1 lg:right-1 dark:text-background"
+                    className="absolute top-2 right-2 grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-foreground lg:top-1 lg:right-1"
                 >
                     {count > 9 ? '9+' : count}
                 </span>
@@ -54,7 +54,7 @@ export function ShellTopBar({
     return (
         <header
             className={cn(
-                'sticky top-0 z-30 border-b blurbar lg:hidden',
+                'sticky top-0 z-30 blurbar lg:hidden',
                 hideOnMobile && 'hidden',
             )}
         >
@@ -62,7 +62,7 @@ export function ShellTopBar({
             <div className="flex h-16 items-center gap-2 px-4 lg:hidden">
                 <div className="min-w-0 flex-1">
                     {title ? (
-                        <p className="truncate text-xl font-semibold tracking-[-0.01em]">
+                        <p className="truncate text-xl font-extrabold tracking-[-0.02em]">
                             {title}
                         </p>
                     ) : (
