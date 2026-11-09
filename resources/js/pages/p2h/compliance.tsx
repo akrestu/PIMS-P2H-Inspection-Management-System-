@@ -130,7 +130,7 @@ function HeatCell({
     const cell = row.cells[date] ?? null;
     const label = cellLabel(row, date, cell);
     const base =
-        'grid size-[26px] place-items-center rounded-[5px] transition-transform';
+        'grid size-[30px] place-items-center rounded-sm transition-transform';
 
     let body;
 
@@ -176,12 +176,12 @@ function HeatCell({
         <Link
             href={`/p2h/${cell.session_id}`}
             aria-label={label}
-            className="rounded-[5px] hover:scale-110"
+            className="rounded-sm hover:scale-110"
         >
             {body}
         </Link>
     ) : (
-        <span tabIndex={0} aria-label={label} className="rounded-[5px]">
+        <span tabIndex={0} aria-label={label} className="rounded-sm">
             {body}
         </span>
     );
@@ -348,7 +348,7 @@ export default function P2hCompliance({ matrix, dates, summary, filters }: Props
                 ) : (
                     <section
                         aria-labelledby="heatmap-title"
-                        className="rounded-xl border-(length:--bw) bg-card p-4 lg:p-5"
+                        className="rounded-xl bg-card p-4 shadow-sm lg:p-6"
                     >
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                             <h2
@@ -463,7 +463,7 @@ export default function P2hCompliance({ matrix, dates, summary, filters }: Props
                                 return (
                                     <div
                                         key={row.id}
-                                        className="rounded-xl border-(length:--bw) bg-card p-4"
+                                        className="rounded-xl bg-card p-4 shadow-sm"
                                     >
                                         <div className="flex items-baseline justify-between gap-2">
                                             <p className="min-w-0 truncate">

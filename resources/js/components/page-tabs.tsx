@@ -76,7 +76,7 @@ export function PageTabs({ group }: { group: PageTabGroup }) {
                             className={cn(
                                 'rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors',
                                 active
-                                    ? 'bg-background text-foreground shadow-sm'
+                                    ? 'bg-card font-bold text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground',
                             )}
                         >

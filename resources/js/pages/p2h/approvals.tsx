@@ -921,7 +921,7 @@ function EntryCard({
                 data-active={active || undefined}
                 {...handlers}
                 style={dx ? { transform: `translateX(${dx}px)` } : undefined}
-                className="relative touch-pan-y rounded-xl border-(length:--bw) bg-card px-4 py-3.5 transition-[box-shadow,transform] duration-200 data-[active]:ring-2 data-[active]:ring-ring"
+                className="relative touch-pan-y rounded-xl bg-card px-4 shadow-sm py-3.5 transition-[box-shadow,transform] duration-200 data-[active]:ring-2 data-[active]:ring-ring"
             >
                 {/* Kartu ringkas (Persetujuan.png): ketuk = tinjau, geser = setujui/tolak */}
                 <button
@@ -1007,7 +1007,7 @@ function StatusFilterTab({
             onClick={onClick}
             className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
                 active
-                    ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+                    ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
             }`}
         >
@@ -1104,7 +1104,7 @@ function QueueRow({
 
 function StatTile({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div className="rounded-[12px] bg-muted-2 px-4 py-3 ring-1 ring-border ring-inset">
+        <div className="rounded-md bg-muted-2 px-4 py-3">
             <p className="text-xs text-muted-foreground">{label}</p>
             <p className="mt-1 truncate text-lg font-semibold tnum">{value}</p>
         </div>
@@ -1211,18 +1211,18 @@ function ApprovalDetailPanel({
                 </header>
 
                 {entry.escalated && pending && (
-                    <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm text-danger">
+                    <p className="rounded-md bg-danger-soft px-4 py-3 text-sm text-danger">
                         Dieskalasi karena PIC belum menyetujui sampai akhir shift.
                     </p>
                 )}
                 {bd && (
-                    <p className="rounded-[12px] border-(length:--bw) px-4 py-3 text-sm">
+                    <p className="rounded-md bg-muted-2 px-4 py-3 text-sm">
                         Unit sudah otomatis <b>BD</b> dari P2H ini. Menyetujui = mengonfirmasi
                         hasil P2H; unit tetap BD sampai temuan ditutup.
                     </p>
                 )}
                 {!pending && (
-                    <p className="rounded-[12px] bg-muted px-4 py-3 text-sm">
+                    <p className="rounded-md bg-muted px-4 py-3 text-sm">
                         {entry.approval_status === 'approved'
                             ? `Disetujui ${entry.approver_name ?? ''}${entry.approved_at ? ` · ${entry.approved_at}` : ''}`
                             : `Ditolak${entry.approver_name ? ` oleh ${entry.approver_name}` : ''}${entry.catatan_approval ? ` — ${entry.catatan_approval}` : ''}`}
@@ -1230,7 +1230,7 @@ function ApprovalDetailPanel({
                 )}
 
                 {error && (
-                    <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm text-danger">
+                    <p className="rounded-md bg-danger-soft px-4 py-3 text-sm text-danger">
                         Detail gagal dimuat. Pilih ulang entry untuk mencoba lagi.
                     </p>
                 )}
@@ -1301,7 +1301,7 @@ function ApprovalDetailPanel({
                                         <li
                                             key={item.inspection_item_id}
                                             className={cn(
-                                                'rounded-[12px] border-(length:--bw) px-4 py-3',
+                                                'rounded-md bg-muted-2 px-4 py-3',
                                                 !isTL && 'py-2.5',
                                             )}
                                         >
@@ -1341,7 +1341,7 @@ function ApprovalDetailPanel({
                                             <img
                                                 src={att.url}
                                                 alt={`Foto unit ${i + 1}`}
-                                                className="h-[110px] w-40 rounded-[10px] border object-cover"
+                                                className="h-[110px] w-40 rounded-md border object-cover"
                                             />
                                         </a>
                                     ))}
@@ -1355,7 +1355,7 @@ function ApprovalDetailPanel({
                                 <img
                                     src={detail.paraf_url}
                                     alt={`Tanda tangan ${detail.driver_name}`}
-                                    className="mt-2 h-16 rounded-[10px] border bg-white object-contain px-3"
+                                    className="mt-2 h-16 rounded-md border bg-white object-contain px-3"
                                 />
                             </section>
                         )}
@@ -1388,7 +1388,7 @@ function ApprovalDetailPanel({
             </div>
 
             {pending && (
-                <footer className="flex items-center justify-between gap-3 border-t-(length:--bw) bg-background px-6 py-4">
+                <footer className="flex items-center justify-between gap-3 border-t-(length:--bw) bg-card px-6 py-4">
                     <Button
                         variant="outline"
                         onClick={onReject}
@@ -1578,7 +1578,7 @@ export default function P2hApprovals({
                 />
 
                 {/* ── Desktop: master–detail ── */}
-                <div className="hidden h-[calc(100svh-150px)] min-h-[560px] grid-cols-[minmax(320px,380px)_1fr] overflow-hidden rounded-xl border-(length:--bw) lg:grid">
+                <div className="hidden h-[calc(100svh-150px)] min-h-[560px] grid-cols-[minmax(320px,380px)_1fr] overflow-hidden rounded-xl bg-card shadow-sm lg:grid">
                     <div className="flex min-h-0 flex-col border-r-(length:--bw)">
                         <div className="border-b-(length:--bw) px-4 py-3">
                             <FilterChips

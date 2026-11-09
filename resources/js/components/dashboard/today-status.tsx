@@ -365,14 +365,14 @@ export function TodayTable({
     const th = 'h-11 px-4 text-left text-xs font-semibold text-muted-foreground';
 
     return (
-        <div className="overflow-x-auto rounded-xl border-(length:--bw)">
+        <div className="overflow-x-auto rounded-xl bg-card p-2 shadow-sm lg:[section_&]:bg-transparent lg:[section_&]:p-0 lg:[section_&]:shadow-none">
             <table
                 className={cn(
                     'w-full text-sm',
                     showJenis ? 'min-w-[900px]' : 'min-w-[720px]',
                 )}
             >
-                <thead className="bg-muted-2">
+                <thead>
                     <tr>
                         <th className={th} aria-sort={ariaSort('no_unit')}>
                             <SortButton label="Unit" column="no_unit" sort={sort} onSort={onSort} />
@@ -517,7 +517,7 @@ export function TodayListCard({ row }: { row: TodayRow }) {
     );
 
     const cls =
-        'flex min-h-[72px] items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3';
+        'flex min-h-[72px] items-center gap-3 rounded-xl bg-card px-4 py-3 shadow-sm';
 
     return href ? (
         <Link href={href} className={cn(cls, 'press')}>

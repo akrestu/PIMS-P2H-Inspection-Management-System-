@@ -916,9 +916,9 @@ export default function P2hFindings({
                 </div>
 
                 {/* ── List: tabel di layar lebar (Temuan-Desktop.png) ── */}
-                <div className="hidden overflow-x-auto rounded-xl border-(length:--bw) md:block">
+                <div className="hidden overflow-x-auto rounded-xl bg-card shadow-sm md:block">
                     <table className="w-full min-w-[960px] text-sm">
-                        <thead className="bg-muted-2 text-left text-xs text-muted-foreground">
+                        <thead className="text-left text-[13px] text-muted-foreground">
                             <tr className="h-11">
                                 {canManage && (
                                     <th className="w-12 pl-4">
@@ -1190,14 +1190,14 @@ function FindingCard({
             type="button"
             onClick={onEdit}
             className={cn(
-                'flex w-full press items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3.5 text-left',
+                'flex w-full press items-center gap-3 rounded-xl bg-card px-4 py-3.5 shadow-sm text-left',
                 f.overdue && 'border-danger/50',
             )}
         >
             <span
                 aria-hidden
                 className={cn(
-                    'grid size-11 shrink-0 place-items-center rounded-[12px]',
+                    'grid size-11 shrink-0 place-items-center rounded-md',
                     f.kode_bahaya === 'AA'
                         ? 'bg-danger-soft text-danger'
                         : 'bg-warning-soft text-warning',

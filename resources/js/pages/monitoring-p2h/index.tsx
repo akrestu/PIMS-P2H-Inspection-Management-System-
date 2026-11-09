@@ -139,7 +139,7 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
                         <button
                             type="button"
                             onClick={refresh}
-                            className="inline-flex h-10 items-center gap-2 rounded-[10px] border-(length:--bw) px-3.5 text-[13px] font-medium hover:bg-muted"
+                            className="inline-flex h-10 items-center gap-2 rounded-full border-(length:--bw) bg-card px-3.5 text-[13px] font-medium hover:bg-muted"
                             aria-label={`Diperbarui ${ago}. Muat ulang`}
                         >
                             <span className="relative flex size-2">
@@ -198,10 +198,10 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
                     />
                 </KpiStrip>
 
-                <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+                <div className="grid gap-5 min-[1600px]:grid-cols-[1fr_320px]">
                     <div className="min-w-0 space-y-3">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                            <label className="field flex h-12 items-center gap-3 rounded-[12px] border-(length:--bw) border-input bg-background px-3.5 lg:h-10 lg:w-72 lg:rounded-[10px]">
+                            <label className="field flex h-12 items-center gap-3 border-(length:--bw) px-3.5 lg:h-10 lg:w-72 lg:rounded-md">
                                 <Search className="size-4 text-muted-foreground" aria-hidden />
                                 <input
                                     type="search"
@@ -284,7 +284,7 @@ export default function MonitoringP2h({ today, feed, updatedAt }: Props) {
 
                     <aside
                         aria-labelledby="feed-title"
-                        className="h-fit rounded-xl border-(length:--bw) bg-card p-4"
+                        className="h-fit rounded-xl bg-card p-5 shadow-sm"
                     >
                         <h2 id="feed-title" className="text-[15px] font-semibold">
                             Aktivitas terbaru

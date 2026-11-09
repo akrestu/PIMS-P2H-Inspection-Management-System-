@@ -104,7 +104,7 @@ export function ShellSidebar() {
 
             <nav
                 aria-label="Navigasi utama"
-                className="noscroll flex-1 overflow-y-auto px-3 pb-4"
+                className="flex-1 overflow-y-auto px-3 pb-4 [scrollbar-width:thin]"
             >
                 {groups.map((group, gi) => (
                     <div

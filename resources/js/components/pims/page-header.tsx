@@ -59,7 +59,7 @@ export function SectionHeader({
             className={cn('flex items-center justify-between gap-3', className)}
         >
             <div className="flex min-w-0 items-baseline gap-2">
-                <h2 className="text-lg font-semibold tracking-[-0.01em] lg:text-xl">
+                <h2 className="text-lg font-bold tracking-[-0.01em] lg:text-xl">
                     {title}
                 </h2>
                 {meta && (

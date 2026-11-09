@@ -1,5 +1,12 @@
-import { Head, Link } from '@inertiajs/react';
-import { Download } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    ArrowUpRight,
+    Check,
+    Clock,
+    Download,
+    X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
     TodayListCard,
@@ -24,7 +31,6 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatNumber, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-
 
 interface Props {
     today: { rows: TodayRow[]; summary: TodaySummary; fleet: TodayFleet };
@@ -51,7 +57,11 @@ function Kpi({
     sub,
     tone = 'default',
     subTone = 'muted',
+    icon,
+    iconClass,
 }: {
+    icon: React.ReactNode;
+    iconClass: string;
     label: string;
     value: React.ReactNode;
     unit?: string;
@@ -60,11 +70,22 @@ function Kpi({
     subTone?: 'muted' | 'danger' | 'warning' | 'success';
 }) {
     return (
-        <div className="min-w-0">
-            <p className="text-[13px] text-muted-foreground">{label}</p>
+        <div className="min-w-0 rounded-xl bg-card p-[18px] shadow-md">
+            <p className="flex items-center gap-2 text-xs font-bold tracking-[0.06em] text-muted-foreground uppercase">
+                <span
+                    aria-hidden
+                    className={cn(
+                        'grid size-7 shrink-0 place-items-center rounded-[10px] [&_svg]:size-4',
+                        iconClass,
+                    )}
+                >
+                    {icon}
+                </span>
+                <span className="truncate">{label}</span>
+            </p>
             <p
                 className={cn(
-                    'mt-1.5 flex items-baseline text-[36px] leading-none font-semibold tracking-[-0.03em] tnum',
+                    'mt-3 flex items-baseline text-[32px] leading-none font-extrabold tracking-[-0.03em] tnum',
                     tone === 'danger' && 'text-danger',
                     tone === 'warning' && 'text-warning',
                 )}
@@ -183,6 +204,16 @@ export default function DashboardIndex({
     updatedAt,
 }: Props) {
     const { rows, summary, fleet } = today;
+    const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
+    const hour = new Date().getHours();
+    const greeting =
+        hour < 11
+            ? 'Selamat pagi'
+            : hour < 15
+              ? 'Selamat siang'
+              : hour < 18
+                ? 'Selamat sore'
+                : 'Selamat malam';
     const [filter, setFilter] = useState<TodayFilter>('semua');
     const [range, setRange] = useState<'7' | '30'>('7');
 
@@ -204,24 +235,63 @@ export default function DashboardIndex({
         { value: 'semua' as const, label: 'Semua', count: rows.length },
         { value: 'belum' as const, label: 'Belum P2H', count: summary.belum },
         { value: 'tidak-layak' as const, label: 'Tidak Layak', count: tlCount },
-        { value: 'menunggu' as const, label: 'Menunggu setuju', count: summary.waiting },
+        {
+            value: 'menunggu' as const,
+            label: 'Menunggu setuju',
+            count: summary.waiting,
+        },
     ];
 
     return (
         <>
             <Head title="Dashboard" />
             <div className="flex w-full flex-1 flex-col px-4 pt-4 pb-8 lg:px-10 lg:pt-8">
-                {/* ── Header (desktop) ── */}
-                <header className="hidden items-start justify-between gap-4 lg:flex">
-                    <div className="min-w-0">
-                        <h1 className="text-[28px] leading-[34px] font-semibold tracking-[-0.02em]">
-                            Dashboard
-                        </h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            {todayLabel} · diperbarui {updatedAt}
-                        </p>
+                {/* ── Hero (desktop, docs/13#2) ── */}
+                <header className="relative isolate hidden min-h-[310px] overflow-hidden rounded-2xl px-9 pt-8 pb-20 text-white lg:block">
+                    <img
+                        src="/images/hero-mountain.jpg"
+                        alt=""
+                        className="absolute inset-0 -z-20 size-full object-cover object-[50%_30%]"
+                    />
+                    <div
+                        aria-hidden
+                        className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/35 to-black/5"
+                    />
+                    <div className="flex items-start justify-between gap-4">
+                        <span className="inline-flex h-8 items-center gap-2 rounded-full bg-white/15 px-3 text-[13px] font-medium ring-1 ring-white/25 backdrop-blur-sm">
+                            <span
+                                aria-hidden
+                                className="size-2 rounded-full bg-success-soft"
+                            />
+                            Diperbarui {updatedAt}
+                        </span>
+                        <span className="rounded-full bg-white text-black">
+                            <NotificationButton />
+                        </span>
                     </div>
-                    <NotificationButton />
+                    <h1 className="mt-3 text-[34px] leading-tight font-extrabold tracking-[-0.02em]">
+                        {greeting}, {auth.user.name.trim().split(/\s+/)[0]}
+                    </h1>
+                    <p className="mt-2 max-w-[540px] text-[15px] text-white/90">
+                        {todayLabel} ·{' '}
+                        <b className="font-bold">
+                            {summary.belum} unit belum P2H
+                        </b>{' '}
+                        dan {tlCount} unit Tidak Layak perlu ditinjau.
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-2.5">
+                        <Button asChild variant="brand">
+                            <Link href="/monitoring-p2h">Lihat monitoring</Link>
+                        </Button>
+                        {summary.waiting > 0 && (
+                            <Link
+                                href="/p2h/approvals"
+                                className="inline-flex h-10 press items-center rounded-full bg-white/15 px-4 text-sm font-semibold ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25"
+                            >
+                                {summary.waiting} menunggu persetujuan
+                            </Link>
+                        )}
+                    </div>
                 </header>
                 <p className="text-[13px] text-muted-foreground lg:hidden">
                     {todayLabel} · diperbarui {updatedAt}
@@ -230,16 +300,20 @@ export default function DashboardIndex({
                 {/* ── KPI strip (desktop) ── */}
                 <section
                     aria-label="Ringkasan hari ini"
-                    className="mt-8 hidden grid-cols-5 gap-6 border-b-(length:--bw) pb-6 lg:grid"
+                    className="relative -mt-14 hidden grid-cols-3 gap-3 px-6 lg:grid xl:grid-cols-5"
                 >
                     <Kpi
                         label="P2H masuk"
+                        icon={<Check />}
+                        iconClass="bg-brand-soft text-foreground"
                         value={summary.submitted}
                         unit={`/ ${summary.required}`}
                         sub={`${formatPercent(pct)} · ${summary.layak} Layak`}
                     />
                     <Kpi
                         label="Belum P2H"
+                        icon={<Clock />}
+                        iconClass="bg-warning-soft text-warning"
                         value={summary.belum}
                         sub={
                             summary.belum > 0
@@ -250,6 +324,8 @@ export default function DashboardIndex({
                     />
                     <Kpi
                         label="Tidak Layak"
+                        icon={<X />}
+                        iconClass="bg-danger-soft text-danger"
                         value={tlCount}
                         tone={tlCount > 0 ? 'danger' : 'default'}
                         sub={
@@ -260,6 +336,8 @@ export default function DashboardIndex({
                     />
                     <Kpi
                         label="Temuan open"
+                        icon={<AlertTriangle />}
+                        iconClass="bg-muted text-foreground"
                         value={summary.findings_open}
                         sub={
                             summary.findings_overdue > 0
@@ -272,9 +350,9 @@ export default function DashboardIndex({
                     />
                     <Kpi
                         label="PA hari ini"
-                        value={
-                            pa.today === null ? '—' : formatNumber(pa.today)
-                        }
+                        icon={<ArrowUpRight />}
+                        iconClass="bg-success-soft text-success"
+                        value={pa.today === null ? '—' : formatNumber(pa.today)}
                         unit={pa.today === null ? undefined : '%'}
                         sub={delta?.text ?? 'Belum ada data kemarin'}
                         subTone={
@@ -289,47 +367,49 @@ export default function DashboardIndex({
 
                 {/* ── Hero (mobile) ── */}
                 <section aria-label="P2H masuk" className="mt-4 lg:hidden">
-                    <p className="text-[13px] text-muted-foreground">
-                        P2H masuk
-                    </p>
-                    <div className="mt-1 flex items-end justify-between">
-                        <p className="text-[52px] leading-none font-semibold tracking-[-0.03em] tnum">
-                            {summary.submitted}
-                            <span className="ml-2 text-[26px] font-medium tracking-normal text-muted-foreground">
-                                / {summary.required} unit
-                            </span>
+                    <div className="rounded-xl bg-card p-5 shadow-sm">
+                        <p className="text-[13px] text-muted-foreground">
+                            P2H masuk
                         </p>
-                        <p className="text-base font-semibold tnum">
-                            {formatPercent(pct)}
-                        </p>
+                        <div className="mt-1 flex items-end justify-between">
+                            <p className="text-[52px] leading-none font-extrabold tracking-[-0.03em] tnum">
+                                {summary.submitted}
+                                <span className="ml-2 text-[26px] font-medium tracking-normal text-muted-foreground">
+                                    / {summary.required} unit
+                                </span>
+                            </p>
+                            <p className="text-base font-semibold tnum">
+                                {formatPercent(pct)}
+                            </p>
+                        </div>
+                        <div className="mt-3 flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-muted">
+                            <span
+                                className="bg-success"
+                                style={{ flexGrow: summary.layak }}
+                            />
+                            <span
+                                className="bg-danger"
+                                style={{ flexGrow: tlCount }}
+                            />
+                            <span style={{ flexGrow: summary.belum }} />
+                        </div>
+                        <ul className="mt-3 flex gap-4 text-[13px] text-muted-foreground">
+                            <li className="flex items-center gap-1.5">
+                                <span className="size-2 rounded-[2px] bg-success" />
+                                {summary.layak} Layak
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                                <span className="size-2 rounded-[2px] bg-danger" />
+                                {tlCount} Tidak Layak
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                                <span className="size-2 rounded-[2px] bg-muted ring-1 ring-border" />
+                                {summary.belum} Belum
+                            </li>
+                        </ul>
                     </div>
-                    <div className="mt-3 flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-muted">
-                        <span
-                            className="bg-success"
-                            style={{ flexGrow: summary.layak }}
-                        />
-                        <span
-                            className="bg-danger"
-                            style={{ flexGrow: tlCount }}
-                        />
-                        <span style={{ flexGrow: summary.belum }} />
-                    </div>
-                    <ul className="mt-3 flex gap-4 text-[13px] text-muted-foreground">
-                        <li className="flex items-center gap-1.5">
-                            <span className="size-2 rounded-[2px] bg-success" />
-                            {summary.layak} Layak
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                            <span className="size-2 rounded-[2px] bg-danger" />
-                            {tlCount} Tidak Layak
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                            <span className="size-2 rounded-[2px] bg-muted ring-1 ring-border" />
-                            {summary.belum} Belum
-                        </li>
-                    </ul>
 
-                    <div className="mt-6 grid grid-cols-2 gap-3">
+                    <div className="mt-3 grid grid-cols-2 gap-3">
                         {[
                             {
                                 label: 'Belum P2H',
@@ -381,16 +461,19 @@ export default function DashboardIndex({
                             <Link
                                 key={k.label}
                                 href={k.href}
-                                className="press rounded-xl border-(length:--bw) bg-muted-2 p-4"
+                                className="press rounded-xl bg-card p-4 shadow-sm"
                             >
                                 <span className="flex items-center gap-2 text-[13px] text-muted-foreground">
                                     <span
-                                        className={cn('size-1.5 rounded-full', k.dot)}
+                                        className={cn(
+                                            'size-1.5 rounded-full',
+                                            k.dot,
+                                        )}
                                         aria-hidden
                                     />
                                     {k.label}
                                 </span>
-                                <span className="mt-1.5 block text-[30px] leading-none font-semibold tracking-[-0.03em] tnum">
+                                <span className="mt-1.5 block text-[32px] leading-none font-extrabold tracking-[-0.03em] tnum">
                                     {k.value}
                                 </span>
                                 <span
@@ -407,16 +490,16 @@ export default function DashboardIndex({
                 </section>
 
                 {/* ── Tren kepatuhan + Ketersediaan armada ── */}
-                <div className="mt-8 grid gap-8 lg:grid-cols-2 lg:gap-12">
+                <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:gap-6">
                     <section
                         aria-labelledby="tren-title"
-                        className="order-2 lg:order-1"
+                        className="order-2 rounded-xl bg-card p-5 shadow-sm lg:order-1 lg:p-6"
                     >
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex min-w-0 items-baseline gap-2">
                                 <h2
                                     id="tren-title"
-                                    className="text-lg font-semibold tracking-[-0.01em]"
+                                    className="text-lg font-bold tracking-[-0.01em]"
                                 >
                                     Tren kepatuhan
                                     <span className="hidden lg:inline">
@@ -468,12 +551,12 @@ export default function DashboardIndex({
 
                     <section
                         aria-labelledby="armada-title"
-                        className="order-1 lg:order-2"
+                        className="order-1 rounded-xl bg-card p-5 shadow-sm lg:order-2 lg:p-6"
                     >
                         <div className="flex items-baseline justify-between gap-3">
                             <h2
                                 id="armada-title"
-                                className="text-lg font-semibold tracking-[-0.01em]"
+                                className="text-lg font-bold tracking-[-0.01em]"
                             >
                                 Ketersediaan armada
                             </h2>
@@ -518,7 +601,9 @@ export default function DashboardIndex({
                                                 {u.no_unit}
                                             </span>
                                             <span>
-                                                <UnitStatusPill status={u.status} />
+                                                <UnitStatusPill
+                                                    status={u.status}
+                                                />
                                             </span>
                                             <span className="truncate text-muted-foreground">
                                                 {u.note ?? '—'}
@@ -543,12 +628,12 @@ export default function DashboardIndex({
                 <section
                     id="status-hari-ini"
                     aria-labelledby="status-title"
-                    className="mt-10 scroll-mt-20"
+                    className="mt-6 scroll-mt-20 lg:rounded-xl lg:bg-card lg:p-6 lg:shadow-sm"
                 >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <h2
                             id="status-title"
-                            className="text-lg font-semibold tracking-[-0.01em]"
+                            className="text-lg font-bold tracking-[-0.01em]"
                         >
                             Status P2H hari ini
                         </h2>

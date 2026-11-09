@@ -230,7 +230,7 @@ function NotificationRow({ notif }: { notif: PimsNotification }) {
             >
                 <span
                     className={cn(
-                        'grid size-9 shrink-0 place-items-center rounded-[10px]',
+                        'grid size-9 shrink-0 place-items-center rounded-md',
                         TONE[d.tone],
                     )}
                     aria-hidden
@@ -526,12 +526,12 @@ export default function NotificationsIndex({
                     <EmptyState tab={filter} />
                 ) : (
                     <div className="space-y-4">
-                        <div className="overflow-hidden rounded-xl border-(length:--bw) bg-card">
+                        <div className="overflow-hidden rounded-xl bg-card shadow-sm">
                             {groupOrder
                                 .filter((label) => grouped[label].length)
                                 .map((label) => (
                                     <section key={label}>
-                                        <h2 className="border-y-(length:--bw) bg-muted-2 px-4 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase first:border-t-0">
+                                        <h2 className="px-4 pt-4 pb-1 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase first:border-t-0">
                                             {label}
                                         </h2>
                                         <ul>
