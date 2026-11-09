@@ -150,7 +150,7 @@ function formatDatetime(dt: string | null): string {
         minute: '2-digit',
         hour12: false,
         timeZone: 'Asia/Jakarta',
-    });
+    }).replace(/(\d{2})\.(\d{2})/, '$1:$2');
 }
 
 // ── Form Dialog ───────────────────────────────────────────────────────────────
@@ -483,7 +483,7 @@ function TodayList({
     const time = (dt: string) => dt.slice(11, 16);
 
     return (
-        <div className="overflow-x-auto rounded-xl bg-card shadow-sm">
+        <div className="relative overflow-x-auto rounded-xl bg-card shadow-sm">
             <table className="w-full min-w-[820px] text-sm">
                 <thead className="text-left text-[13px] text-muted-foreground">
                     <tr className="h-11">

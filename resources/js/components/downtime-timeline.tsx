@@ -83,7 +83,12 @@ export function DowntimeTimeline({
                 />
             </header>
 
-            <div className="overflow-x-auto">
+            <div
+                tabIndex={0}
+                role="region"
+                aria-label="Linimasa downtime"
+                className="relative overflow-x-auto"
+            >
                 <div className="min-w-[640px]">
                     {/* sumbu waktu */}
                     <div className="relative ml-24 h-6 border-b text-[11px] text-muted-foreground">

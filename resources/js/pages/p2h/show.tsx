@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { shiftLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { P2hInspectionItem, P2hSession, P2hUserEntry } from '@/types/pims';
 
@@ -88,7 +89,7 @@ function ShiftBadge({ shift }: { shift?: string | null }) {
             )}
         >
             {cfg.icon}
-            {shift}
+            {shiftLabel(shift)}
         </span>
     );
 }
@@ -228,7 +229,7 @@ function EntryDetail({
                                           minute: '2-digit',
                                           hour12: false,
                                       },
-                                  )
+                                  ).replace(/(\d{2})\.(\d{2})/, '$1:$2')
                                 : ''}
                         </p>
                     )}
@@ -255,7 +256,7 @@ function EntryDetail({
                                             minute: '2-digit',
                                             hour12: false,
                                         },
-                                    )}
+                                    ).replace(/(\d{2})\.(\d{2})/, '$1:$2')}
                                 </span>
                             )}
                         </p>
@@ -600,7 +601,7 @@ function EntryDetail({
                                               minute: '2-digit',
                                               hour12: false,
                                               timeZone: 'Asia/Jakarta',
-                                          })
+                                          }).replace(/(\d{2})\.(\d{2})/, '$1:$2')
                                         : '-'}
                                 </p>
                             </div>
@@ -631,7 +632,7 @@ function EntryDetail({
                                                   minute: '2-digit',
                                                   hour12: false,
                                                   timeZone: 'Asia/Jakarta',
-                                              })
+                                              }).replace(/(\d{2})\.(\d{2})/, '$1:$2')
                                             : '-'}
                                     </p>
                                 )}
@@ -744,7 +745,7 @@ function DeleteEntryDialog({
                                                     minute: '2-digit',
                                                     hour12: false,
                                                     timeZone: 'Asia/Jakarta',
-                                                })}
+                                                }).replace(/(\d{2})\.(\d{2})/, '$1:$2')}
                                             </span>
                                         )}
                                     </div>

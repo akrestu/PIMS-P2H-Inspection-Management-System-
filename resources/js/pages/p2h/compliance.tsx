@@ -181,7 +181,7 @@ function HeatCell({
             {body}
         </Link>
     ) : (
-        <span tabIndex={0} aria-label={label} className="rounded-sm">
+        <span tabIndex={0} role="img" aria-label={label} className="rounded-sm">
             {body}
         </span>
     );

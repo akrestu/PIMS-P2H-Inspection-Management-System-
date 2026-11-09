@@ -100,7 +100,11 @@ export function P2hResultPill({
 
     if (row.p2h === 'layak' && isWaiting(row)) {
         return (
-            <StatusPill status="menunggu" label="Layak · menunggu" size={size} />
+            <StatusPill
+                status="menunggu"
+                label="Layak · menunggu"
+                size={size}
+            />
         );
     }
 
@@ -272,7 +276,14 @@ export function RowAction({ row }: { row: TodayRow }) {
     return null;
 }
 
-type SortKey = 'no_unit' | 'jenis_unit' | 'driver' | 'p2h' | 'waktu' | 'approval' | 'unit_status';
+type SortKey =
+    | 'no_unit'
+    | 'jenis_unit'
+    | 'driver'
+    | 'p2h'
+    | 'waktu'
+    | 'approval'
+    | 'unit_status';
 
 const P2H_ORDER = { 'tidak-layak': 0, belum: 1, layak: 2, 'tidak-wajib': 3 };
 
@@ -301,7 +312,11 @@ function SortButton({
     onSort: (key: SortKey) => void;
 }) {
     const active = sort.key === column;
-    const Icon = !active ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown;
+    const Icon = !active
+        ? ArrowUpDown
+        : sort.dir === 'asc'
+          ? ArrowUp
+          : ArrowDown;
 
     return (
         <button
@@ -362,7 +377,8 @@ export function TodayTable({
                 : 'descending'
             : undefined;
 
-    const th = 'h-11 px-4 text-left text-xs font-semibold text-muted-foreground';
+    const th =
+        'h-11 px-4 text-left text-xs font-semibold text-muted-foreground';
 
     return (
         <div className="overflow-x-auto rounded-xl bg-card p-2 shadow-sm lg:[section_&]:bg-transparent lg:[section_&]:p-0 lg:[section_&]:shadow-none">
@@ -375,29 +391,67 @@ export function TodayTable({
                 <thead>
                     <tr>
                         <th className={th} aria-sort={ariaSort('no_unit')}>
-                            <SortButton label="Unit" column="no_unit" sort={sort} onSort={onSort} />
+                            <SortButton
+                                label="Unit"
+                                column="no_unit"
+                                sort={sort}
+                                onSort={onSort}
+                            />
                         </th>
                         {showJenis && (
-                            <th className={th} aria-sort={ariaSort('jenis_unit')}>
-                                <SortButton label="Jenis" column="jenis_unit" sort={sort} onSort={onSort} />
+                            <th
+                                className={th}
+                                aria-sort={ariaSort('jenis_unit')}
+                            >
+                                <SortButton
+                                    label="Jenis"
+                                    column="jenis_unit"
+                                    sort={sort}
+                                    onSort={onSort}
+                                />
                             </th>
                         )}
                         <th className={th} aria-sort={ariaSort('driver')}>
-                            <SortButton label="Driver" column="driver" sort={sort} onSort={onSort} />
+                            <SortButton
+                                label="Driver"
+                                column="driver"
+                                sort={sort}
+                                onSort={onSort}
+                            />
                         </th>
                         <th className={th} aria-sort={ariaSort('p2h')}>
-                            <SortButton label="P2H" column="p2h" sort={sort} onSort={onSort} />
+                            <SortButton
+                                label="P2H"
+                                column="p2h"
+                                sort={sort}
+                                onSort={onSort}
+                            />
                         </th>
                         <th className={th} aria-sort={ariaSort('waktu')}>
-                            <SortButton label="Waktu" column="waktu" sort={sort} onSort={onSort} />
+                            <SortButton
+                                label="Waktu"
+                                column="waktu"
+                                sort={sort}
+                                onSort={onSort}
+                            />
                         </th>
                         {showApproval && (
                             <th className={th} aria-sort={ariaSort('approval')}>
-                                <SortButton label="Persetujuan" column="approval" sort={sort} onSort={onSort} />
+                                <SortButton
+                                    label="Persetujuan"
+                                    column="approval"
+                                    sort={sort}
+                                    onSort={onSort}
+                                />
                             </th>
                         )}
                         <th className={th} aria-sort={ariaSort('unit_status')}>
-                            <SortButton label="Status unit" column="unit_status" sort={sort} onSort={onSort} />
+                            <SortButton
+                                label="Status unit"
+                                column="unit_status"
+                                sort={sort}
+                                onSort={onSort}
+                            />
                         </th>
                         <th className={th}>
                             <span className="sr-only">Aksi</span>
@@ -408,10 +462,7 @@ export function TodayTable({
                     {sorted.map((row) => (
                         <tr
                             key={row.unit_id}
-                            className={cn(
-                                'h-[52px] border-t-(length:--bw)',
-                                row.p2h === 'tidak-wajib' && 'opacity-60',
-                            )}
+                            className={cn('h-[52px] border-t-(length:--bw)')}
                         >
                             <td className="px-4 font-semibold whitespace-nowrap tnum">
                                 {row.no_unit}
@@ -475,9 +526,7 @@ export function DriverCell({ row }: { row: TodayRow }) {
 
 /** Kartu daftar mobile untuk satu unit. */
 export function TodayListCard({ row }: { row: TodayRow }) {
-    const href = row.session_id
-        ? `/p2h/${row.session_id}`
-        : undefined;
+    const href = row.session_id ? `/p2h/${row.session_id}` : undefined;
 
     const body = (
         <>

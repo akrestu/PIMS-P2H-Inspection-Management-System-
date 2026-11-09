@@ -932,7 +932,7 @@ export default function DriversIndex({ drivers, filters, stats }: Props) {
                                                                         aria-label="Aksi lainnya"
                                                                         variant="ghost"
                                                                         size="sm"
-                                                                        className="h-10 w-10 p-0 focus-visible:opacity-100 data-[state=open]:opacity-100 md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
+                                                                        className="h-10 w-10 p-0 md:h-8 md:w-8"
                                                                     >
                                                                         <MoreHorizontal className="h-4 w-4" />
                                                                     </Button>

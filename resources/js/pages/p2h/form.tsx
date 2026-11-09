@@ -2262,7 +2262,7 @@ export default function P2hForm({
                                             'Unit',
                                             `${selectedUnit?.no_unit ?? '—'} · ${selectedUnit?.jenis_unit ?? ''}`,
                                         ],
-                                        ['Shift', shift],
+                                        ['Shift', shift.replace('Shift II', 'Shift 2').replace('Shift I', 'Shift 1')],
                                         ['Job site', jobSite || '—'],
                                         ['Lokasi kerja', lokasiKerja || '—'],
                                         [

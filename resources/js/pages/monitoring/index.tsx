@@ -57,7 +57,7 @@ function paCell(pa: number | null) {
     }
 
     if (pa >= 100) {
-        return 'bg-brand-50 text-foreground ring-1 ring-brand-200 ring-inset';
+        return 'bg-brand-50 text-black ring-1 ring-brand-200 ring-inset';
     }
 
     if (pa >= 90) {
@@ -69,7 +69,7 @@ function paCell(pa: number | null) {
     }
 
     if (pa >= 60) {
-        return 'bg-brand-600 text-white';
+        return 'bg-brand-600 text-black';
     }
 
     return 'bg-brand-900 text-white';

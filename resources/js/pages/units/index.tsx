@@ -1352,7 +1352,7 @@ export default function UnitsIndex({
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 aria-label="Aksi"
-                                                                className="h-10 w-10 p-0 data-[state=open]:opacity-100 md:h-8 md:w-8 md: md:"
+                                                                className="h-10 w-10 p-0 md:h-8 md:w-8"
                                                             >
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>

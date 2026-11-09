@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useIsDesktop } from '@/hooks/use-media-query';
+import { shiftLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { ApprovalStatus } from '@/types/pims';
 
@@ -1197,7 +1198,7 @@ function ApprovalDetailPanel({
                         </h2>
                         <p className="mt-1 text-sm text-muted-foreground tnum">
                             {entry.driver_name} · submit {submittedTime(entry.submitted_at)}
-                            {entry.shift && ` · ${entry.shift}`}
+                            {entry.shift && ` · ${shiftLabel(entry.shift)}`}
                             {entry.department && ` · ${entry.department}`}
                             {age !== null && age < 600 && ` · menunggu ${age} mnt`}
                         </p>

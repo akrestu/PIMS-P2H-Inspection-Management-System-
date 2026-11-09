@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { shiftLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -448,7 +449,7 @@ function MonitoringCard({ row }: { row: Row }) {
                         className="inline-flex items-center gap-1 text-sm font-medium text-success"
                     >
                         <CheckCircle2 className="h-4 w-4" />
-                        {row.shifts.join(', ') || 'Terisi'}
+                        {row.shifts.map(shiftLabel).join(', ') || 'Terisi'}
                     </Link>
                 ) : (
                     <span className="inline-flex items-center gap-1 text-sm font-medium text-danger">
@@ -574,7 +575,7 @@ function MonitoringRow({ row }: { row: Row }) {
                                     className="font-medium text-success hover:underline"
                                 >
                                     <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
-                                    {row.shifts.join(', ') || 'Terisi'}
+                                    {row.shifts.map(shiftLabel).join(', ') || 'Terisi'}
                                 </Link>
                             ) : null}
                             {row.kondisi === 'BD' && (

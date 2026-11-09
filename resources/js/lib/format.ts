@@ -144,3 +144,8 @@ export function formatDuration(minutes: number | null | undefined): string {
 
     return `${mins} m`;
 }
+
+/** Label shift baku (docs/10): nilai backend "Shift I/II" tampil "Shift 1/2". */
+export function shiftLabel(shift: string): string {
+    return shift.replace('Shift II', 'Shift 2').replace('Shift I', 'Shift 1');
+}

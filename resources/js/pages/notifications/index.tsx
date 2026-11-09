@@ -92,7 +92,7 @@ function fullDateTime(dateStr: string): string {
         minute: '2-digit',
         hour12: false,
         timeZone: 'Asia/Jakarta',
-    });
+    }).replace(/(\d{2})\.(\d{2})/, '$1:$2');
 }
 
 /* ─────────────────── Isi baris (Notifikasi-Desktop.png) ─────── */
@@ -273,7 +273,7 @@ function NotificationRow({ notif }: { notif: PimsNotification }) {
             </button>
 
             {/* Aksi saat hover/fokus (docs/screens/manager-ops.md · Notifikasi) */}
-            <div className="absolute right-3 bottom-3 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+            <div className="absolute right-3 bottom-3 flex gap-1">
                 {isUnread && (
                     <button
                         type="button"
