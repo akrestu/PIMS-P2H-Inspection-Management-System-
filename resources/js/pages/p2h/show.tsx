@@ -121,7 +121,7 @@ function StatCard({
     return (
         <div
             className={cn(
-                'flex flex-col items-center justify-center rounded-xl border-2 px-2 py-3 text-center',
+                'flex flex-col items-center justify-center rounded-xl bg-card px-2 py-3 text-center shadow-sm',
                 cls,
             )}
         >
@@ -181,7 +181,7 @@ function EntryDetail({
 
             {/* ── Approval status banner ── */}
             {entry.approval_status === 'pending' && (
-                <div className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning-soft p-3">
+                <div className="flex items-center gap-2 rounded-xl bg-warning-soft p-3">
                     <span className="text-warning">⏳</span>
                     <div>
                         <p className="text-sm font-semibold text-warning">
@@ -204,7 +204,7 @@ function EntryDetail({
                 </div>
             )}
             {entry.approval_status === 'rejected' && (
-                <div className="space-y-1 rounded-xl border border-danger/40 bg-danger-soft p-3">
+                <div className="space-y-1 rounded-xl bg-danger-soft p-3">
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-danger">
                         <XCircle className="h-4 w-4" />
                         P2H Ditolak
@@ -235,7 +235,7 @@ function EntryDetail({
                 </div>
             )}
             {entry.approval_status === 'approved' && (
-                <div className="space-y-1 rounded-xl border border-success/40 bg-success-soft p-3">
+                <div className="space-y-1 rounded-xl bg-success-soft p-3">
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-success" />
                         <p className="text-sm font-semibold text-success">
@@ -285,9 +285,7 @@ function EntryDetail({
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-muted-foreground">
-                            NIK / NRPP
-                        </p>
+                        <p className="text-xs text-muted-foreground">NRP</p>
                         <p className="font-medium">{entry.user?.nik ?? '-'}</p>
                     </div>
                     <div>
@@ -384,7 +382,7 @@ function EntryDetail({
 
             {/* ── TL Items highlight ── */}
             {tlItems.length > 0 && (
-                <div className="rounded-xl border-2 border-danger/40 bg-danger-soft p-4">
+                <div className="rounded-xl bg-danger-soft p-4">
                     <div className="mb-2.5 flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 text-danger" />
                         <p className="text-sm font-bold text-danger">

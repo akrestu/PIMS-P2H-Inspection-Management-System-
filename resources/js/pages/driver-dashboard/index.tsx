@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Bell,
     CheckCircle2,
     ChevronRight,
     ClipboardCheck,
@@ -113,6 +114,16 @@ const UNIT_STATUS: Record<string, StatusKey> = {
 const shiftLabel = (shift: string) =>
     shift.replace('Shift II', 'Shift 2').replace('Shift I', 'Shift 1');
 
+/** Sapaan menurut jam perangkat (docs/screens/auth.md). */
+const greeting = (hour: number) =>
+    hour < 11
+        ? 'Selamat pagi'
+        : hour < 15
+          ? 'Selamat siang'
+          : hour < 18
+            ? 'Selamat sore'
+            : 'Selamat malam';
+
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
 /** "dd/mm/yyyy" dari controller → Date. */
@@ -154,11 +165,11 @@ function NoUnitCard({
                 };
 
     return (
-        <section className="rounded-[20px] border-(length:--bw) bg-card p-5 shadow-md">
+        <section className="rounded-xl bg-card p-5 shadow-md">
             <p className="text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
                 Unit hari ini
             </p>
-            <h2 className="mt-3 text-xl font-semibold">{copy.title}</h2>
+            <h2 className="mt-3 text-xl font-extrabold">{copy.title}</h2>
             <p className="mt-1.5 text-sm text-muted-foreground">{copy.body}</p>
             {entry ? (
                 <div className="mt-5 border-t pt-4">
@@ -211,7 +222,7 @@ function UnitCard({
 
     return (
         <section
-            className="rounded-[20px] border-(length:--bw) bg-card p-5 shadow-md"
+            className="rounded-xl bg-card p-5 shadow-md"
             aria-labelledby="unit-hari-ini"
         >
             <div className="flex items-center justify-between gap-3">
@@ -230,7 +241,7 @@ function UnitCard({
             </div>
             <h2
                 id="unit-hari-ini"
-                className="mt-3 text-[40px] leading-none font-semibold tracking-[-0.03em]"
+                className="mt-3 text-[40px] leading-none font-extrabold tracking-[-0.03em]"
             >
                 {unit.no_unit}
             </h2>
@@ -315,7 +326,7 @@ function EntryStatus({ entry }: { entry: CurrentEntry }) {
     return (
         <Link
             href={`/p2h/${entry.session_id}`}
-            className="-m-2 flex press items-start gap-3 rounded-[12px] p-2 hover:bg-muted"
+            className="-m-2 flex press items-start gap-3 rounded-md p-2 hover:bg-muted"
         >
             <CheckCircle2
                 className={cn(
@@ -362,11 +373,11 @@ function FindingRow({ finding }: { finding: UnitFindings['items'][number] }) {
         <li>
             <Link
                 href="/p2h/findings"
-                className="flex press items-center gap-3 rounded-xl border-(length:--bw) bg-card p-3.5 shadow-sm hover:bg-muted"
+                className="flex press items-center gap-3 rounded-xl bg-card p-3.5 shadow-sm hover:bg-muted-2"
             >
                 <span
                     className={cn(
-                        'grid size-11 shrink-0 place-items-center rounded-[12px]',
+                        'grid size-11 shrink-0 place-items-center rounded-md',
                         finding.kritis
                             ? 'bg-danger-soft text-danger'
                             : 'bg-warning-soft text-warning',
@@ -427,7 +438,10 @@ function WeekStrip({ week }: { week: Props['stats']['week'] }) {
                 {week.map((d) => (
                     <span
                         key={d.date}
-                        title={formatDate(d.date, { withDay: true, withYear: false })}
+                        title={formatDate(d.date, {
+                            withDay: true,
+                            withYear: false,
+                        })}
                         className={cn(
                             'h-1.5 flex-1 rounded-full',
                             d.status === 'layak' && 'bg-chart-1',
@@ -453,7 +467,11 @@ export default function DriverDashboardIndex({
     currentEntry,
     unitFindings,
 }: Props) {
-    const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
+    const { auth, notifications } = usePage<{
+        auth: { user: { name: string; site_name?: string | null } };
+        notifications?: { unread_count?: number };
+    }>().props;
+    const unread = notifications?.unread_count ?? 0;
     const getInitials = useInitials();
     const now = new Date();
     const today = `${new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(now)}, ${formatDate(now, { withYear: false })}`;
@@ -461,25 +479,64 @@ export default function DriverDashboardIndex({
     return (
         <>
             <Head title="Beranda" />
-            <div className="w-full max-w-[820px] space-y-8 px-4 pt-5 pb-8 lg:px-10 lg:pt-8">
-                <header className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className="text-[13px] text-muted-foreground">
-                            {today} · {shiftLabel(shiftAktif)}
-                        </p>
-                        <h1 className="mt-0.5 text-2xl font-semibold tracking-[-0.02em]">
-                            Halo, {firstName(auth.user.name)}
-                        </h1>
+            <div className="relative isolate h-[236px] overflow-hidden lg:mx-10 lg:mt-8 lg:max-w-[820px] lg:rounded-2xl">
+                <img
+                    src="/images/hero-mountain.jpg"
+                    alt=""
+                    className="absolute inset-0 -z-20 size-full object-cover object-[50%_30%]"
+                />
+                <div
+                    aria-hidden
+                    className="absolute inset-0 -z-10 bg-gradient-to-b from-black/55 via-black/25 to-transparent"
+                />
+                <header className="px-5 pt-[max(env(safe-area-inset-top),20px)] text-white">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={ACCOUNT_HREF}
+                            aria-label="Akun saya"
+                            className="grid size-12 shrink-0 press place-items-center rounded-full bg-white text-sm font-bold text-black"
+                        >
+                            {getInitials(auth.user.name)}
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13px]">
+                                {[
+                                    today,
+                                    shiftLabel(shiftAktif),
+                                    auth.user.site_name,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                            </p>
+                            <p className="truncate text-[17px] font-bold">
+                                {greeting(now.getHours())},{' '}
+                                {firstName(auth.user.name)}
+                            </p>
+                        </div>
+                        <Link
+                            href="/notifications"
+                            aria-label={
+                                unread > 0
+                                    ? unread + ' notifikasi belum dibaca'
+                                    : 'Notifikasi'
+                            }
+                            className="relative grid size-12 shrink-0 press place-items-center rounded-full bg-white text-black"
+                        >
+                            <Bell className="size-5" aria-hidden />
+                            {unread > 0 && (
+                                <span
+                                    aria-hidden
+                                    className="absolute top-2.5 right-3 size-2.5 rounded-full bg-brand"
+                                />
+                            )}
+                        </Link>
                     </div>
-                    <Link
-                        href={ACCOUNT_HREF}
-                        aria-label="Akun saya"
-                        className="grid size-12 shrink-0 press place-items-center rounded-full bg-muted text-sm font-semibold lg:hidden"
-                    >
-                        {getInitials(auth.user.name)}
-                    </Link>
+                    <h1 className="mt-4 max-w-[240px] text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em]">
+                        Cek unit dulu, baru jalan.
+                    </h1>
                 </header>
-
+            </div>
+            <div className="relative -mt-12 w-full max-w-[820px] space-y-8 px-4 pb-8 lg:px-14">
                 <UnitCard
                     unit={todayUnit}
                     assignment={assignment}
@@ -489,7 +546,7 @@ export default function DriverDashboardIndex({
 
                 {/* Dua kartu statistik — berpadding agar tidak menempel ke tepi */}
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="flex min-w-0 flex-col rounded-xl border-(length:--bw) bg-card p-4 shadow-sm">
+                    <div className="flex min-h-[148px] min-w-0 flex-col rounded-xl bg-card p-[18px] shadow-sm">
                         <KpiCard
                             variant="plain"
                             label="P2H bulan ini"
@@ -498,8 +555,7 @@ export default function DriverDashboardIndex({
                         <WeekStrip week={stats.week} />
                     </div>
                     <KpiCard
-                        className="rounded-xl border-(length:--bw) bg-card p-4 shadow-sm"
-                        variant="plain"
+                        className="min-h-[148px]"
                         label="Temuan aktif"
                         value={unitFindings.count}
                         tone={unitFindings.overdue > 0 ? 'danger' : 'default'}

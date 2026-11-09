@@ -181,9 +181,19 @@ async function compressImage(
 
 const STEPS = [
     { id: 1, label: 'Unit & Shift', title: 'Pilih unit & shift', icon: Wrench },
-    { id: 2, label: 'Pemeriksaan', title: 'Checklist pemeriksaan', icon: ClipboardList },
+    {
+        id: 2,
+        label: 'Pemeriksaan',
+        title: 'Checklist pemeriksaan',
+        icon: ClipboardList,
+    },
     { id: 3, label: 'Servis & BBM', title: 'Servis & BBM', icon: Droplets },
-    { id: 4, label: 'Konfirmasi', title: 'Tinjau & tanda tangan', icon: PenLine },
+    {
+        id: 4,
+        label: 'Konfirmasi',
+        title: 'Tinjau & tanda tangan',
+        icon: PenLine,
+    },
 ] as const;
 
 /** Langkah form tempat field dari error validasi server berada. */
@@ -248,10 +258,15 @@ function ReviewBlock({
     danger?: number;
 }) {
     return (
-        <div className="rounded-xl border-(length:--bw) bg-card">
+        <div className="rounded-xl bg-card shadow-sm">
             <div className="flex items-center justify-between gap-3 border-b-(length:--bw) py-2 pr-2 pl-4">
                 <h3 className="text-[15px] font-semibold">{title}</h3>
-                <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onEdit}
+                >
                     Ubah
                 </Button>
             </div>
@@ -296,7 +311,7 @@ function UnitInput({
     placeholder?: string;
 }) {
     return (
-        <div className="field flex h-[52px] items-center gap-2 rounded-[10px] border-(length:--bw) border-input bg-background px-3.5 focus-within:ring-2 focus-within:ring-ring">
+        <div className="flex h-[52px] items-center gap-2 field border-(length:--bw) px-4">
             <input
                 id={id}
                 type="number"
@@ -306,7 +321,7 @@ function UnitInput({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="h-full min-w-0 flex-1 bg-transparent text-base outline-none tnum placeholder:text-muted-foreground"
+                className="h-full min-w-0 flex-1 bg-transparent text-base tnum outline-none placeholder:text-muted-foreground"
             />
             <span className="text-sm text-muted-foreground">{suffix}</span>
         </div>
@@ -341,7 +356,7 @@ function StepNavFooter({
     const isLastStep = step === totalSteps;
 
     return (
-        <div className="sticky bottom-0 z-40 mt-auto border-t px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] blurbar">
+        <div className="sticky bottom-0 z-40 mt-auto px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] blurbar">
             <div className="mx-auto flex max-w-[640px] items-center gap-2.5">
                 {step > 1 && (
                     <Button
@@ -506,10 +521,7 @@ function PicCombobox({
             {/* Trigger / input */}
             <div
                 className={cn(
-                    'flex h-11 w-full cursor-text items-center gap-2 rounded-lg border field px-3 text-sm transition-colors',
-                    open
-                        ? 'border-primary ring-2 ring-ring'
-                        : 'border-input hover:border-muted-foreground/50',
+                    'flex h-11 w-full cursor-text items-center gap-2 field border-(length:--bw) px-3 text-sm transition-colors',
                 )}
                 onClick={() => {
                     setOpen(true);
@@ -654,10 +666,8 @@ function LokasiCombobox({
                     }
                 }}
                 className={cn(
-                    'flex h-11 w-full cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm transition-colors',
-                    value
-                        ? 'border-input'
-                        : 'border-input text-muted-foreground',
+                    'flex h-11 w-full cursor-pointer items-center gap-2 rounded-lg bg-input-fill px-3 text-sm transition-colors',
+                    !value && 'text-muted-foreground',
                 )}
             >
                 <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -703,7 +713,7 @@ function LokasiCombobox({
 
                     {/* Search input — sticky, tidak ikut scroll */}
                     <div className="shrink-0 px-4 py-3">
-                        <div className="flex h-11 items-center gap-2 rounded-lg border field px-3">
+                        <div className="flex h-11 items-center gap-2 field rounded-lg border px-3">
                             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <input
                                 ref={inputRef}
@@ -1311,7 +1321,10 @@ export default function P2hForm({
                     });
                     document
                         .getElementById(checklistItemDomId(bad.id))
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        ?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                        });
                 }
             }
 
@@ -1475,7 +1488,7 @@ export default function P2hForm({
 
             <div ref={topRef} className="flex min-h-dvh flex-col">
                 {/* ── App bar form (docs/screens/driver.md) ── */}
-                <div className="sticky top-0 z-20 border-b px-4 pt-3 pb-4 blurbar">
+                <div className="sticky top-0 z-20 px-4 pt-3 pb-4 blurbar">
                     <div className="mx-auto max-w-[640px]">
                         <div className="mb-3 flex items-center gap-2">
                             <button
@@ -1491,18 +1504,20 @@ export default function P2hForm({
                                     }
                                 }}
                                 aria-label="Keluar dari Form P2H"
-                                className="-ml-2 grid size-12 press place-items-center rounded-[12px] hover:bg-muted"
+                                className="-ml-2 grid size-12 press place-items-center rounded-md hover:bg-muted"
                             >
                                 <X className="size-5" />
                             </button>
                             <div className="min-w-0 flex-1">
-                                <h1 className="truncate text-lg font-semibold tracking-[-0.01em]">
+                                <h1 className="truncate text-lg font-extrabold tracking-[-0.02em]">
                                     {STEPS[step - 1].title}
                                 </h1>
                                 <p className="truncate text-[13px] text-muted-foreground tnum">
                                     {[
                                         selectedUnit?.no_unit ?? 'Form P2H',
-                                        shift,
+                                        shift
+                                            .replace('Shift II', 'Shift 2')
+                                            .replace('Shift I', 'Shift 1'),
                                         formatDate(new Date(), {
                                             withYear: false,
                                         }),
@@ -1565,7 +1580,15 @@ export default function P2hForm({
                                         label: (
                                             <span className="flex flex-col items-center leading-tight">
                                                 <span className="font-semibold">
-                                                    {s}
+                                                    {s
+                                                        .replace(
+                                                            'Shift II',
+                                                            'Shift 2',
+                                                        )
+                                                        .replace(
+                                                            'Shift I',
+                                                            'Shift 1',
+                                                        )}
                                                 </span>
                                                 {shiftOptions.length === 2 && (
                                                     <span className="text-xs font-normal text-muted-foreground">
@@ -1584,7 +1607,7 @@ export default function P2hForm({
                             <section className="space-y-2">
                                 <h2 className="text-sm font-medium">Unit</h2>
                                 {units.length > 5 && (
-                                    <label className="field flex h-[52px] items-center gap-3 rounded-[12px] border-(length:--bw) border-input bg-background px-4">
+                                    <label className="flex h-[52px] items-center gap-3 field border-(length:--bw) px-4">
                                         <Search
                                             className="size-5 shrink-0 text-muted-foreground"
                                             aria-hidden
@@ -1603,9 +1626,8 @@ export default function P2hForm({
                                 )}
                                 {units.length === 0 ? (
                                     <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
-                                        Belum ada unit untuk akun Anda.
-                                        Hubungi admin site untuk penugasan
-                                        unit.
+                                        Belum ada unit untuk akun Anda. Hubungi
+                                        admin site untuk penugasan unit.
                                     </p>
                                 ) : (
                                     <div
@@ -1633,10 +1655,10 @@ export default function P2hForm({
                                                         setPicApproverId('');
                                                     }}
                                                     className={cn(
-                                                        'flex min-h-[72px] w-full press items-center gap-3 rounded-xl border-(length:--bw) bg-card px-4 py-3 text-left',
+                                                        'flex min-h-[72px] w-full press items-center gap-3 rounded-xl border-2 bg-card px-4 py-3 text-left shadow-sm',
                                                         isSelected
-                                                            ? 'border-foreground ring-1 ring-foreground'
-                                                            : 'hover:border-foreground/30',
+                                                            ? 'border-foreground'
+                                                            : 'border-transparent hover:border-foreground/30',
                                                         !isSelected &&
                                                             (notReady ||
                                                                 unit.filled_at) &&
@@ -1702,8 +1724,8 @@ export default function P2hForm({
                                         })}
                                         {pickerUnits.length === 0 && (
                                             <p className="px-1 py-4 text-sm text-muted-foreground">
-                                                Tidak ada unit yang cocok
-                                                dengan “{unitQuery}”.
+                                                Tidak ada unit yang cocok dengan
+                                                “{unitQuery}”.
                                             </p>
                                         )}
                                     </div>
@@ -1718,7 +1740,7 @@ export default function P2hForm({
                                 {slotInfo &&
                                     !checkingSlot &&
                                     slotInfo.slot_terisi > 0 && (
-                                        <p className="flex items-start gap-2 rounded-[12px] bg-info-soft px-3 py-2.5 text-[13px] text-info">
+                                        <p className="flex items-start gap-2 rounded-md bg-info-soft px-3 py-2.5 text-[13px] text-info">
                                             <Info className="mt-0.5 size-4 shrink-0" />
                                             Unit ini sudah diisi{' '}
                                             {slotInfo.slot_terisi}× hari ini.
@@ -1757,7 +1779,7 @@ export default function P2hForm({
                                                 slotInfo.last_hm_km_akhir) ||
                                         undefined
                                     }
-                                    className="h-[52px] rounded-[12px] text-base tnum"
+                                    className="h-[52px] text-base tnum"
                                 />
                                 {slotInfo?.last_hm_km_akhir != null && (
                                     <p
@@ -1797,7 +1819,7 @@ export default function P2hForm({
                                     >
                                         <SelectTrigger
                                             id="job-site"
-                                            className="h-[52px] w-full rounded-[12px] text-base"
+                                            className="h-[52px] w-full text-base"
                                         >
                                             <SelectValue placeholder="Pilih job site" />
                                         </SelectTrigger>
@@ -1835,12 +1857,12 @@ export default function P2hForm({
                                         <span className="text-danger">*</span>
                                     </h2>
                                     <p className="text-[13px] text-muted-foreground">
-                                        P2H Light Vehicle perlu disetujui.
-                                        Pilih {picJabatanLabel} yang akan
-                                        meninjau dan menandatangani P2H ini.
+                                        P2H Light Vehicle perlu disetujui. Pilih{' '}
+                                        {picJabatanLabel} yang akan meninjau dan
+                                        menandatangani P2H ini.
                                     </p>
                                     {filteredStaffUsers.length === 0 ? (
-                                        <p className="rounded-[12px] bg-danger-soft px-3 py-3 text-sm text-danger">
+                                        <p className="rounded-md bg-danger-soft px-3 py-3 text-sm text-danger">
                                             Tidak ada {picJabatanLabel} dari
                                             departemen{' '}
                                             <strong>
@@ -1861,9 +1883,9 @@ export default function P2hForm({
 
                             <p className="flex items-start gap-2 text-[13px] text-muted-foreground">
                                 <Info className="mt-0.5 size-4 shrink-0" />
-                                Pengemudi: {auth?.user?.name ?? '—'}. Satu
-                                sesi = satu unit per hari; pergantian driver
-                                tercatat sebagai entry terpisah.
+                                Pengemudi: {auth?.user?.name ?? '—'}. Satu sesi
+                                = satu unit per hari; pergantian driver tercatat
+                                sebagai entry terpisah.
                             </p>
                         </>
                     )}
@@ -1932,7 +1954,7 @@ export default function P2hForm({
                         <div className="flex flex-col gap-9">
                             {/* BBM (FormP2H.dc.html "HM & BBM"): switch → KM + liter */}
                             <section className="flex flex-col gap-4">
-                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                <h2 className="text-xl font-extrabold tracking-[-0.02em]">
                                     BBM
                                 </h2>
                                 <div className="flex min-h-[52px] items-center justify-between gap-3">
@@ -2001,7 +2023,7 @@ export default function P2hForm({
 
                             {/* Servis: pertanyaan Ya/Tidak → jenis servis + catatan */}
                             <section className="flex flex-col gap-4">
-                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                <h2 className="text-xl font-extrabold tracking-[-0.02em]">
                                     Servis
                                 </h2>
                                 <div className="flex flex-col gap-2">
@@ -2073,13 +2095,15 @@ export default function P2hForm({
                                                 <label
                                                     key={srv.id}
                                                     htmlFor={srv.id}
-                                                    className="flex min-h-14 cursor-pointer items-center gap-3 rounded-[12px] border-(length:--bw) px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground"
+                                                    className="flex min-h-14 cursor-pointer items-center gap-3 rounded-md bg-input-fill px-4 py-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-foreground"
                                                 >
                                                     <Checkbox
                                                         id={srv.id}
                                                         checked={srv.value}
                                                         onCheckedChange={(v) =>
-                                                            srv.setter(Boolean(v))
+                                                            srv.setter(
+                                                                Boolean(v),
+                                                            )
                                                         }
                                                         className="size-5"
                                                     />
@@ -2143,10 +2167,10 @@ export default function P2hForm({
                                 <section
                                     aria-label="Perkiraan hasil"
                                     className={cn(
-                                        'flex flex-col gap-3 rounded-xl border-(length:--bw) p-4',
+                                        'flex flex-col gap-3 rounded-xl p-4',
                                         recommendedKondisi === 'Layak Pakai'
-                                            ? 'border-success/40 bg-success-soft'
-                                            : 'border-danger/40 bg-danger-soft',
+                                            ? 'bg-success-soft'
+                                            : 'bg-danger-soft',
                                     )}
                                 >
                                     <div className="flex items-center gap-3">
@@ -2173,7 +2197,7 @@ export default function P2hForm({
                                             </span>
                                             <span
                                                 className={cn(
-                                                    'text-xl font-semibold tracking-[-0.015em]',
+                                                    'text-xl font-extrabold tracking-[-0.02em]',
                                                     recommendedKondisi ===
                                                         'Layak Pakai'
                                                         ? 'text-success'
@@ -2227,7 +2251,7 @@ export default function P2hForm({
 
                             {/* Ringkasan per langkah + "Ubah" */}
                             <section className="flex flex-col gap-3">
-                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                <h2 className="text-xl font-extrabold tracking-[-0.02em]">
                                     Ringkasan
                                 </h2>
                                 <ReviewBlock
@@ -2250,7 +2274,12 @@ export default function P2hForm({
                                                 : '—',
                                         ],
                                         ...(needsApproval && picName
-                                            ? [['PIC persetujuan', picName] as [string, string]]
+                                            ? [
+                                                  [
+                                                      'PIC persetujuan',
+                                                      picName,
+                                                  ] as [string, string],
+                                              ]
                                             : []),
                                     ]}
                                 />
@@ -2301,7 +2330,7 @@ export default function P2hForm({
                             {/* Keputusan kondisi akhir */}
                             <section className="flex flex-col gap-3">
                                 <div>
-                                    <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                    <h2 className="text-xl font-extrabold tracking-[-0.02em]">
                                         Kondisi akhir unit{' '}
                                         <span className="text-danger">*</span>
                                     </h2>
@@ -2360,7 +2389,10 @@ export default function P2hForm({
                                                         : 'border-border bg-card text-muted-foreground hover:text-foreground',
                                                 )}
                                             >
-                                                <Icon className="size-6" aria-hidden />
+                                                <Icon
+                                                    className="size-6"
+                                                    aria-hidden
+                                                />
                                                 {opt.label}
                                                 <span className="text-xs font-normal opacity-75">
                                                     {opt.sub}
@@ -2373,28 +2405,32 @@ export default function P2hForm({
                                 {/* Justifikasi — wajib jika berbeda dari rekomendasi */}
                                 {isOverride && (
                                     <div className="flex animate-in flex-col gap-2 duration-200 fade-in slide-in-from-top-1">
-                                        <p className="flex items-start gap-2 rounded-[10px] bg-warning-soft px-3 py-2.5 text-sm font-medium text-warning">
+                                        <p className="flex items-start gap-2 rounded-md bg-warning-soft px-3 py-2.5 text-sm font-medium text-warning">
                                             <AlertTriangle
                                                 className="mt-0.5 size-4 shrink-0"
                                                 aria-hidden
                                             />
                                             Keputusan Anda berbeda dari
-                                            perkiraan hasil. Alasan wajib
-                                            diisi.
+                                            perkiraan hasil. Alasan wajib diisi.
                                         </p>
                                         <Label
                                             htmlFor="justifikasi"
                                             className="text-sm font-medium"
                                         >
                                             Alasan keputusan{' '}
-                                            <span className="text-danger">*</span>
+                                            <span className="text-danger">
+                                                *
+                                            </span>
                                         </Label>
                                         <Textarea
                                             id="justifikasi"
                                             value={justifikasiKondisi}
                                             onChange={(e) =>
                                                 setJustifikasiKondisi(
-                                                    e.target.value.slice(0, 500),
+                                                    e.target.value.slice(
+                                                        0,
+                                                        500,
+                                                    ),
                                                 )
                                             }
                                             placeholder="Jelaskan alasan keputusan Anda berbeda dari perkiraan hasil…"
@@ -2425,7 +2461,7 @@ export default function P2hForm({
 
                             {/* HM/KM akhir + foto */}
                             <section className="flex flex-col gap-4">
-                                <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                <h2 className="text-xl font-extrabold tracking-[-0.02em]">
                                     Akhir shift & foto
                                 </h2>
                                 <div className="flex flex-col gap-2">
@@ -2471,7 +2507,7 @@ export default function P2hForm({
                             {/* Tanda tangan */}
                             <section className="flex flex-col gap-3">
                                 <div>
-                                    <h2 className="text-xl font-semibold tracking-[-0.015em]">
+                                    <h2 className="text-xl font-extrabold tracking-[-0.02em]">
                                         Tanda tangan driver{' '}
                                         <span className="text-danger">*</span>
                                     </h2>
@@ -2496,7 +2532,7 @@ export default function P2hForm({
                                     benar.
                                 </p>
                                 {needsApproval && picName && (
-                                    <p className="flex items-center gap-2 rounded-[10px] bg-muted px-3 py-2.5 text-sm">
+                                    <p className="flex items-center gap-2 rounded-md bg-muted px-3 py-2.5 text-sm">
                                         <Send
                                             className="size-4 shrink-0 text-muted-foreground"
                                             aria-hidden

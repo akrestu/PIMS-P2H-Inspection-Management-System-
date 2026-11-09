@@ -90,7 +90,7 @@ export default function ChecklistItem({
             {isTidakLayak && (
                 <div className="flex animate-in flex-col gap-2.5 duration-200 fade-in slide-in-from-top-1">
                     {kritis && (
-                        <p className="flex items-start gap-2 rounded-[10px] bg-danger-soft px-3 py-2.5 text-sm font-medium text-danger">
+                        <p className="flex items-start gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-sm font-medium text-danger">
                             <AlertTriangle
                                 className="mt-0.5 size-4 shrink-0"
                                 aria-hidden
