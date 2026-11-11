@@ -79,6 +79,8 @@ class UnitDowntimeController extends Controller
                 'jam_selesai' => $log->jam_selesai?->format('Y-m-d H:i'),
                 'duration_hours' => $log->duration_hours,
                 'keterangan' => $log->keterangan,
+                'progress' => $log->progress,
+                'progress_updated_at' => $log->progress_updated_at?->format('Y-m-d H:i'),
                 'created_by' => $log->creator?->name,
             ]),
             'allUnits' => $allUnits,
@@ -124,6 +126,8 @@ class UnitDowntimeController extends Controller
                 'jam_selesai' => $log->jam_selesai?->format('Y-m-d H:i'),
                 'duration_hours' => $log->duration_hours,
                 'keterangan' => $log->keterangan,
+                'progress' => $log->progress,
+                'progress_updated_at' => $log->progress_updated_at?->format('Y-m-d H:i'),
                 'created_by' => $log->creator?->name,
                 'otomatis' => $log->opened_by_entry_id !== null,
             ])->values(),
@@ -164,6 +168,7 @@ class UnitDowntimeController extends Controller
             'jam_mulai' => ['required', 'date'],
             'jam_selesai' => ['nullable', 'date', 'after:jam_mulai'],
             'keterangan' => ['nullable', 'string', 'max:500'],
+            'progress' => ['nullable', 'string', 'max:500'],
         ]);
 
         $created = DB::transaction(function () use ($data, $request): bool {
@@ -202,6 +207,7 @@ class UnitDowntimeController extends Controller
             'jam_mulai' => ['required', 'date'],
             'jam_selesai' => ['nullable', 'date', 'after:jam_mulai'],
             'keterangan' => ['nullable', 'string', 'max:500'],
+            'progress' => ['nullable', 'string', 'max:500'],
         ]);
 
         $updated = DB::transaction(function () use ($data, $log): bool {

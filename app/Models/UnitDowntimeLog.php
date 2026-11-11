@@ -11,13 +11,24 @@ class UnitDowntimeLog extends Model
 {
     protected $fillable = [
         'unit_id', 'tipe', 'jam_mulai', 'jam_selesai', 'keterangan', 'created_by',
-        'opened_by_entry_id', 'closed_by_entry_id',
+        'opened_by_entry_id', 'closed_by_entry_id', 'progress', 'progress_updated_at',
     ];
 
     protected $casts = [
         'jam_mulai' => 'datetime',
         'jam_selesai' => 'datetime',
+        'progress_updated_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Catat kapan progress perbaikan terakhir diubah
+        static::saving(function (self $log) {
+            if ($log->isDirty('progress')) {
+                $log->progress_updated_at = filled($log->progress) ? now() : null;
+            }
+        });
+    }
 
     public function unit(): BelongsTo
     {

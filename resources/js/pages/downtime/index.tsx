@@ -55,6 +55,8 @@ interface DowntimeLog {
     jam_selesai: string | null;
     duration_hours: number | null;
     keterangan: string | null;
+    progress: string | null;
+    progress_updated_at: string | null;
     created_by: string | null;
 }
 
@@ -161,6 +163,7 @@ interface DowntimeFormData {
     jam_mulai: string;
     jam_selesai: string;
     keterangan: string;
+    progress: string;
     [key: string]: string;
 }
 
@@ -186,6 +189,7 @@ function DowntimeDialog({
             jam_mulai: editLog?.jam_mulai?.slice(0, 16) ?? '',
             jam_selesai: editLog?.jam_selesai?.slice(0, 16) ?? '',
             keterangan: editLog?.keterangan ?? '',
+            progress: editLog?.progress ?? '',
         });
 
     useEffect(() => {
@@ -195,6 +199,7 @@ function DowntimeDialog({
             jam_mulai: editLog?.jam_mulai?.slice(0, 16) ?? '',
             jam_selesai: editLog?.jam_selesai?.slice(0, 16) ?? '',
             keterangan: editLog?.keterangan ?? '',
+            progress: editLog?.progress ?? '',
         });
     }, [editLog, setData]);
 
@@ -369,6 +374,30 @@ function DowntimeDialog({
                         />
                     </div>
 
+                    {/* Progress perbaikan — tampil di Daily Report */}
+                    <div className="space-y-1.5">
+                        <Label>Progress perbaikan</Label>
+                        <Textarea
+                            value={data.progress}
+                            onChange={(e) =>
+                                setData('progress', e.target.value)
+                            }
+                            placeholder="Contoh: Menunggu sparepart, estimasi selesai minggu depan"
+                            className="min-h-[60px] text-sm"
+                            maxLength={500}
+                        />
+                        {editLog?.progress_updated_at && (
+                            <p className="text-xs text-muted-foreground">
+                                Terakhir diperbarui {formatDatetime(editLog.progress_updated_at)}
+                            </p>
+                        )}
+                        {errors.progress && (
+                            <p className="text-xs text-destructive">
+                                {errors.progress}
+                            </p>
+                        )}
+                    </div>
+
                     <DialogFooter>
                         <Button
                             type="button"
@@ -525,6 +554,11 @@ function TodayList({
                                 </td>
                                 <td className="max-w-[240px] truncate px-4 text-muted-foreground" title={log.keterangan ?? undefined}>
                                     {log.keterangan ?? '—'}
+                                    {log.progress && (
+                                        <span className="block truncate text-xs text-foreground" title={log.progress}>
+                                            Progress: {log.progress}
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="px-4">
                                     <div className="flex justify-end gap-1.5">
@@ -937,6 +971,12 @@ export default function DowntimeIndex({
                                                         {log.keterangan}
                                                     </p>
                                                 )}
+                                                {log.progress && (
+                                                    <p className="text-xs">
+                                                        <span className="font-semibold">Progress:</span>{' '}
+                                                        {log.progress}
+                                                    </p>
+                                                )}
                                                 <div className="flex items-center gap-2 pt-1">
                                                     {isOngoing && (
                                                         <Button
@@ -1155,6 +1195,11 @@ export default function DowntimeIndex({
                                                                 {log.keterangan ||
                                                                     '—'}
                                                             </p>
+                                                            {log.progress && (
+                                                                <p className="truncate text-xs" title={log.progress}>
+                                                                    Progress: {log.progress}
+                                                                </p>
+                                                            )}
                                                         </td>
                                                         <td className="px-4 py-3 text-xs text-muted-foreground">
                                                             {log.created_by ??

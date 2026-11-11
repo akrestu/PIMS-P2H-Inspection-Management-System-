@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\P2hChecklistAnswer;
+use App\Models\P2hInspectionItem;
 use App\Models\P2hSession;
 use App\Models\P2hUserEntry;
 use App\Models\Unit;
@@ -203,4 +205,29 @@ test('dashboard groups today fleet condition per vehicle type', function () {
         ->assertInertia(fn ($page) => $page
             ->where('fleetToday.Light Vehicle', ['layak' => 1, 'temuan' => 0, 'bd' => 1, 'tidak_ready' => 1, 'belum' => 1, 'total' => 4])
             ->where('fleetToday.Bus', ['layak' => 0, 'temuan' => 0, 'bd' => 0, 'tidak_ready' => 0, 'belum' => 1, 'total' => 1]));
+});
+
+test('daily report shows downtime progress on its own line and summarizes long BD causes', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $unit = availabilityUnit('LV-50');
+    $entry = availabilityEntry($unit, '2026-10-08 07:00', 'BD');
+    $items = ['Radio' => 'A', 'Kotak P3K' => 'A', 'Rem' => 'AA', 'Traffic cone' => 'A', 'Ganjal roda' => 'A'];
+    foreach (array_keys($items) as $i => $nama) {
+        P2hChecklistAnswer::create([
+            'p2h_user_entry_id' => $entry->id, 'kondisi' => 'Tidak Layak', 'item_nama' => $nama,
+            'item_section' => 'A', 'item_kode_bahaya' => $items[$nama], 'item_urutan' => $i + 1,
+            'inspection_item_id' => P2hInspectionItem::create(['nama_item' => $nama, 'section' => 'A', 'kode_bahaya' => $items[$nama], 'urutan' => $i + 1, 'is_active' => true])->id,
+        ]);
+    }
+
+    $log = UnitDowntimeLog::where('unit_id', $unit->id)->sole();
+    $this->actingAs($admin)->patch(route('downtime.update', $log), [
+        'unit_id' => $unit->id, 'tipe' => 'BD', 'jam_mulai' => $log->jam_mulai->format('Y-m-d H:i'),
+        'keterangan' => $log->keterangan, 'progress' => 'Menunggu sparepart',
+    ])->assertSessionHasNoErrors();
+
+    expect($log->fresh()->progress_updated_at)->not->toBeNull();
+
+    expect(P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(Carbon::parse('2026-10-10'))))
+        ->toContain("1. *LV-50* — BD (sejak 08 Okt, 2 hari)\n_Temuan: Rem (AA), Radio, Kotak P3K +2 item lain_\nProgress: Menunggu sparepart");
 });

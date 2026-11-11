@@ -108,9 +108,10 @@ class P2hDigestFormatter
             'hari' => $u['bd_hari'] ?? null,
             'sejak' => $u['bd_sejak'] ?? null,
             'keterangan' => null,
+            'progress' => $u['bd_progress'] ?? null,
             'unit' => $u,
         ])->concat(collect($digest['tidak_ready'][$tanggal] ?? [])->map(fn ($u) => [
-            'hari' => null, 'sejak' => null, 'keterangan' => null, ...$u, 'unit' => null,
+            'hari' => null, 'sejak' => null, 'keterangan' => null, 'progress' => null, ...$u, 'unit' => null,
         ]));
 
         $ok = $units->reject($isBd);
@@ -236,18 +237,21 @@ class P2hDigestFormatter
 
         $lines = ["{$no}. *".self::clean($bd['no_unit'])."* — {$bd['status']}".($info !== '' ? " ({$info})" : '')];
 
+        // Progress perbaikan dari log downtime, baris tersendiri di bawah penyebab
+        $progress = filled($bd['progress']) ? ['Progress: '.self::clean($bd['progress'])] : [];
+
         if ($bd['unit'] === null) {
             if (filled($bd['keterangan'])) {
                 $lines[] = '_'.self::clean($bd['keterangan']).'_';
             }
 
-            return $lines;
+            return [...$lines, ...$progress];
         }
 
         // BD hasil P2H hari itu: alasan + temuan penyebabnya (tanpa ulang nomor unit)
         $lines[] = '_Hasil P2H hari ini: BD_';
 
-        return [...$lines, ...array_slice(self::unitLines(0, $bd['unit'], withReason: true), 1)];
+        return [...$lines, ...array_slice(self::unitLines(0, $bd['unit'], withReason: true), 1), ...$progress];
     }
 
     /**
@@ -274,7 +278,9 @@ class P2hDigestFormatter
         $lines[] = 'Unit BD/tidak Ready ('.$day['bd']->count().'):';
         foreach ($day['bd'] as $b) {
             $lines[] = '- '.self::clean($b['no_unit'])." {$b['status']}".($b['hari'] !== null ? ", {$b['hari']} hari" : '')
-                .($b['unit'] ? ', BD dari hasil P2H hari ini' : '');
+                .($b['unit'] ? ', BD dari hasil P2H hari ini' : '')
+                .(filled($b['keterangan']) ? ', penyebab: '.self::clean($b['keterangan']) : '')
+                .(filled($b['progress']) ? ', progress: '.self::clean($b['progress']) : '');
         }
 
         return implode("\n", $lines);

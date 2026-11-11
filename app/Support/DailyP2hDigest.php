@@ -25,6 +25,9 @@ class DailyP2hDigest
     /** Batas riwayat untuk menghitung lama unit belum P2H */
     private const MISSING_LOOKBACK_DAYS = 30;
 
+    /** Jumlah item penyebab BD yang ditulis sebelum diringkas "+N item lain" */
+    private const BD_CAUSE_LIMIT = 3;
+
     public static function build(CarbonInterface $start, ?CarbonInterface $end = null, ?int $siteId = null, ?string $jenisUnit = null): array
     {
         $end ??= $start;
@@ -61,12 +64,12 @@ class DailyP2hDigest
         $activeUnits = Unit::active()->where($unitScope)->orderBy('no_unit')->get(['id', 'no_unit']);
         $downtimes = UnitDowntimeLog::whereIn('unit_id', $activeUnits->pluck('id'))
             ->inRange($start->toDateString(), $end->toDateString())
-            ->get(['unit_id', 'tipe', 'jam_mulai', 'jam_selesai', 'keterangan', 'opened_by_entry_id'])
+            ->get(['unit_id', 'tipe', 'jam_mulai', 'jam_selesai', 'keterangan', 'opened_by_entry_id', 'progress'])
             ->groupBy('unit_id');
 
         // Penyebab BD otomatis: item Tidak Layak + alasan pada P2H yang membuka downtime
         $bdCauses = P2hUserEntry::whereIn('id', $downtimes->flatten()->pluck('opened_by_entry_id')->filter()->unique())
-            ->with(['answers' => fn ($q) => $q->where('kondisi', 'Tidak Layak')->select('id', 'p2h_user_entry_id', 'item_nama')])
+            ->with(['answers' => fn ($q) => $q->where('kondisi', 'Tidak Layak')->select('id', 'p2h_user_entry_id', 'item_nama', 'item_kode_bahaya')])
             ->get(['id', 'justifikasi_kondisi'])
             ->keyBy('id');
 
@@ -99,6 +102,7 @@ class DailyP2hDigest
                 'kondisi_akhir' => $latest?->kondisi_akhir,
                 'bd_sejak' => $downtime?->jam_mulai->toDateTimeString(),
                 'bd_hari' => $downtime ? self::daysSince($downtime, $session->tanggal) : null,
+                'bd_progress' => filled($downtime?->progress) ? trim($downtime->progress) : null,
                 'keputusan' => [
                     'final' => $latest?->kondisi_akhir,
                     'rekomendasi_sistem' => $recommended,
@@ -156,6 +160,7 @@ class DailyP2hDigest
                         'sejak' => $log->jam_mulai->toDateTimeString(),
                         'hari' => self::daysSince($log, $day),
                         'keterangan' => self::downtimeNote($log, $bdCauses),
+                        'progress' => filled($log->progress) ? trim($log->progress) : null,
                     ];
                 } else {
                     $belumP2h[$date][] = $unit->no_unit;
@@ -221,7 +226,15 @@ class DailyP2hDigest
             return filled($log->keterangan) ? trim($log->keterangan) : null;
         }
 
-        $items = $entry->answers->pluck('item_nama')->filter()->unique()->implode(', ');
+        // Item AA (kritis) lebih dulu; daftar panjang diringkas agar laporan tetap pendek
+        $all = $entry->answers
+            ->sortBy(fn ($a) => $a->item_kode_bahaya === 'AA' ? 0 : 1)
+            ->map(fn ($a) => trim((string) $a->item_nama).($a->item_kode_bahaya === 'AA' ? ' (AA)' : ''))
+            ->filter()
+            ->unique()
+            ->values();
+        $items = $all->take(self::BD_CAUSE_LIMIT)->implode(', ')
+            .($all->count() > self::BD_CAUSE_LIMIT ? ' +'.($all->count() - self::BD_CAUSE_LIMIT).' item lain' : '');
 
         return collect([
             $items !== '' ? "Temuan: {$items}" : null,
