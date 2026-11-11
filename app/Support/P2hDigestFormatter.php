@@ -24,61 +24,46 @@ class P2hDigestFormatter
 
     public static function toWhatsApp(array $digest): string
     {
+        $jenis = $digest['jenis_unit'] ?? null;
+        $judul = $jenis ? strtoupper(self::JENIS_SINGKAT[$jenis] ?? $jenis) : 'UNIT';
         $scope = collect([
-            $digest['jenis_unit'] ?? 'Semua Unit',
             $digest['site'] ? "Site {$digest['site']}" : null,
+            $digest['tanggal_label'],
         ])->filter()->implode(' · ');
 
         $lines = [
-            '*DAILY REPORT P2H*',
-            "_{$scope} · {$digest['tanggal_label']}_",
+            "*DAILY REPORT MONITORING {$judul}*",
+            "_{$scope}_",
         ];
 
-        $lines[] = '';
-        if (($digest['pa'] ?? []) !== []) {
-            $lines[] = 'PA: '.collect($digest['pa'])
-                ->map(fn ($g, $jenis) => (self::JENIS_SINGKAT[$jenis] ?? $jenis).' *'.self::percent($g['pa']).'*'
-                    .($g['bd'] > 0 ? " ({$g['bd']} unit tidak Ready)" : ''))
-                ->implode(' · ');
-        }
-
         $byDate = collect($digest['units'])->groupBy('tanggal');
-        $belum = $digest['belum_p2h'] ?? [];
-        $total = $digest['stats']['total_unit'] ?? null;
+        $dates = array_keys($digest['belum_p2h'] ?? []) ?: $byDate->keys()->all();
+        $multi = $digest['multi_hari'] ?? false;
+        $lastDay = null;
 
-        // Rentang lebih dari 1 hari → dikelompokkan per tanggal
-        foreach (array_keys($belum) ?: $byDate->keys()->all() as $tanggal) {
-            $units = $byDate->get($tanggal, collect());
-            $missing = $belum[$tanggal] ?? [];
-            $notReady = $digest['tidak_ready'][$tanggal] ?? [];
+        foreach ($dates as $tanggal) {
+            $day = self::classify($byDate->get($tanggal, collect()), $digest, $tanggal);
+            $lastDay = $day;
 
-            if ($digest['multi_hari'] ?? false) {
+            if ($multi) {
                 $lines[] = '';
                 $lines[] = '*'.strtoupper(Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d M Y')).'*';
             }
-            if ($total !== null) {
-                // Unit yang sedang BD/PM/Servis tidak wajib P2H
-                $wajib = $total - count($notReady);
-                $lines[] = "Sudah P2H: *{$units->count()} dari {$wajib} unit*"
-                    .($notReady !== [] ? ' ('.count($notReady).' unit tidak Ready)' : '');
-            }
 
-            $lines = [...$lines, ...self::dayLines($units)];
+            $lines = [...$lines, ...self::overviewLines($digest, $day, withPa: ! $multi)];
+            $lines = [...$lines, ...self::sectionLines($day)];
+        }
 
-            if ($notReady !== []) {
-                $lines[] = '';
-                $lines[] = '*TIDAK READY ('.count($notReady).')*';
-                $lines[] = collect($notReady)
-                    ->sortBy(fn ($u) => preg_replace('/\s+/', '', $u['no_unit']), SORT_NATURAL | SORT_FLAG_CASE)
-                    ->map(fn ($u) => self::clean($u['no_unit'])." ({$u['status']})")
-                    ->implode(', ');
-            }
+        if ($multi && ($digest['pa'] ?? []) !== []) {
+            $lines[] = '';
+            $lines[] = self::paSummary($digest['pa']);
+        }
 
-            if ($missing !== []) {
-                $lines[] = '';
-                $lines[] = '*BELUM P2H ('.count($missing).')*';
-                $lines[] = self::unitList($missing);
-            }
+        // Arahan disusun dari kondisi hari terakhir pada rentang laporan
+        if ($lastDay !== null && ($tindak = self::actionLines($lastDay)) !== []) {
+            $lines[] = '';
+            $lines[] = '*CORRECTIVE ACTION*';
+            $lines = [...$lines, ...$tindak];
         }
 
         // Keterangan simbol cukup sekali di akhir, hanya bila simbolnya dipakai
@@ -86,7 +71,6 @@ class P2hDigestFormatter
         $legend = collect([
             $findings->contains(fn ($f) => $f['kode_bahaya'] === 'AA') ? 'AA = bahaya kritis' : null,
             $findings->contains(fn ($f) => $f['berulang'] ?? null) ? 'berulang = item yang sama bermasalah dalam '.config('p2h.findings.recurring_window_days').' hari terakhir' : null,
-            $findings->contains(fn ($f) => $f['overdue'] ?? false) ? null : null,
         ])->filter();
 
         $lines[] = '';
@@ -94,55 +78,233 @@ class P2hDigestFormatter
             $lines[] = '_Ket: '.$legend->implode(' · ').'_';
         }
         if ($url = AppSetting::publicReportUrl()) {
-            $lines[] = '';
             // Link membawa filter laporan yang sama (bulan, jenis unit, site)
             $query = array_filter([
                 'bulan' => substr($digest['tanggal_selesai'] ?? now()->toDateString(), 0, 7),
-                'jenis' => array_search($digest['jenis_unit'] ?? null, PublicReportController::JENIS, true) ?: null,
+                'jenis' => array_search($jenis, PublicReportController::JENIS, true) ?: null,
                 'site' => $digest['site_id'] ?? null,
             ]);
             $lines[] = 'Rekap bulanan: '.$url.'?'.http_build_query($query);
         }
-        $lines[] = '_Detail tindak lanjut: menu Temuan P2H di PIMS_';
+        $lines[] = '';
+        $lines[] = 'Terima kasih.';
 
         return implode("\n", $lines);
     }
 
-    /** Satu hari: BD → ada temuan → layak tanpa temuan. */
-    private static function dayLines(Collection $units): array
+    /**
+     * Kelompokkan unit satu hari: layak, ada temuan, BD (hasil P2H maupun downtime
+     * berjalan), dan belum P2H.
+     */
+    private static function classify(Collection $units, array $digest, string $tanggal): array
     {
         $isBd = fn ($u) => (($u['keputusan']['final'] ?? null) ?? $u['kondisi_akhir']) === 'BD';
-        $bd = $units->filter($isBd)->sortBy('no_unit', SORT_NATURAL)->values();
-        $temuan = $units->reject($isBd)->filter(fn ($u) => $u['findings'] !== [])->sortBy('no_unit', SORT_NATURAL)->values();
-        $clean = $units->reject($isBd)->filter(fn ($u) => $u['findings'] === [])->values();
+        $sort = fn (Collection $c) => $c->sortBy(fn ($u) => preg_replace('/\s+/', '', (string) $u['no_unit']), SORT_NATURAL | SORT_FLAG_CASE)->values();
 
+        // Unit BD hasil P2H hari itu + unit yang sedang BD/PM/Servis tanpa P2H
+        $bd = $units->filter($isBd)->map(fn ($u) => [
+            'no_unit' => $u['no_unit'],
+            'status' => 'BD',
+            'hari' => $u['bd_hari'] ?? null,
+            'sejak' => $u['bd_sejak'] ?? null,
+            'keterangan' => null,
+            'unit' => $u,
+        ])->concat(collect($digest['tidak_ready'][$tanggal] ?? [])->map(fn ($u) => [
+            'hari' => null, 'sejak' => null, 'keterangan' => null, ...$u, 'unit' => null,
+        ]));
+
+        $ok = $units->reject($isBd);
+
+        return [
+            'sudah' => $units->count(),
+            'layak' => $sort($ok->filter(fn ($u) => $u['findings'] === [])),
+            'temuan' => $sort($ok->filter(fn ($u) => $u['findings'] !== [])),
+            // BD terlama di atas agar paling cepat terlihat; durasi sama → urut nomor unit
+            'bd' => $sort($bd)->sortByDesc(fn ($b) => $b['hari'] ?? -1)->values(),
+            'belum' => $digest['belum_p2h'][$tanggal] ?? [],
+            'belum_hari' => $digest['belum_p2h_hari'][$tanggal] ?? [],
+            'tidak_ready' => count($digest['tidak_ready'][$tanggal] ?? []),
+        ];
+    }
+
+    /** Angka utama: PA dan kepatuhan P2H (jumlah per kondisi ada di judul tiap bagian). */
+    private static function overviewLines(array $digest, array $day, bool $withPa): array
+    {
+        $lines = [''];
+        if ($withPa && ($digest['pa'] ?? []) !== []) {
+            $lines[] = self::paSummary($digest['pa']);
+        }
+
+        if (($digest['stats']['total_unit'] ?? null) !== null) {
+            // Unit yang sedang BD/PM/Servis tanpa P2H tidak wajib P2H
+            $wajib = $digest['stats']['total_unit'] - $day['tidak_ready'];
+            $persen = $wajib > 0 ? ' ('.round($day['sudah'] / $wajib * 100).'%)' : '';
+            $lines[] = "Sudah P2H: *{$day['sudah']} dari {$wajib} unit{$persen}*";
+        }
+
+        return $lines;
+    }
+
+    private static function paSummary(array $pa): string
+    {
+        return collect($pa)
+            ->map(fn ($g, $jenis) => 'PA '.(self::JENIS_SINGKAT[$jenis] ?? $jenis).': *'.self::percent($g['pa']).'*')
+            ->implode(' · ');
+    }
+
+    /** Urutan bagian: sudah P2H (temuan dulu) → BD → belum P2H. */
+    private static function sectionLines(array $day): array
+    {
         $lines = [];
 
-        if ($bd->isNotEmpty()) {
+        if ($day['sudah'] > 0) {
             $lines[] = '';
-            $lines[] = '*BREAKDOWN ('.$bd->count().')*';
-            foreach ($bd as $i => $unit) {
-                $lines = [...$lines, ...self::unitLines($i + 1, $unit, withReason: true)];
+            $lines[] = "*1. SUDAH P2H ({$day['sudah']})*";
+
+            if ($day['temuan']->isNotEmpty()) {
+                $lines[] = '_Ada temuan:_';
+                foreach ($day['temuan'] as $i => $unit) {
+                    $lines = [...$lines, ...self::unitLines($i + 1, $unit)];
+                }
+            }
+
+            if ($day['layak']->isNotEmpty()) {
+                if ($day['temuan']->isNotEmpty()) {
+                    $lines[] = '';
+                }
+                $lines[] = '_Layak tanpa temuan:_ '.self::unitList($day['layak']->pluck('no_unit')->all());
+
+                // Keputusan yang menyimpang dari rekomendasi sistem tetap perlu terlihat
+                foreach ($day['layak']->filter(fn ($u) => $u['keputusan']['berbeda_dari_rekomendasi'] ?? false) as $unit) {
+                    $lines[] = '*'.self::clean($unit['no_unit']).'*: '.self::overrideNote($unit['keputusan']);
+                }
+            }
+
+            $bdP2h = $day['bd']->filter(fn ($b) => $b['unit'] !== null)->count();
+            if ($bdP2h > 0) {
+                $lines[] = "_Hasil P2H BD: {$bdP2h} unit (lihat bagian 2)_";
             }
         }
 
-        if ($temuan->isNotEmpty()) {
+        if ($day['bd']->isNotEmpty()) {
             $lines[] = '';
-            $lines[] = '*LAYAK, ADA TEMUAN ('.$temuan->count().')*';
-            foreach ($temuan as $i => $unit) {
-                $lines = [...$lines, ...self::unitLines($i + 1, $unit)];
+            $lines[] = '*2. UNIT BD / TIDAK READY ('.$day['bd']->count().')*';
+            foreach ($day['bd'] as $i => $bd) {
+                $lines = [...$lines, ...self::bdLines($i + 1, $bd)];
             }
         }
 
-        if ($clean->isNotEmpty()) {
+        if ($day['belum'] !== []) {
             $lines[] = '';
-            $lines[] = '*LAYAK TANPA TEMUAN ('.$clean->count().')*';
-            $lines[] = self::unitList($clean->pluck('no_unit')->all());
+            $lines[] = '*3. BELUM P2H ('.count($day['belum']).')*';
+            $lines[] = self::missingList($day);
+        }
 
-            // Keputusan yang menyimpang dari rekomendasi sistem tetap perlu terlihat
-            foreach ($clean->filter(fn ($u) => $u['keputusan']['berbeda_dari_rekomendasi'] ?? false) as $unit) {
-                $lines[] = '*'.self::clean($unit['no_unit']).'*: '.self::overrideNote($unit['keputusan']);
+        return $lines;
+    }
+
+    /**
+     * Daftar unit belum P2H; unit yang sudah 2 hari atau lebih tidak P2H diberi
+     * tanda lama hari (">30 hari" bila tidak ada P2H dalam riwayat).
+     */
+    private static function missingList(array $day): string
+    {
+        return collect($day['belum'])
+            ->sortBy(fn ($u) => preg_replace('/\s+/', '', $u), SORT_NATURAL | SORT_FLAG_CASE)
+            ->map(function ($u) use ($day) {
+                $hari = array_key_exists($u, $day['belum_hari']) ? $day['belum_hari'][$u] : 1;
+
+                return self::clean($u).match (true) {
+                    $hari === null => ' (>30 hari)',
+                    $hari >= 2 => " ({$hari} hari)",
+                    default => '',
+                };
+            })
+            ->implode(', ');
+    }
+
+    /** Satu unit BD: status + sejak kapan + lama BD, lalu keterangan/temuan. */
+    private static function bdLines(int $no, array $bd): array
+    {
+        $durasi = match (true) {
+            $bd['hari'] === null => null,
+            $bd['hari'] === 0 => 'mulai hari ini',
+            default => "{$bd['hari']} hari",
+        };
+        $sejak = $bd['sejak'] ? 'sejak '.Carbon::parse($bd['sejak'])->locale('id')->translatedFormat('d M') : null;
+        $info = collect([$sejak, $durasi])->filter()->implode(', ');
+
+        $lines = ["{$no}. *".self::clean($bd['no_unit'])."* — {$bd['status']}".($info !== '' ? " ({$info})" : '')];
+
+        if ($bd['unit'] === null) {
+            if (filled($bd['keterangan'])) {
+                $lines[] = '_'.self::clean($bd['keterangan']).'_';
             }
+
+            return $lines;
+        }
+
+        // BD hasil P2H hari itu: alasan + temuan penyebabnya (tanpa ulang nomor unit)
+        $lines[] = '_Hasil P2H hari ini: BD_';
+
+        return [...$lines, ...array_slice(self::unitLines(0, $bd['unit'], withReason: true), 1)];
+    }
+
+    /**
+     * Fakta hari terakhir laporan sebagai bahan AI menyusun arahan tindak lanjut.
+     * AI hanya boleh memakai angka/nomor unit yang ada di sini.
+     */
+    public static function actionFacts(array $digest): string
+    {
+        $byDate = collect($digest['units'])->groupBy('tanggal');
+        $tanggal = collect(array_keys($digest['belum_p2h'] ?? []) ?: $byDate->keys()->all())->last();
+        if ($tanggal === null) {
+            return '';
+        }
+        $day = self::classify($byDate->get($tanggal, collect()), $digest, $tanggal);
+
+        $lines = ['Jenis unit: '.($digest['jenis_unit'] ?? 'Semua'), 'Tanggal: '.$tanggal];
+        $lines[] = 'Belum P2H ('.count($day['belum']).'): '.(self::unitList($day['belum']) ?: '-');
+        $lines[] = 'Unit dengan temuan ('.$day['temuan']->count().'):';
+        foreach ($day['temuan'] as $u) {
+            $lines[] = '- '.self::clean($u['no_unit']).': '.collect($u['findings'])
+                ->map(fn ($f) => self::clean($f['item']).($f['kode_bahaya'] === 'AA' ? ' [AA]' : '').(($f['overdue'] ?? false) ? ' [lewat target]' : ''))
+                ->implode('; ');
+        }
+        $lines[] = 'Unit BD/tidak Ready ('.$day['bd']->count().'):';
+        foreach ($day['bd'] as $b) {
+            $lines[] = '- '.self::clean($b['no_unit'])." {$b['status']}".($b['hari'] !== null ? ", {$b['hari']} hari" : '')
+                .($b['unit'] ? ', BD dari hasil P2H hari ini' : '');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /** Ganti isi bagian CORRECTIVE ACTION dengan baris arahan lain (mis. dari AI). */
+    public static function replaceActions(string $text, array $actions): string
+    {
+        return preg_replace_callback('/(\*CORRECTIVE ACTION\*\n)((?:- .*\n?)+)/u', fn ($m) => $m[1].implode("\n", $actions)."\n", $text, 1);
+    }
+
+    /** Arahan singkat dan deterministik untuk tim lapangan. */
+    private static function actionLines(array $day): array
+    {
+        $lines = [];
+
+        if ($day['belum'] !== []) {
+            $lines[] = '- Segera P2H '.count($day['belum']).' unit yang belum P2H sebelum unit dioperasikan.';
+        }
+
+        if ($day['temuan']->isNotEmpty()) {
+            $aa = $day['temuan']->sum(fn ($u) => collect($u['findings'])->where('kode_bahaya', 'AA')->count());
+            $lines[] = '- Tindak lanjuti temuan pada '.$day['temuan']->count().' unit'
+                .($aa > 0 ? " ({$aa} temuan AA, prioritaskan sebelum unit jalan)" : '').'.';
+        }
+
+        if ($day['bd']->isNotEmpty()) {
+            $terlama = $day['bd']->filter(fn ($b) => $b['hari'] !== null)->sortByDesc('hari')->first();
+            $lines[] = '- Pantau perbaikan '.$day['bd']->count().' unit BD/tidak Ready'
+                .($terlama && $terlama['hari'] > 0 ? '; terlama '.self::clean($terlama['no_unit'])." ({$terlama['hari']} hari)" : '').'.';
         }
 
         return $lines;

@@ -8,6 +8,7 @@ use App\Models\P2hUserEntry;
 use App\Models\Site;
 use App\Models\Unit;
 use App\Models\UnitDowntimeLog;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +22,9 @@ use Illuminate\Support\Collection;
  */
 class DailyP2hDigest
 {
+    /** Batas riwayat untuk menghitung lama unit belum P2H */
+    private const MISSING_LOOKBACK_DAYS = 30;
+
     public static function build(CarbonInterface $start, ?CarbonInterface $end = null, ?int $siteId = null, ?string $jenisUnit = null): array
     {
         $end ??= $start;
@@ -53,7 +57,20 @@ class DailyP2hDigest
 
         $recurrence = P2hFinding::recurrenceCounts($end);
 
-        $units = $sessions->map(function (P2hSession $session) use ($recurrence, $end) {
+        // Downtime yang overlap rentang laporan: dipakai untuk "BD sejak kapan"
+        $activeUnits = Unit::active()->where($unitScope)->orderBy('no_unit')->get(['id', 'no_unit']);
+        $downtimes = UnitDowntimeLog::whereIn('unit_id', $activeUnits->pluck('id'))
+            ->inRange($start->toDateString(), $end->toDateString())
+            ->get(['unit_id', 'tipe', 'jam_mulai', 'jam_selesai', 'keterangan', 'opened_by_entry_id'])
+            ->groupBy('unit_id');
+
+        // Penyebab BD otomatis: item Tidak Layak + alasan pada P2H yang membuka downtime
+        $bdCauses = P2hUserEntry::whereIn('id', $downtimes->flatten()->pluck('opened_by_entry_id')->filter()->unique())
+            ->with(['answers' => fn ($q) => $q->where('kondisi', 'Tidak Layak')->select('id', 'p2h_user_entry_id', 'item_nama')])
+            ->get(['id', 'justifikasi_kondisi'])
+            ->keyBy('id');
+
+        $units = $sessions->map(function (P2hSession $session) use ($recurrence, $end, $downtimes) {
             $entries = $session->userEntries;
             // Temuan diambil dari item "Tidak Layak" pada P2H hari itu — termasuk temuan
             // gabungan yang pertama kali tercatat di hari sebelumnya dan masih dilaporkan.
@@ -71,6 +88,7 @@ class DailyP2hDigest
             $latest = $entries->last();
             $isBd = $latest?->kondisi_akhir === 'BD';
             $recommended = $latest?->recommendedKondisi();
+            $downtime = $isBd ? self::downtimeOn($downtimes->get($session->unit_id, collect()), $session->tanggal) : null;
 
             return [
                 'tanggal' => $session->tanggal->toDateString(),
@@ -79,6 +97,8 @@ class DailyP2hDigest
                 'no_lambung' => $session->unit?->no_lambung,
                 'kondisi' => $isBd ? 'tidak_layak' : ($findings->isNotEmpty() ? 'temuan' : 'layak'),
                 'kondisi_akhir' => $latest?->kondisi_akhir,
+                'bd_sejak' => $downtime?->jam_mulai->toDateTimeString(),
+                'bd_hari' => $downtime ? self::daysSince($downtime, $session->tanggal) : null,
                 'keputusan' => [
                     'final' => $latest?->kondisi_akhir,
                     'rekomendasi_sistem' => $recommended,
@@ -101,19 +121,25 @@ class DailyP2hDigest
         // BD/PM/Servis (status dari admin atau P2H sebelumnya) dipisahkan sebagai "tidak Ready"
         // karena memang tidak wajib P2H.
         $filled = $units->groupBy('tanggal')->map(fn ($g) => $g->pluck('no_unit')->all());
-        $activeUnits = Unit::active()->where($unitScope)->orderBy('no_unit')->get(['id', 'no_unit']);
-        $downtimes = UnitDowntimeLog::whereIn('unit_id', $activeUnits->pluck('id'))
-            ->inRange($start->toDateString(), $end->toDateString())
-            ->get(['unit_id', 'tipe', 'jam_mulai', 'jam_selesai'])
-            ->groupBy('unit_id');
+
+        // Riwayat tanggal P2H sah per unit untuk menghitung "sudah berapa hari belum P2H"
+        $lookback = self::MISSING_LOOKBACK_DAYS;
+        $p2hDates = P2hSession::query()
+            ->whereIn('unit_id', $activeUnits->pluck('id'))
+            ->whereDate('tanggal', '>=', $start->copy()->subDays($lookback))
+            ->whereDate('tanggal', '<=', $end)
+            ->whereHas('userEntries', $notRejected)
+            ->get(['unit_id', 'tanggal'])
+            ->groupBy('unit_id')
+            ->map(fn ($g) => $g->map(fn ($s) => $s->tanggal->toDateString())->unique()->sort()->values());
 
         $belumP2h = [];
+        $belumHari = [];
         $tidakReady = [];
         foreach (CarbonPeriod::create($start, $end) as $day) {
             $date = $day->toDateString();
-            $dayStart = $day->copy()->startOfDay();
-            $dayEnd = $day->copy()->endOfDay()->min(now());
             $belumP2h[$date] = [];
+            $belumHari[$date] = [];
             $tidakReady[$date] = [];
 
             foreach ($activeUnits as $unit) {
@@ -121,13 +147,21 @@ class DailyP2hDigest
                     continue;
                 }
 
-                $log = $downtimes->get($unit->id, collect())->first(fn (UnitDowntimeLog $l) => $l->jam_mulai->lessThanOrEqualTo($dayEnd)
-                    && ($l->jam_selesai === null || $l->jam_selesai->greaterThan($dayStart)));
+                $log = self::downtimeOn($downtimes->get($unit->id, collect()), $day);
 
                 if ($log) {
-                    $tidakReady[$date][] = ['no_unit' => $unit->no_unit, 'status' => $log->tipe];
+                    $tidakReady[$date][] = [
+                        'no_unit' => $unit->no_unit,
+                        'status' => $log->tipe,
+                        'sejak' => $log->jam_mulai->toDateTimeString(),
+                        'hari' => self::daysSince($log, $day),
+                        'keterangan' => self::downtimeNote($log, $bdCauses),
+                    ];
                 } else {
                     $belumP2h[$date][] = $unit->no_unit;
+                    // Hari berturut-turut tanpa P2H sampai tanggal ini (null = lebih dari batas riwayat)
+                    $last = $p2hDates->get($unit->id, collect())->filter(fn ($d) => $d < $date)->last();
+                    $belumHari[$date][$unit->no_unit] = $last ? (int) Carbon::parse($last)->diffInDays($day->copy()->startOfDay(), absolute: true) : null;
                 }
             }
         }
@@ -160,9 +194,45 @@ class DailyP2hDigest
             ],
             'units' => $units->all(),
             'belum_p2h' => $belumP2h,
+            'belum_p2h_hari' => $belumHari,
             'tidak_ready' => $tidakReady,
             'pa' => $availability['pa_by_jenis'],
         ];
+    }
+
+    /** Downtime (BD/PM/Servis) yang sedang berjalan pada tanggal tersebut. */
+    private static function downtimeOn(Collection $logs, CarbonInterface $day): ?UnitDowntimeLog
+    {
+        $dayStart = $day->copy()->startOfDay();
+        $dayEnd = $day->copy()->endOfDay()->min(now());
+
+        return $logs->sortByDesc('jam_mulai')->first(fn (UnitDowntimeLog $l) => $l->jam_mulai->lessThanOrEqualTo($dayEnd)
+            && ($l->jam_selesai === null || $l->jam_selesai->greaterThan($dayStart)));
+    }
+
+    /**
+     * Keterangan downtime untuk laporan. Downtime yang dibuka otomatis oleh P2H
+     * diganti penyebabnya (item Tidak Layak + alasan), bukan teks "Otomatis dari P2H".
+     */
+    private static function downtimeNote(UnitDowntimeLog $log, Collection $bdCauses): ?string
+    {
+        $entry = $log->opened_by_entry_id ? $bdCauses->get($log->opened_by_entry_id) : null;
+        if ($entry === null) {
+            return filled($log->keterangan) ? trim($log->keterangan) : null;
+        }
+
+        $items = $entry->answers->pluck('item_nama')->filter()->unique()->implode(', ');
+
+        return collect([
+            $items !== '' ? "Temuan: {$items}" : null,
+            filled($entry->justifikasi_kondisi) ? 'Alasan: '.trim($entry->justifikasi_kondisi) : null,
+        ])->filter()->implode(' · ') ?: null;
+    }
+
+    /** Lama downtime dalam hari kalender sampai tanggal laporan (0 = mulai hari itu). */
+    private static function daysSince(UnitDowntimeLog $log, CarbonInterface $day): int
+    {
+        return (int) $log->jam_mulai->copy()->startOfDay()->diffInDays($day->copy()->startOfDay(), absolute: true);
     }
 
     private static function mapFinding(P2hFinding $finding, Collection $recurrence, CarbonInterface $asOf): array

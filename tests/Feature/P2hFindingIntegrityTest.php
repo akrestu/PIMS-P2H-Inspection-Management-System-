@@ -96,7 +96,7 @@ test('daily report shows the final BD decision, system recommendation and reason
     ])->and($digest['units'][0]['kondisi'])->toBe('tidak_layak');
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('*BREAKDOWN (1)*', '1. *LV-77*')
+        ->toContain('*2. UNIT BD / TIDAK READY (1)*', '1. *LV-77* — BD', '_Hasil P2H hari ini: BD_')
         ->toContain('_Alasan: Rem tidak pakem saat uji jalan_', '- Rem: _Kampas tipis_ (*AA*)', 'AA = bahaya kritis')
         ->not->toContain('rekomendasi sistem');
 });
@@ -107,7 +107,7 @@ test('daily report flags a Layak decision that overrides a BD recommendation', f
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today()));
 
-    expect($text)->toContain('*LAYAK, ADA TEMUAN (1)*', '_Keputusan tidak sesuai rekomendasi sistem (BD)_', '_Alasan: Sudah diperbaiki di lokasi_');
+    expect($text)->toContain('_Ada temuan:_', '1. *LV-77*', '_Keputusan tidak sesuai rekomendasi sistem (BD)_', '_Alasan: Sudah diperbaiki di lokasi_');
 });
 
 test('daily report lists one finding per line without PIC, progress, action or empty notes', function () {

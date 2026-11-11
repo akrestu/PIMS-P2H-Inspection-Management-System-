@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Agents\P2hActionPlanAgent;
 use App\Ai\Agents\P2hDailySummaryAgent;
 use App\Enums\FindingStatus;
 use App\Models\P2hChecklistAnswer;
@@ -102,8 +103,9 @@ test('digest lists only P2H and findings within the selected date, scoped by sit
 
     $text = P2hDigestFormatter::toWhatsApp($digest);
 
-    expect($text)->toContain('DAILY REPORT P2H', 'LV-01', 'Rem')
-        ->toContain('Sudah P2H: *1 dari 2 unit*', "BELUM P2H (1)*\nLV-02")
+    expect($text)->toContain('DAILY REPORT MONITORING UNIT', 'LV-01', 'Rem')
+        ->toContain('Sudah P2H: *1 dari 2 unit (50%)*', "*3. BELUM P2H (1)*\nLV-02 (3 hari)", '*CORRECTIVE ACTION*', "\n\nTerima kasih.")
+        ->not->toContain('Detail tindak lanjut')
         // Format profesional tanpa emoji
         ->not->toMatch('/[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]/u')
         // PIC, progress, dan tindakan tidak ditulis di laporan harian (ada di menu Temuan)
@@ -143,7 +145,7 @@ test('digest can be filtered by unit type', function () {
 
     $text = P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(today(), today(), null, 'Bus'));
 
-    expect($text)->toContain('BUS-11', 'Bus · ')->not->toContain('LV-11');
+    expect($text)->toContain('BUS-11', '*DAILY REPORT MONITORING BUS*')->not->toContain('LV-11');
 });
 
 test('admin can view the daily summary page', function () {
@@ -171,20 +173,37 @@ test('AI summary returns the agent text when configured', function () {
     p2hWithFinding(Unit::create(['no_unit' => 'LV-21', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']));
     // AI hanya merapikan bahasa: susunan baris sama, teks bebas diperbaiki
     P2hDailySummaryAgent::fake(fn (string $prompt) => str_replace('Kampas tipis', 'Kampas rem menipis', $prompt));
+    // AI menyusun arahan tindak lanjut dari fakta harian
+    P2hActionPlanAgent::fake(['- Perbaiki Rem (AA) pada *LV-21* sebelum unit jalan.']);
 
     $this->actingAs(summaryAdmin())
         ->postJson(route('p2h.daily-summary.ai'), ['start' => today()->toDateString(), 'end' => today()->toDateString()])
         ->assertOk()
         ->assertJson(['fallback' => false])
-        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem: _Kampas rem menipis_'));
+        ->assertJsonPath('text', fn (string $text) => str_contains($text, '- Rem: _Kampas rem menipis_')
+            && str_contains($text, "*CORRECTIVE ACTION*\n- Perbaiki Rem (AA) pada *LV-21* sebelum unit jalan.\n"));
 
-    P2hDailySummaryAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, '*DAILY REPORT P2H*'));
+    P2hDailySummaryAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, '*DAILY REPORT MONITORING UNIT*'));
+    P2hActionPlanAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, 'LV-21: Rem [AA]'));
+});
+
+test('AI directions with numbers outside the facts keep the template directions', function () {
+    config(['ai.providers.gemini.key' => 'test-key', 'p2h.ai_summary.enabled' => true]);
+    p2hWithFinding(Unit::create(['no_unit' => 'LV-23', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']));
+    P2hDailySummaryAgent::fake(fn (string $prompt) => $prompt);
+    P2hActionPlanAgent::fake(['- Perbaiki *LV-99* dalam 2 jam.']);
+
+    $this->actingAs(summaryAdmin())
+        ->postJson(route('p2h.daily-summary.ai'))
+        ->assertOk()
+        ->assertJsonPath('text', fn (string $text) => ! str_contains($text, 'LV-99') && str_contains($text, '- Tindak lanjuti temuan pada 1 unit'));
 });
 
 test('AI output that changes the report structure falls back to the template', function () {
     config(['ai.providers.gemini.key' => 'test-key', 'p2h.ai_summary.enabled' => true]);
     p2hWithFinding(Unit::create(['no_unit' => 'LV-22', 'jenis_unit' => 'Light Vehicle', 'status' => 'active']));
     P2hDailySummaryAgent::fake(['*LAPORAN VERSI AI YANG MENGUBAH SUSUNAN*']);
+    P2hActionPlanAgent::fake(fn () => throw new RuntimeException('quota exceeded'));
 
     $this->actingAs(summaryAdmin())
         ->postJson(route('p2h.daily-summary.ai'))
@@ -196,12 +215,13 @@ test('AI output that changes the report structure falls back to the template', f
 test('AI summary falls back to the template when the provider fails', function () {
     config(['ai.providers.gemini.key' => 'test-key', 'p2h.ai_summary.enabled' => true]);
     P2hDailySummaryAgent::fake(fn () => throw new RuntimeException('quota exceeded'));
+    P2hActionPlanAgent::fake(fn () => throw new RuntimeException('quota exceeded'));
 
     $this->actingAs(summaryAdmin())
         ->postJson(route('p2h.daily-summary.ai'))
         ->assertOk()
         ->assertJson(['fallback' => true])
-        ->assertJsonPath('text', fn (string $text) => str_contains($text, 'DAILY REPORT P2H'));
+        ->assertJsonPath('text', fn (string $text) => str_contains($text, 'DAILY REPORT MONITORING'));
 });
 
 test('AI summary falls back to the template when no API key is set', function () {

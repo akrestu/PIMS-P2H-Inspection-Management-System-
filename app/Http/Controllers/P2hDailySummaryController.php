@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Ai\Agents\P2hActionPlanAgent;
 use App\Ai\Agents\P2hDailySummaryAgent;
 use App\Models\Site;
 use App\Models\Unit;
@@ -47,7 +48,42 @@ class P2hDailySummaryController extends Controller
             $text = null;
         }
 
+        // AI menyusun arahan CORRECTIVE ACTION dari fakta; arahan tak valid → arahan template
+        $facts = P2hDigestFormatter::actionFacts($digest);
+        if ($facts !== '' && str_contains($template, '*CORRECTIVE ACTION*')
+            && ($actions = self::validActions(AiText::generate(new P2hActionPlanAgent, $facts), $facts)) !== null) {
+            $text = P2hDigestFormatter::replaceActions($text ?? $template, $actions);
+        }
+
         return self::aiResponse($text, $template);
+    }
+
+    /**
+     * Arahan AI hanya dipakai bila berupa 1–6 baris "- ..." dan setiap angka
+     * (jumlah, nomor unit, lama BD) memang ada di fakta.
+     *
+     * @return list<string>|null
+     */
+    private static function validActions(?string $text, string $facts): ?array
+    {
+        if ($text === null) {
+            return null;
+        }
+
+        $lines = array_values(array_filter(array_map('trim', explode("\n", $text)), fn ($l) => $l !== ''));
+        if ($lines === [] || count($lines) > 6) {
+            return null;
+        }
+
+        preg_match_all('/\d+/', $facts, $known);
+        foreach ($lines as $line) {
+            preg_match_all('/\d+/', $line, $numbers);
+            if (! str_starts_with($line, '- ') || array_diff($numbers[0], $known[0]) !== []) {
+                return null;
+            }
+        }
+
+        return $lines;
     }
 
     /** Respons standar tombol "Rapikan dengan AI": hasil AI, atau template bila AI tidak tersedia. */

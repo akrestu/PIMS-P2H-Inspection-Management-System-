@@ -176,15 +176,18 @@ test('daily report lists units that are BD/PM/Servis separately instead of as mi
     $digest = DailyP2hDigest::build(Carbon::parse('2026-10-10'));
     $tanggal = '2026-10-10';
 
-    expect($digest['tidak_ready'][$tanggal])->toBe([
-        ['no_unit' => 'LV-31', 'status' => 'BD'],
-        ['no_unit' => 'LV-32', 'status' => 'PM'],
+    expect(collect($digest['tidak_ready'][$tanggal])->map(fn ($u) => collect($u)->only('no_unit', 'status', 'hari')->all())->all())->toBe([
+        ['no_unit' => 'LV-31', 'status' => 'BD', 'hari' => 1],
+        ['no_unit' => 'LV-32', 'status' => 'PM', 'hari' => 1],
     ])->and($digest['belum_p2h'][$tanggal])->toBe(['LV-33']);
 
     expect(P2hDigestFormatter::toWhatsApp($digest))
-        ->toContain('Sudah P2H: *1 dari 2 unit* (2 unit tidak Ready)')
-        ->toContain("*TIDAK READY (2)*\nLV-31 (BD), LV-32 (PM)")
-        ->toContain("*BELUM P2H (1)*\nLV-33");
+        ->toContain('Sudah P2H: *1 dari 2 unit (50%)*')
+        ->toContain("*2. UNIT BD / TIDAK READY (2)*\n1. *LV-31* — BD (sejak 09 Okt, 1 hari)\n")
+        ->toContain('2. *LV-32* — PM (sejak 09 Okt, 1 hari)')
+        ->not->toContain('Otomatis dari P2H')
+        ->toContain("*3. BELUM P2H (1)*\nLV-33")
+        ->toContain('- Pantau perbaikan 2 unit BD/tidak Ready; terlama LV-31 (1 hari).');
 });
 
 test('dashboard groups today fleet condition per vehicle type', function () {
