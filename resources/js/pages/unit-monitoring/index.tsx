@@ -168,7 +168,7 @@ export default function UnitMonitoring({
                         <Input
                             id="start"
                             type="date"
-                            className="w-38 lg:h-10"
+                            className="w-44 lg:h-10"
                             value={range.start}
                             onChange={(e) =>
                                 setRange((r) => ({
@@ -183,7 +183,7 @@ export default function UnitMonitoring({
                         <Input
                             id="end"
                             type="date"
-                            className="w-38 lg:h-10"
+                            className="w-44 lg:h-10"
                             value={range.end}
                             onChange={(e) =>
                                 setRange((r) => ({ ...r, end: e.target.value }))
@@ -208,7 +208,7 @@ export default function UnitMonitoring({
                         >
                             <SelectTrigger
                                 aria-label="Jenis unit"
-                                className="w-40"
+                                className="w-40 lg:h-10"
                             >
                                 <SelectValue />
                             </SelectTrigger>
@@ -235,7 +235,7 @@ export default function UnitMonitoring({
                                 })
                             }
                         >
-                            <SelectTrigger aria-label="Site" className="w-40">
+                            <SelectTrigger aria-label="Site" className="w-56 lg:h-10">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -249,7 +249,7 @@ export default function UnitMonitoring({
                         </Select>
                     </div>
                     <form
-                        className="space-y-1.5"
+                        className="min-w-56 flex-1 space-y-1.5"
                         onSubmit={(e) => {
                             e.preventDefault();
                             applyFilter({ search: search.trim() || null });
@@ -257,11 +257,11 @@ export default function UnitMonitoring({
                     >
                         <Label htmlFor="search">Cari unit</Label>
                         <div className="relative">
-                            <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="search"
-                                className="w-44 pl-8"
-                                placeholder="No. unit / lambung"
+                                className="w-full pl-9 lg:h-10"
+                                placeholder="Cari no. unit atau no. lambung"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
