@@ -27,14 +27,30 @@ class UnitStatus
     {
         $ongoing = UnitDowntimeLog::where('unit_id', $unit->id)->whereNull('jam_selesai')->first();
 
+        // Status sama → koreksi waktu mulai/keterangan status yang sedang berjalan
+        if ($ongoing?->tipe === $status) {
+            $overlap = UnitDowntimeLog::where('unit_id', $unit->id)
+                ->whereKeyNot($ongoing->id)
+                ->where('jam_selesai', '>', $at)
+                ->exists();
+            if ($overlap) {
+                throw ValidationException::withMessages([
+                    'waktu' => 'Waktu bertabrakan dengan log downtime sebelumnya untuk unit ini.',
+                ]);
+            }
+
+            $ongoing->update(array_filter([
+                'jam_mulai' => $at,
+                'keterangan' => $keterangan,
+            ], fn ($v) => $v !== null));
+
+            return;
+        }
+
         if ($ongoing && $at->lessThan($ongoing->jam_mulai)) {
             throw ValidationException::withMessages([
                 'waktu' => "Waktu tidak boleh sebelum status {$ongoing->tipe} dimulai ({$ongoing->jam_mulai->format('d/m/Y H:i')}).",
             ]);
-        }
-
-        if ($ongoing?->tipe === $status) {
-            return;
         }
 
         $ongoing?->update(['jam_selesai' => $at]);

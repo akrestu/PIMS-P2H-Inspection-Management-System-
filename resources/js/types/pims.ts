@@ -5,6 +5,7 @@ export interface UnitDowntimeLogSummary {
     id: number;
     tipe: 'BD' | 'PM' | 'Servis Berkala';
     jam_mulai: string;
+    keterangan?: string | null;
 }
 
 export interface Site {

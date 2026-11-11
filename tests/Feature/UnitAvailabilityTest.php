@@ -231,3 +231,19 @@ test('daily report shows downtime progress on its own line and summarizes long B
     expect(P2hDigestFormatter::toWhatsApp(DailyP2hDigest::build(Carbon::parse('2026-10-10'))))
         ->toContain("1. *LV-50* — BD (sejak 08 Okt, 2 hari)\n_Temuan: Rem (AA), Radio, Kotak P3K +2 item lain_\nProgress: Menunggu sparepart");
 });
+
+test('admin can correct the start date of the ongoing status instead of it being ignored', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $unit = availabilityUnit('LV-60');
+
+    $this->actingAs($admin)->patch(route('units.status', $unit), ['status' => 'BD', 'waktu' => '2026-10-10 08:00', 'keterangan' => 'Rem'])
+        ->assertSessionHasNoErrors();
+    // Koreksi: BD sebenarnya mulai 2 hari sebelumnya
+    $this->actingAs($admin)->patch(route('units.status', $unit), ['status' => 'BD', 'waktu' => '2026-10-08T07:30', 'keterangan' => 'Rem blong'])
+        ->assertSessionHasNoErrors();
+
+    $log = UnitDowntimeLog::where('unit_id', $unit->id)->sole();
+    expect($log->jam_mulai->format('Y-m-d H:i'))->toBe('2026-10-08 07:30')
+        ->and($log->keterangan)->toBe('Rem blong')
+        ->and($log->jam_selesai)->toBeNull();
+});

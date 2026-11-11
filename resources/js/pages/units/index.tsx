@@ -731,24 +731,30 @@ function OperationalStatusBadge({
 /* ─────────────── Ubah status operasional unit ─────────────── */
 const STATUS_OPTIONS = ['Ready', 'BD', 'PM', 'Servis Berkala'] as const;
 
-function nowLocal(): string {
-    const d = new Date();
+/** Waktu lokal format input datetime-local (YYYY-MM-DDTHH:mm). */
+function toLocalInput(value?: string | Date): string {
+    const d = value ? new Date(value) : new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
 
     return d.toISOString().slice(0, 16);
 }
 
+const nowLocal = () => toLocalInput();
+
 function UnitStatusControl({ unit }: { unit: Unit }) {
-    const current = unit.downtime_logs?.[0]?.tipe ?? 'Ready';
-    const [open, setOpen] = useState(false);
-    const form = useForm({
-        status: current as string,
-        waktu: nowLocal(),
-        keterangan: '',
+    const ongoing = unit.downtime_logs?.[0];
+    const current = ongoing?.tipe ?? 'Ready';
+    // Status yang sedang berjalan → isi dengan waktu mulainya, bukan waktu sekarang
+    const initial = (status: string) => ({
+        status,
+        waktu: ongoing && status === current ? toLocalInput(ongoing.jam_mulai) : nowLocal(),
+        keterangan: ongoing && status === current ? (ongoing.keterangan ?? '') : '',
     });
+    const [open, setOpen] = useState(false);
+    const form = useForm(initial(current));
 
     const openDialog = () => {
-        form.setData({ status: current, waktu: nowLocal(), keterangan: '' });
+        form.setData(initial(current));
         form.clearErrors();
         setOpen(true);
     };
@@ -789,7 +795,7 @@ function UnitStatusControl({ unit }: { unit: Unit }) {
                             <Label>Status baru</Label>
                             <Select
                                 value={form.data.status}
-                                onValueChange={(v) => form.setData('status', v)}
+                                onValueChange={(v) => form.setData(initial(v))}
                             >
                                 <SelectTrigger>
                                     <SelectValue />

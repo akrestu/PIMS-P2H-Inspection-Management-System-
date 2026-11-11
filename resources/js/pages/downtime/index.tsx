@@ -186,8 +186,8 @@ function DowntimeDialog({
         useForm<DowntimeFormData>({
             unit_id: editLog ? String(editLog.unit_id) : '',
             tipe: editLog?.tipe ?? '',
-            jam_mulai: editLog?.jam_mulai?.slice(0, 16) ?? '',
-            jam_selesai: editLog?.jam_selesai?.slice(0, 16) ?? '',
+            jam_mulai: editLog?.jam_mulai?.slice(0, 16).replace(' ', 'T') ?? '',
+            jam_selesai: editLog?.jam_selesai?.slice(0, 16).replace(' ', 'T') ?? '',
             keterangan: editLog?.keterangan ?? '',
             progress: editLog?.progress ?? '',
         });
@@ -196,8 +196,8 @@ function DowntimeDialog({
         setData({
             unit_id: editLog ? String(editLog.unit_id) : '',
             tipe: editLog?.tipe ?? '',
-            jam_mulai: editLog?.jam_mulai?.slice(0, 16) ?? '',
-            jam_selesai: editLog?.jam_selesai?.slice(0, 16) ?? '',
+            jam_mulai: editLog?.jam_mulai?.slice(0, 16).replace(' ', 'T') ?? '',
+            jam_selesai: editLog?.jam_selesai?.slice(0, 16).replace(' ', 'T') ?? '',
             keterangan: editLog?.keterangan ?? '',
             progress: editLog?.progress ?? '',
         });

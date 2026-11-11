@@ -35,7 +35,7 @@ class UnitController extends Controller
             ->with(['site:id,name', 'downtimeLogs' => function ($q) {
                 $q->whereNull('jam_selesai')
                     ->latest('jam_mulai')
-                    ->select(['id', 'unit_id', 'tipe', 'jam_mulai']);
+                    ->select(['id', 'unit_id', 'tipe', 'jam_mulai', 'keterangan']);
             }])
             ->when($request->search, fn ($q) => $q->where('no_unit', 'like', "%{$request->search}%"))
             ->when($request->jenis_unit, fn ($q) => $q->where('jenis_unit', $request->jenis_unit))
