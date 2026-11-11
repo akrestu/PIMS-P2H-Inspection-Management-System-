@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
+import { clearPageCache } from '@/lib/pwa';
 import { cn, toUrl } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -67,7 +68,10 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             </header>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[200px_minmax(0,720px)]">
-                <nav aria-label="Menu akun" className="noscroll -mx-4 flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:block lg:space-y-1 lg:px-0">
+                <nav
+                    aria-label="Menu akun"
+                    className="-mx-4 noscroll flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:block lg:space-y-1 lg:px-0"
+                >
                     {sidebarNavItems.map((item, index) => {
                         const active = isCurrentOrParentUrl(item.href);
 
@@ -90,7 +94,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 </nav>
 
                 <div className="min-w-0 space-y-5">
-                    <section className="space-y-10 rounded-xl bg-card shadow-sm p-5 lg:p-6">
+                    <section className="space-y-10 rounded-xl bg-card p-5 shadow-sm lg:p-6">
                         {children}
                     </section>
 
@@ -101,7 +105,10 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         <Button
                             variant="outline"
                             className="lg:hidden"
-                            onClick={() => router.post(logout.url())}
+                            onClick={() => {
+                                clearPageCache();
+                                router.post(logout.url());
+                            }}
                         >
                             <LogOut />
                             Keluar

@@ -1,0 +1,17 @@
+{
+    "name": "PIMS — P2H Management System",
+    "short_name": "PIMS",
+    "description": "Pemeriksaan & Perawatan Harian unit dan alat berat.",
+    "lang": "id",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#0A0A0A",
+    "background_color": "#FFFFFF",
+    "icons": [
+        { "src": "/icons/pims-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/pims-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/pims-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}

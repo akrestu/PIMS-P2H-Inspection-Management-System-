@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Offline - PIMS</title>
+    <style>
+        :root { color-scheme: light dark; --bg: #F7F6F2; --card: #FFFFFF; --fg: #0A0A0A; --muted: #6B6B66; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #0F0F0E; --card: #1A1A18; --fg: #F5F5F2; --muted: #A3A39E; } }
+        body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: var(--bg); color: var(--fg);
+               font-family: "Plus Jakarta Sans Variable", system-ui, sans-serif; padding: 16px; box-sizing: border-box; }
+        main { background: var(--card); border-radius: 20px; padding: 32px 24px; max-width: 360px; text-align: center; }
+        h1 { font-size: 20px; margin: 16px 0 8px; }
+        p { color: var(--muted); line-height: 1.5; margin: 0 0 24px; }
+        button { min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: var(--fg); color: var(--bg);
+                 font: inherit; font-weight: 600; cursor: pointer; }
+        button:focus-visible { outline: 3px solid #F4D03F; outline-offset: 2px; }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="/icons/pims-192.png" alt="" width="56" height="56">
+        <h1>Anda sedang offline</h1>
+        <p>Halaman ini belum tersimpan di HP. P2H yang sudah diisi tetap aman di antrean dan terkirim saat sinyal kembali.</p>
+        <button type="button" onclick="location.reload()">Coba lagi</button>
+    </main>
+</body>
+</html>

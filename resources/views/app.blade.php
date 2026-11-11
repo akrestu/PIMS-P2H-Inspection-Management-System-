@@ -37,7 +37,8 @@
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
         <link rel="shortcut icon" href="/favicon-32.png?v=2">
 
-        {{-- PWA Meta Tags --}}
+        {{-- PWA (docs/11) --}}
+        <link rel="manifest" href="/manifest.webmanifest">
         <meta name="theme-color" content="#0A0A0A">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">

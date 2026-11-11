@@ -17,7 +17,7 @@ class P2hUserEntry extends Model
 
     protected $fillable = [
         'p2h_session_id', 'user_id', 'user_slot', 'lokasi_kerja', 'km_awal', 'hm_km_akhir',
-        'paraf_url', 'shift', 'submitted_at',
+        'paraf_url', 'shift', 'submitted_at', 'client_uuid', 'submitted_offline',
         'kondisi_akhir', 'justifikasi_kondisi',
         'approval_status', 'pic_approver_id', 'approver_id', 'approved_at', 'catatan_approval',
         'approver_signature_url', 'escalated_at',
@@ -25,6 +25,7 @@ class P2hUserEntry extends Model
 
     protected $casts = [
         'submitted_at' => 'datetime',
+        'submitted_offline' => 'boolean',
         'approved_at' => 'datetime',
         'escalated_at' => 'datetime',
     ];

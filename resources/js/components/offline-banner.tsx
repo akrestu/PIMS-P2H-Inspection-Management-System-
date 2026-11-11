@@ -1,5 +1,6 @@
 import { WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useOutbox } from '@/components/offline-outbox';
 
 export function OfflineBanner() {
     const [isOffline, setIsOffline] = useState(
@@ -19,6 +20,8 @@ export function OfflineBanner() {
         };
     }, []);
 
+    const queued = useOutbox().length;
+
     if (!isOffline) {
         return null;
     }
@@ -31,8 +34,10 @@ export function OfflineBanner() {
         >
             <WifiOff className="size-4 shrink-0 text-warning" aria-hidden />
             <span>
-                <span className="font-semibold">Anda sedang offline.</span> Data
-                mungkin belum terbaru; kirim perubahan setelah sinyal kembali.
+                <span className="font-semibold">Anda sedang offline.</span>{' '}
+                {queued > 0
+                    ? `${queued} P2H antre, terkirim otomatis saat sinyal kembali.`
+                    : 'Data mungkin belum terbaru; P2H tetap bisa diisi.'}
             </span>
         </div>
     );

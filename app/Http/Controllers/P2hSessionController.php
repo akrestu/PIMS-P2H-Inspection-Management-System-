@@ -24,6 +24,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -230,20 +231,31 @@ class P2hSessionController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
+        // Pengiriman ulang dari antrean offline (uuid sama) → kembalikan entry yang ada
+        if ($existing = $this->entryForClientUuid($data['client_uuid'] ?? null, $user->id)) {
+            return redirect()->route('p2h.submitted', $existing);
+        }
+
+        // Tanggal & jam mengikuti waktu pengisian di HP, bukan waktu sinkron
+        $filledAt = isset($data['filled_at'])
+            ? Carbon::parse($data['filled_at'])->setTimezone(config('app.timezone'))
+            : now();
+        $tanggal = $filledAt->copy()->startOfDay();
+
         // Resolve atau buat sesi di luar transaksi agar MySQL error (duplicate key)
         // tidak membunuh transaksi utama yang menyimpan entry.
         // withTrashed() penting: jika sesi pernah soft-deleted, unique constraint MySQL
         // tetap memblokir INSERT sehingga kita harus restore, bukan membuat baru.
         $session = P2hSession::withTrashed()
             ->where('unit_id', $data['unit_id'])
-            ->whereDate('tanggal', today())
+            ->whereDate('tanggal', $tanggal)
             ->first();
 
         if (! $session) {
             try {
                 $session = P2hSession::create([
                     'unit_id' => $data['unit_id'],
-                    'tanggal' => today(),
+                    'tanggal' => $tanggal,
                     'status' => 'open',
                     'created_by' => $user->id,
                     'job_site' => $data['job_site'] ?? null,
@@ -255,7 +267,7 @@ class P2hSessionController extends Controller
                 // Race condition: sesi sudah dibuat request lain, ambil termasuk soft-deleted
                 $session = P2hSession::withTrashed()
                     ->where('unit_id', $data['unit_id'])
-                    ->whereDate('tanggal', today())
+                    ->whereDate('tanggal', $tanggal)
                     ->firstOrFail();
             }
         }
@@ -275,7 +287,7 @@ class P2hSessionController extends Controller
         )->get()->keyBy('id');
 
         try {
-            DB::transaction(function () use ($data, $user, $session, $request, $inspectionItems, &$storedPaths, &$createdEntry, &$criticalTL) {
+            DB::transaction(function () use ($data, $user, $session, $request, $inspectionItems, $filledAt, &$storedPaths, &$createdEntry, &$criticalTL) {
 
                 // Lock baris sesi agar penghitungan slot antar submit bersamaan tidak balapan
                 $lockedSession = P2hSession::whereKey($session->id)->lockForUpdate()->first();
@@ -303,7 +315,9 @@ class P2hSessionController extends Controller
                     'hm_km_akhir' => $data['hm_km_akhir'] ?? null,
                     'shift' => $data['shift'],
                     'paraf_url' => $parafUrl,
-                    'submitted_at' => now(),
+                    'client_uuid' => $data['client_uuid'] ?? null,
+                    'submitted_at' => $filledAt,
+                    'submitted_offline' => (bool) ($data['offline'] ?? false),
                     'kondisi_akhir' => $data['kondisi_akhir'],
                     'justifikasi_kondisi' => $data['justifikasi_kondisi'] ?? null,
                     'approval_status' => $needsApproval ? 'pending' : null,
@@ -391,6 +405,12 @@ class P2hSessionController extends Controller
         } catch (\Throwable $exception) {
             P2hFileStorage::delete($storedPaths);
 
+            // Dua pengiriman uuid sama bersamaan: yang kalah memakai entry pemenang
+            if ($exception instanceof QueryException && $exception->getCode() === '23000'
+                && ($existing = $this->entryForClientUuid($data['client_uuid'] ?? null, $user->id))) {
+                return redirect()->route('p2h.submitted', $existing);
+            }
+
             throw $exception;
         }
 
@@ -422,6 +442,13 @@ class P2hSessionController extends Controller
         // Layar sukses (docs/screens/driver.md §7) — halaman sendiri agar tetap tampil
         // setelah redirect; isinya diambil ulang dari entry yang baru disimpan.
         return redirect()->route('p2h.submitted', $createdEntry);
+    }
+
+    private function entryForClientUuid(?string $uuid, int $userId): ?P2hUserEntry
+    {
+        return $uuid
+            ? P2hUserEntry::where('client_uuid', $uuid)->where('user_id', $userId)->first()
+            : null;
     }
 
     /**

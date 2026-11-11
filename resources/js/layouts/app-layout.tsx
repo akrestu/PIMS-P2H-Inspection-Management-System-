@@ -1,5 +1,6 @@
 import { FlashToastListener } from '@/components/flash-toast-listener';
 import { OfflineBanner } from '@/components/offline-banner';
+import { OfflineSync } from '@/components/offline-outbox';
 import PageLoader from '@/components/page-loader';
 import { SessionTimeoutWarning } from '@/components/session-timeout-warning';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
@@ -18,6 +19,7 @@ export default function AppLayout({
             <PageLoader />
             <FlashToastListener />
             <OfflineBanner />
+            <OfflineSync />
             <SessionTimeoutWarning />
             {children}
         </AppLayoutTemplate>

@@ -7,6 +7,7 @@ import {
     Wrench,
 } from 'lucide-react';
 import NotificationBell from '@/components/Layout/NotificationBell';
+import { OutboxCard } from '@/components/offline-outbox';
 import { KpiCard } from '@/components/pims/kpi';
 import { ListCard } from '@/components/pims/list-card';
 import { SectionHeader } from '@/components/pims/page-header';
@@ -539,6 +540,8 @@ export default function DriverDashboardIndex({
                         shift={shiftAktif}
                         entry={currentEntry}
                     />
+
+                    <OutboxCard />
 
                     {/* Dua kartu statistik — berpadding agar tidak menempel ke tepi */}
                     <div className="grid grid-cols-2 gap-3">

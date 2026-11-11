@@ -10,6 +10,7 @@ import {
     Droplets,
     Info,
     Loader2,
+    CloudUpload,
     Lock,
     MapPin,
     PenLine,
@@ -55,6 +56,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/format';
+import { enqueue, newClientUuid, toParts } from '@/lib/offline-queue';
 import { cn } from '@/lib/utils';
 import type { AnswerState, P2hInspectionItem } from '@/types/pims';
 
@@ -898,6 +900,12 @@ export default function P2hForm({
         Record<number, boolean>
     >({});
     const [submitting, setSubmitting] = useState(false);
+    // Antrean offline (docs/11): uuid tetap per pengisian agar kirim ulang idempoten
+    const [clientUuid] = useState(newClientUuid);
+    const [queued, setQueued] = useState<{
+        unit: string;
+        layak: boolean;
+    } | null>(null);
     const [uploadPct, setUploadPct] = useState<number | null>(null);
     const [sigEmpty, setSigEmpty] = useState(true);
     const sigPadRef = useRef<ReactSignatureCanvas | null>(null);
@@ -1380,107 +1388,147 @@ export default function P2hForm({
             }
         });
 
-        router.post(
-            '/p2h',
-            {
-                unit_id: Number(selectedUnitId),
-                job_site: jobSite || null,
-                lokasi_kerja: lokasiKerja || null,
-                km_awal: kmAwal ? Number(kmAwal) : null,
-                hm_km_akhir: hmKmAkhir ? Number(hmKmAkhir) : null,
-                shift,
-                pic_approver_id:
-                    needsApproval && picApproverId
-                        ? Number(picApproverId)
+        const filledAt = new Date().toISOString();
+        const payload = {
+            client_uuid: clientUuid,
+            filled_at: filledAt,
+            unit_id: Number(selectedUnitId),
+            job_site: jobSite || null,
+            lokasi_kerja: lokasiKerja || null,
+            km_awal: kmAwal ? Number(kmAwal) : null,
+            hm_km_akhir: hmKmAkhir ? Number(hmKmAkhir) : null,
+            shift,
+            pic_approver_id:
+                needsApproval && picApproverId ? Number(picApproverId) : null,
+            paraf,
+            answers: answersArray,
+            kondisi_akhir: kondisiAkhir,
+            justifikasi_kondisi: justifikasiKondisi || null,
+            service_info: {
+                servis_mingguan: servisMingguan,
+                servis_berkala: servisBerkala,
+                unschedule_breakdown: unscheduleBreakdown,
+                lainnya: lainnya ? lainnyaText : null,
+                catatan_servis: catatanServis || null,
+            },
+            fuel_log: {
+                km_unit: kmUnit ? Number(kmUnit) : null,
+                jumlah_liter: jumlahLiter ? Number(jumlahLiter) : null,
+            },
+            attachments,
+            ...itemAttachmentsFlat,
+        };
+
+        // Tanpa sinyal: simpan ke antrean IndexedDB, kirim otomatis saat online
+        const queueOffline = async () => {
+            try {
+                await enqueue({
+                    client_uuid: clientUuid,
+                    user_id: auth.user?.id ?? 0,
+                    unit_label: selectedUnit?.no_unit ?? 'Unit',
+                    layak: kondisiAkhir !== 'BD',
+                    created_at: filledAt,
+                    parts: toParts({ ...payload, offline: true }),
+                });
+                setQueued({
+                    unit: selectedUnit?.no_unit ?? 'Unit',
+                    layak: kondisiAkhir !== 'BD',
+                });
+            } catch {
+                toast.error('Gagal menyimpan ke antrean offline.', {
+                    description: 'Coba kirim lagi saat ada sinyal.',
+                });
+            } finally {
+                setSubmitting(false);
+                setUploadPct(null);
+            }
+        };
+
+        if (!navigator.onLine) {
+            void queueOffline();
+
+            return;
+        }
+
+        router.post('/p2h', payload, {
+            forceFormData: true,
+            // Sinyal putus di tengah unggah → masuk antrean (server idempoten)
+            onNetworkError: () => {
+                void queueOffline();
+
+                return false;
+            },
+            // Status "mengunggah %" (docs/02 PhotoCapture) — foto bisa besar di sinyal lemah
+            onProgress: (e) =>
+                setUploadPct(
+                    e?.percentage !== undefined
+                        ? Math.round(e.percentage)
                         : null,
-                paraf,
-                answers: answersArray,
-                kondisi_akhir: kondisiAkhir,
-                justifikasi_kondisi: justifikasiKondisi || null,
-                service_info: {
-                    servis_mingguan: servisMingguan,
-                    servis_berkala: servisBerkala,
-                    unschedule_breakdown: unscheduleBreakdown,
-                    lainnya: lainnya ? lainnyaText : null,
-                    catatan_servis: catatanServis || null,
-                },
-                fuel_log: {
-                    km_unit: kmUnit ? Number(kmUnit) : null,
-                    jumlah_liter: jumlahLiter ? Number(jumlahLiter) : null,
-                },
-                attachments,
-                ...itemAttachmentsFlat,
+                ),
+            onFinish: () => setUploadPct(null),
+            onSuccess: () => {
+                // Server mengarahkan ke layar "P2H terkirim" (p2h/submitted)
+                try {
+                    navigator.vibrate?.([10, 30, 10]);
+                } catch {
+                    // Vibration API tidak tersedia
+                }
+
+                setSubmitting(false);
             },
-            {
-                forceFormData: true,
-                // Status "mengunggah %" (docs/02 PhotoCapture) — foto bisa besar di sinyal lemah
-                onProgress: (e) =>
-                    setUploadPct(
-                        e?.percentage !== undefined
-                            ? Math.round(e.percentage)
-                            : null,
-                    ),
-                onFinish: () => setUploadPct(null),
-                onSuccess: () => {
-                    // Server mengarahkan ke layar "P2H terkirim" (p2h/submitted)
-                    try {
-                        navigator.vibrate?.([10, 30, 10]);
-                    } catch {
-                        // Vibration API tidak tersedia
-                    }
+            onError: (errors) => {
+                setSubmitting(false);
+                // Kembalikan draft jika submit gagal
+                saveDraft({
+                    step,
+                    selectedUnitId,
+                    jobSite,
+                    lokasiKerja,
+                    kmAwal,
+                    shift,
+                    picApproverId,
+                    answers,
+                    servisMingguan,
+                    servisBerkala,
+                    unscheduleBreakdown,
+                    lainnya,
+                    lainnyaText,
+                    catatanServis,
+                    kmUnit,
+                    jumlahLiter,
+                    hmKmAkhir,
+                    kondisiAkhir,
+                    justifikasiKondisi,
+                });
+                const keys = Object.keys(errors);
+                const messages = [...new Set(Object.values(errors))];
 
-                    setSubmitting(false);
-                },
-                onError: (errors) => {
-                    setSubmitting(false);
-                    // Kembalikan draft jika submit gagal
-                    saveDraft({
-                        step,
-                        selectedUnitId,
-                        jobSite,
-                        lokasiKerja,
-                        kmAwal,
-                        shift,
-                        picApproverId,
-                        answers,
-                        servisMingguan,
-                        servisBerkala,
-                        unscheduleBreakdown,
-                        lainnya,
-                        lainnyaText,
-                        catatanServis,
-                        kmUnit,
-                        jumlahLiter,
-                        hmKmAkhir,
-                        kondisiAkhir,
-                        justifikasiKondisi,
-                    });
-                    const keys = Object.keys(errors);
-                    const messages = [...new Set(Object.values(errors))];
+                if (keys.length === 0) {
+                    toast.error('Terjadi kesalahan. Periksa form kembali.');
 
-                    if (keys.length === 0) {
-                        toast.error('Terjadi kesalahan. Periksa form kembali.');
+                    return;
+                }
 
-                        return;
-                    }
-
-                    // Satu ringkasan (bukan satu toast per error) + pindah ke langkah pertama yang bermasalah
-                    const errorStep = Math.min(...keys.map(stepForErrorKey));
-                    setStep(errorStep);
-                    toast.error(
-                        `Periksa langkah ${errorStep} — ${STEPS[errorStep - 1].label}`,
-                        {
-                            description:
-                                messages.slice(0, 3).join(' ') +
-                                (messages.length > 3
-                                    ? ` (+${messages.length - 3} lainnya)`
-                                    : ''),
-                        },
-                    );
-                },
+                // Satu ringkasan (bukan satu toast per error) + pindah ke langkah pertama yang bermasalah
+                const errorStep = Math.min(...keys.map(stepForErrorKey));
+                setStep(errorStep);
+                toast.error(
+                    `Periksa langkah ${errorStep} — ${STEPS[errorStep - 1].label}`,
+                    {
+                        description:
+                            messages.slice(0, 3).join(' ') +
+                            (messages.length > 3
+                                ? ` (+${messages.length - 3} lainnya)`
+                                : ''),
+                    },
+                );
             },
-        );
+        });
     };
+
+    if (queued) {
+        return <QueuedScreen {...queued} homeHref={homeHref} />;
+    }
 
     return (
         <>
@@ -2262,7 +2310,12 @@ export default function P2hForm({
                                             'Unit',
                                             `${selectedUnit?.no_unit ?? '—'} · ${selectedUnit?.jenis_unit ?? ''}`,
                                         ],
-                                        ['Shift', shift.replace('Shift II', 'Shift 2').replace('Shift I', 'Shift 1')],
+                                        [
+                                            'Shift',
+                                            shift
+                                                .replace('Shift II', 'Shift 2')
+                                                .replace('Shift I', 'Shift 1'),
+                                        ],
                                         ['Job site', jobSite || '—'],
                                         ['Lokasi kerja', lokasiKerja || '—'],
                                         [
@@ -2571,3 +2624,37 @@ export default function P2hForm({
 P2hForm.layout = {
     breadcrumbs: [{ title: 'Form P2H', href: '/p2h/form' }],
 };
+
+/** Layar sukses versi antrean offline: label "Antre, unggah saat online" (docs/11 §Antrean 2). */
+function QueuedScreen({
+    unit,
+    layak,
+    homeHref,
+}: {
+    unit: string;
+    layak: boolean;
+    homeHref: string;
+}) {
+    return (
+        <>
+            <Head title="P2H antre" />
+            <div className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+                <div className="grid size-28 animate-pop place-items-center rounded-full bg-warning-soft text-foreground">
+                    <CloudUpload className="size-14" aria-hidden />
+                </div>
+                <div className="space-y-2" role="status">
+                    <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+                        P2H tersimpan · {layak ? 'Layak Pakai' : 'Tidak Layak'}
+                    </h1>
+                    <p className="text-muted-foreground">
+                        {unit} · Antre, unggah saat online. Jangan hapus data
+                        browser sampai P2H terkirim.
+                    </p>
+                </div>
+                <Button asChild size="lg" className="w-full max-w-xs">
+                    <a href={homeHref}>Kembali ke Beranda</a>
+                </Button>
+            </div>
+        </>
+    );
+}

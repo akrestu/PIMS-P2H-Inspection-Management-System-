@@ -22,6 +22,11 @@ class StoreP2hRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Antrean offline (docs/11): uuid dari HP + waktu pengisian sebenarnya
+            // uuid milik akun lain ditolak; uuid sendiri = kirim ulang (ditangani controller)
+            'client_uuid' => ['nullable', 'uuid', Rule::unique('p2h_user_entries', 'client_uuid')->where(fn ($q) => $q->where('user_id', '!=', $this->user()?->id))],
+            'filled_at' => ['nullable', 'date', 'after_or_equal:'.now()->subDays(3)->toIso8601String(), 'before_or_equal:'.now()->addMinutes(10)->toIso8601String()],
+            'offline' => ['nullable', 'boolean'],
             'unit_id' => ['required', 'integer', Rule::exists('units', 'id')->where('status', 'active')->whereNull('deleted_at')],
             'pic_approver_id' => $this->requiresPicApprover()
                 ? ['required', 'integer', Rule::exists('users', 'id')]
@@ -70,6 +75,8 @@ class StoreP2hRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'filled_at.after_or_equal' => 'P2H antrean offline sudah lebih dari 3 hari dan tidak bisa dikirim.',
+            'filled_at.before_or_equal' => 'Jam di HP tidak sesuai. Periksa pengaturan tanggal & jam.',
             'pic_approver_id.required' => 'PIC yang akan menyetujui P2H wajib dipilih.',
             'pic_approver_id.exists' => 'PIC yang dipilih tidak valid atau bukan dari departemen yang sama dengan unit.',
         ];
